@@ -3,15 +3,12 @@ import time
 from typing import Any
 
 from aioinject.ext.fastapi import AioInjectMiddleware
-from commons.logging.datadog_logger import setup_logging
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from sqlalchemy.orm import configure_mappers
 
-import app.datadog_bootstrap  # noqa: F401 # pyright: ignore[reportUnusedImport]
 from app.api.auth_router import router as auth_router
-from app.core.config.settings import Settings
 from app.core.container import create_container
 from app.graphql.app import create_graphql_app
 
@@ -23,15 +20,6 @@ def create_app() -> FastAPI:
     async def lifespan(_app: FastAPI):
         configure_mappers()
         async with container:
-            async with container.context() as ctx:
-                settings = await ctx.resolve(Settings)
-                setup_logging(
-                    service="fastapi",
-                    environment=settings.environment,
-                    datadog_settings=settings.datadog,
-                    level=settings.log_level,
-                    echo_sqlalchemy=settings.log_level == "DEBUG",
-                )
             yield
 
     app = FastAPI(

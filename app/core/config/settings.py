@@ -1,11 +1,9 @@
-from commons.logging.datadog_settings import DatadogSettings
 from pydantic import PostgresDsn
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
 class Settings(BaseSettings):
     pg_url: PostgresDsn
-    datadog: DatadogSettings
     environment: str
 
     log_level: str = "INFO"

@@ -21,7 +21,6 @@ class JobType(DTOMixin[Job]):
     id: UUID
     entry_date: datetime
     created_by: UUID
-    creation_type: int
     status: JobStatus
     job_name: str
     start_date: date
@@ -45,7 +44,6 @@ class JobType(DTOMixin[Job]):
             id=model.id,
             entry_date=model.entry_date,
             created_by=model.created_by,
-            creation_type=model.creation_type,
             status=model.status,
             job_name=model.job_name,
             start_date=model.start_date,

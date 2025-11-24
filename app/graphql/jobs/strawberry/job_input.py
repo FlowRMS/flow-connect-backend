@@ -16,7 +16,6 @@ class JobInput(BaseInputGQL[Job]):
     start_date: date | None = strawberry.UNSET
     end_date: date | None = strawberry.UNSET
     status: str | None = strawberry.UNSET
-    creation_type: int | None = strawberry.UNSET
     job_owner_id: UUID | None = strawberry.UNSET
     description: str | None = strawberry.UNSET
     requester_id: UUID | None = strawberry.UNSET
@@ -29,7 +28,6 @@ class JobInput(BaseInputGQL[Job]):
             start_date=self.optional_field(self.start_date),
             end_date=self.optional_field(self.end_date),
             status=self.optional_field(self.status),
-            creation_type=self.optional_field(self.creation_type),
             job_owner_id=self.optional_field(self.job_owner_id),
             description=self.optional_field(self.description),
             requester_id=self.optional_field(self.requester_id),

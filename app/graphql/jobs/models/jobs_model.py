@@ -26,7 +26,6 @@ class Job(Base):
     id: Mapped[UUID] = mapped_column(PG_UUID(as_uuid=True), primary_key=True)
     entry_date: Mapped[datetime] = mapped_column(TIMESTAMP, nullable=False)
     created_by: Mapped[UUID] = mapped_column(PG_UUID(as_uuid=True), nullable=False)
-    creation_type: Mapped[int] = mapped_column(SmallInteger, nullable=False)
     job_name: Mapped[str] = mapped_column(String(255), nullable=False, unique=True)
     status: Mapped[JobStatus] = mapped_column(IntEnum(JobStatus), nullable=False)
     start_date: Mapped[date] = mapped_column(Date, nullable=False)

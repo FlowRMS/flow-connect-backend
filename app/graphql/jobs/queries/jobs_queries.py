@@ -2,8 +2,8 @@
 
 from uuid import UUID
 
-from aioinject import Injected
 import strawberry
+from aioinject import Injected
 
 from app.graphql.inject import inject
 from app.graphql.jobs.services.jobs_service import JobsService
