@@ -5,6 +5,7 @@ from typing import Any, Generic, Self, TypeVar
 import strawberry
 
 T = TypeVar("T")
+TT = TypeVar("TT")
 
 
 class BaseInputGQL(ABC, Generic[T]):
@@ -45,7 +46,7 @@ class BaseInputGQL(ABC, Generic[T]):
         return attr not in (None, "", 0, "0")
 
     @staticmethod
-    def optional_field(field: T, default: T | None = None) -> T | None:
+    def optional_field(field: TT, default: TT | None = None) -> TT | None:
         """Get optional field value or default.
 
         Args:
