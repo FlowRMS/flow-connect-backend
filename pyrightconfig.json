@@ -1,0 +1,42 @@
+{
+  "venvPath": ".",
+  "venv": ".venv",
+  "extraPaths": ["."],
+  "include": [
+    "app",
+    "scripts"
+  ],
+  "exclude": [
+    "**/__pycache__",
+    "**/listeners/*",
+    ".venv/**",
+    "build/**",
+    "dist/**",
+    "**/sandbox_scripts/*",
+    "scripts/backup_restore_tenants.py"
+  ],
+  "ignore": [
+    "**/sandbox_scripts/*"
+  ],
+  "reportMissingSuperCall": true,
+  "reportUnusedCallResult": true,
+  "reportCallInDefaultInitializer": true,
+  "reportMissingTypeStubs": false,
+  "reportAny": false,
+  "reportImportCycles": false,
+  "reportWildcardImportFromLibrary": false,
+  "reportUnsafeMultipleInheritance": false,
+  "reportUnnecessaryTypeIgnoreComment": false,
+  "reportUnknownLambdaType": false,
+  "reportExplicitAny": false,
+  "reportUnannotatedClassAttribute": false,
+  "reportInvalidTypeForm": false,
+  "reportUnusedImport": true,
+  "reportUnusedVariable": true,
+  "reportDeprecated": "error",
+  "pythonVersion": "3.13",
+  "pythonPlatform": "Linux",
+  "autoImportCompletions": true,
+  "useLibraryCodeForTypes": true,
+  "typeCheckingMode": "basic",
+}

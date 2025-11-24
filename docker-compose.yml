@@ -1,0 +1,18 @@
+version: "3.8"
+
+services:
+  ai:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        UV_INDEX_URL: https://flowbot-user:88qbA6RXJGHt@pypi.flowrms.com/simple/
+    environment:
+      - PORT=8000
+    ports:
+      - "8000:8000"
+    env_file:
+      - .env
+
+volumes:
+  pgdata:

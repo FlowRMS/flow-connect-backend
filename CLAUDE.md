@@ -1,0 +1,21 @@
+# Python Standards
+  - Use Python 3.13 syntax and features
+  - Follow PEP 585 (use `list[str]` instead of `List[str]`) `str | None` instead of `Optional[str]`, `dict[str, Any]` instead of `Dict[str, Any]`
+  - Use structural pattern matching when appropriate
+  - Leverage new typing features
+  - Use f-strings for string formatting
+  - Prefer pathlib.Path over os.path for file operations
+  - Use type hints for all function parameters and return values
+  - Use @dataclass or @dataclasses.dataclass for data classes
+  - Use enum.Enum for constants and enumerated values
+  - Use contextlib.asynccontextmanager for async context managers
+  - Prefer async/await over callbacks when working with async code
+  - Use walrus operator (:=) when it improves readability
+  - Use match/case for complex conditional logic
+  - Follow PEP 8 for code formatting (use black or ruff for automatic formatting)
+  - Use descriptive variable names and avoid abbreviations
+  - Write docstrings in Google or NumPy format for all public functions
+  - Use pyright: ignore[] comments sparingly and with specific error codes
+  - Prefer composition over inheritance
+  - Use ABC (Abstract Base Classes) for defining interfaces
+  - Every function parameter should have a type hint

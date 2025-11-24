@@ -1,0 +1,56 @@
+version: '3'
+
+vars:
+  SOURCES: app
+  RUNNER: uv run
+
+tasks:
+  default:
+    cmd:
+      task: all
+
+  .uv:
+    internal: true
+    desc: Ensure that uv is installed
+    silent: true
+    preconditions: []
+
+  lint:
+    desc: Lint python source files
+    deps: [.uv]
+    cmds:
+      - "{{.RUNNER}} ruff check --fix --select I {{.SOURCES}}"
+      - "{{.RUNNER}} ruff format {{.SOURCES}}"
+
+  typecheck:
+    desc: Perform type-checking with mypy
+    deps: [.uv]
+    silent: true
+    cmd: "{{.RUNNER}} mypy {{.SOURCES}} --show-traceback"
+
+  typecheck-basedpy:
+    desc: Perform type-checking with basedpyright
+    deps: [.uv]
+    silent: true
+    cmd: "{{.RUNNER}} basedpyright {{.SOURCES}}"
+
+  gql:
+    desc: Export GraphQL Schema
+    cmds:
+      - >
+        {{.RUNNER}} strawberry export-schema
+        --app-dir app
+        --output schema.graphql
+        app.graphql.schemas.schema
+
+  all:
+    desc: Run the standard set of checks performed in CI
+    cmds:
+      - task: lint
+      - task: typecheck-basedpy
+
+  lints:
+    desc: Run linting and type-checking
+    cmds:
+      - task: lint
+      - task: typecheck-basedpy
