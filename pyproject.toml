@@ -23,7 +23,6 @@ dependencies = [
     "cryptography>=46.0.2",
     "uvicorn[standard]>=0.35.0",
     "flowbot-commons==0.90.7",
-    "ddtrace>=3.16.0",
 ]
 
 [dependency-groups]

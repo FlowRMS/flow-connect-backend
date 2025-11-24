@@ -35,9 +35,8 @@ COPY start.py ./
 COPY run_migrations.py ./
 COPY alembic.ini ./
 COPY alembic/ ./alembic
-COPY load_models.py ./
 
 ENV PATH="/app/.venv/bin:$PATH"
 ENV PYTHONPATH="${PYTHONPATH}:${PWD}"
 
-CMD ["ddtrace-run", "python", "start.py"]
+CMD ["python", "start.py"]
