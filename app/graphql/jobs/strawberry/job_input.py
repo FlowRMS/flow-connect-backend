@@ -12,15 +12,14 @@ from app.graphql.jobs.models.jobs_model import Job
 
 @strawberry.input
 class JobInput(BaseInputGQL[Job]):
-    job_name: JobStatus | None = strawberry.UNSET
+    job_name: str | None = strawberry.UNSET
     start_date: date | None = strawberry.UNSET
     end_date: date | None = strawberry.UNSET
-    status: str | None = strawberry.UNSET
+    status: JobStatus | None = strawberry.UNSET
     job_owner_id: UUID | None = strawberry.UNSET
     description: str | None = strawberry.UNSET
     requester_id: UUID | None = strawberry.UNSET
     user_owner_ids: list[UUID] | None = strawberry.UNSET
-    is_used: bool | None = strawberry.UNSET
 
     def to_orm_model(self) -> Job:
         return Job(
@@ -32,5 +31,4 @@ class JobInput(BaseInputGQL[Job]):
             description=self.optional_field(self.description),
             requester_id=self.optional_field(self.requester_id),
             user_owner_ids=self.optional_field(self.user_owner_ids),
-            is_used=self.optional_field(self.is_used, default=False),
         )

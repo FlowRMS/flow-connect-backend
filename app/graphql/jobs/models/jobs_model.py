@@ -4,7 +4,7 @@ from datetime import date, datetime
 from uuid import UUID
 
 from commons.db.int_enum import IntEnum
-from sqlalchemy import Date, SmallInteger, String, Text
+from sqlalchemy import Date, String, Text
 from sqlalchemy.dialects.postgresql import TIMESTAMP
 from sqlalchemy.dialects.postgresql import UUID as PG_UUID
 from sqlalchemy.orm import Mapped, mapped_column
