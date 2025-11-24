@@ -1,5 +1,6 @@
 """GraphQL mutations for Jobs entity."""
 
+from aioinject import Injected
 import strawberry
 
 from app.graphql.inject import inject
@@ -17,6 +18,6 @@ class JobsMutations:
     async def create_job(
         self,
         input: JobInput,
-        service: JobsService,
+        service: Injected[JobsService],
     ) -> JobType:
         return JobType.from_orm_model(await service.create_job(job_input=input))

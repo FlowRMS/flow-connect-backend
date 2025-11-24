@@ -2,6 +2,7 @@
 
 from uuid import UUID
 
+from aioinject import Injected
 import strawberry
 
 from app.graphql.inject import inject
@@ -18,6 +19,6 @@ class JobsQueries:
     async def job(
         self,
         id: UUID,
-        service: JobsService,
+        service: Injected[JobsService],
     ) -> JobType:
         return JobType.from_orm_model(await service.get_job(id))

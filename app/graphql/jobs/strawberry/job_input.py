@@ -6,12 +6,13 @@ from uuid import UUID
 import strawberry
 
 from app.core.strawberry.inputs import BaseInputGQL
+from app.graphql.jobs.models.job_status import JobStatus
 from app.graphql.jobs.models.jobs_model import Job
 
 
 @strawberry.input
 class JobInput(BaseInputGQL[Job]):
-    job_name: str | None = strawberry.UNSET
+    job_name: JobStatus | None = strawberry.UNSET
     start_date: date | None = strawberry.UNSET
     end_date: date | None = strawberry.UNSET
     status: str | None = strawberry.UNSET

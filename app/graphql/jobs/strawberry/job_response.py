@@ -6,6 +6,7 @@ from uuid import UUID
 import strawberry
 
 from app.core.db.adapters.dto import DTOMixin
+from app.graphql.jobs.models.job_status import JobStatus
 from app.graphql.jobs.models.jobs_model import Job
 
 
@@ -21,9 +22,7 @@ class JobType(DTOMixin[Job]):
     entry_date: datetime
     created_by: UUID
     creation_type: int
-    user_owner_ids: list[UUID] | None
-    status: str
-    is_used: bool
+    status: JobStatus
     job_name: str
     start_date: date
     end_date: date
@@ -47,9 +46,7 @@ class JobType(DTOMixin[Job]):
             entry_date=model.entry_date,
             created_by=model.created_by,
             creation_type=model.creation_type,
-            user_owner_ids=model.user_owner_ids,
             status=model.status,
-            is_used=model.is_used,
             job_name=model.job_name,
             start_date=model.start_date,
             end_date=model.end_date,

@@ -3,12 +3,14 @@
 from datetime import date, datetime
 from uuid import UUID
 
-from sqlalchemy import ARRAY, Boolean, Date, SmallInteger, String, Text
+from commons.db.int_enum import IntEnum
+from sqlalchemy import Date, SmallInteger, String, Text
 from sqlalchemy.dialects.postgresql import TIMESTAMP
 from sqlalchemy.dialects.postgresql import UUID as PG_UUID
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.core.db.base import Base
+from app.graphql.jobs.models.job_status import JobStatus
 
 
 class Job(Base):
@@ -21,18 +23,12 @@ class Job(Base):
     __tablename__ = "jobs"
     __table_args__ = {"schema": "crm"}
 
-    id: Mapped[UUID] = mapped_column(
-        PG_UUID(as_uuid=True), primary_key=True, init=False
-    )
+    id: Mapped[UUID] = mapped_column(PG_UUID(as_uuid=True), primary_key=True)
     entry_date: Mapped[datetime] = mapped_column(TIMESTAMP, nullable=False)
     created_by: Mapped[UUID] = mapped_column(PG_UUID(as_uuid=True), nullable=False)
     creation_type: Mapped[int] = mapped_column(SmallInteger, nullable=False)
-    user_owner_ids: Mapped[list[UUID] | None] = mapped_column(
-        ARRAY(PG_UUID(as_uuid=True)), nullable=True
-    )
-    status: Mapped[str] = mapped_column(String(255), nullable=False)
-    is_used: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
     job_name: Mapped[str] = mapped_column(String(255), nullable=False, unique=True)
+    status: Mapped[JobStatus] = mapped_column(IntEnum(JobStatus), nullable=False)
     start_date: Mapped[date] = mapped_column(Date, nullable=False)
     end_date: Mapped[date] = mapped_column(Date, nullable=False)
     description: Mapped[str | None] = mapped_column(Text, nullable=True)
