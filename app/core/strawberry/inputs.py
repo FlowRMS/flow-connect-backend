@@ -5,7 +5,7 @@ from typing import Any, Generic, Self, TypeVar
 import strawberry
 
 T = TypeVar("T")
-TT = TypeVar("TT")
+TT = TypeVar("TT", bound=Any)
 
 
 class BaseInputGQL(ABC, Generic[T]):

@@ -1,0 +1,43 @@
+"""Date (isoformat)"""
+scalar Date
+
+input JobInput {
+  jobName: String!
+  status: JobStatus!
+  startDate: Date
+  endDate: Date
+  jobOwnerId: UUID
+  description: String
+  requesterId: UUID
+}
+
+enum JobStatus {
+  BID
+  BUY
+  COMPLETE
+}
+
+type JobType {
+  id: UUID!
+  entryDate: datetime!
+  createdBy: UUID!
+  status: JobStatus!
+  jobName: String!
+  startDate: Date
+  endDate: Date
+  description: String
+  requesterId: UUID
+}
+
+type Mutation {
+  createJob(input: JobInput!): JobType!
+}
+
+type Query {
+  job(id: UUID!): JobType!
+}
+
+scalar UUID
+
+"""A date and time"""
+scalar datetime

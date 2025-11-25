@@ -23,11 +23,10 @@ class JobType(DTOMixin[Job]):
     created_by: UUID
     status: JobStatus
     job_name: str
-    start_date: date
-    end_date: date
+    start_date: date | None
+    end_date: date | None
     description: str | None
     requester_id: UUID | None
-    job_owner_id: UUID
 
     @classmethod
     def from_orm_model(cls, model: Job) -> "JobType":
@@ -50,5 +49,4 @@ class JobType(DTOMixin[Job]):
             end_date=model.end_date,
             description=model.description,
             requester_id=model.requester_id,
-            job_owner_id=model.job_owner_id,
         )

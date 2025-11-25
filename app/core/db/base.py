@@ -1,9 +1,43 @@
 """SQLAlchemy declarative base for all ORM models."""
 
-from sqlalchemy.orm import DeclarativeBase
+import datetime
+import uuid
+
+from sqlalchemy import func
+from sqlalchemy.dialects.postgresql import TIMESTAMP
+from sqlalchemy.dialects.postgresql import UUID as PG_UUID
+from sqlalchemy.ext.asyncio import AsyncAttrs
+from sqlalchemy.orm import DeclarativeBase, Mapped, MappedAsDataclass, mapped_column
 
 
 class Base(DeclarativeBase):
-    """Base class for all ORM models."""
-
     pass
+
+
+class BaseModel(Base, MappedAsDataclass, AsyncAttrs):
+    __abstract__ = True
+
+
+class HasPrimaryKey(MappedAsDataclass):
+    id: Mapped[uuid.UUID] = mapped_column(
+        PG_UUID(as_uuid=True),
+        default_factory=uuid.uuid4,
+        init=False,
+        primary_key=True,
+    )
+
+
+class HasCreatedAt(MappedAsDataclass):
+    entry_date: Mapped[datetime.datetime] = mapped_column(
+        TIMESTAMP(timezone=True),
+        init=False,
+        server_default=func.now(),  # Corrected line
+    )
+
+
+class HasCreatedBy(MappedAsDataclass):
+    created_by: Mapped[uuid.UUID] = mapped_column(
+        PG_UUID(as_uuid=True),
+        init=False,
+        nullable=False,
+    )

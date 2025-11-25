@@ -3,9 +3,12 @@
 from typing import Any, Generic, TypeVar
 from uuid import UUID
 
+import pendulum
 from sqlalchemy import delete as sql_delete
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
+
+from app.core.context_wrapper import ContextWrapper
 
 T = TypeVar("T")
 
@@ -17,7 +20,12 @@ class BaseRepository(Generic[T]):
     Type parameter T should be the SQLAlchemy model class.
     """
 
-    def __init__(self, session: AsyncSession, model_class: type[T]) -> None:
+    def __init__(
+        self,
+        session: AsyncSession,
+        context_wrapper: ContextWrapper,
+        model_class: type[T],
+    ) -> None:
         """
         Initialize the repository.
 
@@ -25,6 +33,8 @@ class BaseRepository(Generic[T]):
             session: SQLAlchemy async session
             model_class: The SQLAlchemy model class this repository manages
         """
+        super().__init__()
+        self.context = context_wrapper.get()
         self.session = session
         self.model_class = model_class
 
@@ -74,6 +84,13 @@ class BaseRepository(Generic[T]):
         Returns:
             The created entity
         """
+
+        if hasattr(entity, "created_by"):
+            setattr(entity, "created_by", self.context.auth_info.user_id)
+
+        if hasattr(entity, "entry_date"):
+            setattr(entity, "entry_date", pendulum.now())
+
         self.session.add(entity)
         await self.session.flush()
         await self.session.refresh(entity)
