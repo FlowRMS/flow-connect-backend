@@ -31,10 +31,70 @@ type JobType {
 
 type Mutation {
   createJob(input: JobInput!): JobType!
+  createTask(input: TaskInput!): TaskType!
+  deleteTask(id: UUID!): Boolean!
+  addTaskRelation(input: TaskRelationInput!): TaskRelationType!
 }
 
 type Query {
   job(id: UUID!): JobType!
+  task(id: UUID!): TaskType!
+}
+
+enum RelatedEntityType {
+  JOB
+  CONTACT
+  COMPANY
+}
+
+input TaskInput {
+  title: String!
+  status: TaskStatus!
+  priority: TaskPriority!
+  description: String
+  assignedToId: UUID
+  dueDate: Date
+  tags: [String!]
+}
+
+enum TaskPriority {
+  LOW
+  NORMAL
+  URGENT
+  CRITICAL
+}
+
+input TaskRelationInput {
+  taskId: UUID!
+  relatedType: RelatedEntityType!
+  relatedId: UUID!
+}
+
+type TaskRelationType {
+  id: UUID!
+  taskId: UUID!
+  relatedType: RelatedEntityType!
+  relatedId: UUID!
+}
+
+enum TaskStatus {
+  TODO
+  IN_PROGRESS
+  COMPLETED
+  CANCELLED
+}
+
+type TaskType {
+  id: UUID!
+  entryDate: datetime!
+  createdBy: UUID!
+  title: String!
+  status: TaskStatus!
+  priority: TaskPriority!
+  description: String
+  assignedToId: UUID
+  dueDate: Date
+  tags: [String!]
 }
 
 scalar UUID

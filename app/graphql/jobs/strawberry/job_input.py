@@ -23,8 +23,8 @@ class JobInput(BaseInputGQL[Job]):
     def to_orm_model(self) -> Job:
         return Job(
             job_name=self.job_name,
-            start_date=self.optional_field(self.start_date),
-            end_date=self.optional_field(self.end_date),
+            start_date=self.optional_field(self.start_date),  # pyright: ignore[reportArgumentType]
+            end_date=self.optional_field(self.end_date),  # pyright: ignore[reportArgumentType]
             status=self.status,
             job_owner_id=self.optional_field(self.job_owner_id),
             description=self.optional_field(self.description),
