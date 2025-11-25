@@ -42,7 +42,7 @@ def main() -> None:
         proxy_headers=True,
         forwarded_allow_ips="*",
         # Performance settings for production
-        loop="asyncio",
+        loop="uvloop",
         http="httptools",
     )
 
