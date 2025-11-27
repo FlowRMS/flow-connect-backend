@@ -11,6 +11,9 @@ from app.core.context_wrapper import ContextWrapper
 from app.graphql.base_repository import BaseRepository
 from app.graphql.jobs.models.jobs_model import Job
 from app.graphql.jobs.models.status_model import JobStatus
+from app.graphql.jobs.strawberry.job_landing_page_response import (
+    JobLandingPageResponse,
+)
 
 
 class JobsRepository(BaseRepository[Job]):
@@ -19,6 +22,8 @@ class JobsRepository(BaseRepository[Job]):
 
     Extends BaseRepository with job-specific query methods.
     """
+
+    landing_model = JobLandingPageResponse
 
     def __init__(self, context_wrapper: ContextWrapper, session: AsyncSession) -> None:
         """

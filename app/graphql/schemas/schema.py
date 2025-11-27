@@ -12,13 +12,13 @@ from app.core.container import create_container
 from app.core.middleware.graphql_middleware import GraphQLMiddleware
 
 # from app.graphql.class_discovery import types_discovery
+from app.graphql.common.queries.landing_page_queries import LandingPageQueries
 from app.graphql.companies.mutations.companies_mutations import CompaniesMutations
 from app.graphql.companies.queries.companies_queries import CompaniesQueries
 from app.graphql.contacts.mutations.contacts_mutations import ContactsMutations
 from app.graphql.contacts.queries.contacts_queries import ContactsQueries
 from app.graphql.inject import context_setter
 from app.graphql.jobs.mutations.jobs_mutations import JobsMutations
-from app.graphql.jobs.queries.jobs_landing_queries import JobsLandingQueries
 
 # Import entity queries and mutations
 from app.graphql.jobs.queries.jobs_queries import JobsQueries
@@ -40,7 +40,7 @@ Query = merge_types(
         CompaniesQueries,
         ContactsQueries,
         LinksQueries,
-        JobsLandingQueries,
+        LandingPageQueries,
     ),
 )
 
