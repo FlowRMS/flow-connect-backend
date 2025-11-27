@@ -19,10 +19,7 @@ from app.graphql.contacts.mutations.contacts_mutations import ContactsMutations
 from app.graphql.contacts.queries.contacts_queries import ContactsQueries
 from app.graphql.inject import context_setter
 from app.graphql.jobs.mutations.jobs_mutations import JobsMutations
-
-# Import entity queries and mutations
 from app.graphql.jobs.queries.jobs_queries import JobsQueries
-from app.graphql.jobs.strawberry.job_landing_page_response import JobLandingPageResponse
 from app.graphql.links.mutations.links_mutations import LinksMutations
 from app.graphql.links.queries.links_queries import LinksQueries
 from app.graphql.schemas.date_time_scalar import DateTimeScalar
@@ -73,5 +70,4 @@ schema = strawberry.Schema(  # pyright: ignore[reportArgumentType]
         decimal.Decimal: DecimalScalar,
         strawberry.scalars.JSON: JsonScalar,
     },
-    types=(JobLandingPageResponse,),
 )

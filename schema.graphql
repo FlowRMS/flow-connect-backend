@@ -7,6 +7,16 @@ input CompanyInput {
   parentCompanyId: UUID
 }
 
+type CompanyLandingPage implements LandingPageInterfaceBase {
+  id: UUID!
+  createdAt: datetime!
+  createdBy: String!
+  name: String!
+  companySourceType: String!
+  website: String
+  phone: String
+}
+
 type CompanyResponse {
   id: UUID!
   createdAt: datetime!
@@ -34,6 +44,18 @@ input ContactInput {
   tags: [String!]
   notes: String
   companyId: UUID
+}
+
+type ContactLandingPage implements LandingPageInterfaceBase {
+  id: UUID!
+  createdAt: datetime!
+  createdBy: String!
+  firstName: String!
+  lastName: String!
+  email: String
+  phone: String
+  role: String
+  companyName: String
 }
 
 type ContactResponse {
@@ -94,7 +116,7 @@ enum FilterOperator {
 }
 
 type GenericLandingPage {
-  records: [LandingPageInterfaceBase!]!
+  records: [LandingRecord!]!
   total: Int!
 }
 
@@ -152,6 +174,8 @@ interface LandingPageInterfaceBase {
   createdAt: datetime!
   createdBy: String!
 }
+
+union LandingRecord = JobLandingPage | CompanyLandingPage | ContactLandingPage
 
 enum LandingSourceType {
   JOBS

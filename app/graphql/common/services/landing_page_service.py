@@ -6,6 +6,8 @@ from commons.graphql.order_by_types import OrderBy
 from app.graphql.common.landing_repository_protocol import LandingRepositoryProtocol
 from app.graphql.common.landing_source_type import LandingSourceType
 from app.graphql.common.paginated_landing_page import PaginatedLandingPageInterface
+from app.graphql.companies.repositories.companies_repository import CompaniesRepository
+from app.graphql.contacts.repositories.contacts_repository import ContactsRepository
 from app.graphql.jobs.repositories.jobs_repository import JobsRepository
 
 
@@ -15,22 +17,24 @@ class LandingPageService:
     def __init__(
         self,
         jobs_repository: JobsRepository,
-        # companies_repository: CompaniesRepository,  # TODO: Add when implemented
-        # contacts_repository: ContactsRepository,    # TODO: Add when implemented
-        # tasks_repository: TasksRepository,          # TODO: Add when implemented
+        companies_repository: CompaniesRepository,
+        contacts_repository: ContactsRepository,
+        # tasks_repository: TasksRepository,  # TODO: Add when implemented
     ) -> None:
         """
         Initialize the generic landing page service.
 
         Args:
             jobs_repository: Jobs repository instance
+            companies_repository: Companies repository instance
+            contacts_repository: Contacts repository instance
         """
         super().__init__()
         self._repository_map: dict[LandingSourceType, LandingRepositoryProtocol] = {
             LandingSourceType.JOBS: jobs_repository,
-            # LandingSourceType.COMPANIES: companies_repository,  # TODO: Add when implemented
-            # LandingSourceType.CONTACTS: contacts_repository,    # TODO: Add when implemented
-            # LandingSourceType.TASKS: tasks_repository,          # TODO: Add when implemented
+            LandingSourceType.COMPANIES: companies_repository,
+            LandingSourceType.CONTACTS: contacts_repository,
+            # LandingSourceType.TASKS: tasks_repository,  # TODO: Add when implemented
         }
 
     async def find_landing_pages(

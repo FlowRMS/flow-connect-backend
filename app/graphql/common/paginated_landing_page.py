@@ -9,14 +9,29 @@ from commons.graphql.pagination import get_pagination_window as _get_pagination_
 from sqlalchemy import Select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.core.db.adapters.dto import LandingPageInterfaceBase
+from app.graphql.companies.strawberry.company_landing_page_response import (
+    CompanyLandingPageResponse,
+)
+from app.graphql.contacts.strawberry.contact_landing_page_response import (
+    ContactLandingPageResponse,
+)
+from app.graphql.jobs.strawberry.job_landing_page_response import JobLandingPageResponse
+
+LandingRecord = strawberry.union(
+    name="LandingRecord",
+    types=[
+        JobLandingPageResponse,
+        CompanyLandingPageResponse,
+        ContactLandingPageResponse,
+    ],
+)
 
 
 @strawberry.type(name="GenericLandingPage")
 class PaginatedLandingPageInterface:
     """Generic paginated landing page response with records and total count."""
 
-    records: list[LandingPageInterfaceBase]
+    records: list[LandingRecord]
     total: int
 
     @classmethod
