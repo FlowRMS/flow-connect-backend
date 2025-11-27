@@ -31,7 +31,6 @@ class PreOpportunityDetailResponse(DTOMixin[PreOpportunityDetail]):
     product_id: UUID
     product_cpn_id: UUID | None
     end_user_id: UUID
-    factory_id: UUID
     lead_time: str | None
 
     @classmethod
@@ -49,7 +48,6 @@ class PreOpportunityDetailResponse(DTOMixin[PreOpportunityDetail]):
             product_id=model.product_id,
             product_cpn_id=model.product_cpn_id,
             end_user_id=model.end_user_id,
-            factory_id=model.factory_id,
             lead_time=model.lead_time,
         )
 

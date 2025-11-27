@@ -76,7 +76,6 @@ def upgrade() -> None:
         sa.Column('product_id', postgresql.UUID(as_uuid=True), nullable=False),
         sa.Column('product_cpn_id', postgresql.UUID(as_uuid=True), nullable=True),
         sa.Column('end_user_id', postgresql.UUID(as_uuid=True), nullable=False),
-        sa.Column('factory_id', postgresql.UUID(as_uuid=True), nullable=False),
         sa.Column('lead_time', sa.String(length=255), nullable=True),
         sa.ForeignKeyConstraint(['pre_opportunity_id'], ['crm.pre_opportunities.id'], name='fk_pre_opportunity_details_pre_opportunity'),
         sa.ForeignKeyConstraint(['product_id'], ['core.products.id'], name='fk_pre_opportunity_details_product'),

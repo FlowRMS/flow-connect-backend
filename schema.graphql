@@ -253,7 +253,6 @@ input PreOpportunityDetailInput {
   discountRate: Decimal!
   productId: UUID!
   endUserId: UUID!
-  factoryId: UUID!
   id: UUID = null
   productCpnId: UUID = null
   leadTime: String = null
@@ -272,7 +271,6 @@ type PreOpportunityDetailResponse {
   productId: UUID!
   productCpnId: UUID
   endUserId: UUID!
-  factoryId: UUID!
   leadTime: String
   product: ProductResponse!
 }
@@ -370,14 +368,8 @@ type Query {
   jobRelatedEntities(jobId: UUID!): JobRelatedEntitiesResponse!
   task(id: UUID!): TaskType!
   company(id: UUID!): CompanyResponse!
-  companies(limit: Int! = 100, offset: Int! = 0): [CompanyResponse!]!
-  companiesByJobId(jobId: UUID!): [CompanyResponse!]!
   contact(id: UUID!): ContactResponse!
-  contacts(limit: Int! = 100, offset: Int! = 0): [ContactResponse!]!
   contactsByCompany(companyId: UUID!): [ContactResponse!]!
-  linksForEntity(entityType: EntityType!, entityId: UUID!): [LinkRelationType!]!
-  linksFromSource(sourceType: EntityType!, sourceId: UUID!): [LinkRelationType!]!
-  linksToTarget(targetType: EntityType!, targetId: UUID!): [LinkRelationType!]!
   preOpportunity(id: UUID!): PreOpportunityResponse!
   preOpportunitiesByJob(jobId: UUID!): [PreOpportunityResponse!]!
   preOpportunitiesByCustomer(customerId: UUID!): [PreOpportunityResponse!]!

@@ -24,18 +24,6 @@ class ContactsQueries:
 
     @strawberry.field
     @inject
-    async def contacts(
-        self,
-        service: Injected[ContactsService],
-        limit: int = 100,
-        offset: int = 0,
-    ) -> list[ContactResponse]:
-        """List all contacts with pagination."""
-        contacts = await service.list_contacts(limit=limit, offset=offset)
-        return ContactResponse.from_orm_model_list(contacts)
-
-    @strawberry.field
-    @inject
     async def contacts_by_company(
         self,
         company_id: UUID,

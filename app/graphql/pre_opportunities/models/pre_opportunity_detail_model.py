@@ -4,7 +4,6 @@ from decimal import Decimal
 from uuid import UUID
 
 from commons.db.models.core.customer import Customer
-from commons.db.models.core.factory import Factory
 from commons.db.models.core.product import Product
 from sqlalchemy import ForeignKey, Integer, Numeric, String
 from sqlalchemy.dialects.postgresql import UUID as PG_UUID
@@ -63,11 +62,6 @@ class PreOpportunityDetail(CrmBaseModel, HasPrimaryKey, kw_only=True):
     )
     end_user_id: Mapped[UUID] = mapped_column(
         PG_UUID(as_uuid=True), ForeignKey(Customer.id), nullable=False
-    )
-    factory_id: Mapped[UUID] = mapped_column(
-        PG_UUID(as_uuid=True),
-        ForeignKey(Factory.id),
-        nullable=False,
     )
 
     lead_time: Mapped[str | None] = mapped_column(String(255), nullable=True)

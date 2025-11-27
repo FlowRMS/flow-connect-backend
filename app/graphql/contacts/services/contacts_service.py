@@ -38,10 +38,6 @@ class ContactsService:
             raise NotFoundError(str(contact_id))
         return contact
 
-    async def list_contacts(self, limit: int = 100, offset: int = 0) -> list[Contact]:
-        """List all contacts with pagination."""
-        return await self.repository.list_all(limit=limit, offset=offset)
-
     async def get_contacts_by_company(self, company_id: UUID) -> list[Contact]:
         """Get all contacts for a specific company."""
         return await self.repository.get_by_company_id(company_id)

@@ -21,7 +21,6 @@ class PreOpportunityDetailInput(BaseInputGQL[PreOpportunityDetail]):
     discount_rate: Decimal
     product_id: UUID
     end_user_id: UUID
-    factory_id: UUID
 
     id: UUID | None = None
     product_cpn_id: UUID | None = None
@@ -39,7 +38,6 @@ class PreOpportunityDetailInput(BaseInputGQL[PreOpportunityDetail]):
             unit_price=unit_price,
             product_id=self.product_id,
             end_user_id=self.end_user_id,
-            factory_id=self.factory_id,
             subtotal=subtotal,
             discount_rate=self.discount_rate,
             discount=discount,

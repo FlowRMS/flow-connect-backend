@@ -35,8 +35,5 @@ class CompaniesService:
             raise NotFoundError(str(company_id))
         return company
 
-    async def list_companies(self, limit: int = 100, offset: int = 0) -> list[Company]:
-        return await self.repository.list_all(limit=limit, offset=offset)
-
     async def find_companies_by_job_id(self, job_id: UUID) -> list[Company]:
         return await self.repository.find_by_job_id(job_id)
