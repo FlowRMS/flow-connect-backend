@@ -11,3 +11,8 @@ class NameAlreadyExistsError(BaseException):
 class NotFoundError(BaseException):
     def __init__(self, id: str) -> None:
         super().__init__(f"Entity with ID '{id}' not found")
+
+
+class ConflictError(BaseException):
+    def __init__(self, message: str) -> None:
+        super().__init__(message)

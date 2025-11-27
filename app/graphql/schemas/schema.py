@@ -21,6 +21,8 @@ from app.graphql.jobs.mutations.jobs_mutations import JobsMutations
 
 # Import entity queries and mutations
 from app.graphql.jobs.queries.jobs_queries import JobsQueries
+from app.graphql.links.mutations.links_mutations import LinksMutations
+from app.graphql.links.queries.links_queries import LinksQueries
 from app.graphql.schemas.date_time_scalar import DateTimeScalar
 from app.graphql.schemas.decimal_scalar import DecimalScalar
 from app.graphql.schemas.id_scalar import IdScalar
@@ -30,12 +32,18 @@ from app.graphql.tasks.queries.tasks_queries import TasksQueries
 
 Query = merge_types(
     name="Query",
-    types=(JobsQueries, TasksQueries, CompaniesQueries, ContactsQueries),
+    types=(JobsQueries, TasksQueries, CompaniesQueries, ContactsQueries, LinksQueries),
 )
 
 Mutation = merge_types(
     name="Mutation",
-    types=(JobsMutations, TasksMutations, CompaniesMutations, ContactsMutations),
+    types=(
+        JobsMutations,
+        TasksMutations,
+        CompaniesMutations,
+        ContactsMutations,
+        LinksMutations,
+    ),
 )
 
 

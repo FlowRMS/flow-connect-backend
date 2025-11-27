@@ -22,7 +22,7 @@ dependencies = [
     "greenlet>=3.2.4",
     "cryptography>=46.0.2",
     "uvicorn[standard]>=0.35.0",
-    "flowbot-commons==0.90.7",
+    "flowbot-commons==0.92.7",
 ]
 
 [dependency-groups]
