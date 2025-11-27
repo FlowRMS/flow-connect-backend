@@ -150,6 +150,12 @@ type JobLandingPage implements LandingPageInterfaceBase {
   jobOwner: String
 }
 
+type JobRelatedEntitiesResponse {
+  preOpportunities: [PreOpportunityLiteResponse!]!
+  contacts: [ContactResponse!]!
+  companies: [CompanyResponse!]!
+}
+
 type JobStatusType {
   id: UUID!
   name: String!
@@ -302,6 +308,26 @@ type PreOpportunityLandingPage implements LandingPageInterfaceBase {
   total: Decimal!
 }
 
+type PreOpportunityLiteResponse {
+  id: UUID!
+  createdAt: datetime!
+  createdBy: UUID!
+  status: PreOpportunityStatus!
+  entityNumber: String!
+  entityDate: Date!
+  expDate: Date
+  reviseDate: Date
+  acceptDate: Date
+  soldToCustomerId: UUID!
+  soldToCustomerAddressId: UUID
+  billToCustomerId: UUID
+  billToCustomerAddressId: UUID
+  jobId: UUID
+  paymentTerms: String
+  customerRef: String
+  freightTerms: String
+}
+
 type PreOpportunityResponse {
   id: UUID!
   createdAt: datetime!
@@ -341,6 +367,7 @@ type ProductResponse {
 type Query {
   job(id: UUID!): JobType!
   jobStatuses: [JobStatusType!]!
+  jobRelatedEntities(jobId: UUID!): JobRelatedEntitiesResponse!
   task(id: UUID!): TaskType!
   company(id: UUID!): CompanyResponse!
   companies(limit: Int! = 100, offset: Int! = 0): [CompanyResponse!]!

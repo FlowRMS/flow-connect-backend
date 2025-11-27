@@ -45,3 +45,15 @@ class ContactsService:
     async def get_contacts_by_company(self, company_id: UUID) -> list[Contact]:
         """Get all contacts for a specific company."""
         return await self.repository.get_by_company_id(company_id)
+
+    async def find_contacts_by_job_id(self, job_id: UUID) -> list[Contact]:
+        """
+        Find all contacts linked to the given job ID.
+
+        Args:
+            job_id: The job ID to find contacts for
+
+        Returns:
+            List of Contact objects linked to the given job ID
+        """
+        return await self.repository.find_by_job_id(job_id)

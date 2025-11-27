@@ -8,6 +8,9 @@ from aioinject import Injected
 from app.graphql.inject import inject
 from app.graphql.jobs.services.jobs_service import JobsService
 from app.graphql.jobs.services.status_service import JobStatusService
+from app.graphql.jobs.strawberry.job_related_entities_response import (
+    JobRelatedEntitiesResponse,
+)
 from app.graphql.jobs.strawberry.job_response import JobType
 from app.graphql.jobs.strawberry.status_response import JobStatusType
 
@@ -32,3 +35,22 @@ class JobsQueries:
         service: Injected[JobStatusService],
     ) -> list[JobStatusType]:
         return JobStatusType.from_orm_model_list(await service.get_all_statuses())
+
+    @strawberry.field
+    @inject
+    async def job_related_entities(
+        self,
+        job_id: UUID,
+        service: Injected[JobsService],
+    ) -> JobRelatedEntitiesResponse:
+        """
+        Get all entities related to a job.
+
+        Args:
+            job_id: The job ID to get related entities for
+            service: Injected JobsService
+
+        Returns:
+            JobRelatedEntitiesResponse containing pre_opportunities, contacts, and companies
+        """
+        return await service.get_job_related_entities(job_id)

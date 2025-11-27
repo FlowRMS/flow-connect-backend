@@ -2,7 +2,7 @@ from typing import Any
 from uuid import UUID
 
 from commons.db.models.user import User
-from sqlalchemy import Select, select
+from sqlalchemy import Select, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import lazyload
 
@@ -13,6 +13,8 @@ from app.graphql.contacts.models.contact_model import Contact
 from app.graphql.contacts.strawberry.contact_landing_page_response import (
     ContactLandingPageResponse,
 )
+from app.graphql.links.models.entity_type import EntityType
+from app.graphql.links.models.link_relation_model import LinkRelation
 
 
 class ContactsRepository(BaseRepository[Contact]):
@@ -51,5 +53,37 @@ class ContactsRepository(BaseRepository[Contact]):
     async def get_by_company_id(self, company_id: UUID) -> list[Contact]:
         """Get all contacts for a specific company."""
         stmt = select(Contact).where(Contact.company_id == company_id)
+        result = await self.session.execute(stmt)
+        return list(result.scalars().all())
+
+    async def find_by_job_id(self, job_id: UUID) -> list[Contact]:
+        """
+        Find all contacts linked to the given job ID.
+
+        Args:
+            job_id: The job ID to find contacts for
+
+        Returns:
+            List of Contact objects linked to the given job ID
+        """
+        stmt = select(Contact).join(
+            LinkRelation,
+            or_(
+                # Contacts as source, Jobs as target
+                (
+                    (LinkRelation.source_entity_type == EntityType.CONTACT)
+                    & (LinkRelation.target_entity_type == EntityType.JOB)
+                    & (LinkRelation.target_entity_id == job_id)
+                    & (LinkRelation.source_entity_id == Contact.id)
+                ),
+                # Jobs as source, Contacts as target
+                (
+                    (LinkRelation.source_entity_type == EntityType.JOB)
+                    & (LinkRelation.target_entity_type == EntityType.CONTACT)
+                    & (LinkRelation.source_entity_id == job_id)
+                    & (LinkRelation.target_entity_id == Contact.id)
+                ),
+            ),
+        )
         result = await self.session.execute(stmt)
         return list(result.scalars().all())
