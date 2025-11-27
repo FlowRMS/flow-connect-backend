@@ -18,15 +18,15 @@ WORKDIR /app
 RUN --mount=type=cache,target=/root/.cache/uv \
     --mount=type=bind,source=uv.lock,target=uv.lock \
     --mount=type=bind,source=pyproject.toml,target=pyproject.toml \
-    uv sync --locked --no-install-project --no-dev
+    uv sync --frozen --no-install-project --no-dev
 
 # Copy source code
 COPY pyproject.toml uv.lock ./
 
 RUN --mount=type=cache,target=/root/.cache/uv \
-    uv sync --locked --no-dev
+    uv sync --frozen --no-dev
 
-FROM python:3.13.7-slim as runtime
+FROM python:3.13-slim as runtime
 
 COPY --from=builder /app/.venv /app/.venv
 
@@ -35,6 +35,7 @@ COPY start.py ./
 COPY run_migrations.py ./
 COPY alembic.ini ./
 COPY alembic/ ./alembic
+COPY models.py ./
 
 ENV PATH="/app/.venv/bin:$PATH"
 ENV PYTHONPATH="${PYTHONPATH}:${PWD}"

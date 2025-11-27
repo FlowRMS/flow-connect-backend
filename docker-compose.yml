@@ -1,7 +1,7 @@
 version: "3.8"
 
 services:
-  ai:
+  crm:
     build:
       context: .
       dockerfile: Dockerfile
@@ -12,7 +12,4 @@ services:
     ports:
       - "8000:8000"
     env_file:
-      - .env
-
-volumes:
-  pgdata:
+      - .env.staging
