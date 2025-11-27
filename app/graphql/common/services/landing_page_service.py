@@ -9,6 +9,9 @@ from app.graphql.common.paginated_landing_page import PaginatedLandingPageInterf
 from app.graphql.companies.repositories.companies_repository import CompaniesRepository
 from app.graphql.contacts.repositories.contacts_repository import ContactsRepository
 from app.graphql.jobs.repositories.jobs_repository import JobsRepository
+from app.graphql.pre_opportunities.repositories.pre_opportunities_repository import (
+    PreOpportunitiesRepository,
+)
 
 
 class LandingPageService:
@@ -19,6 +22,7 @@ class LandingPageService:
         jobs_repository: JobsRepository,
         companies_repository: CompaniesRepository,
         contacts_repository: ContactsRepository,
+        pre_opportunities_repository: PreOpportunitiesRepository,
         # tasks_repository: TasksRepository,  # TODO: Add when implemented
     ) -> None:
         """
@@ -28,12 +32,14 @@ class LandingPageService:
             jobs_repository: Jobs repository instance
             companies_repository: Companies repository instance
             contacts_repository: Contacts repository instance
+            pre_opportunities_repository: Pre-opportunities repository instance
         """
         super().__init__()
         self._repository_map: dict[LandingSourceType, LandingRepositoryProtocol] = {
             LandingSourceType.JOBS: jobs_repository,
             LandingSourceType.COMPANIES: companies_repository,
             LandingSourceType.CONTACTS: contacts_repository,
+            LandingSourceType.PRE_OPPORTUNITIES: pre_opportunities_repository,
             # LandingSourceType.TASKS: tasks_repository,  # TODO: Add when implemented
         }
 

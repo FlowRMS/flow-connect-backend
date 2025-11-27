@@ -16,6 +16,9 @@ from app.graphql.contacts.strawberry.contact_landing_page_response import (
     ContactLandingPageResponse,
 )
 from app.graphql.jobs.strawberry.job_landing_page_response import JobLandingPageResponse
+from app.graphql.pre_opportunities.strawberry.pre_opportunity_landing_page_response import (
+    PreOpportunityLandingPageResponse,
+)
 
 LandingRecord = strawberry.union(
     name="LandingRecord",
@@ -23,6 +26,7 @@ LandingRecord = strawberry.union(
         JobLandingPageResponse,
         CompanyLandingPageResponse,
         ContactLandingPageResponse,
+        PreOpportunityLandingPageResponse,
     ],
 )
 

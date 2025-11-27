@@ -22,6 +22,12 @@ from app.graphql.jobs.mutations.jobs_mutations import JobsMutations
 from app.graphql.jobs.queries.jobs_queries import JobsQueries
 from app.graphql.links.mutations.links_mutations import LinksMutations
 from app.graphql.links.queries.links_queries import LinksQueries
+from app.graphql.pre_opportunities.mutations.pre_opportunities_mutations import (
+    PreOpportunitiesMutations,
+)
+from app.graphql.pre_opportunities.queries.pre_opportunities_queries import (
+    PreOpportunitiesQueries,
+)
 from app.graphql.schemas.date_time_scalar import DateTimeScalar
 from app.graphql.schemas.decimal_scalar import DecimalScalar
 from app.graphql.schemas.id_scalar import IdScalar
@@ -37,6 +43,7 @@ Query = merge_types(
         CompaniesQueries,
         ContactsQueries,
         LinksQueries,
+        PreOpportunitiesQueries,
         LandingPageQueries,
     ),
 )
@@ -49,6 +56,7 @@ Mutation = merge_types(
         CompaniesMutations,
         ContactsMutations,
         LinksMutations,
+        PreOpportunitiesMutations,
     ),
 )
 

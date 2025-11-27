@@ -76,6 +76,8 @@ type ContactResponse {
 """Date (isoformat)"""
 scalar Date
 
+scalar Decimal
+
 input DeleteLinkByEntitiesInput {
   sourceEntityType: EntityType!
   sourceEntityId: UUID!
@@ -175,13 +177,14 @@ interface LandingPageInterfaceBase {
   createdBy: String!
 }
 
-union LandingRecord = JobLandingPage | CompanyLandingPage | ContactLandingPage
+union LandingRecord = JobLandingPage | CompanyLandingPage | ContactLandingPage | PreOpportunityLandingPage
 
 enum LandingSourceType {
   JOBS
   COMPANIES
   CONTACTS
   TASKS
+  PRE_OPPORTUNITIES
 }
 
 input LinkRelationInput {
@@ -213,6 +216,9 @@ type Mutation {
   createLink(input: LinkRelationInput!): LinkRelationType!
   deleteLink(id: UUID!): Boolean!
   deleteLinkByEntities(input: DeleteLinkByEntitiesInput!): Boolean!
+  createPreOpportunity(input: PreOpportunityInput!): PreOpportunityResponse!
+  updatePreOpportunity(input: PreOpportunityInput!): PreOpportunityResponse!
+  deletePreOpportunity(id: UUID!): Boolean!
 }
 
 input OrderBy {
@@ -223,6 +229,113 @@ input OrderBy {
 enum OrderByOperator {
   ASC
   DESC
+}
+
+type PreOpportunityBalanceResponse {
+  id: UUID!
+  subtotal: Decimal!
+  total: Decimal!
+  quantity: Decimal!
+  discount: Decimal!
+  discountRate: Decimal!
+}
+
+input PreOpportunityDetailInput {
+  quantity: Decimal!
+  itemNumber: Int!
+  unitPrice: Decimal!
+  discountRate: Decimal!
+  productId: UUID!
+  endUserId: UUID!
+  factoryId: UUID!
+  id: UUID = null
+  productCpnId: UUID = null
+  leadTime: String = null
+}
+
+type PreOpportunityDetailResponse {
+  id: UUID!
+  preOpportunityId: UUID!
+  quantity: Decimal!
+  itemNumber: Int!
+  unitPrice: Decimal!
+  subtotal: Decimal!
+  discountRate: Decimal!
+  discount: Decimal!
+  total: Decimal!
+  productId: UUID!
+  productCpnId: UUID
+  endUserId: UUID!
+  factoryId: UUID!
+  leadTime: String
+  product: ProductResponse!
+}
+
+input PreOpportunityInput {
+  status: PreOpportunityStatus!
+  entityNumber: String!
+  entityDate: Date!
+  soldToCustomerId: UUID!
+  details: [PreOpportunityDetailInput!]!
+  id: UUID
+  userOwnerIds: [UUID!]
+  expDate: Date
+  reviseDate: Date
+  acceptDate: Date
+  soldToCustomerAddressId: UUID
+  billToCustomerId: UUID
+  billToCustomerAddressId: UUID
+  jobId: UUID
+  paymentTerms: String
+  customerRef: String
+  freightTerms: String
+}
+
+type PreOpportunityLandingPage implements LandingPageInterfaceBase {
+  id: UUID!
+  createdAt: datetime!
+  createdBy: String!
+  entityNumber: String!
+  status: String!
+  entityDate: Date!
+  expDate: Date
+  total: Decimal!
+}
+
+type PreOpportunityResponse {
+  id: UUID!
+  createdAt: datetime!
+  createdBy: UUID!
+  status: PreOpportunityStatus!
+  entityNumber: String!
+  entityDate: Date!
+  expDate: Date
+  reviseDate: Date
+  acceptDate: Date
+  soldToCustomerId: UUID!
+  soldToCustomerAddressId: UUID
+  billToCustomerId: UUID
+  billToCustomerAddressId: UUID
+  jobId: UUID
+  paymentTerms: String
+  customerRef: String
+  freightTerms: String
+  balance: PreOpportunityBalanceResponse!
+  details: [PreOpportunityDetailResponse!]!
+}
+
+enum PreOpportunityStatus {
+  DRAFT
+  PENDING
+  APPROVED
+  REJECTED
+  CONVERTED
+}
+
+type ProductResponse {
+  id: UUID!
+  factoryId: UUID!
+  factoryPartNumber: String!
 }
 
 type Query {
@@ -238,6 +351,9 @@ type Query {
   linksForEntity(entityType: EntityType!, entityId: UUID!): [LinkRelationType!]!
   linksFromSource(sourceType: EntityType!, sourceId: UUID!): [LinkRelationType!]!
   linksToTarget(targetType: EntityType!, targetId: UUID!): [LinkRelationType!]!
+  preOpportunity(id: UUID!): PreOpportunityResponse!
+  preOpportunitiesByJob(jobId: UUID!): [PreOpportunityResponse!]!
+  preOpportunitiesByCustomer(customerId: UUID!): [PreOpportunityResponse!]!
   findLandingPages(sourceType: LandingSourceType!, filters: [Filter!] = null, orderBy: [OrderBy!] = null, limit: Int = 10, offset: Int = 0): GenericLandingPage!
 }
 
