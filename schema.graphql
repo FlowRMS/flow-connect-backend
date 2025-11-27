@@ -1,32 +1,180 @@
+input CompanyInput {
+  name: String!
+  companySourceType: CompanyType!
+  website: String
+  phone: String
+  tags: [String!]
+  parentCompanyId: UUID
+}
+
+type CompanyResponse {
+  id: UUID!
+  createdAt: datetime!
+  createdBy: UUID!
+  name: String!
+  companySourceType: CompanyType!
+  website: String
+  phone: String
+  tags: [String!]
+  parentCompanyId: UUID
+}
+
+enum CompanyType {
+  CUSTOMER
+  MANUFACTURER
+}
+
+input ContactInput {
+  firstName: String!
+  lastName: String!
+  email: String
+  phone: String
+  role: String
+  territory: String
+  tags: [String!]
+  notes: String
+  companyId: UUID
+}
+
+type ContactResponse {
+  id: UUID!
+  createdAt: datetime!
+  createdBy: UUID!
+  firstName: String!
+  lastName: String!
+  email: String
+  phone: String
+  role: String
+  territory: String
+  tags: [String!]
+  notes: String
+  companyId: UUID
+}
+
 """Date (isoformat)"""
 scalar Date
 
+input DeleteLinkByEntitiesInput {
+  sourceEntityType: EntityType!
+  sourceEntityId: UUID!
+  targetEntityType: EntityType!
+  targetEntityId: UUID!
+}
+
+enum EntityType {
+  JOB
+  TASK
+  CONTACT
+  COMPANY
+  NOTE
+}
+
+input Filter {
+  columnName: String!
+  operator: FilterOperator!
+  value: String = null
+  values: [String!] = null
+}
+
+enum FilterOperator {
+  EQ
+  NE
+  GT
+  GTE
+  LT
+  LTE
+  LIKE
+  ILIKE
+  BEGINS_WITH
+  ENDS_WITH
+  IN
+  NOT_IN
+  IS_NULL
+  IS_NOT_NULL
+}
+
+type GenericLandingPage {
+  records: [LandingPageInterfaceBase!]!
+  total: Int!
+}
+
 input JobInput {
   jobName: String!
-  status: JobStatus!
+  statusId: UUID!
   startDate: Date
   endDate: Date
   jobOwnerId: UUID
   description: String
+  jobType: String
+  structuralDetails: String
+  structuralInformation: String
+  additionalInformation: String
   requesterId: UUID
 }
 
-enum JobStatus {
-  BID
-  BUY
-  COMPLETE
+type JobLandingPage implements LandingPageInterfaceBase {
+  id: UUID!
+  createdAt: datetime!
+  createdBy: String!
+  jobName: String!
+  statusName: String!
+  startDate: Date
+  endDate: Date
+  description: String
+  jobType: String
+  requester: String
+  jobOwner: String
+}
+
+type JobStatusType {
+  id: UUID!
+  name: String!
 }
 
 type JobType {
   id: UUID!
-  entryDate: datetime!
+  createdAt: datetime!
   createdBy: UUID!
-  status: JobStatus!
+  status: JobStatusType!
   jobName: String!
   startDate: Date
   endDate: Date
   description: String
+  jobType: String
+  structuralDetails: String
+  structuralInformation: String
+  additionalInformation: String
   requesterId: UUID
+}
+
+interface LandingPageInterfaceBase {
+  id: UUID!
+  createdAt: datetime!
+  createdBy: String!
+}
+
+enum LandingSourceType {
+  JOBS
+  COMPANIES
+  CONTACTS
+  TASKS
+}
+
+input LinkRelationInput {
+  sourceEntityType: EntityType!
+  sourceEntityId: UUID!
+  targetEntityType: EntityType!
+  targetEntityId: UUID!
+}
+
+type LinkRelationType {
+  id: UUID!
+  sourceEntityType: EntityType!
+  sourceEntityId: UUID!
+  targetEntityType: EntityType!
+  targetEntityId: UUID!
+  createdAt: datetime!
+  createdBy: UUID!
 }
 
 type Mutation {
@@ -34,11 +182,38 @@ type Mutation {
   createTask(input: TaskInput!): TaskType!
   deleteTask(id: UUID!): Boolean!
   addTaskRelation(input: TaskRelationInput!): TaskRelationType!
+  createCompany(input: CompanyInput!): CompanyResponse!
+  deleteCompany(id: UUID!): Boolean!
+  createContact(input: ContactInput!): ContactResponse!
+  deleteContact(id: UUID!): Boolean!
+  createLink(input: LinkRelationInput!): LinkRelationType!
+  deleteLink(id: UUID!): Boolean!
+  deleteLinkByEntities(input: DeleteLinkByEntitiesInput!): Boolean!
+}
+
+input OrderBy {
+  columnName: String!
+  direction: OrderByOperator!
+}
+
+enum OrderByOperator {
+  ASC
+  DESC
 }
 
 type Query {
   job(id: UUID!): JobType!
+  jobStatuses: [JobStatusType!]!
   task(id: UUID!): TaskType!
+  company(id: UUID!): CompanyResponse!
+  companies(limit: Int! = 100, offset: Int! = 0): [CompanyResponse!]!
+  contact(id: UUID!): ContactResponse!
+  contacts(limit: Int! = 100, offset: Int! = 0): [ContactResponse!]!
+  contactsByCompany(companyId: UUID!): [ContactResponse!]!
+  linksForEntity(entityType: EntityType!, entityId: UUID!): [LinkRelationType!]!
+  linksFromSource(sourceType: EntityType!, sourceId: UUID!): [LinkRelationType!]!
+  linksToTarget(targetType: EntityType!, targetId: UUID!): [LinkRelationType!]!
+  findLandingPages(sourceType: LandingSourceType!, filters: [Filter!] = null, orderBy: [OrderBy!] = null, limit: Int = 10, offset: Int = 0): GenericLandingPage!
 }
 
 enum RelatedEntityType {
@@ -86,7 +261,7 @@ enum TaskStatus {
 
 type TaskType {
   id: UUID!
-  entryDate: datetime!
+  createdAt: datetime!
   createdBy: UUID!
   title: String!
   status: TaskStatus!
