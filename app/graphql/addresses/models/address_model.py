@@ -1,6 +1,5 @@
 """SQLAlchemy ORM model for Address entity."""
 
-from typing import TYPE_CHECKING
 from uuid import UUID
 
 from commons.db.int_enum import IntEnum
@@ -8,14 +7,12 @@ from sqlalchemy import ForeignKey, String
 from sqlalchemy.dialects.postgresql import UUID as PG_UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
-from app.core.db.base import BaseModel, HasCreatedAt, HasCreatedBy, HasPrimaryKey
+from app.core.db.base import CrmBaseModel, HasCreatedAt, HasCreatedBy, HasPrimaryKey
 from app.graphql.addresses.models.address_type import AddressType
-
-if TYPE_CHECKING:
-    from app.graphql.companies.models.company_model import Company  # noqa: F401
+from app.graphql.companies.models.company_model import Company
 
 
-class Address(BaseModel, HasPrimaryKey, HasCreatedAt, HasCreatedBy, kw_only=True):
+class Address(CrmBaseModel, HasPrimaryKey, HasCreatedAt, HasCreatedBy, kw_only=True):
     """
     Address entity representing an address in the CRM system.
 
@@ -24,11 +21,10 @@ class Address(BaseModel, HasPrimaryKey, HasCreatedAt, HasCreatedBy, kw_only=True
     """
 
     __tablename__ = "addresses"
-    __table_args__ = {"schema": "crm"}
 
     company_id: Mapped[UUID] = mapped_column(
         PG_UUID(as_uuid=True),
-        ForeignKey("crm.companies.id"),
+        ForeignKey(Company.id),
         nullable=False,
     )
     address_type: Mapped[AddressType] = mapped_column(
@@ -41,7 +37,7 @@ class Address(BaseModel, HasPrimaryKey, HasCreatedAt, HasCreatedBy, kw_only=True
     state: Mapped[str | None] = mapped_column(String(100), nullable=True)
     zip_code: Mapped[str | None] = mapped_column(String(20), nullable=True)
 
-    company: Mapped["Company"] = relationship(
+    company: Mapped[Company] = relationship(
         back_populates="addresses", init=False, lazy="noload"
     )
 

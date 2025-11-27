@@ -2,20 +2,17 @@
 
 import uuid
 from datetime import date
-from typing import TYPE_CHECKING
 from uuid import UUID
 
 from sqlalchemy import Date, ForeignKey, String, Text
 from sqlalchemy.dialects.postgresql import UUID as PG_UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
-from app.core.db.base import BaseModel, HasCreatedAt, HasCreatedBy, HasPrimaryKey
-
-if TYPE_CHECKING:
-    from app.graphql.jobs.models.status_model import JobStatus
+from app.core.db.base import CrmBaseModel, HasCreatedAt, HasCreatedBy, HasPrimaryKey
+from app.graphql.jobs.models.status_model import JobStatus
 
 
-class Job(BaseModel, HasPrimaryKey, HasCreatedAt, HasCreatedBy, kw_only=True):
+class Job(CrmBaseModel, HasPrimaryKey, HasCreatedAt, HasCreatedBy, kw_only=True):
     """
     Job entity representing a job in the CRM system.
 
@@ -23,11 +20,10 @@ class Job(BaseModel, HasPrimaryKey, HasCreatedAt, HasCreatedBy, kw_only=True):
     """
 
     __tablename__ = "jobs"
-    __table_args__ = {"schema": "crm"}
 
     job_name: Mapped[str] = mapped_column(String(255), nullable=False, unique=True)
     status_id: Mapped[uuid.UUID] = mapped_column(
-        PG_UUID(as_uuid=True), ForeignKey("crm.job_statuses.id"), nullable=False
+        PG_UUID(as_uuid=True), ForeignKey(JobStatus.id), nullable=False
     )
     start_date: Mapped[date | None] = mapped_column(Date, nullable=True)
     end_date: Mapped[date | None] = mapped_column(Date, nullable=True)
@@ -43,7 +39,7 @@ class Job(BaseModel, HasPrimaryKey, HasCreatedAt, HasCreatedBy, kw_only=True):
         PG_UUID(as_uuid=True), nullable=True
     )
 
-    status: Mapped["JobStatus"] = relationship(
+    status: Mapped[JobStatus] = relationship(
         init=False, back_populates="jobs", lazy="joined"
     )
 

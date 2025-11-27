@@ -18,6 +18,11 @@ class BaseModel(Base, MappedAsDataclass, AsyncAttrs):
     __abstract__ = True
 
 
+class CrmBaseModel(BaseModel):
+    __abstract__ = True
+    __table_args__ = {"schema": "crm"}
+
+
 class HasPrimaryKey(MappedAsDataclass):
     id: Mapped[uuid.UUID] = mapped_column(
         PG_UUID(as_uuid=True),

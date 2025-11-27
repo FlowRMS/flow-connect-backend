@@ -6,16 +6,15 @@ from sqlalchemy import ARRAY, Date, String, Text
 from sqlalchemy.dialects.postgresql import UUID as PG_UUID
 from sqlalchemy.orm import Mapped, mapped_column
 
-from app.core.db.base import BaseModel, HasCreatedAt, HasCreatedBy, HasPrimaryKey
+from app.core.db.base import CrmBaseModel, HasCreatedAt, HasCreatedBy, HasPrimaryKey
 from app.graphql.tasks.models.task_priority import TaskPriority
 from app.graphql.tasks.models.task_status import TaskStatus
 
 
-class Task(BaseModel, HasPrimaryKey, HasCreatedAt, HasCreatedBy, kw_only=True):
+class Task(CrmBaseModel, HasPrimaryKey, HasCreatedAt, HasCreatedBy, kw_only=True):
     """Task entity representing a task in the CRM system."""
 
     __tablename__ = "tasks"
-    __table_args__ = {"schema": "crm"}
 
     # Required fields
     title: Mapped[str] = mapped_column(String(255), nullable=False)

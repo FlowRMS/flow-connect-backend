@@ -8,14 +8,15 @@ from sqlalchemy import ARRAY, String
 from sqlalchemy.dialects.postgresql import UUID as PG_UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
-from app.core.db.base import BaseModel, HasCreatedAt, HasCreatedBy, HasPrimaryKey
+from app.core.db.base import CrmBaseModel, HasCreatedAt, HasCreatedBy, HasPrimaryKey
 from app.graphql.companies.models.company_type import CompanyType
 
 if TYPE_CHECKING:
-    from app.graphql.addresses.models.address_model import Address  # noqa: F401
+    from app.graphql.addresses.models.address_model import Address
+    from app.graphql.contacts.models.contact_model import Contact
 
 
-class Company(BaseModel, HasPrimaryKey, HasCreatedAt, HasCreatedBy, kw_only=True):
+class Company(CrmBaseModel, HasPrimaryKey, HasCreatedAt, HasCreatedBy, kw_only=True):
     """
     Company entity representing a company in the CRM system.
 
@@ -23,7 +24,6 @@ class Company(BaseModel, HasPrimaryKey, HasCreatedAt, HasCreatedBy, kw_only=True
     """
 
     __tablename__ = "companies"
-    __table_args__ = {"schema": "crm"}
 
     name: Mapped[str] = mapped_column(String(255), nullable=False)
     company_source_type: Mapped[CompanyType] = mapped_column(
@@ -38,6 +38,10 @@ class Company(BaseModel, HasPrimaryKey, HasCreatedAt, HasCreatedBy, kw_only=True
     )
     addresses: Mapped[list["Address"]] = relationship(
         init=False, back_populates="company", cascade="all, delete-orphan"
+    )
+    contacts: Mapped[list["Contact"]] = relationship(
+        init=False,
+        back_populates="company",
     )
 
     def __repr__(self) -> str:
