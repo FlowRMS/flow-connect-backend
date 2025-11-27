@@ -21,23 +21,22 @@ class CompaniesService:
         self.auth_info = auth_info
 
     async def create_company(self, company_input: CompanyInput) -> Company:
-        """Create a new company."""
         company = company_input.to_orm_model()
         return await self.repository.create(company)
 
     async def delete_company(self, company_id: UUID | str) -> bool:
-        """Delete a company by ID."""
         if not await self.repository.exists(company_id):
             raise NotFoundError(str(company_id))
         return await self.repository.delete(company_id)
 
     async def get_company(self, company_id: UUID | str) -> Company:
-        """Get a company by ID."""
         company = await self.repository.get_by_id(company_id)
         if not company:
             raise NotFoundError(str(company_id))
         return company
 
     async def list_companies(self, limit: int = 100, offset: int = 0) -> list[Company]:
-        """List all companies with pagination."""
         return await self.repository.list_all(limit=limit, offset=offset)
+
+    async def find_companies_by_job_id(self, job_id: UUID) -> list[Company]:
+        return await self.repository.find_by_job_id(job_id)

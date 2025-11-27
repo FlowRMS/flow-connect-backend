@@ -29,3 +29,14 @@ class CompaniesQueries:
     ) -> list[CompanyResponse]:
         companies = await service.list_companies(limit=limit, offset=offset)
         return CompanyResponse.from_orm_model_list(companies)
+
+    @strawberry.field
+    @inject
+    async def companies_by_job_id(
+        self,
+        job_id: UUID,
+        service: Injected[CompaniesService],
+    ) -> list[CompanyResponse]:
+        return CompanyResponse.from_orm_model_list(
+            await service.find_companies_by_job_id(job_id)
+        )

@@ -207,6 +207,7 @@ type Query {
   task(id: UUID!): TaskType!
   company(id: UUID!): CompanyResponse!
   companies(limit: Int! = 100, offset: Int! = 0): [CompanyResponse!]!
+  companiesByJobId(jobId: UUID!): [CompanyResponse!]!
   contact(id: UUID!): ContactResponse!
   contacts(limit: Int! = 100, offset: Int! = 0): [ContactResponse!]!
   contactsByCompany(companyId: UUID!): [ContactResponse!]!
