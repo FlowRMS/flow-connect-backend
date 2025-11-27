@@ -36,7 +36,7 @@ async def create_multitenant_controller(settings: Settings) -> MultiTenantContro
     controller = MultiTenantController(
         pg_url=settings.pg_url.unicode_string(),
         app_name="FlowAI App",
-        echo=False,
+        echo=True,
         connect_args={
             "timeout": 5,
             "command_timeout": 90,

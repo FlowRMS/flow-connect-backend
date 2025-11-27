@@ -15,7 +15,6 @@ class CompanyInput(BaseInputGQL[Company]):
     company_source_type: CompanyType
     website: str | None = strawberry.UNSET
     phone: str | None = strawberry.UNSET
-    territory: str | None = strawberry.UNSET
     tags: list[str] | None = strawberry.UNSET
     parent_company_id: UUID | None = strawberry.UNSET
 
