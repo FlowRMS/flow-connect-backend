@@ -13,7 +13,7 @@ class AddressResponse(DTOMixin[Address]):
     """GraphQL type for Address entity (output/query results)."""
 
     id: UUID
-    entry_date: datetime
+    created_at: datetime
     created_by: UUID
     company_id: UUID
     address_type: AddressType
@@ -28,7 +28,7 @@ class AddressResponse(DTOMixin[Address]):
         """Convert ORM model to GraphQL type."""
         return cls(
             id=model.id,
-            entry_date=model.entry_date,
+            created_at=model.created_at,
             created_by=model.created_by,
             company_id=model.company_id,
             address_type=model.address_type,

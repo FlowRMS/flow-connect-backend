@@ -24,7 +24,7 @@ def upgrade() -> None:
     _ = op.create_table(
         "tasks",
         sa.Column("id", postgresql.UUID(as_uuid=True), nullable=False),
-        sa.Column("entry_date", postgresql.TIMESTAMP(timezone=True), nullable=False),
+        sa.Column("created_at", postgresql.TIMESTAMP(timezone=True), nullable=False),
         sa.Column("created_by", postgresql.UUID(as_uuid=True), nullable=False),
         sa.Column("title", sa.String(length=255), nullable=False),
         sa.Column("status", sa.SmallInteger(), nullable=False),

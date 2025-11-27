@@ -14,4 +14,4 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     settings = get_settings_local(env=args.env, cls=Settings)
-    uvicorn.run("app.api.app:create_app", port=8005, factory=True, reload=True, loop="asyncio")
+    uvicorn.run("app.api.app:create_app", port=8006, factory=True, reload=True, loop="uvloop")

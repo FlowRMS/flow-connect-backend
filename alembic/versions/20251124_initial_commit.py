@@ -22,7 +22,7 @@ def upgrade() -> None:
     _ = op.create_table(
         "jobs",
         sa.Column("id", postgresql.UUID(as_uuid=True), nullable=False),
-        sa.Column("entry_date", postgresql.TIMESTAMP(), nullable=False),
+        sa.Column("created_at", postgresql.TIMESTAMP(), nullable=False),
         sa.Column("created_by", postgresql.UUID(as_uuid=True), nullable=False),
         sa.Column("status", sa.SmallInteger(), nullable=False),
         sa.Column("job_name", sa.String(length=255), nullable=False),

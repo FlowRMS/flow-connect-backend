@@ -2,10 +2,7 @@
   "venvPath": ".",
   "venv": ".venv",
   "extraPaths": ["."],
-  "include": [
-    "app",
-    "scripts"
-  ],
+  "include": ["app"],
   "exclude": [
     "**/__pycache__",
     "**/listeners/*",
@@ -16,9 +13,7 @@
     "scripts/backup_restore_tenants.py",
     "app/graphql/base_repository.py"
   ],
-  "ignore": [
-    "**/sandbox_scripts/*"
-  ],
+  "ignore": ["**/sandbox_scripts/*"],
   "reportMissingSuperCall": true,
   "reportUnusedCallResult": true,
   "reportCallInDefaultInitializer": true,
@@ -39,5 +34,5 @@
   "pythonPlatform": "Linux",
   "autoImportCompletions": true,
   "useLibraryCodeForTypes": true,
-  "typeCheckingMode": "basic",
+  "typeCheckingMode": "basic"
 }

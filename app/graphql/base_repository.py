@@ -88,8 +88,8 @@ class BaseRepository(Generic[T]):
         if hasattr(entity, "created_by"):
             setattr(entity, "created_by", self.context.auth_info.user_id)
 
-        if hasattr(entity, "entry_date"):
-            setattr(entity, "entry_date", pendulum.now())
+        if hasattr(entity, "created_at"):
+            setattr(entity, "created_at", pendulum.now())
 
         self.session.add(entity)
         await self.session.flush()

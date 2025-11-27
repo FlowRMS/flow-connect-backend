@@ -19,7 +19,7 @@ class JobType(DTOMixin[Job]):
     """
 
     id: UUID
-    entry_date: datetime
+    created_at: datetime
     created_by: UUID
     status: JobStatus
     job_name: str
@@ -41,7 +41,7 @@ class JobType(DTOMixin[Job]):
         """
         return cls(
             id=model.id,
-            entry_date=model.entry_date,
+            created_at=model.created_at,
             created_by=model.created_by,
             status=model.status,
             job_name=model.job_name,

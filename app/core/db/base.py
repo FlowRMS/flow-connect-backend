@@ -28,7 +28,7 @@ class HasPrimaryKey(MappedAsDataclass):
 
 
 class HasCreatedAt(MappedAsDataclass):
-    entry_date: Mapped[datetime.datetime] = mapped_column(
+    created_at: Mapped[datetime.datetime] = mapped_column(
         TIMESTAMP(timezone=True),
         init=False,
         server_default=func.now(),  # Corrected line

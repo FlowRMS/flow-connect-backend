@@ -13,7 +13,7 @@ class CompanyResponse(DTOMixin[Company]):
     """GraphQL type for Company entity (output/query results)."""
 
     id: UUID
-    entry_date: datetime
+    created_at: datetime
     created_by: UUID
     name: str
     company_source_type: CompanyType
@@ -27,7 +27,7 @@ class CompanyResponse(DTOMixin[Company]):
         """Convert ORM model to GraphQL type."""
         return cls(
             id=model.id,
-            entry_date=model.entry_date,
+            created_at=model.created_at,
             created_by=model.created_by,
             name=model.name,
             company_source_type=model.company_source_type,

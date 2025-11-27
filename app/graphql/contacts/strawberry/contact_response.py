@@ -12,7 +12,7 @@ class ContactResponse(DTOMixin[Contact]):
     """GraphQL type for Contact entity (output/query results)."""
 
     id: UUID
-    entry_date: datetime
+    created_at: datetime
     created_by: UUID
     first_name: str
     last_name: str
@@ -29,7 +29,7 @@ class ContactResponse(DTOMixin[Contact]):
         """Convert ORM model to GraphQL type."""
         return cls(
             id=model.id,
-            entry_date=model.entry_date,
+            created_at=model.created_at,
             created_by=model.created_by,
             first_name=model.first_name,
             last_name=model.last_name,

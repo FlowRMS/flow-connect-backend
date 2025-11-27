@@ -25,7 +25,7 @@ def upgrade() -> None:
         "companies",
         sa.Column("id", postgresql.UUID(as_uuid=True), nullable=False),
         sa.Column(
-            "entry_date",
+            "created_at",
             postgresql.TIMESTAMP(timezone=True),
             server_default=sa.text("now()"),
             nullable=False,
