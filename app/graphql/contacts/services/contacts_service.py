@@ -1,0 +1,47 @@
+from uuid import UUID
+
+from commons.auth import AuthInfo
+
+from app.errors.common_errors import NotFoundError
+from app.graphql.contacts.models.contact_model import Contact
+from app.graphql.contacts.repositories.contacts_repository import ContactsRepository
+from app.graphql.contacts.strawberry.contact_input import ContactInput
+
+
+class ContactsService:
+    """Service for Contacts entity business logic."""
+
+    def __init__(
+        self,
+        repository: ContactsRepository,
+        auth_info: AuthInfo,
+    ) -> None:
+        super().__init__()
+        self.repository = repository
+        self.auth_info = auth_info
+
+    async def create_contact(self, contact_input: ContactInput) -> Contact:
+        """Create a new contact."""
+        contact = contact_input.to_orm_model()
+        return await self.repository.create(contact)
+
+    async def delete_contact(self, contact_id: UUID | str) -> bool:
+        """Delete a contact by ID."""
+        if not await self.repository.exists(contact_id):
+            raise NotFoundError(str(contact_id))
+        return await self.repository.delete(contact_id)
+
+    async def get_contact(self, contact_id: UUID | str) -> Contact:
+        """Get a contact by ID."""
+        contact = await self.repository.get_by_id(contact_id)
+        if not contact:
+            raise NotFoundError(str(contact_id))
+        return contact
+
+    async def list_contacts(self, limit: int = 100, offset: int = 0) -> list[Contact]:
+        """List all contacts with pagination."""
+        return await self.repository.list_all(limit=limit, offset=offset)
+
+    async def get_contacts_by_company(self, company_id: UUID) -> list[Contact]:
+        """Get all contacts for a specific company."""
+        return await self.repository.get_by_company_id(company_id)

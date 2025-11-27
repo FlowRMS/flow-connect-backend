@@ -12,6 +12,10 @@ from app.core.container import create_container
 from app.core.middleware.graphql_middleware import GraphQLMiddleware
 
 # from app.graphql.class_discovery import types_discovery
+from app.graphql.companies.mutations.companies_mutations import CompaniesMutations
+from app.graphql.companies.queries.companies_queries import CompaniesQueries
+from app.graphql.contacts.mutations.contacts_mutations import ContactsMutations
+from app.graphql.contacts.queries.contacts_queries import ContactsQueries
 from app.graphql.inject import context_setter
 from app.graphql.jobs.mutations.jobs_mutations import JobsMutations
 
@@ -26,12 +30,12 @@ from app.graphql.tasks.queries.tasks_queries import TasksQueries
 
 Query = merge_types(
     name="Query",
-    types=(JobsQueries, TasksQueries),
+    types=(JobsQueries, TasksQueries, CompaniesQueries, ContactsQueries),
 )
 
 Mutation = merge_types(
     name="Mutation",
-    types=(JobsMutations, TasksMutations),
+    types=(JobsMutations, TasksMutations, CompaniesMutations, ContactsMutations),
 )
 
 
