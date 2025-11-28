@@ -18,7 +18,7 @@ class ProductsQueries:
         self,
         service: Injected[ProductService],
         search_term: str,
-        factory_id: strawberry.Maybe[uuid.UUID],
+        factory_id: strawberry.Maybe[uuid.UUID] = None,
         limit: int = 20,
     ) -> list[ProductResponse]:
         """
