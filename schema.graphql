@@ -73,6 +73,13 @@ type ContactResponse {
   companyId: UUID
 }
 
+type CustomerResponse {
+  id: UUID!
+  companyName: String!
+  parentId: UUID
+  insideRepId: UUID
+}
+
 """Date (isoformat)"""
 scalar Date
 
@@ -91,6 +98,11 @@ enum EntityType {
   CONTACT
   COMPANY
   NOTE
+}
+
+type FactoryResponse {
+  id: UUID!
+  title: String!
 }
 
 input Filter {
@@ -374,6 +386,8 @@ type Query {
   preOpportunitiesByJob(jobId: UUID!): [PreOpportunityResponse!]!
   preOpportunitiesByCustomer(customerId: UUID!): [PreOpportunityResponse!]!
   productSearch(searchTerm: String!, factoryId: UUID, limit: Int! = 20): [ProductResponse!]!
+  factorySearch(searchTerm: String!, published: Boolean! = true, limit: Int! = 20): [FactoryResponse!]!
+  customerSearch(searchTerm: String!, published: Boolean! = true, limit: Int! = 20): [CustomerResponse!]!
   findLandingPages(sourceType: LandingSourceType!, filters: [Filter!] = null, orderBy: [OrderBy!] = null, limit: Int = 10, offset: Int = 0): GenericLandingPage!
 }
 

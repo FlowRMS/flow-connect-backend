@@ -17,6 +17,8 @@ from app.graphql.companies.mutations.companies_mutations import CompaniesMutatio
 from app.graphql.companies.queries.companies_queries import CompaniesQueries
 from app.graphql.contacts.mutations.contacts_mutations import ContactsMutations
 from app.graphql.contacts.queries.contacts_queries import ContactsQueries
+from app.graphql.customers.queries.customers_queries import CustomersQueries
+from app.graphql.factories.queries.factories_queries import FactoriesQueries
 from app.graphql.inject import context_setter
 from app.graphql.jobs.mutations.jobs_mutations import JobsMutations
 from app.graphql.jobs.queries.jobs_queries import JobsQueries
@@ -44,6 +46,8 @@ Query = merge_types(
         ContactsQueries,
         PreOpportunitiesQueries,
         ProductsQueries,
+        FactoriesQueries,
+        CustomersQueries,
         LandingPageQueries,
     ),
 )
