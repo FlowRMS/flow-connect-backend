@@ -121,15 +121,13 @@ class BaseRepository(Generic[T]):
         Returns:
             True if deleted, False if not found
         """
-        if isinstance(entity_id, str):
-            entity_id = UUID(entity_id)
-
-        result = await self.session.execute(
-            sql_delete(self.model_class)
-            .where(self.model_class.id == entity_id)
-            .returning(self.model_class.id)
-        )
-        return result.scalar_one_or_none() is not None
+        entity = await self.get_by_id(entity_id)
+        if not entity:
+            return False
+        
+        await self.session.delete(entity)
+        await self.session.flush()
+        return True
 
     async def exists(self, entity_id: UUID | str) -> bool:
         """
