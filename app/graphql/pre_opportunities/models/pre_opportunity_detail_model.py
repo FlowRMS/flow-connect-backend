@@ -70,4 +70,4 @@ class PreOpportunityDetail(CrmBaseModel, HasPrimaryKey, kw_only=True):
     pre_opportunity: Mapped["PreOpportunity"] = relationship(
         back_populates="details", init=False
     )
-    product: Mapped[Product] = relationship(init=False)
+    product: Mapped[Product] = relationship(init=False, lazy="joined")

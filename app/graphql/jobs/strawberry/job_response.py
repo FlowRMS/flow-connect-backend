@@ -13,10 +13,11 @@ from app.graphql.jobs.strawberry.status_response import JobStatusType
 
 @strawberry.type
 class JobType(DTOMixin[Job]):
+    _instance: strawberry.Private[Job]
     id: UUID
     created_at: datetime
     created_by: UUID
-    status: JobStatusType
+    # status: JobStatusType
     job_name: str
     start_date: date | None
     end_date: date | None
@@ -30,10 +31,10 @@ class JobType(DTOMixin[Job]):
     @classmethod
     def from_orm_model(cls, model: Job) -> Self:
         return cls(
+            _instance=model,
             id=model.id,
             created_at=model.created_at,
             created_by=model.created_by,
-            status=JobStatusType.from_orm_model(model.status),
             job_name=model.job_name,
             start_date=model.start_date,
             end_date=model.end_date,
@@ -44,3 +45,7 @@ class JobType(DTOMixin[Job]):
             additional_information=model.additional_information,
             requester_id=model.requester_id,
         )
+
+    @strawberry.field
+    def status(self) -> JobStatusType:
+        return JobStatusType.from_orm_model(self._instance.status)

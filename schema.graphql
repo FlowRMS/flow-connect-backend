@@ -177,7 +177,6 @@ type JobType {
   id: UUID!
   createdAt: datetime!
   createdBy: UUID!
-  status: JobStatusType!
   jobName: String!
   startDate: Date
   endDate: Date
@@ -187,6 +186,7 @@ type JobType {
   structuralInformation: String
   additionalInformation: String
   requesterId: UUID
+  status: JobStatusType!
 }
 
 interface LandingPageInterfaceBase {
@@ -294,7 +294,6 @@ input PreOpportunityInput {
   soldToCustomerId: UUID!
   details: [PreOpportunityDetailInput!]!
   id: UUID
-  userOwnerIds: [UUID!]
   expDate: Date
   reviseDate: Date
   acceptDate: Date
@@ -358,6 +357,7 @@ type PreOpportunityResponse {
   freightTerms: String
   balance: PreOpportunityBalanceResponse!
   details: [PreOpportunityDetailResponse!]!
+  job: JobType
 }
 
 enum PreOpportunityStatus {
@@ -378,6 +378,7 @@ type Query {
   job(id: UUID!): JobType!
   jobStatuses: [JobStatusType!]!
   jobRelatedEntities(jobId: UUID!): JobRelatedEntitiesResponse!
+  jobSearch(searchTerm: String!, limit: Int! = 20): [JobType!]!
   task(id: UUID!): TaskType!
   company(id: UUID!): CompanyResponse!
   contact(id: UUID!): ContactResponse!

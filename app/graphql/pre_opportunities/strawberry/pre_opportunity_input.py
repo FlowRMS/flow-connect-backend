@@ -24,7 +24,6 @@ class PreOpportunityInput(BaseInputGQL[PreOpportunity]):
     details: list[PreOpportunityDetailInput]
 
     id: UUID | None = strawberry.UNSET
-    user_owner_ids: list[UUID] | None = strawberry.UNSET
     exp_date: date | None = strawberry.UNSET
     revise_date: date | None = strawberry.UNSET
     accept_date: date | None = strawberry.UNSET

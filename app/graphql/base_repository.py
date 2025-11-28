@@ -124,7 +124,7 @@ class BaseRepository(Generic[T]):
         entity = await self.get_by_id(entity_id)
         if not entity:
             return False
-        
+
         await self.session.delete(entity)
         await self.session.flush()
         return True

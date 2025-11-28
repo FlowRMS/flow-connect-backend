@@ -54,3 +54,25 @@ class JobsQueries:
             JobRelatedEntitiesResponse containing pre_opportunities, contacts, and companies
         """
         return await service.get_job_related_entities(job_id)
+
+    @strawberry.field
+    @inject
+    async def job_search(
+        self,
+        service: Injected[JobsService],
+        search_term: str,
+        limit: int = 20,
+    ) -> list[JobType]:
+        """
+        Search jobs by name.
+
+        Args:
+            search_term: The search term to match against job name
+            limit: Maximum number of jobs to return (default: 20)
+
+        Returns:
+            List of JobType objects matching the search criteria
+        """
+        return JobType.from_orm_model_list(
+            await service.search_jobs(search_term, limit)
+        )

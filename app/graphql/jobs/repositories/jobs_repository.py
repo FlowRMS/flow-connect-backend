@@ -64,3 +64,19 @@ class JobsRepository(BaseRepository[Job]):
             .outerjoin(user_owner_alias, user_owner_alias.id == Job.job_owner_id)
             .outerjoin(requester_alias, requester_alias.id == Job.requester_id)
         )
+
+    async def search_by_name(self, search_term: str, limit: int = 20) -> list[Job]:
+        """
+        Search jobs by name using case-insensitive pattern matching.
+
+        Args:
+            search_term: The search term to match against job name
+            limit: Maximum number of jobs to return (default: 20)
+
+        Returns:
+            List of Job objects matching the search criteria
+        """
+        stmt = select(Job).where(Job.job_name.ilike(f"%{search_term}%")).limit(limit)
+
+        result = await self.session.execute(stmt)
+        return list(result.scalars().all())

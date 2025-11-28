@@ -100,7 +100,7 @@ class PreOpportunity(
         cascade="all, delete, delete-orphan",
     )
 
-    job: Mapped["Job | None"] = relationship(init=False, lazy="noload")
+    job: Mapped["Job | None"] = relationship(init=False, lazy="joined")
 
     def __repr__(self) -> str:
         """String representation of the PreOpportunity."""

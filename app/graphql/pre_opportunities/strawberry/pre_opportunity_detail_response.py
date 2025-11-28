@@ -5,12 +5,8 @@ from typing import Self
 from uuid import UUID
 
 import strawberry
-from aioinject import Injected
-from commons.db.models.core.product import Product
-from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.db.adapters.dto import DTOMixin
-from app.graphql.inject import inject
 from app.graphql.pre_opportunities.models.pre_opportunity_detail_model import (
     PreOpportunityDetail,
 )
@@ -19,6 +15,7 @@ from app.graphql.products.strawberry.product_response import ProductResponse
 
 @strawberry.type
 class PreOpportunityDetailResponse(DTOMixin[PreOpportunityDetail]):
+    _instance: strawberry.Private[PreOpportunityDetail]
     id: UUID
     pre_opportunity_id: UUID
     quantity: Decimal
@@ -36,6 +33,7 @@ class PreOpportunityDetailResponse(DTOMixin[PreOpportunityDetail]):
     @classmethod
     def from_orm_model(cls, model: PreOpportunityDetail) -> Self:
         return cls(
+            _instance=model,
             id=model.id,
             pre_opportunity_id=model.pre_opportunity_id,
             quantity=model.quantity,
@@ -52,8 +50,5 @@ class PreOpportunityDetailResponse(DTOMixin[PreOpportunityDetail]):
         )
 
     @strawberry.field
-    @inject
-    async def product(self, session: Injected[AsyncSession]) -> ProductResponse:
-        return ProductResponse.from_orm_model(
-            await session.get_one(Product, self.product_id)
-        )
+    def product(self) -> ProductResponse:
+        return ProductResponse.from_orm_model(self._instance.product)

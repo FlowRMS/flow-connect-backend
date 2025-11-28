@@ -1,7 +1,11 @@
 """GraphQL response type for PreOpportunity."""
 
+# from aioinject import Injected
 import strawberry
 
+# from app.graphql.inject import inject
+# from app.graphql.jobs.models.jobs_model import Job
+from app.graphql.jobs.strawberry.job_response import JobType
 from app.graphql.pre_opportunities.strawberry.pre_opportunity_balance_response import (
     PreOpportunityBalanceResponse,
 )
@@ -11,6 +15,8 @@ from app.graphql.pre_opportunities.strawberry.pre_opportunity_detail_response im
 from app.graphql.pre_opportunities.strawberry.pre_opportunity_lite_response import (
     PreOpportunityLiteResponse,
 )
+
+# from sqlalchemy.ext.asyncio import AsyncSession
 
 
 @strawberry.type
@@ -22,3 +28,15 @@ class PreOpportunityResponse(PreOpportunityLiteResponse):
     @strawberry.field
     def details(self) -> list[PreOpportunityDetailResponse]:
         return PreOpportunityDetailResponse.from_orm_model_list(self._instance.details)
+
+    # @strawberry.field
+    # @inject
+    # async def job(self, session: Injected[AsyncSession]) -> JobType | None:
+    #     if not self._instance.job:
+    #         return None
+
+    #     return JobType.from_orm_model(await session.get_one(Job, self._instance.job.id))
+
+    @strawberry.field
+    def job(self) -> JobType | None:
+        return JobType.from_orm_model_optional(self._instance.job)

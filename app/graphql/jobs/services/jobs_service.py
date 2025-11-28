@@ -119,3 +119,16 @@ class JobsService:
             contacts=ContactResponse.from_orm_model_list(contacts),
             companies=CompanyResponse.from_orm_model_list(companies),
         )
+
+    async def search_jobs(self, search_term: str, limit: int = 20) -> list[Job]:
+        """
+        Search jobs by name.
+
+        Args:
+            search_term: The search term to match against job name
+            limit: Maximum number of jobs to return (default: 20)
+
+        Returns:
+            List of Job objects matching the search criteria
+        """
+        return await self.repository.search_by_name(search_term, limit)
