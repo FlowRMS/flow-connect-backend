@@ -97,7 +97,7 @@ class PreOpportunity(
         default_factory=list,
         back_populates="pre_opportunity",
         lazy="selectin",
-        cascade="all, delete-orphan",
+        cascade="all, delete, delete-orphan",
     )
 
     job: Mapped["Job | None"] = relationship(init=False, lazy="noload")
