@@ -3,9 +3,9 @@
 from typing import Self
 from uuid import UUID
 
+import strawberry
 from commons.db.models.core.product import Product
 
-import strawberry
 from app.core.db.adapters.dto import DTOMixin
 
 

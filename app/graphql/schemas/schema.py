@@ -27,6 +27,7 @@ from app.graphql.pre_opportunities.mutations.pre_opportunities_mutations import 
 from app.graphql.pre_opportunities.queries.pre_opportunities_queries import (
     PreOpportunitiesQueries,
 )
+from app.graphql.products.queries.products_queries import ProductsQueries
 from app.graphql.schemas.date_time_scalar import DateTimeScalar
 from app.graphql.schemas.decimal_scalar import DecimalScalar
 from app.graphql.schemas.id_scalar import IdScalar
@@ -42,6 +43,7 @@ Query = merge_types(
         CompaniesQueries,
         ContactsQueries,
         PreOpportunitiesQueries,
+        ProductsQueries,
         LandingPageQueries,
     ),
 )

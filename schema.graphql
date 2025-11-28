@@ -373,6 +373,7 @@ type Query {
   preOpportunity(id: UUID!): PreOpportunityResponse!
   preOpportunitiesByJob(jobId: UUID!): [PreOpportunityResponse!]!
   preOpportunitiesByCustomer(customerId: UUID!): [PreOpportunityResponse!]!
+  productSearch(searchTerm: String!, factoryId: UUID, limit: Int! = 20): [ProductResponse!]!
   findLandingPages(sourceType: LandingSourceType!, filters: [Filter!] = null, orderBy: [OrderBy!] = null, limit: Int = 10, offset: Int = 0): GenericLandingPage!
 }
 
