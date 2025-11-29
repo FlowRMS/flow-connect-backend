@@ -54,6 +54,10 @@ class PreOpportunitiesService:
             Updated pre-opportunity entity
         """
         pre_opportunity = pre_opportunity_input.to_orm_model()
+        if pre_opportunity_input.id is None:
+            raise ValueError("ID must be provided for update")
+
+        pre_opportunity.id = pre_opportunity_input.id
         return await self.repository.update_with_balance(pre_opportunity)
 
     async def get_pre_opportunity(

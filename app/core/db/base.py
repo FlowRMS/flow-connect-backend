@@ -1,5 +1,6 @@
 """SQLAlchemy declarative base for all ORM models."""
 
+import dataclasses
 import datetime
 import uuid
 
@@ -16,6 +17,10 @@ class Base(DeclarativeBase):
 
 class BaseModel(Base, MappedAsDataclass, AsyncAttrs):
     __abstract__ = True
+
+    @classmethod
+    def get_init_fields(cls):
+        return [field.name for field in dataclasses.fields(cls) if not field.init]
 
 
 class CrmBaseModel(BaseModel):

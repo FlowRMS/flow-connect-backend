@@ -1,16 +1,19 @@
 """Base repository with common CRUD operations for all entities."""
 
+import uuid
 from typing import Any, Generic, TypeVar
 from uuid import UUID
 
 import pendulum
-from sqlalchemy import delete as sql_delete
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.sql.base import ExecutableOption
 
 from app.core.context_wrapper import ContextWrapper
+from app.core.db.base import BaseModel
+from app.errors.common_errors import NotFoundError
 
-T = TypeVar("T")
+T = TypeVar("T", bound=BaseModel | Any)
 
 
 class BaseRepository(Generic[T]):
@@ -37,6 +40,27 @@ class BaseRepository(Generic[T]):
         self.context = context_wrapper.get()
         self.session = session
         self.model_class = model_class
+
+    async def get_edit(
+        self,
+        *,
+        pk: uuid.UUID,
+        options: list[ExecutableOption] | None = None,
+        unique: bool = False,
+    ) -> T:
+        stmt = select(self.model_class).where(self.model_class.id == pk)
+        if options:
+            stmt = stmt.options(*options)
+        result = await self.session.execute(stmt)  # type: ignore[attr-defined]
+        if unique:
+            entity = result.unique().scalar_one_or_none()
+        else:
+            entity = result.scalars().one_or_none()
+
+        if entity is None:
+            raise NotFoundError(f"{self.model_class.__name__} with id {pk} not found")
+
+        return entity
 
     async def get_by_id(self, entity_id: UUID | str) -> T | None:
         """
@@ -96,7 +120,11 @@ class BaseRepository(Generic[T]):
         await self.session.refresh(entity)
         return entity
 
-    async def update(self, entity: T) -> T:
+    async def update(
+        self,
+        incoming_entity: T,
+        # original_entity: T,
+    ) -> T:
         """
         Update an existing entity.
 
@@ -106,7 +134,18 @@ class BaseRepository(Generic[T]):
         Returns:
             The updated entity
         """
-        merged = await self.session.merge(entity)
+
+        original_entity = await self.get_edit(pk=incoming_entity.id)
+
+        init_fields = original_entity.get_init_fields()
+
+        for column in incoming_entity.__table__.columns:
+            if column.name in init_fields:
+                setattr(
+                    incoming_entity, column.name, getattr(original_entity, column.name)
+                )
+
+        merged = await self.session.merge(incoming_entity)
         await self.session.flush()
         await self.session.refresh(merged)
         return merged
