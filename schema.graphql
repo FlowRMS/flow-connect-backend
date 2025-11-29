@@ -224,13 +224,16 @@ type LinkRelationType {
 
 type Mutation {
   createJob(input: JobInput!): JobType!
+  updateJob(id: UUID!, input: JobInput!): JobType!
   createTask(input: TaskInput!): TaskType!
   deleteTask(id: UUID!): Boolean!
   addTaskRelation(input: TaskRelationInput!): TaskRelationType!
   createCompany(input: CompanyInput!): CompanyResponse!
   deleteCompany(id: UUID!): Boolean!
+  updateCompany(id: UUID!, input: CompanyInput!): CompanyResponse!
   createContact(input: ContactInput!): ContactResponse!
   deleteContact(id: UUID!): Boolean!
+  updateContact(id: UUID!, input: ContactInput!): ContactResponse!
   createLink(input: LinkRelationInput!): LinkRelationType!
   deleteLink(id: UUID!): Boolean!
   deleteLinkByEntities(input: DeleteLinkByEntitiesInput!): Boolean!
@@ -379,6 +382,8 @@ type Query {
   jobStatuses: [JobStatusType!]!
   jobRelatedEntities(jobId: UUID!): JobRelatedEntitiesResponse!
   jobSearch(searchTerm: String!, limit: Int! = 20): [JobType!]!
+  jobsByContact(contactId: UUID!): [JobType!]!
+  jobsByCompany(companyId: UUID!): [JobType!]!
   task(id: UUID!): TaskType!
   company(id: UUID!): CompanyResponse!
   contact(id: UUID!): ContactResponse!

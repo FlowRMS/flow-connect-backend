@@ -34,3 +34,24 @@ class ContactsMutations:
     ) -> bool:
         """Delete a contact by ID."""
         return await service.delete_contact(contact_id=id)
+
+    @strawberry.mutation
+    @inject
+    async def update_contact(
+        self,
+        id: UUID,
+        input: ContactInput,
+        service: Injected[ContactsService],
+    ) -> ContactResponse:
+        """
+        Update an existing contact.
+
+        Args:
+            id: The contact ID to update
+            input: The updated contact data
+            service: Injected ContactsService
+
+        Returns:
+            The updated ContactResponse object
+        """
+        return ContactResponse.from_orm_model(await service.update_contact(id, input))

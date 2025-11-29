@@ -37,3 +37,26 @@ class CompaniesService:
 
     async def find_companies_by_job_id(self, job_id: UUID) -> list[Company]:
         return await self.repository.find_by_job_id(job_id)
+
+    async def update_company(
+        self, company_id: UUID, company_input: CompanyInput
+    ) -> Company:
+        """
+        Update an existing company.
+
+        Args:
+            company_id: The company ID to update
+            company_input: The updated company data
+
+        Returns:
+            The updated company entity
+
+        Raises:
+            NotFoundError: If the company doesn't exist
+        """
+        if not await self.repository.exists(company_id):
+            raise NotFoundError(str(company_id))
+
+        company = company_input.to_orm_model()
+        company.id = company_id
+        return await self.repository.update(company)

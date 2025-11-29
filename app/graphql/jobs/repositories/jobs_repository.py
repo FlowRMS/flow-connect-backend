@@ -1,9 +1,10 @@
 """Repository for Jobs entity with specific database operations."""
 
 from typing import Any
+from uuid import UUID
 
 from commons.db.models.user import User
-from sqlalchemy import Select, select
+from sqlalchemy import Select, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import aliased, lazyload
 
@@ -78,5 +79,75 @@ class JobsRepository(BaseRepository[Job]):
         """
         stmt = select(Job).where(Job.job_name.ilike(f"%{search_term}%")).limit(limit)
 
+        result = await self.session.execute(stmt)
+        return list(result.scalars().all())
+
+    async def find_by_contact_id(self, contact_id: UUID) -> list[Job]:
+        """
+        Find all jobs linked to the given contact ID.
+
+        Args:
+            contact_id: The contact ID to find jobs for
+
+        Returns:
+            List of Job objects linked to the given contact ID
+        """
+        from app.graphql.links.models.entity_type import EntityType
+        from app.graphql.links.models.link_relation_model import LinkRelation
+
+        stmt = select(Job).join(
+            LinkRelation,
+            or_(
+                # Jobs as source, Contacts as target
+                (
+                    (LinkRelation.source_entity_type == EntityType.JOB)
+                    & (LinkRelation.target_entity_type == EntityType.CONTACT)
+                    & (LinkRelation.target_entity_id == contact_id)
+                    & (LinkRelation.source_entity_id == Job.id)
+                ),
+                # Contacts as source, Jobs as target
+                (
+                    (LinkRelation.source_entity_type == EntityType.CONTACT)
+                    & (LinkRelation.target_entity_type == EntityType.JOB)
+                    & (LinkRelation.source_entity_id == contact_id)
+                    & (LinkRelation.target_entity_id == Job.id)
+                ),
+            ),
+        )
+        result = await self.session.execute(stmt)
+        return list(result.scalars().all())
+
+    async def find_by_company_id(self, company_id: UUID) -> list[Job]:
+        """
+        Find all jobs linked to the given company ID.
+
+        Args:
+            company_id: The company ID to find jobs for
+
+        Returns:
+            List of Job objects linked to the given company ID
+        """
+        from app.graphql.links.models.entity_type import EntityType
+        from app.graphql.links.models.link_relation_model import LinkRelation
+
+        stmt = select(Job).join(
+            LinkRelation,
+            or_(
+                # Jobs as source, Companies as target
+                (
+                    (LinkRelation.source_entity_type == EntityType.JOB)
+                    & (LinkRelation.target_entity_type == EntityType.COMPANY)
+                    & (LinkRelation.target_entity_id == company_id)
+                    & (LinkRelation.source_entity_id == Job.id)
+                ),
+                # Companies as source, Jobs as target
+                (
+                    (LinkRelation.source_entity_type == EntityType.COMPANY)
+                    & (LinkRelation.target_entity_type == EntityType.JOB)
+                    & (LinkRelation.source_entity_id == company_id)
+                    & (LinkRelation.target_entity_id == Job.id)
+                ),
+            ),
+        )
         result = await self.session.execute(stmt)
         return list(result.scalars().all())

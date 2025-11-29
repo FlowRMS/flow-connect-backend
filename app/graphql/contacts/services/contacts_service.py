@@ -53,3 +53,26 @@ class ContactsService:
             List of Contact objects linked to the given job ID
         """
         return await self.repository.find_by_job_id(job_id)
+
+    async def update_contact(
+        self, contact_id: UUID, contact_input: ContactInput
+    ) -> Contact:
+        """
+        Update an existing contact.
+
+        Args:
+            contact_id: The contact ID to update
+            contact_input: The updated contact data
+
+        Returns:
+            The updated contact entity
+
+        Raises:
+            NotFoundError: If the contact doesn't exist
+        """
+        if not await self.repository.exists(contact_id):
+            raise NotFoundError(str(contact_id))
+
+        contact = contact_input.to_orm_model()
+        contact.id = contact_id
+        return await self.repository.update(contact)

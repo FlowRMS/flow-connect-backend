@@ -34,3 +34,24 @@ class CompaniesMutations:
     ) -> bool:
         """Delete a company by ID."""
         return await service.delete_company(company_id=id)
+
+    @strawberry.mutation
+    @inject
+    async def update_company(
+        self,
+        id: UUID,
+        input: CompanyInput,
+        service: Injected[CompaniesService],
+    ) -> CompanyResponse:
+        """
+        Update an existing company.
+
+        Args:
+            id: The company ID to update
+            input: The updated company data
+            service: Injected CompaniesService
+
+        Returns:
+            The updated CompanyResponse object
+        """
+        return CompanyResponse.from_orm_model(await service.update_company(id, input))

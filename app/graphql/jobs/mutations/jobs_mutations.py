@@ -1,5 +1,7 @@
 """GraphQL mutations for Jobs entity."""
 
+from uuid import UUID
+
 import strawberry
 from aioinject import Injected
 
@@ -21,3 +23,24 @@ class JobsMutations:
         service: Injected[JobsService],
     ) -> JobType:
         return JobType.from_orm_model(await service.create_job(job_input=input))
+
+    @strawberry.mutation
+    @inject
+    async def update_job(
+        self,
+        id: UUID,
+        input: JobInput,
+        service: Injected[JobsService],
+    ) -> JobType:
+        """
+        Update an existing job.
+
+        Args:
+            id: The job ID to update
+            input: The updated job data
+            service: Injected JobsService
+
+        Returns:
+            The updated JobType object
+        """
+        return JobType.from_orm_model(await service.update_job(id, input))

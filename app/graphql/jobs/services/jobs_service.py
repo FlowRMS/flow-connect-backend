@@ -132,3 +132,48 @@ class JobsService:
             List of Job objects matching the search criteria
         """
         return await self.repository.search_by_name(search_term, limit)
+
+    async def get_jobs_by_contact(self, contact_id: UUID) -> list[Job]:
+        """
+        Get all jobs linked to a specific contact.
+
+        Args:
+            contact_id: The contact ID to find jobs for
+
+        Returns:
+            List of Job objects linked to the given contact ID
+        """
+        return await self.repository.find_by_contact_id(contact_id)
+
+    async def get_jobs_by_company(self, company_id: UUID) -> list[Job]:
+        """
+        Get all jobs linked to a specific company.
+
+        Args:
+            company_id: The company ID to find jobs for
+
+        Returns:
+            List of Job objects linked to the given company ID
+        """
+        return await self.repository.find_by_company_id(company_id)
+
+    async def update_job(self, job_id: UUID, job_input: JobInput) -> Job:
+        """
+        Update an existing job.
+
+        Args:
+            job_id: The job ID to update
+            job_input: The updated job data
+
+        Returns:
+            The updated job entity
+
+        Raises:
+            NotFoundError: If the job doesn't exist
+        """
+        if not await self.repository.exists(job_id):
+            raise NotFoundError(str(job_id))
+
+        job = job_input.to_orm_model()
+        job.id = job_id
+        return await self.repository.update(job)

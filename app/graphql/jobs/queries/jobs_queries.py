@@ -76,3 +76,45 @@ class JobsQueries:
         return JobType.from_orm_model_list(
             await service.search_jobs(search_term, limit)
         )
+
+    @strawberry.field
+    @inject
+    async def jobs_by_contact(
+        self,
+        contact_id: UUID,
+        service: Injected[JobsService],
+    ) -> list[JobType]:
+        """
+        Get all jobs linked to a specific contact.
+
+        Args:
+            contact_id: The contact ID to find jobs for
+            service: Injected JobsService
+
+        Returns:
+            List of JobType objects linked to the given contact ID
+        """
+        return JobType.from_orm_model_list(
+            await service.get_jobs_by_contact(contact_id)
+        )
+
+    @strawberry.field
+    @inject
+    async def jobs_by_company(
+        self,
+        company_id: UUID,
+        service: Injected[JobsService],
+    ) -> list[JobType]:
+        """
+        Get all jobs linked to a specific company.
+
+        Args:
+            company_id: The company ID to find jobs for
+            service: Injected JobsService
+
+        Returns:
+            List of JobType objects linked to the given company ID
+        """
+        return JobType.from_orm_model_list(
+            await service.get_jobs_by_company(company_id)
+        )
