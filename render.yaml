@@ -1,0 +1,23 @@
+version: "1"
+projects:
+- name: Flow RMS Services
+  environments:
+  - name: Staging
+    networking:
+      isolation: enabled
+    services:
+    - type: web
+      name: flow-py-crm
+      runtime: docker
+      repo: https://github.com/FlowRMS/flow-py-crm
+      plan: standard
+      envVars:
+      - fromGroup: Flow Py Commons
+      - fromGroup: Flow Py CRM Staging
+      region: ohio
+      preDeployCommand: python run_migrations.py
+      dockerContext: .
+      dockerfilePath: ./Dockerfile
+      domains:
+      - staging.crm.flowrms.com
+      autoDeployTrigger: commit
