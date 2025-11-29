@@ -12,7 +12,7 @@ from app.core.db.base import CrmBaseModel, HasCreatedAt, HasCreatedBy
 from app.graphql.companies.models.company_type import CompanyType
 
 if TYPE_CHECKING:
-    from app.graphql.addresses.models.address_model import Address
+    from app.graphql.addresses.models.address_model import CompanyAddress
     from app.graphql.contacts.models.contact_model import Contact
 
 
@@ -36,7 +36,7 @@ class Company(CrmBaseModel, HasCreatedAt, HasCreatedBy, kw_only=True):
     parent_company_id: Mapped[UUID | None] = mapped_column(
         PG_UUID(as_uuid=True), nullable=True
     )
-    addresses: Mapped[list["Address"]] = relationship(
+    addresses: Mapped[list["CompanyAddress"]] = relationship(
         init=False, back_populates="company", cascade="all, delete-orphan"
     )
     contacts: Mapped[list["Contact"]] = relationship(

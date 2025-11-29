@@ -3,13 +3,13 @@ from uuid import UUID
 import strawberry
 
 from app.core.strawberry.inputs import BaseInputGQL
-from app.graphql.addresses.models.address_model import Address
+from app.graphql.addresses.models.address_model import CompanyAddress
 from app.graphql.addresses.models.address_type import AddressType
 
 
 @strawberry.input
-class AddressInput(BaseInputGQL[Address]):
-    """GraphQL input type for creating/updating Address entities."""
+class AddressInput(BaseInputGQL[CompanyAddress]):
+    """GraphQL input type for creating/updating CompanyAddress entities."""
 
     company_id: UUID
     address_type: AddressType
@@ -19,8 +19,8 @@ class AddressInput(BaseInputGQL[Address]):
     state: str | None = None
     zip_code: str | None = None
 
-    def to_orm_model(self) -> Address:
-        return Address(
+    def to_orm_model(self) -> CompanyAddress:
+        return CompanyAddress(
             company_id=self.company_id,
             address_type=self.address_type,
             address_line_1=self.address_line_1,

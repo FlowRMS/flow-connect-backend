@@ -4,13 +4,13 @@ from uuid import UUID
 import strawberry
 
 from app.core.db.adapters.dto import DTOMixin
-from app.graphql.addresses.models.address_model import Address
+from app.graphql.addresses.models.address_model import CompanyAddress
 from app.graphql.addresses.models.address_type import AddressType
 
 
 @strawberry.type
-class AddressResponse(DTOMixin[Address]):
-    """GraphQL type for Address entity (output/query results)."""
+class AddressResponse(DTOMixin[CompanyAddress]):
+    """GraphQL type for CompanyAddress entity (output/query results)."""
 
     id: UUID
     created_at: datetime
@@ -24,7 +24,7 @@ class AddressResponse(DTOMixin[Address]):
     zip_code: str | None
 
     @classmethod
-    def from_orm_model(cls, model: Address) -> "AddressResponse":
+    def from_orm_model(cls, model: CompanyAddress) -> "AddressResponse":
         """Convert ORM model to GraphQL type."""
         return cls(
             id=model.id,

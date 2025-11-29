@@ -1,4 +1,4 @@
-"""SQLAlchemy ORM model for Address entity."""
+"""SQLAlchemy ORM model for CompanyAddress entity."""
 
 from uuid import UUID
 
@@ -12,9 +12,9 @@ from app.graphql.addresses.models.address_type import AddressType
 from app.graphql.companies.models.company_model import Company
 
 
-class Address(CrmBaseModel, HasCreatedAt, HasCreatedBy, kw_only=True):
+class CompanyAddress(CrmBaseModel, HasCreatedAt, HasCreatedBy, kw_only=True):
     """
-    Address entity representing an address in the CRM system.
+    CompanyAddress entity representing an address in the CRM system.
 
     Addresses are associated with companies and can be of different types
     (BILLING, SHIPPING, OTHER).
@@ -42,5 +42,5 @@ class Address(CrmBaseModel, HasCreatedAt, HasCreatedBy, kw_only=True):
     )
 
     def __repr__(self) -> str:
-        """String representation of the Address."""
-        return f"<Address(id={self.id}, company_id={self.company_id}, type='{self.address_type}')>"
+        """String representation of the CompanyAddress."""
+        return f"<CompanyAddress(id={self.id}, company_id={self.company_id}, type='{self.address_type}')>"

@@ -1,4 +1,4 @@
-"""Address mutations."""
+"""CompanyAddress mutations."""
 
 from app.graphql.addresses.mutations.addresses_mutations import AddressesMutations
 

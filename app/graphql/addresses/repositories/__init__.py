@@ -1,4 +1,4 @@
-"""Address repositories."""
+"""CompanyAddress repositories."""
 
 from app.graphql.addresses.repositories.addresses_repository import (
     AddressesRepository,

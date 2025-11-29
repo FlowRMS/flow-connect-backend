@@ -1,4 +1,4 @@
-"""Address queries."""
+"""CompanyAddress queries."""
 
 from app.graphql.addresses.queries.addresses_queries import AddressesQueries
 
