@@ -10,8 +10,6 @@
     "build/**",
     "dist/**",
     "**/sandbox_scripts/*",
-    "scripts/backup_restore_tenants.py",
-    "app/graphql/base_repository.py"
   ],
   "ignore": ["**/sandbox_scripts/*"],
   "reportMissingSuperCall": true,

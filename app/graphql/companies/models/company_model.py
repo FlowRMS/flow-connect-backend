@@ -8,7 +8,7 @@ from sqlalchemy import ARRAY, String
 from sqlalchemy.dialects.postgresql import UUID as PG_UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
-from app.core.db.base import CrmBaseModel, HasCreatedAt, HasCreatedBy, HasPrimaryKey
+from app.core.db.base import CrmBaseModel, HasCreatedAt, HasCreatedBy
 from app.graphql.companies.models.company_type import CompanyType
 
 if TYPE_CHECKING:
@@ -16,7 +16,7 @@ if TYPE_CHECKING:
     from app.graphql.contacts.models.contact_model import Contact
 
 
-class Company(CrmBaseModel, HasPrimaryKey, HasCreatedAt, HasCreatedBy, kw_only=True):
+class Company(CrmBaseModel, HasCreatedAt, HasCreatedBy, kw_only=True):
     """
     Company entity representing a company in the CRM system.
 

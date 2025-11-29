@@ -1,7 +1,7 @@
 """Base repository with common CRUD operations for all entities."""
 
 import uuid
-from typing import Any, Generic, TypeVar
+from typing import Generic, TypeVar
 from uuid import UUID
 
 import pendulum
@@ -13,7 +13,7 @@ from app.core.context_wrapper import ContextWrapper
 from app.core.db.base import BaseModel
 from app.errors.common_errors import NotFoundError
 
-T = TypeVar("T", bound=BaseModel | Any)
+T = TypeVar("T", bound=BaseModel)
 
 
 class BaseRepository(Generic[T]):

@@ -6,7 +6,7 @@ from typing import TYPE_CHECKING
 from sqlalchemy import Numeric
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
-from app.core.db.base import CrmBaseModel, HasPrimaryKey
+from app.core.db.base import CrmBaseModel
 
 if TYPE_CHECKING:
     from app.graphql.pre_opportunities.models.pre_opportunity_model import (
@@ -14,7 +14,7 @@ if TYPE_CHECKING:
     )
 
 
-class PreOpportunityBalance(CrmBaseModel, HasPrimaryKey, kw_only=True):
+class PreOpportunityBalance(CrmBaseModel, kw_only=True):
     """
     Read-only balance entity for pre-opportunities.
 

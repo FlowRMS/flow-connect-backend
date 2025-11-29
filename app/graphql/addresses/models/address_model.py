@@ -7,12 +7,12 @@ from sqlalchemy import ForeignKey, String
 from sqlalchemy.dialects.postgresql import UUID as PG_UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
-from app.core.db.base import CrmBaseModel, HasCreatedAt, HasCreatedBy, HasPrimaryKey
+from app.core.db.base import CrmBaseModel, HasCreatedAt, HasCreatedBy
 from app.graphql.addresses.models.address_type import AddressType
 from app.graphql.companies.models.company_model import Company
 
 
-class Address(CrmBaseModel, HasPrimaryKey, HasCreatedAt, HasCreatedBy, kw_only=True):
+class Address(CrmBaseModel, HasCreatedAt, HasCreatedBy, kw_only=True):
     """
     Address entity representing an address in the CRM system.
 

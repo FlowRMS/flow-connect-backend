@@ -9,13 +9,13 @@ from sqlalchemy import ForeignKey, Integer, Numeric, String
 from sqlalchemy.dialects.postgresql import UUID as PG_UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
-from app.core.db.base import CrmBaseModel, HasPrimaryKey
+from app.core.db.base import CrmBaseModel
 from app.graphql.pre_opportunities.models.pre_opportunity_model import (
     PreOpportunity,
 )
 
 
-class PreOpportunityDetail(CrmBaseModel, HasPrimaryKey, kw_only=True):
+class PreOpportunityDetail(CrmBaseModel, kw_only=True):
     """
     Line item detail for a pre-opportunity.
 

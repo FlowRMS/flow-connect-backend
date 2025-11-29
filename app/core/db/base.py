@@ -1,40 +1,18 @@
 """SQLAlchemy declarative base for all ORM models."""
 
-import dataclasses
 import datetime
 import uuid
 
+from commons.db.models.base import BaseModel
 from sqlalchemy import func
 from sqlalchemy.dialects.postgresql import TIMESTAMP
 from sqlalchemy.dialects.postgresql import UUID as PG_UUID
-from sqlalchemy.ext.asyncio import AsyncAttrs
-from sqlalchemy.orm import DeclarativeBase, Mapped, MappedAsDataclass, mapped_column
-
-
-class Base(DeclarativeBase):
-    pass
-
-
-class BaseModel(Base, MappedAsDataclass, AsyncAttrs):
-    __abstract__ = True
-
-    @classmethod
-    def get_init_fields(cls):
-        return [field.name for field in dataclasses.fields(cls) if not field.init]
+from sqlalchemy.orm import Mapped, MappedAsDataclass, mapped_column
 
 
 class CrmBaseModel(BaseModel):
     __abstract__ = True
     __table_args__ = {"schema": "crm"}
-
-
-class HasPrimaryKey(MappedAsDataclass):
-    id: Mapped[uuid.UUID] = mapped_column(
-        PG_UUID(as_uuid=True),
-        default_factory=uuid.uuid4,
-        init=False,
-        primary_key=True,
-    )
 
 
 class HasCreatedAt(MappedAsDataclass):

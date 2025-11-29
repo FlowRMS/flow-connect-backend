@@ -8,11 +8,11 @@ from sqlalchemy import Date, ForeignKey, String, Text
 from sqlalchemy.dialects.postgresql import UUID as PG_UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
-from app.core.db.base import CrmBaseModel, HasCreatedAt, HasCreatedBy, HasPrimaryKey
+from app.core.db.base import CrmBaseModel, HasCreatedAt, HasCreatedBy
 from app.graphql.jobs.models.status_model import JobStatus
 
 
-class Job(CrmBaseModel, HasPrimaryKey, HasCreatedAt, HasCreatedBy, kw_only=True):
+class Job(CrmBaseModel, HasCreatedAt, HasCreatedBy, kw_only=True):
     """
     Job entity representing a job in the CRM system.
 

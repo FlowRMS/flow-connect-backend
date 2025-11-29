@@ -10,7 +10,7 @@ from sqlalchemy import Date, ForeignKey, String
 from sqlalchemy.dialects.postgresql import UUID as PG_UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
-from app.core.db.base import CrmBaseModel, HasCreatedAt, HasCreatedBy, HasPrimaryKey
+from app.core.db.base import CrmBaseModel, HasCreatedAt, HasCreatedBy
 from app.graphql.jobs.models.jobs_model import Job
 from app.graphql.pre_opportunities.models.pre_opportunity_balance_model import (
     PreOpportunityBalance,
@@ -25,9 +25,7 @@ if TYPE_CHECKING:
     )
 
 
-class PreOpportunity(
-    CrmBaseModel, HasPrimaryKey, HasCreatedAt, HasCreatedBy, kw_only=True
-):
+class PreOpportunity(CrmBaseModel, HasCreatedAt, HasCreatedBy, kw_only=True):
     """
     PreOpportunity entity representing a potential sales opportunity.
 

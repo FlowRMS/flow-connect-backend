@@ -384,8 +384,6 @@ type Query {
   contact(id: UUID!): ContactResponse!
   contactsByCompany(companyId: UUID!): [ContactResponse!]!
   preOpportunity(id: UUID!): PreOpportunityResponse!
-  preOpportunitiesByJob(jobId: UUID!): [PreOpportunityResponse!]!
-  preOpportunitiesByCustomer(customerId: UUID!): [PreOpportunityResponse!]!
   productSearch(searchTerm: String!, factoryId: UUID, limit: Int! = 20): [ProductResponse!]!
   factorySearch(searchTerm: String!, published: Boolean! = true, limit: Int! = 20): [FactoryResponse!]!
   customerSearch(searchTerm: String!, published: Boolean! = true, limit: Int! = 20): [CustomerResponse!]!

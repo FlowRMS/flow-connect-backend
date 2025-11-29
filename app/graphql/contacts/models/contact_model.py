@@ -6,11 +6,11 @@ from sqlalchemy import ARRAY, ForeignKey, String, Text
 from sqlalchemy.dialects.postgresql import UUID as PG_UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
-from app.core.db.base import CrmBaseModel, HasCreatedAt, HasCreatedBy, HasPrimaryKey
+from app.core.db.base import CrmBaseModel, HasCreatedAt, HasCreatedBy
 from app.graphql.companies.models.company_model import Company
 
 
-class Contact(CrmBaseModel, HasPrimaryKey, HasCreatedAt, HasCreatedBy, kw_only=True):
+class Contact(CrmBaseModel, HasCreatedAt, HasCreatedBy, kw_only=True):
     """
     Contact entity representing a contact in the CRM system.
 

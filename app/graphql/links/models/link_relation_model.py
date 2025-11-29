@@ -7,11 +7,11 @@ from sqlalchemy import Index
 from sqlalchemy.dialects.postgresql import UUID as PG_UUID
 from sqlalchemy.orm import Mapped, mapped_column
 
-from app.core.db.base import BaseModel, HasCreatedAt, HasCreatedBy, HasPrimaryKey
+from app.core.db.base import BaseModel, HasCreatedAt, HasCreatedBy
 from app.graphql.links.models.entity_type import EntityType
 
 
-class LinkRelation(BaseModel, HasPrimaryKey, HasCreatedAt, HasCreatedBy, kw_only=True):
+class LinkRelation(BaseModel, HasCreatedAt, HasCreatedBy, kw_only=True):
     """Link relation entity representing bidirectional relationships between any two entities."""
 
     __tablename__ = "link_relations"

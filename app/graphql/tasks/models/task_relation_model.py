@@ -5,11 +5,11 @@ from sqlalchemy import ForeignKeyConstraint, Index
 from sqlalchemy.dialects.postgresql import UUID as PG_UUID
 from sqlalchemy.orm import Mapped, mapped_column
 
-from app.core.db.base import BaseModel, HasPrimaryKey
+from app.core.db.base import BaseModel
 from app.graphql.tasks.models.related_entity_type import RelatedEntityType
 
 
-class TaskRelation(BaseModel, HasPrimaryKey, kw_only=True):
+class TaskRelation(BaseModel, kw_only=True):
     """Task relation entity representing relationships between tasks and other entities."""
 
     __tablename__ = "task_relations"
