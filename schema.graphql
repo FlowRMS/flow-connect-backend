@@ -225,6 +225,7 @@ type LinkRelationType {
 type Mutation {
   createJob(input: JobInput!): JobType!
   updateJob(id: UUID!, input: JobInput!): JobType!
+  deleteJob(id: UUID!): Boolean!
   createTask(input: TaskInput!): TaskType!
   deleteTask(id: UUID!): Boolean!
   addTaskRelation(input: TaskRelationInput!): TaskRelationType!

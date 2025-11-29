@@ -44,3 +44,25 @@ class JobsMutations:
             The updated JobType object
         """
         return JobType.from_orm_model(await service.update_job(id, input))
+
+    @strawberry.mutation
+    @inject
+    async def delete_job(
+        self,
+        id: UUID,
+        service: Injected[JobsService],
+    ) -> bool:
+        """
+        Delete a job.
+
+        Args:
+            id: The job ID to delete
+            service: Injected JobsService
+
+        Returns:
+            True if deleted successfully
+
+        Raises:
+            NotFoundError: If the job doesn't exist
+        """
+        return await service.delete_job(id)
