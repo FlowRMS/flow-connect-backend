@@ -25,6 +25,17 @@ class TasksMutations:
 
     @strawberry.mutation
     @inject
+    async def update_task(
+        self,
+        id: UUID,
+        input: TaskInput,
+        service: Injected[TasksService],
+    ) -> TaskType:
+        """Update an existing task."""
+        return TaskType.from_orm_model(await service.update_task(id, input))
+
+    @strawberry.mutation
+    @inject
     async def delete_task(
         self,
         id: UUID,

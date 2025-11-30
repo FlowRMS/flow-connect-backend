@@ -227,8 +227,15 @@ type Mutation {
   updateJob(id: UUID!, input: JobInput!): JobType!
   deleteJob(id: UUID!): Boolean!
   createTask(input: TaskInput!): TaskType!
+  updateTask(id: UUID!, input: TaskInput!): TaskType!
   deleteTask(id: UUID!): Boolean!
   addTaskRelation(input: TaskRelationInput!): TaskRelationType!
+  createNote(input: NoteInput!): NoteType!
+  updateNote(id: UUID!, input: NoteInput!): NoteType!
+  deleteNote(id: UUID!): Boolean!
+  addNoteConversation(input: NoteConversationInput!): NoteConversationType!
+  updateNoteConversation(input: NoteConversationInput!): NoteConversationType!
+  deleteNoteConversations(noteId: UUID!): Boolean!
   createCompany(input: CompanyInput!): CompanyResponse!
   deleteCompany(id: UUID!): Boolean!
   updateCompany(id: UUID!, input: CompanyInput!): CompanyResponse!
@@ -241,6 +248,37 @@ type Mutation {
   createPreOpportunity(input: PreOpportunityInput!): PreOpportunityResponse!
   updatePreOpportunity(input: PreOpportunityInput!): PreOpportunityResponse!
   deletePreOpportunity(id: UUID!): Boolean!
+}
+
+input NoteConversationInput {
+  noteId: UUID!
+  content: String!
+}
+
+type NoteConversationType {
+  id: UUID!
+  createdAt: datetime!
+  createdBy: UUID!
+  noteId: UUID!
+  content: String!
+}
+
+input NoteInput {
+  title: String!
+  content: String!
+  tags: [String!]
+  mentions: [UUID!]
+}
+
+type NoteType {
+  id: UUID!
+  createdAt: datetime!
+  createdBy: UUID!
+  title: String!
+  content: String!
+  tags: [String!]
+  mentions: [UUID!]
+  conversations: [NoteConversationType!]!
 }
 
 input OrderBy {
@@ -386,6 +424,10 @@ type Query {
   jobsByContact(contactId: UUID!): [JobType!]!
   jobsByCompany(companyId: UUID!): [JobType!]!
   task(id: UUID!): TaskType!
+  note(id: UUID!): NoteType!
+  notes(limit: Int! = 20, offset: Int! = 0): [NoteType!]!
+  notesByEntity(entityType: EntityType!, entityId: UUID!): [NoteType!]!
+  noteConversations(noteId: UUID!): [NoteConversationType!]!
   company(id: UUID!): CompanyResponse!
   contact(id: UUID!): ContactResponse!
   contactsByCompany(companyId: UUID!): [ContactResponse!]!

@@ -23,6 +23,8 @@ from app.graphql.inject import context_setter
 from app.graphql.jobs.mutations.jobs_mutations import JobsMutations
 from app.graphql.jobs.queries.jobs_queries import JobsQueries
 from app.graphql.links.mutations.links_mutations import LinksMutations
+from app.graphql.notes.mutations.notes_mutations import NotesMutations
+from app.graphql.notes.queries.notes_queries import NotesQueries
 from app.graphql.pre_opportunities.mutations.pre_opportunities_mutations import (
     PreOpportunitiesMutations,
 )
@@ -42,6 +44,7 @@ Query = merge_types(
     types=(
         JobsQueries,
         TasksQueries,
+        NotesQueries,
         CompaniesQueries,
         ContactsQueries,
         PreOpportunitiesQueries,
@@ -57,6 +60,7 @@ Mutation = merge_types(
     types=(
         JobsMutations,
         TasksMutations,
+        NotesMutations,
         CompaniesMutations,
         ContactsMutations,
         LinksMutations,

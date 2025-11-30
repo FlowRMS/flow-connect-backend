@@ -32,6 +32,15 @@ class TasksService:
         task = task_input.to_orm_model()
         return await self.repository.create(task)
 
+    async def update_task(self, task_id: UUID, task_input: TaskInput) -> Task:
+        """Update an existing task."""
+        if not await self.repository.exists(task_id):
+            raise NotFoundError(str(task_id))
+
+        task = task_input.to_orm_model()
+        task.id = task_id
+        return await self.repository.update(task)
+
     async def delete_task(self, task_id: UUID | str) -> bool:
         """Delete a task by ID."""
         if not await self.repository.exists(task_id):
