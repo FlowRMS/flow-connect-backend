@@ -68,13 +68,26 @@ class NotesMutations:
     @inject
     async def update_note_conversation(
         self,
+        note_conversation_id: UUID,
         input: NoteConversationInput,
         service: Injected[NotesService],
     ) -> NoteConversationType:
         """Update an existing conversation entry."""
         return NoteConversationType.from_orm_model(
-            await service.update_conversation(conversation_input=input)
+            await service.update_conversation(
+                conversation_id=note_conversation_id, conversation_input=input
+            )
         )
+
+    @strawberry.mutation
+    @inject
+    async def delete_note_conversation(
+        self,
+        conversation_id: UUID,
+        service: Injected[NotesService],
+    ) -> bool:
+        """Delete a conversation entry by ID."""
+        return await service.delete_conversation(conversation_id=conversation_id)
 
     @strawberry.mutation
     @inject
@@ -84,4 +97,4 @@ class NotesMutations:
         service: Injected[NotesService],
     ) -> bool:
         """Delete a conversation entry by ID."""
-        return await service.delete_conversation(note_id=note_id)
+        return await service.delete_conversations(note_id=note_id)

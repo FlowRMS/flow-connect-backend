@@ -21,3 +21,20 @@ class NoteConversationsRepository(BaseRepository[NoteConversation]):
         stmt = select(NoteConversation).where(NoteConversation.note_id == note_id)
         result = await self.session.execute(stmt)
         return list(result.scalars().all())
+
+    async def delete_by_note_id(self, note_id: UUID) -> bool:
+        """Delete all conversations for a specific note.
+
+        Args:
+            note_id: The ID of the note whose conversations should be deleted.
+
+        Returns:
+            The number of conversations deleted.
+        """
+        note_conversations = await self.get_by_note_id(note_id)
+
+        for conversation in note_conversations:
+            _ = await self.delete(conversation.id)
+
+        await self.session.flush()
+        return True

@@ -241,7 +241,8 @@ type Mutation {
   updateNote(id: UUID!, input: NoteInput!): NoteType!
   deleteNote(id: UUID!): Boolean!
   addNoteConversation(input: NoteConversationInput!): NoteConversationType!
-  updateNoteConversation(input: NoteConversationInput!): NoteConversationType!
+  updateNoteConversation(noteConversationId: UUID!, input: NoteConversationInput!): NoteConversationType!
+  deleteNoteConversation(conversationId: UUID!): Boolean!
   deleteNoteConversations(noteId: UUID!): Boolean!
   createCompany(input: CompanyInput!): CompanyResponse!
   deleteCompany(id: UUID!): Boolean!

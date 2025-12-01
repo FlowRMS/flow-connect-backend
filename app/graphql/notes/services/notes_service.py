@@ -80,21 +80,25 @@ class NotesService:
         )
 
     async def update_conversation(
-        self, conversation_input: NoteConversationInput
+        self, conversation_id: UUID, conversation_input: NoteConversationInput
     ) -> NoteConversation:
         """Update an existing conversation entry."""
-        if not await self.conversations_repository.exists(conversation_input.note_id):
-            raise NotFoundError(str(conversation_input.note_id))
-        return await self.conversations_repository.update(
-            conversation_input.to_orm_model()
-        )
+        if not await self.conversations_repository.exists(conversation_id):
+            raise NotFoundError(str(conversation_id))
+        conversation = conversation_input.to_orm_model()
+        conversation.id = conversation_id
+        return await self.conversations_repository.update(conversation)
 
-    # TODO: Fix this
-    async def delete_conversation(self, note_id: UUID | str) -> bool:
-        """Delete a conversation entry by ID."""
-        if not await self.conversations_repository.exists(note_id):
+    async def delete_conversation(self, conversation_id: UUID | str) -> bool:
+        """Delete a single conversation entry by its ID."""
+        if not await self.conversations_repository.exists(conversation_id):
+            raise NotFoundError(str(conversation_id))
+        return await self.conversations_repository.delete(conversation_id)
+
+    async def delete_conversations(self, note_id: UUID) -> bool:
+        if not await self.repository.exists(note_id):
             raise NotFoundError(str(note_id))
-        return await self.conversations_repository.delete(note_id)
+        return await self.conversations_repository.delete_by_note_id(note_id)
 
     async def get_conversations_by_note(self, note_id: UUID) -> list[NoteConversation]:
         """Get all conversation entries for a specific note."""
