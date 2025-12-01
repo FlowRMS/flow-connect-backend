@@ -198,7 +198,7 @@ interface LandingPageInterfaceBase {
   createdBy: String!
 }
 
-union LandingRecord = JobLandingPage | CompanyLandingPage | ContactLandingPage | PreOpportunityLandingPage
+union LandingRecord = JobLandingPage | CompanyLandingPage | ContactLandingPage | PreOpportunityLandingPage | NoteLandingPage | TaskLandingPage
 
 enum LandingSourceType {
   JOBS
@@ -275,6 +275,15 @@ input NoteInput {
   content: String!
   tags: [String!]
   mentions: [UUID!]
+}
+
+type NoteLandingPage implements LandingPageInterfaceBase {
+  id: UUID!
+  createdAt: datetime!
+  createdBy: String!
+  title: String!
+  content: String!
+  tags: [String!]
 }
 
 type NoteType {
@@ -476,6 +485,18 @@ input TaskInput {
   assignedToId: UUID
   dueDate: Date
   tags: [String!]
+}
+
+type TaskLandingPage implements LandingPageInterfaceBase {
+  id: UUID!
+  createdAt: datetime!
+  createdBy: String!
+  title: String!
+  status: TaskStatus!
+  priority: TaskPriority!
+  description: String
+  assignedTo: String
+  dueDate: Date
 }
 
 enum TaskPriority {
