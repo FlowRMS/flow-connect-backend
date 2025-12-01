@@ -33,6 +33,7 @@ class PreOpportunityLiteResponse(DTOMixin[PreOpportunity]):
     payment_terms: str | None
     customer_ref: str | None
     freight_terms: str | None
+    tags: list[str] | None
 
     @classmethod
     def from_orm_model(cls, model: PreOpportunity) -> Self:
@@ -56,4 +57,5 @@ class PreOpportunityLiteResponse(DTOMixin[PreOpportunity]):
             payment_terms=model.payment_terms,
             customer_ref=model.customer_ref,
             freight_terms=model.freight_terms,
+            tags=model.tags,
         )

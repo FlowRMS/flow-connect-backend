@@ -53,6 +53,7 @@ class PreOpportunitiesRepository(BaseRepository[PreOpportunity]):
                 PreOpportunity.entity_date,
                 PreOpportunity.exp_date,
                 PreOpportunityBalance.total.label("total"),
+                PreOpportunity.tags,
             )
             .select_from(PreOpportunity)
             .options(lazyload("*"))

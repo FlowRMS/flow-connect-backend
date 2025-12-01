@@ -146,6 +146,7 @@ input JobInput {
   structuralInformation: String
   additionalInformation: String
   requesterId: UUID
+  tags: [String!]
 }
 
 type JobLandingPage implements LandingPageInterfaceBase {
@@ -160,6 +161,7 @@ type JobLandingPage implements LandingPageInterfaceBase {
   jobType: String
   requester: String
   jobOwner: String
+  tags: [String!]
 }
 
 type JobRelatedEntitiesResponse {
@@ -186,6 +188,7 @@ type JobType {
   structuralInformation: String
   additionalInformation: String
   requesterId: UUID
+  tags: [String!]
   status: JobStatusType!
 }
 
@@ -202,6 +205,7 @@ enum LandingSourceType {
   COMPANIES
   CONTACTS
   TASKS
+  NOTES
   PRE_OPPORTUNITIES
 }
 
@@ -230,6 +234,9 @@ type Mutation {
   updateTask(id: UUID!, input: TaskInput!): TaskType!
   deleteTask(id: UUID!): Boolean!
   addTaskRelation(input: TaskRelationInput!): TaskRelationType!
+  addTaskConversation(input: TaskConversationInput!): TaskConversationType!
+  updateTaskConversation(id: UUID!, input: TaskConversationInput!): TaskConversationType!
+  deleteTaskConversation(id: UUID!): Boolean!
   createNote(input: NoteInput!): NoteType!
   updateNote(id: UUID!, input: NoteInput!): NoteType!
   deleteNote(id: UUID!): Boolean!
@@ -278,7 +285,6 @@ type NoteType {
   content: String!
   tags: [String!]
   mentions: [UUID!]
-  conversations: [NoteConversationType!]!
 }
 
 input OrderBy {
@@ -346,6 +352,7 @@ input PreOpportunityInput {
   paymentTerms: String
   customerRef: String
   freightTerms: String
+  tags: [String!]
 }
 
 type PreOpportunityLandingPage implements LandingPageInterfaceBase {
@@ -357,6 +364,7 @@ type PreOpportunityLandingPage implements LandingPageInterfaceBase {
   entityDate: Date!
   expDate: Date
   total: Decimal!
+  tags: [String!]
 }
 
 type PreOpportunityLiteResponse {
@@ -377,6 +385,7 @@ type PreOpportunityLiteResponse {
   paymentTerms: String
   customerRef: String
   freightTerms: String
+  tags: [String!]
 }
 
 type PreOpportunityResponse {
@@ -397,6 +406,7 @@ type PreOpportunityResponse {
   paymentTerms: String
   customerRef: String
   freightTerms: String
+  tags: [String!]
   balance: PreOpportunityBalanceResponse!
   details: [PreOpportunityDetailResponse!]!
   job: JobType
@@ -424,6 +434,7 @@ type Query {
   jobsByContact(contactId: UUID!): [JobType!]!
   jobsByCompany(companyId: UUID!): [JobType!]!
   task(id: UUID!): TaskType!
+  taskConversations(taskId: UUID!): [TaskConversationType!]!
   note(id: UUID!): NoteType!
   notes(limit: Int! = 20, offset: Int! = 0): [NoteType!]!
   notesByEntity(entityType: EntityType!, entityId: UUID!): [NoteType!]!
@@ -442,6 +453,19 @@ enum RelatedEntityType {
   JOB
   CONTACT
   COMPANY
+}
+
+input TaskConversationInput {
+  taskId: UUID!
+  content: String!
+}
+
+type TaskConversationType {
+  id: UUID!
+  createdAt: datetime!
+  createdBy: UUID!
+  taskId: UUID!
+  content: String!
 }
 
 input TaskInput {

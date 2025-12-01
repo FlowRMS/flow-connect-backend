@@ -4,12 +4,17 @@ from commons.auth import AuthInfo
 
 from app.errors.common_errors import NotFoundError
 from app.graphql.tasks.models.related_entity_type import RelatedEntityType
+from app.graphql.tasks.models.task_conversation_model import TaskConversation
 from app.graphql.tasks.models.task_model import Task
 from app.graphql.tasks.models.task_relation_model import TaskRelation
+from app.graphql.tasks.repositories.task_conversations_repository import (
+    TaskConversationsRepository,
+)
 from app.graphql.tasks.repositories.task_relations_repository import (
     TaskRelationsRepository,
 )
 from app.graphql.tasks.repositories.tasks_repository import TasksRepository
+from app.graphql.tasks.strawberry.task_conversation_input import TaskConversationInput
 from app.graphql.tasks.strawberry.task_input import TaskInput, TaskRelationInput
 
 
@@ -20,11 +25,13 @@ class TasksService:
         self,
         repository: TasksRepository,
         relations_repository: TaskRelationsRepository,
+        conversations_repository: TaskConversationsRepository,
         auth_info: AuthInfo,
     ) -> None:
         super().__init__()
         self.repository = repository
         self.relations_repository = relations_repository
+        self.conversations_repository = conversations_repository
         self.auth_info = auth_info
 
     async def create_task(self, task_input: TaskInput) -> Task:
@@ -77,3 +84,35 @@ class TasksService:
             related_type=relation_input.related_type,
             related_id=relation_input.related_id,
         )
+
+    async def add_conversation(
+        self, conversation_input: TaskConversationInput
+    ) -> TaskConversation:
+        """Add a conversation entry to a task."""
+        if not await self.repository.exists(conversation_input.task_id):
+            raise NotFoundError(str(conversation_input.task_id))
+        return await self.conversations_repository.create(
+            conversation_input.to_orm_model()
+        )
+
+    async def update_conversation(
+        self, conversation_id: UUID, conversation_input: TaskConversationInput
+    ) -> TaskConversation:
+        """Update an existing conversation entry."""
+        if not await self.conversations_repository.exists(conversation_id):
+            raise NotFoundError(str(conversation_id))
+        conversation = conversation_input.to_orm_model()
+        conversation.id = conversation_id
+        return await self.conversations_repository.update(conversation)
+
+    async def delete_conversation(self, conversation_id: UUID | str) -> bool:
+        """Delete a conversation entry by ID."""
+        if not await self.conversations_repository.exists(conversation_id):
+            raise NotFoundError(str(conversation_id))
+        return await self.conversations_repository.delete(conversation_id)
+
+    async def get_conversations_by_task(self, task_id: UUID) -> list[TaskConversation]:
+        """Get all conversation entries for a specific task."""
+        if not await self.repository.exists(task_id):
+            raise NotFoundError(str(task_id))
+        return await self.conversations_repository.get_by_task_id(task_id)

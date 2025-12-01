@@ -4,7 +4,7 @@ import uuid
 from datetime import date
 from uuid import UUID
 
-from sqlalchemy import Date, ForeignKey, String, Text
+from sqlalchemy import ARRAY, Date, ForeignKey, String, Text
 from sqlalchemy.dialects.postgresql import UUID as PG_UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
@@ -38,6 +38,7 @@ class Job(CrmBaseModel, HasCreatedAt, HasCreatedBy, kw_only=True):
     job_owner_id: Mapped[UUID | None] = mapped_column(
         PG_UUID(as_uuid=True), nullable=True
     )
+    tags: Mapped[list[str] | None] = mapped_column(ARRAY(String), nullable=True)
 
     status: Mapped[JobStatus] = relationship(
         init=False, back_populates="jobs", lazy="joined"

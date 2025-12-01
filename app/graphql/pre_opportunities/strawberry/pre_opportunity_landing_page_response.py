@@ -17,3 +17,4 @@ class PreOpportunityLandingPageResponse(LandingPageInterfaceBase):
     entity_date: date
     exp_date: date | None
     total: Decimal
+    tags: list[str] | None

@@ -13,4 +13,5 @@ class LandingSourceType(Enum):
     COMPANIES = "companies"
     CONTACTS = "contacts"
     TASKS = "tasks"
+    NOTES = "notes"
     PRE_OPPORTUNITIES = "pre_opportunities"

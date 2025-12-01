@@ -6,7 +6,7 @@ from uuid import UUID
 
 from commons.db.int_enum import IntEnum
 from commons.db.models.core.customer import Customer
-from sqlalchemy import Date, ForeignKey, String
+from sqlalchemy import ARRAY, Date, ForeignKey, String
 from sqlalchemy.dialects.postgresql import UUID as PG_UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
@@ -82,6 +82,7 @@ class PreOpportunity(CrmBaseModel, HasCreatedAt, HasCreatedBy, kw_only=True):
     payment_terms: Mapped[str | None] = mapped_column(String(255), nullable=True)
     customer_ref: Mapped[str | None] = mapped_column(String(255), nullable=True)
     freight_terms: Mapped[str | None] = mapped_column(String(255), nullable=True)
+    tags: Mapped[list[str] | None] = mapped_column(ARRAY(String), nullable=True)
 
     # Relationships
     balance: Mapped["PreOpportunityBalance"] = relationship(

@@ -57,6 +57,7 @@ class JobsRepository(BaseRepository[Job]):
                 Job.job_type,
                 requester_alias.full_name.label("requester"),
                 user_owner_alias.full_name.label("job_owner"),
+                Job.tags,
             )
             .select_from(Job)
             .options(lazyload("*"))

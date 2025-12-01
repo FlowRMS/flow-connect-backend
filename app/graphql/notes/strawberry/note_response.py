@@ -54,6 +54,6 @@ class NoteType(DTOMixin[Note]):
             mentions=model.mentions,
         )
 
-    @strawberry.field
-    def conversations(self) -> list[NoteConversationType]:
-        return NoteConversationType.from_orm_model_list(self._instance.conversations)
+    # @strawberry.field
+    # def conversations(self) -> list[NoteConversationType]:
+    #     return NoteConversationType.from_orm_model_list(self._instance.conversations)

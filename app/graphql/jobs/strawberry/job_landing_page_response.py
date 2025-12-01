@@ -19,3 +19,4 @@ class JobLandingPageResponse(LandingPageInterfaceBase):
     job_type: str | None
     requester: str | None
     job_owner: str | None
+    tags: list[str] | None

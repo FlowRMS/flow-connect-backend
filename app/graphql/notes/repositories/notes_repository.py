@@ -1,22 +1,51 @@
 """Repository for Note entity."""
 
+from typing import Any
 from uuid import UUID
 
-from sqlalchemy import select
+from commons.db.models.user import User
+from sqlalchemy import Select, select
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import lazyload
 
 from app.core.context_wrapper import ContextWrapper
 from app.graphql.base_repository import BaseRepository
 from app.graphql.links.models.entity_type import EntityType
 from app.graphql.links.models.link_relation_model import LinkRelation
 from app.graphql.notes.models.note_model import Note
+from app.graphql.notes.strawberry.note_landing_page_response import (
+    NoteLandingPageResponse,
+)
 
 
 class NotesRepository(BaseRepository[Note]):
     """Repository for Notes entity."""
 
+    landing_model = NoteLandingPageResponse
+
     def __init__(self, context_wrapper: ContextWrapper, session: AsyncSession) -> None:
         super().__init__(session, context_wrapper, Note)
+
+    def paginated_stmt(self) -> Select[Any]:
+        """
+        Build paginated query for notes landing page.
+
+        Returns:
+            SQLAlchemy select statement with columns for landing page
+        """
+        return (
+            select(
+                Note.id,
+                Note.created_at,
+                User.full_name.label("created_by"),
+                Note.title,
+                Note.content,
+                Note.tags,
+            )
+            .select_from(Note)
+            .options(lazyload("*"))
+            .join(User, User.id == Note.created_by)
+        )
 
     async def find_by_entity(
         self,

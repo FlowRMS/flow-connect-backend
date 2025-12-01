@@ -34,6 +34,7 @@ class PreOpportunityInput(BaseInputGQL[PreOpportunity]):
     payment_terms: str | None = strawberry.UNSET
     customer_ref: str | None = strawberry.UNSET
     freight_terms: str | None = strawberry.UNSET
+    tags: list[str] | None = strawberry.UNSET
 
     def to_orm_model(self) -> PreOpportunity:
         return PreOpportunity(
@@ -55,5 +56,6 @@ class PreOpportunityInput(BaseInputGQL[PreOpportunity]):
             payment_terms=self.optional_field(self.payment_terms),
             customer_ref=self.optional_field(self.customer_ref),
             freight_terms=self.optional_field(self.freight_terms),
+            tags=self.optional_field(self.tags),
             details=[detail.to_orm_model() for detail in self.details],
         )

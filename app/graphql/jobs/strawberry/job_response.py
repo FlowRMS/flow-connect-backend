@@ -27,6 +27,7 @@ class JobType(DTOMixin[Job]):
     structural_information: str | None
     additional_information: str | None
     requester_id: UUID | None
+    tags: list[str] | None
 
     @classmethod
     def from_orm_model(cls, model: Job) -> Self:
@@ -44,6 +45,7 @@ class JobType(DTOMixin[Job]):
             structural_information=model.structural_information,
             additional_information=model.additional_information,
             requester_id=model.requester_id,
+            tags=model.tags,
         )
 
     @strawberry.field

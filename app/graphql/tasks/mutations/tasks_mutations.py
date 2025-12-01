@@ -5,6 +5,10 @@ from aioinject import Injected
 
 from app.graphql.inject import inject
 from app.graphql.tasks.services.tasks_service import TasksService
+from app.graphql.tasks.strawberry.task_conversation_input import TaskConversationInput
+from app.graphql.tasks.strawberry.task_conversation_response import (
+    TaskConversationType,
+)
 from app.graphql.tasks.strawberry.task_input import TaskInput, TaskRelationInput
 from app.graphql.tasks.strawberry.task_response import TaskRelationType, TaskType
 
@@ -55,3 +59,40 @@ class TasksMutations:
         return TaskRelationType.from_orm_model(
             await service.add_task_relation_from_input(relation_input=input)
         )
+
+    @strawberry.mutation
+    @inject
+    async def add_task_conversation(
+        self,
+        input: TaskConversationInput,
+        service: Injected[TasksService],
+    ) -> TaskConversationType:
+        """Add a conversation entry to a task."""
+        return TaskConversationType.from_orm_model(
+            await service.add_conversation(conversation_input=input)
+        )
+
+    @strawberry.mutation
+    @inject
+    async def update_task_conversation(
+        self,
+        id: UUID,
+        input: TaskConversationInput,
+        service: Injected[TasksService],
+    ) -> TaskConversationType:
+        """Update an existing conversation entry."""
+        return TaskConversationType.from_orm_model(
+            await service.update_conversation(
+                conversation_id=id, conversation_input=input
+            )
+        )
+
+    @strawberry.mutation
+    @inject
+    async def delete_task_conversation(
+        self,
+        id: UUID,
+        service: Injected[TasksService],
+    ) -> bool:
+        """Delete a conversation entry by ID."""
+        return await service.delete_conversation(conversation_id=id)

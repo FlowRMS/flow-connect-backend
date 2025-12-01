@@ -23,6 +23,7 @@ class JobInput(BaseInputGQL[Job]):
     structural_information: str | None = strawberry.UNSET
     additional_information: str | None = strawberry.UNSET
     requester_id: UUID | None = strawberry.UNSET
+    tags: list[str] | None = strawberry.UNSET
 
     def to_orm_model(self) -> Job:
         return Job(
@@ -37,4 +38,5 @@ class JobInput(BaseInputGQL[Job]):
             structural_information=self.optional_field(self.structural_information),
             additional_information=self.optional_field(self.additional_information),
             requester_id=self.optional_field(self.requester_id),
+            tags=self.optional_field(self.tags),
         )
