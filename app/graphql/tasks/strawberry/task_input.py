@@ -4,10 +4,8 @@ from uuid import UUID
 import strawberry
 
 from app.core.strawberry.inputs import BaseInputGQL
-from app.graphql.tasks.models.related_entity_type import RelatedEntityType
 from app.graphql.tasks.models.task_model import Task
 from app.graphql.tasks.models.task_priority import TaskPriority
-from app.graphql.tasks.models.task_relation_model import TaskRelation
 from app.graphql.tasks.models.task_status import TaskStatus
 
 
@@ -33,21 +31,4 @@ class TaskInput(BaseInputGQL[Task]):
             assigned_to_id=self.optional_field(self.assigned_to_id),
             due_date=self.optional_field(self.due_date),
             tags=self.optional_field(self.tags),
-        )
-
-
-@strawberry.input
-class TaskRelationInput(BaseInputGQL[TaskRelation]):
-    """GraphQL input type for creating task relations."""
-
-    task_id: UUID
-    related_type: RelatedEntityType
-    related_id: UUID
-
-    def to_orm_model(self) -> TaskRelation:
-        """Convert input to ORM model."""
-        return TaskRelation(
-            task_id=self.task_id,
-            related_type=self.related_type,
-            related_id=self.related_id,
         )

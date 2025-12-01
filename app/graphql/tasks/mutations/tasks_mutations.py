@@ -9,8 +9,8 @@ from app.graphql.tasks.strawberry.task_conversation_input import TaskConversatio
 from app.graphql.tasks.strawberry.task_conversation_response import (
     TaskConversationType,
 )
-from app.graphql.tasks.strawberry.task_input import TaskInput, TaskRelationInput
-from app.graphql.tasks.strawberry.task_response import TaskRelationType, TaskType
+from app.graphql.tasks.strawberry.task_input import TaskInput
+from app.graphql.tasks.strawberry.task_response import TaskType
 
 
 @strawberry.type
@@ -47,18 +47,6 @@ class TasksMutations:
     ) -> bool:
         """Delete a task by ID."""
         return await service.delete_task(task_id=id)
-
-    @strawberry.mutation
-    @inject
-    async def add_task_relation(
-        self,
-        input: TaskRelationInput,
-        service: Injected[TasksService],
-    ) -> TaskRelationType:
-        """Add a relation to a task."""
-        return TaskRelationType.from_orm_model(
-            await service.add_task_relation_from_input(relation_input=input)
-        )
 
     @strawberry.mutation
     @inject

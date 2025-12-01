@@ -4,10 +4,8 @@ from uuid import UUID
 import strawberry
 
 from app.core.db.adapters.dto import DTOMixin
-from app.graphql.tasks.models.related_entity_type import RelatedEntityType
 from app.graphql.tasks.models.task_model import Task
 from app.graphql.tasks.models.task_priority import TaskPriority
-from app.graphql.tasks.models.task_relation_model import TaskRelation
 from app.graphql.tasks.models.task_status import TaskStatus
 
 
@@ -40,24 +38,4 @@ class TaskType(DTOMixin[Task]):
             assigned_to_id=model.assigned_to_id,
             due_date=model.due_date,
             tags=model.tags,
-        )
-
-
-@strawberry.type
-class TaskRelationType(DTOMixin[TaskRelation]):
-    """GraphQL type for TaskRelation entity (output/query results)."""
-
-    id: UUID
-    task_id: UUID
-    related_type: RelatedEntityType
-    related_id: UUID
-
-    @classmethod
-    def from_orm_model(cls, model: TaskRelation) -> "TaskRelationType":
-        """Convert ORM model to GraphQL type."""
-        return cls(
-            id=model.id,
-            task_id=model.task_id,
-            related_type=model.related_type,
-            related_id=model.related_id,
         )

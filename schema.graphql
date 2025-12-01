@@ -233,7 +233,6 @@ type Mutation {
   createTask(input: TaskInput!): TaskType!
   updateTask(id: UUID!, input: TaskInput!): TaskType!
   deleteTask(id: UUID!): Boolean!
-  addTaskRelation(input: TaskRelationInput!): TaskRelationType!
   addTaskConversation(input: TaskConversationInput!): TaskConversationType!
   updateTaskConversation(id: UUID!, input: TaskConversationInput!): TaskConversationType!
   deleteTaskConversation(id: UUID!): Boolean!
@@ -459,12 +458,6 @@ type Query {
   findLandingPages(sourceType: LandingSourceType!, filters: [Filter!] = null, orderBy: [OrderBy!] = null, limit: Int = 10, offset: Int = 0): GenericLandingPage!
 }
 
-enum RelatedEntityType {
-  JOB
-  CONTACT
-  COMPANY
-}
-
 input TaskConversationInput {
   taskId: UUID!
   content: String!
@@ -505,19 +498,6 @@ enum TaskPriority {
   NORMAL
   URGENT
   CRITICAL
-}
-
-input TaskRelationInput {
-  taskId: UUID!
-  relatedType: RelatedEntityType!
-  relatedId: UUID!
-}
-
-type TaskRelationType {
-  id: UUID!
-  taskId: UUID!
-  relatedType: RelatedEntityType!
-  relatedId: UUID!
 }
 
 enum TaskStatus {
