@@ -33,6 +33,7 @@ class Task(CrmBaseModel, HasCreatedAt, HasCreatedBy, kw_only=True):
         PG_UUID(as_uuid=True), nullable=True
     )
     due_date: Mapped[date | None] = mapped_column(Date, nullable=True)
+    reminder_date: Mapped[date | None] = mapped_column(Date, nullable=True)
     tags: Mapped[list[str] | None] = mapped_column(ARRAY(String), nullable=True)
 
     conversations: Mapped[list["TaskConversation"]] = relationship(

@@ -177,3 +177,11 @@ class JobsService:
         job = job_input.to_orm_model()
         job.id = job_id
         return await self.repository.update(job)
+
+    async def get_jobs_by_task(self, task_id: UUID) -> list[Job]:
+        """Find all jobs linked to the given task ID."""
+        return await self.repository.find_by_task_id(task_id)
+
+    async def get_jobs_by_note(self, note_id: UUID) -> list[Job]:
+        """Find all jobs linked to the given note ID."""
+        return await self.repository.find_by_note_id(note_id)

@@ -60,3 +60,26 @@ class CompaniesService:
         company = company_input.to_orm_model()
         company.id = company_id
         return await self.repository.update(company)
+
+    async def search_companies(
+        self, search_term: str, limit: int = 20
+    ) -> list[Company]:
+        """
+        Search companies by name.
+
+        Args:
+            search_term: The search term to match against company name
+            limit: Maximum number of companies to return (default: 20)
+
+        Returns:
+            List of Company objects matching the search criteria
+        """
+        return await self.repository.search_by_name(search_term, limit)
+
+    async def find_companies_by_task_id(self, task_id: UUID) -> list[Company]:
+        """Find all companies linked to the given task ID."""
+        return await self.repository.find_by_task_id(task_id)
+
+    async def find_companies_by_note_id(self, note_id: UUID) -> list[Company]:
+        """Find all companies linked to the given note ID."""
+        return await self.repository.find_by_note_id(note_id)

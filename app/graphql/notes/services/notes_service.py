@@ -105,3 +105,16 @@ class NotesService:
         if not await self.repository.exists(note_id):
             raise NotFoundError(str(note_id))
         return await self.conversations_repository.get_by_note_id(note_id)
+
+    async def search_notes(self, search_term: str, limit: int = 20) -> list[Note]:
+        """
+        Search notes by title or content.
+
+        Args:
+            search_term: The search term to match against note title or content
+            limit: Maximum number of notes to return (default: 20)
+
+        Returns:
+            List of Note objects matching the search criteria
+        """
+        return await self.repository.search_by_title_or_content(search_term, limit)

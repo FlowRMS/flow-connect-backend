@@ -3,6 +3,7 @@ from uuid import UUID
 from commons.auth import AuthInfo
 
 from app.errors.common_errors import NotFoundError
+from app.graphql.links.models.entity_type import EntityType
 from app.graphql.tasks.models.task_conversation_model import TaskConversation
 from app.graphql.tasks.models.task_model import Task
 from app.graphql.tasks.repositories.task_conversations_repository import (
@@ -85,3 +86,20 @@ class TasksService:
         if not await self.repository.exists(task_id):
             raise NotFoundError(str(task_id))
         return await self.conversations_repository.get_by_task_id(task_id)
+
+    async def search_tasks(self, search_term: str, limit: int = 20) -> list[Task]:
+        """
+        Search tasks by title.
+
+        Args:
+            search_term: The search term to match against task title
+            limit: Maximum number of tasks to return (default: 20)
+
+        Returns:
+            List of Task objects matching the search criteria
+        """
+        return await self.repository.search_by_title(search_term, limit)
+
+    async def find_tasks_by_note_id(self, note_id: UUID) -> list[Task]:
+        """Find all tasks linked to the given note ID."""
+        return await self.repository.find_by_entity(EntityType.NOTE, note_id)

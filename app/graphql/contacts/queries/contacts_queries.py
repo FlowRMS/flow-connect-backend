@@ -32,3 +32,25 @@ class ContactsQueries:
         """Get all contacts for a specific company."""
         contacts = await service.get_contacts_by_company(company_id)
         return ContactResponse.from_orm_model_list(contacts)
+
+    @strawberry.field
+    @inject
+    async def contact_search(
+        self,
+        service: Injected[ContactsService],
+        search_term: str,
+        limit: int = 20,
+    ) -> list[ContactResponse]:
+        """
+        Search contacts by name.
+
+        Args:
+            search_term: The search term to match against contact names
+            limit: Maximum number of contacts to return (default: 20)
+
+        Returns:
+            List of ContactResponse objects matching the search criteria
+        """
+        return ContactResponse.from_orm_model_list(
+            await service.search_contacts(search_term, limit)
+        )

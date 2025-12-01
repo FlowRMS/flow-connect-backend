@@ -77,3 +77,84 @@ class CompaniesRepository(BaseRepository[Company]):
         )
         result = await self.session.execute(stmt)
         return list(result.scalars().all())
+
+    async def search_by_name(self, search_term: str, limit: int = 20) -> list[Company]:
+        """
+        Search companies by name using case-insensitive pattern matching.
+
+        Args:
+            search_term: The search term to match against company name
+            limit: Maximum number of companies to return (default: 20)
+
+        Returns:
+            List of Company objects matching the search criteria
+        """
+        stmt = (
+            select(Company).where(Company.name.ilike(f"%{search_term}%")).limit(limit)
+        )
+        result = await self.session.execute(stmt)
+        return list(result.scalars().all())
+
+    async def find_by_task_id(self, task_id: UUID) -> list[Company]:
+        """
+        Find all companies linked to the given task ID.
+
+        Args:
+            task_id: The task ID to find companies for
+
+        Returns:
+            List of Company objects linked to the given task ID
+        """
+        stmt = select(Company).join(
+            LinkRelation,
+            or_(
+                # Companies as source, Tasks as target
+                (
+                    (LinkRelation.source_entity_type == EntityType.COMPANY)
+                    & (LinkRelation.target_entity_type == EntityType.TASK)
+                    & (LinkRelation.target_entity_id == task_id)
+                    & (LinkRelation.source_entity_id == Company.id)
+                ),
+                # Tasks as source, Companies as target
+                (
+                    (LinkRelation.source_entity_type == EntityType.TASK)
+                    & (LinkRelation.target_entity_type == EntityType.COMPANY)
+                    & (LinkRelation.source_entity_id == task_id)
+                    & (LinkRelation.target_entity_id == Company.id)
+                ),
+            ),
+        )
+        result = await self.session.execute(stmt)
+        return list(result.scalars().all())
+
+    async def find_by_note_id(self, note_id: UUID) -> list[Company]:
+        """
+        Find all companies linked to the given note ID.
+
+        Args:
+            note_id: The note ID to find companies for
+
+        Returns:
+            List of Company objects linked to the given note ID
+        """
+        stmt = select(Company).join(
+            LinkRelation,
+            or_(
+                # Companies as source, Notes as target
+                (
+                    (LinkRelation.source_entity_type == EntityType.COMPANY)
+                    & (LinkRelation.target_entity_type == EntityType.NOTE)
+                    & (LinkRelation.target_entity_id == note_id)
+                    & (LinkRelation.source_entity_id == Company.id)
+                ),
+                # Notes as source, Companies as target
+                (
+                    (LinkRelation.source_entity_type == EntityType.NOTE)
+                    & (LinkRelation.target_entity_type == EntityType.COMPANY)
+                    & (LinkRelation.source_entity_id == note_id)
+                    & (LinkRelation.target_entity_id == Company.id)
+                ),
+            ),
+        )
+        result = await self.session.execute(stmt)
+        return list(result.scalars().all())

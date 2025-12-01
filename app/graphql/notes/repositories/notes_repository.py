@@ -4,7 +4,7 @@ from typing import Any
 from uuid import UUID
 
 from commons.db.models.user import User
-from sqlalchemy import Select, select
+from sqlalchemy import Select, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import lazyload
 
@@ -41,6 +41,7 @@ class NotesRepository(BaseRepository[Note]):
                 Note.title,
                 Note.content,
                 Note.tags,
+                Note.mentions,
             )
             .select_from(Note)
             .options(lazyload("*"))
@@ -86,3 +87,29 @@ class NotesRepository(BaseRepository[Note]):
         notes_stmt = select(Note).where(Note.id.in_(note_ids))
         notes_result = await self.session.execute(notes_stmt)
         return list(notes_result.scalars().all())
+
+    async def search_by_title_or_content(
+        self, search_term: str, limit: int = 20
+    ) -> list[Note]:
+        """
+        Search notes by title or content using case-insensitive pattern matching.
+
+        Args:
+            search_term: The search term to match against note title or content
+            limit: Maximum number of notes to return (default: 20)
+
+        Returns:
+            List of Note objects matching the search criteria
+        """
+        stmt = (
+            select(Note)
+            .where(
+                or_(
+                    Note.title.ilike(f"%{search_term}%"),
+                    Note.content.ilike(f"%{search_term}%"),
+                )
+            )
+            .limit(limit)
+        )
+        result = await self.session.execute(stmt)
+        return list(result.scalars().all())

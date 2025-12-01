@@ -76,3 +76,24 @@ class ContactsService:
         contact = contact_input.to_orm_model()
         contact.id = contact_id
         return await self.repository.update(contact)
+
+    async def search_contacts(self, search_term: str, limit: int = 20) -> list[Contact]:
+        """
+        Search contacts by name.
+
+        Args:
+            search_term: The search term to match against contact names
+            limit: Maximum number of contacts to return (default: 20)
+
+        Returns:
+            List of Contact objects matching the search criteria
+        """
+        return await self.repository.search_by_name(search_term, limit)
+
+    async def find_contacts_by_task_id(self, task_id: UUID) -> list[Contact]:
+        """Find all contacts linked to the given task ID."""
+        return await self.repository.find_by_task_id(task_id)
+
+    async def find_contacts_by_note_id(self, note_id: UUID) -> list[Contact]:
+        """Find all contacts linked to the given note ID."""
+        return await self.repository.find_by_note_id(note_id)

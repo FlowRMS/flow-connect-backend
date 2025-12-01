@@ -19,3 +19,5 @@ class TaskLandingPageResponse(LandingPageInterfaceBase):
     description: str | None
     assigned_to: str | None
     due_date: date | None
+    reminder_date: date | None
+    tags: list[str] | None

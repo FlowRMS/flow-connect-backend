@@ -22,6 +22,7 @@ class TaskType(DTOMixin[Task]):
     description: str | None
     assigned_to_id: UUID | None
     due_date: date | None
+    reminder_date: date | None
     tags: list[str] | None
 
     @classmethod
@@ -37,5 +38,6 @@ class TaskType(DTOMixin[Task]):
             description=model.description,
             assigned_to_id=model.assigned_to_id,
             due_date=model.due_date,
+            reminder_date=model.reminder_date,
             tags=model.tags,
         )

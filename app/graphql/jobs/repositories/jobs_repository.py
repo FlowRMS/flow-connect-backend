@@ -152,3 +152,73 @@ class JobsRepository(BaseRepository[Job]):
         )
         result = await self.session.execute(stmt)
         return list(result.scalars().all())
+
+    async def find_by_task_id(self, task_id: UUID) -> list[Job]:
+        """
+        Find all jobs linked to the given task ID.
+
+        Args:
+            task_id: The task ID to find jobs for
+
+        Returns:
+            List of Job objects linked to the given task ID
+        """
+        from app.graphql.links.models.entity_type import EntityType
+        from app.graphql.links.models.link_relation_model import LinkRelation
+
+        stmt = select(Job).join(
+            LinkRelation,
+            or_(
+                # Jobs as source, Tasks as target
+                (
+                    (LinkRelation.source_entity_type == EntityType.JOB)
+                    & (LinkRelation.target_entity_type == EntityType.TASK)
+                    & (LinkRelation.target_entity_id == task_id)
+                    & (LinkRelation.source_entity_id == Job.id)
+                ),
+                # Tasks as source, Jobs as target
+                (
+                    (LinkRelation.source_entity_type == EntityType.TASK)
+                    & (LinkRelation.target_entity_type == EntityType.JOB)
+                    & (LinkRelation.source_entity_id == task_id)
+                    & (LinkRelation.target_entity_id == Job.id)
+                ),
+            ),
+        )
+        result = await self.session.execute(stmt)
+        return list(result.scalars().all())
+
+    async def find_by_note_id(self, note_id: UUID) -> list[Job]:
+        """
+        Find all jobs linked to the given note ID.
+
+        Args:
+            note_id: The note ID to find jobs for
+
+        Returns:
+            List of Job objects linked to the given note ID
+        """
+        from app.graphql.links.models.entity_type import EntityType
+        from app.graphql.links.models.link_relation_model import LinkRelation
+
+        stmt = select(Job).join(
+            LinkRelation,
+            or_(
+                # Jobs as source, Notes as target
+                (
+                    (LinkRelation.source_entity_type == EntityType.JOB)
+                    & (LinkRelation.target_entity_type == EntityType.NOTE)
+                    & (LinkRelation.target_entity_id == note_id)
+                    & (LinkRelation.source_entity_id == Job.id)
+                ),
+                # Notes as source, Jobs as target
+                (
+                    (LinkRelation.source_entity_type == EntityType.NOTE)
+                    & (LinkRelation.target_entity_type == EntityType.JOB)
+                    & (LinkRelation.source_entity_id == note_id)
+                    & (LinkRelation.target_entity_id == Job.id)
+                ),
+            ),
+        )
+        result = await self.session.execute(stmt)
+        return list(result.scalars().all())
