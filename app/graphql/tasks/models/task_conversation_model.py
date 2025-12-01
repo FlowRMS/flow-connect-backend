@@ -6,11 +6,11 @@ from sqlalchemy import ForeignKey, Text
 from sqlalchemy.dialects.postgresql import UUID as PG_UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
-from app.core.db.base import BaseModel, HasCreatedAt, HasCreatedBy
+from app.core.db.base import CrmBaseModel, HasCreatedAt, HasCreatedBy
 from app.graphql.tasks.models.task_model import Task
 
 
-class TaskConversation(BaseModel, HasCreatedAt, HasCreatedBy, kw_only=True):
+class TaskConversation(CrmBaseModel, HasCreatedAt, HasCreatedBy, kw_only=True):
     """Task conversation entity for threaded comments on tasks."""
 
     __tablename__ = "task_conversations"
