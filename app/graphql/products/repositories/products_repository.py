@@ -1,6 +1,6 @@
 import uuid
 
-from commons.db.models.core.product import Product
+from commons.db.models import Product
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 

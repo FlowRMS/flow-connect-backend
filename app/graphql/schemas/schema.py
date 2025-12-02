@@ -10,6 +10,7 @@ from strawberry.tools import merge_types
 # import app.graphql
 from app.core.container import create_container
 from app.core.middleware.graphql_middleware import GraphQLMiddleware
+from app.graphql.checks.queries.checks_queries import ChecksQueries
 
 # from app.graphql.class_discovery import types_discovery
 from app.graphql.common.queries.landing_page_queries import LandingPageQueries
@@ -20,11 +21,13 @@ from app.graphql.contacts.queries.contacts_queries import ContactsQueries
 from app.graphql.customers.queries.customers_queries import CustomersQueries
 from app.graphql.factories.queries.factories_queries import FactoriesQueries
 from app.graphql.inject import context_setter
+from app.graphql.invoices.queries.invoices_queries import InvoicesQueries
 from app.graphql.jobs.mutations.jobs_mutations import JobsMutations
 from app.graphql.jobs.queries.jobs_queries import JobsQueries
 from app.graphql.links.mutations.links_mutations import LinksMutations
 from app.graphql.notes.mutations.notes_mutations import NotesMutations
 from app.graphql.notes.queries.notes_queries import NotesQueries
+from app.graphql.orders.queries.orders_queries import OrdersQueries
 from app.graphql.pre_opportunities.mutations.pre_opportunities_mutations import (
     PreOpportunitiesMutations,
 )
@@ -32,6 +35,7 @@ from app.graphql.pre_opportunities.queries.pre_opportunities_queries import (
     PreOpportunitiesQueries,
 )
 from app.graphql.products.queries.products_queries import ProductsQueries
+from app.graphql.quotes.queries.quotes_queries import QuotesQueries
 from app.graphql.schemas.date_time_scalar import DateTimeScalar
 from app.graphql.schemas.decimal_scalar import DecimalScalar
 from app.graphql.schemas.id_scalar import IdScalar
@@ -51,6 +55,10 @@ Query = merge_types(
         ProductsQueries,
         FactoriesQueries,
         CustomersQueries,
+        QuotesQueries,
+        OrdersQueries,
+        InvoicesQueries,
+        ChecksQueries,
         LandingPageQueries,
     ),
 )

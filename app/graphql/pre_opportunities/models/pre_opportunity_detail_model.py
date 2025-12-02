@@ -3,8 +3,7 @@
 from decimal import Decimal
 from uuid import UUID
 
-from commons.db.models.core.customer import Customer
-from commons.db.models.core.product import Product
+from commons.db.models import Customer, Product
 from sqlalchemy import ForeignKey, Integer, Numeric, String
 from sqlalchemy.dialects.postgresql import UUID as PG_UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship

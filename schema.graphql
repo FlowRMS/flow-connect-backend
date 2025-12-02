@@ -1,3 +1,18 @@
+type CheckResponse {
+  id: UUID!
+  entryDate: datetime!
+  checkNumber: String!
+  entityDate: Date!
+  postDate: Date
+  commissionMonth: Date
+  commission: Decimal!
+  factoryId: UUID!
+  userOwnerIds: [UUID!]!
+  status: Int!
+  createdBy: UUID!
+  creationType: Int!
+}
+
 input CompanyInput {
   name: String!
   companySourceType: CompanyType!
@@ -98,6 +113,11 @@ enum EntityType {
   CONTACT
   COMPANY
   NOTE
+  PRE_OPPORTUNITY
+  QUOTE
+  ORDER
+  INVOICE
+  CHECK
 }
 
 type FactoryResponse {
@@ -134,6 +154,23 @@ type GenericLandingPage {
   total: Int!
 }
 
+type InvoiceResponse {
+  id: UUID!
+  entryDate: datetime!
+  invoiceNumber: String!
+  entityDate: Date!
+  dueDate: Date
+  factoryId: UUID
+  orderId: UUID!
+  userOwnerIds: [UUID!]!
+  status: Int!
+  published: Boolean!
+  locked: Boolean!
+  createdBy: UUID!
+  creationType: Int!
+  balanceId: UUID!
+}
+
 input JobInput {
   jobName: String!
   statusId: UUID!
@@ -168,6 +205,10 @@ type JobRelatedEntitiesResponse {
   preOpportunities: [PreOpportunityLiteResponse!]!
   contacts: [ContactResponse!]!
   companies: [CompanyResponse!]!
+  quotes: [QuoteResponse!]!
+  orders: [OrderResponse!]!
+  invoices: [InvoiceResponse!]!
+  checks: [CheckResponse!]!
 }
 
 type JobStatusType {
@@ -312,6 +353,24 @@ input OrderBy {
 enum OrderByOperator {
   ASC
   DESC
+}
+
+type OrderResponse {
+  id: UUID!
+  entryDate: datetime!
+  orderNumber: String!
+  status: Int!
+  balanceId: UUID
+  factoryId: UUID
+  soldToCustomerId: UUID
+  billToCustomerId: UUID
+  jobName: String
+  entityDate: Date!
+  shipDate: Date
+  dueDate: Date!
+  factSoNumber: String
+  userOwnerIds: [UUID!]!
+  quoteId: UUID
 }
 
 type PreOpportunityBalanceResponse {
@@ -469,7 +528,25 @@ type Query {
   productSearch(searchTerm: String!, factoryId: UUID, limit: Int! = 20): [ProductResponse!]!
   factorySearch(searchTerm: String!, published: Boolean! = true, limit: Int! = 20): [FactoryResponse!]!
   customerSearch(searchTerm: String!, published: Boolean! = true, limit: Int! = 20): [CustomerResponse!]!
+  quoteSearch(searchTerm: String!, limit: Int! = 20): [QuoteResponse!]!
+  orderSearch(searchTerm: String!, limit: Int! = 20): [OrderResponse!]!
+  invoiceSearch(searchTerm: String!, limit: Int! = 20): [InvoiceResponse!]!
+  checkSearch(searchTerm: String!, limit: Int! = 20): [CheckResponse!]!
   findLandingPages(sourceType: LandingSourceType!, filters: [Filter!] = null, orderBy: [OrderBy!] = null, limit: Int = 10, offset: Int = 0): GenericLandingPage!
+}
+
+type QuoteResponse {
+  id: UUID!
+  entryDate: datetime!
+  quoteNumber: String!
+  entityDate: Date!
+  createdBy: UUID!
+  userOwnerIds: [UUID!]!
+  soldToCustomerId: UUID
+  billToCustomerId: UUID
+  jobName: String
+  expDate: Date
+  blanket: Boolean!
 }
 
 input TaskConversationInput {

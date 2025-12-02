@@ -3,7 +3,7 @@
 from typing import Any
 from uuid import UUID
 
-from commons.db.models.user import User
+from commons.db.models import User
 from sqlalchemy import Select, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import lazyload

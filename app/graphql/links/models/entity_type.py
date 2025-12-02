@@ -14,3 +14,8 @@ class EntityType(IntEnum):
     CONTACT = auto()
     COMPANY = auto()
     NOTE = auto()
+    PRE_OPPORTUNITY = auto()
+    QUOTE = auto()
+    ORDER = auto()
+    INVOICE = auto()
+    CHECK = auto()

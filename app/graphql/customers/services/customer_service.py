@@ -1,5 +1,5 @@
 from commons.auth import AuthInfo
-from commons.db.models.core.customer import Customer
+from commons.db.models import Customer
 
 from app.graphql.customers.repositories.customers_repository import CustomersRepository
 

@@ -1,7 +1,7 @@
 import uuid
 
 from commons.auth import AuthInfo
-from commons.db.models.core.product import Product
+from commons.db.models import Product
 
 from app.graphql.products.repositories.products_repository import ProductsRepository
 

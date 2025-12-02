@@ -5,7 +5,7 @@ from typing import TYPE_CHECKING
 from uuid import UUID
 
 from commons.db.int_enum import IntEnum
-from commons.db.models.core.customer import Customer
+from commons.db.models import Customer
 from sqlalchemy import ARRAY, Date, ForeignKey, String
 from sqlalchemy.dialects.postgresql import UUID as PG_UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship

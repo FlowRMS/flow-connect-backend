@@ -1,4 +1,4 @@
-from commons.db.models.core.customer import Customer
+from commons.db.models import Customer
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 

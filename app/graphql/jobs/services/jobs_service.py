@@ -5,22 +5,30 @@ from uuid import UUID
 from commons.auth import AuthInfo
 
 from app.errors.common_errors import NotFoundError
+from app.graphql.checks.services.check_service import CheckService
+from app.graphql.checks.strawberry.check_response import CheckResponse
 from app.graphql.companies.services.companies_service import CompaniesService
 from app.graphql.companies.strawberry.company_response import CompanyResponse
 from app.graphql.contacts.services.contacts_service import ContactsService
 from app.graphql.contacts.strawberry.contact_response import ContactResponse
+from app.graphql.invoices.services.invoice_service import InvoiceService
+from app.graphql.invoices.strawberry.invoice_response import InvoiceResponse
 from app.graphql.jobs.models.jobs_model import Job
 from app.graphql.jobs.repositories.jobs_repository import JobsRepository
 from app.graphql.jobs.strawberry.job_input import JobInput
 from app.graphql.jobs.strawberry.job_related_entities_response import (
     JobRelatedEntitiesResponse,
 )
+from app.graphql.orders.services.order_service import OrderService
+from app.graphql.orders.strawberry.order_response import OrderResponse
 from app.graphql.pre_opportunities.services.pre_opportunities_service import (
     PreOpportunitiesService,
 )
 from app.graphql.pre_opportunities.strawberry.pre_opportunity_lite_response import (
     PreOpportunityLiteResponse,
 )
+from app.graphql.quotes.services.quote_service import QuoteService
+from app.graphql.quotes.strawberry.quote_response import QuoteResponse
 
 
 class JobsService:
@@ -37,6 +45,10 @@ class JobsService:
         companies_service: CompaniesService,
         contacts_service: ContactsService,
         pre_opportunities_service: PreOpportunitiesService,
+        quote_service: QuoteService,
+        order_service: OrderService,
+        invoice_service: InvoiceService,
+        check_service: CheckService,
     ) -> None:
         super().__init__()
         self.repository = repository
@@ -44,6 +56,10 @@ class JobsService:
         self.companies_service = companies_service
         self.contacts_service = contacts_service
         self.pre_opportunities_service = pre_opportunities_service
+        self.quote_service = quote_service
+        self.order_service = order_service
+        self.invoice_service = invoice_service
+        self.check_service = check_service
 
     async def create_job(
         self,
@@ -98,7 +114,7 @@ class JobsService:
             job_id: The job ID
 
         Returns:
-            JobRelatedEntitiesResponse containing pre_opportunities, contacts, and companies
+            JobRelatedEntitiesResponse containing all related entities
 
         Raises:
             NotFoundError: If the job doesn't exist
@@ -107,10 +123,14 @@ class JobsService:
         if not await self.repository.exists(job_id):
             raise NotFoundError(str(job_id))
 
-        # Fetch related entities in parallel
+        # Fetch related entities
         pre_opportunities = await self.pre_opportunities_service.get_by_job_id(job_id)
         contacts = await self.contacts_service.find_contacts_by_job_id(job_id)
         companies = await self.companies_service.find_companies_by_job_id(job_id)
+        quotes = await self.quote_service.find_quotes_by_job_id(job_id)
+        orders = await self.order_service.find_orders_by_job_id(job_id)
+        invoices = await self.invoice_service.find_invoices_by_job_id(job_id)
+        checks = await self.check_service.find_checks_by_job_id(job_id)
 
         return JobRelatedEntitiesResponse(
             pre_opportunities=PreOpportunityLiteResponse.from_orm_model_list(
@@ -118,6 +138,10 @@ class JobsService:
             ),
             contacts=ContactResponse.from_orm_model_list(contacts),
             companies=CompanyResponse.from_orm_model_list(companies),
+            quotes=QuoteResponse.from_orm_model_list(quotes),
+            orders=OrderResponse.from_orm_model_list(orders),
+            invoices=InvoiceResponse.from_orm_model_list(invoices),
+            checks=CheckResponse.from_orm_model_list(checks),
         )
 
     async def search_jobs(self, search_term: str, limit: int = 20) -> list[Job]:

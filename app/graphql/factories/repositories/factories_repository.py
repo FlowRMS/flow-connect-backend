@@ -1,4 +1,4 @@
-from commons.db.models.core.factory import Factory
+from commons.db.models import Factory
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 

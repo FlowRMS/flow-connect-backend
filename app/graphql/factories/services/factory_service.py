@@ -1,5 +1,5 @@
 from commons.auth import AuthInfo
-from commons.db.models.core.factory import Factory
+from commons.db.models import Factory
 
 from app.graphql.factories.repositories.factories_repository import FactoriesRepository
 
