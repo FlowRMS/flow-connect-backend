@@ -33,7 +33,7 @@ class LinkRelation(CrmBaseModel, HasCreatedAt, HasCreatedBy, kw_only=True):
             "target_entity_type",
             "target_entity_id",
         ),
-        {"schema": "crm"},
+        {"schema": "pycrm"},
     )
 
     # Source entity
