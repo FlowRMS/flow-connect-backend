@@ -45,7 +45,7 @@ class NotesRepository(BaseRepository[Note]):
             )
             .select_from(Note)
             .options(lazyload("*"))
-            .join(User, User.id == Note.created_by)
+            .join(User, User.id == Note.created_by_id)
         )
 
     async def find_by_entity(
