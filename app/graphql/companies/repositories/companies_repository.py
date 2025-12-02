@@ -43,7 +43,7 @@ class CompaniesRepository(BaseRepository[Company]):
             )
             .select_from(Company)
             .options(lazyload("*"))
-            .join(User, User.id == Company.created_by)
+            .join(User, User.id == Company.created_by_id)
         )
 
     async def find_by_job_id(self, job_id: UUID) -> list[Company]:
