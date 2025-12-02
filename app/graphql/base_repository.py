@@ -109,8 +109,8 @@ class BaseRepository(Generic[T]):
             The created entity
         """
 
-        if hasattr(entity, "created_by"):
-            setattr(entity, "created_by", self.context.auth_info.user_id)
+        if hasattr(entity, "created_by_id"):
+            setattr(entity, "created_by_id", self.context.auth_info.user_id)
 
         if hasattr(entity, "created_at"):
             setattr(entity, "created_at", pendulum.now())
