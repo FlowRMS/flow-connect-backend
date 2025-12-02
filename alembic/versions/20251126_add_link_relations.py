@@ -25,13 +25,13 @@ def upgrade() -> None:
         'link_relations',
         sa.Column('id', postgresql.UUID(as_uuid=True), nullable=False),
         sa.Column('created_at', postgresql.TIMESTAMP(timezone=True), server_default=sa.text('now()'), nullable=False),
-        sa.Column('created_by', postgresql.UUID(as_uuid=True), nullable=False),
+        sa.Column('created_by_id', postgresql.UUID(as_uuid=True), nullable=False),
         sa.Column('source_entity_type', sa.SmallInteger(), nullable=False),
         sa.Column('source_entity_id', postgresql.UUID(as_uuid=True), nullable=False),
         sa.Column('target_entity_type', sa.SmallInteger(), nullable=False),
         sa.Column('target_entity_id', postgresql.UUID(as_uuid=True), nullable=False),
         sa.PrimaryKeyConstraint('id'),
-        schema='crm'
+        schema='pycrm'
     )
 
     # Create indexes
@@ -39,29 +39,29 @@ def upgrade() -> None:
         'ix_crm_link_relations_source_type_source_id',
         'link_relations',
         ['source_entity_type', 'source_entity_id'],
-        schema='crm'
+        schema='pycrm'
     )
 
     op.create_index(
         'ix_crm_link_relations_target_type_target_id',
         'link_relations',
         ['target_entity_type', 'target_entity_id'],
-        schema='crm'
+        schema='pycrm'
     )
 
     op.create_index(
         'ix_crm_link_relations_source_target',
         'link_relations',
         ['source_entity_type', 'source_entity_id', 'target_entity_type', 'target_entity_id'],
-        schema='crm'
+        schema='pycrm'
     )
 
 
 def downgrade() -> None:
     # Drop indexes
-    op.drop_index('ix_crm_link_relations_source_target', table_name='link_relations', schema='crm')
-    op.drop_index('ix_crm_link_relations_target_type_target_id', table_name='link_relations', schema='crm')
-    op.drop_index('ix_crm_link_relations_source_type_source_id', table_name='link_relations', schema='crm')
+    op.drop_index('ix_crm_link_relations_source_target', table_name='link_relations', schema='pycrm')
+    op.drop_index('ix_crm_link_relations_target_type_target_id', table_name='link_relations', schema='pycrm')
+    op.drop_index('ix_crm_link_relations_source_type_source_id', table_name='link_relations', schema='pycrm')
 
     # Drop table
-    op.drop_table('link_relations', schema='crm')
+    op.drop_table('link_relations', schema='pycrm')

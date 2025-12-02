@@ -7,15 +7,16 @@ from app.core.db.adapters.dto import DTOMixin
 from app.graphql.tasks.models.task_model import Task
 from app.graphql.tasks.models.task_priority import TaskPriority
 from app.graphql.tasks.models.task_status import TaskStatus
+from app.graphql.users.strawberry.user_response import UserResponse
 
 
 @strawberry.type
 class TaskType(DTOMixin[Task]):
     """GraphQL type for Task entity (output/query results)."""
 
+    _instance: strawberry.Private[Task]
     id: UUID
     created_at: datetime
-    created_by: UUID
     title: str
     status: TaskStatus
     priority: TaskPriority
@@ -29,9 +30,9 @@ class TaskType(DTOMixin[Task]):
     def from_orm_model(cls, model: Task) -> "TaskType":
         """Convert ORM model to GraphQL type."""
         return cls(
+            _instance=model,
             id=model.id,
             created_at=model.created_at,
-            created_by=model.created_by,
             title=model.title,
             status=model.status,
             priority=model.priority,
@@ -41,3 +42,7 @@ class TaskType(DTOMixin[Task]):
             reminder_date=model.reminder_date,
             tags=model.tags,
         )
+
+    @strawberry.field
+    def created_by(self) -> UserResponse:
+        return UserResponse.from_orm_model(self._instance.created_by)

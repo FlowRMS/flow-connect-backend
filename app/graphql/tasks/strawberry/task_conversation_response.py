@@ -14,7 +14,7 @@ from app.graphql.tasks.models.task_conversation_model import TaskConversation
 class TaskConversationType(DTOMixin[TaskConversation]):
     id: UUID
     created_at: datetime
-    created_by: UUID
+    # created_by: UUID
     task_id: UUID
     content: str
 
@@ -23,7 +23,7 @@ class TaskConversationType(DTOMixin[TaskConversation]):
         return cls(
             id=model.id,
             created_at=model.created_at,
-            created_by=model.created_by,
+            # created_by=model.created_by,
             task_id=model.task_id,
             content=model.content,
         )

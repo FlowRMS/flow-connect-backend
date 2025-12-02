@@ -46,7 +46,7 @@ class ContactsRepository(BaseRepository[Contact]):
             )
             .select_from(Contact)
             .options(lazyload("*"))
-            .join(User, User.id == Contact.created_by)
+            .join(User, User.id == Contact.created_by_id)
             .outerjoin(Company, Company.id == Contact.company_id)
         )
 

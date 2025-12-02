@@ -13,7 +13,7 @@ class ContactResponse(DTOMixin[Contact]):
 
     id: UUID
     created_at: datetime
-    created_by: UUID
+    # created_by: UUID
     first_name: str
     last_name: str
     email: str | None
@@ -30,7 +30,7 @@ class ContactResponse(DTOMixin[Contact]):
         return cls(
             id=model.id,
             created_at=model.created_at,
-            created_by=model.created_by,
+            # created_by=model.created_by,
             first_name=model.first_name,
             last_name=model.last_name,
             email=model.email,

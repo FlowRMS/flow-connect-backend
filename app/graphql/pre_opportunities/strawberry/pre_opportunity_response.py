@@ -15,6 +15,7 @@ from app.graphql.pre_opportunities.strawberry.pre_opportunity_detail_response im
 from app.graphql.pre_opportunities.strawberry.pre_opportunity_lite_response import (
     PreOpportunityLiteResponse,
 )
+from app.graphql.users.strawberry.user_response import UserResponse
 
 # from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -40,3 +41,7 @@ class PreOpportunityResponse(PreOpportunityLiteResponse):
     @strawberry.field
     def job(self) -> JobType | None:
         return JobType.from_orm_model_optional(self._instance.job)
+
+    @strawberry.field
+    def created_by(self) -> UserResponse:
+        return UserResponse.from_orm_model(self._instance.created_by)

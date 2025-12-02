@@ -25,12 +25,12 @@ def upgrade() -> None:
         'task_conversations',
         sa.Column('id', postgresql.UUID(as_uuid=True), nullable=False),
         sa.Column('created_at', postgresql.TIMESTAMP(timezone=True), server_default=sa.text('now()'), nullable=False),
-        sa.Column('created_by', postgresql.UUID(as_uuid=True), nullable=False),
+        sa.Column('created_by_id', postgresql.UUID(as_uuid=True), nullable=False),
         sa.Column('task_id', postgresql.UUID(as_uuid=True), nullable=False),
         sa.Column('content', sa.Text(), nullable=False),
-        sa.ForeignKeyConstraint(['task_id'], ['crm.tasks.id'], name='fk_task_conversations_task_id', ondelete='CASCADE'),
+        sa.ForeignKeyConstraint(['task_id'], ['pycrm.tasks.id'], name='fk_task_conversations_task_id', ondelete='CASCADE'),
         sa.PrimaryKeyConstraint('id'),
-        schema='crm'
+        schema='pycrm'
     )
 
     # Create index on task_conversations for efficient lookups
@@ -38,11 +38,11 @@ def upgrade() -> None:
         'ix_crm_task_conversations_task_id',
         'task_conversations',
         ['task_id'],
-        schema='crm'
+        schema='pycrm'
     )
 
 
 def downgrade() -> None:
     # Drop tables in reverse order
-    op.drop_index('ix_crm_task_conversations_task_id', table_name='task_conversations', schema='crm')
-    op.drop_table('task_conversations', schema='crm')
+    op.drop_index('ix_crm_task_conversations_task_id', table_name='task_conversations', schema='pycrm')
+    op.drop_table('task_conversations', schema='pycrm')

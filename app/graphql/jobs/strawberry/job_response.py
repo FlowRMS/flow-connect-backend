@@ -9,6 +9,7 @@ import strawberry
 from app.core.db.adapters.dto import DTOMixin
 from app.graphql.jobs.models.jobs_model import Job
 from app.graphql.jobs.strawberry.status_response import JobStatusType
+from app.graphql.users.strawberry.user_response import UserResponse
 
 
 @strawberry.type
@@ -16,7 +17,7 @@ class JobType(DTOMixin[Job]):
     _instance: strawberry.Private[Job]
     id: UUID
     created_at: datetime
-    created_by: UUID
+    # created_by: UUID
     # status: JobStatusType
     job_name: str
     start_date: date | None
@@ -35,7 +36,7 @@ class JobType(DTOMixin[Job]):
             _instance=model,
             id=model.id,
             created_at=model.created_at,
-            created_by=model.created_by,
+            # created_by=model.created_by,
             job_name=model.job_name,
             start_date=model.start_date,
             end_date=model.end_date,
@@ -51,3 +52,7 @@ class JobType(DTOMixin[Job]):
     @strawberry.field
     def status(self) -> JobStatusType:
         return JobStatusType.from_orm_model(self._instance.status)
+
+    @strawberry.field
+    def created_by(self) -> UserResponse:
+        return UserResponse.from_orm_model(self._instance.created_by)

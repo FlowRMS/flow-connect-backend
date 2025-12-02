@@ -23,10 +23,10 @@ def upgrade() -> None:
     op.add_column(
         'tasks',
         sa.Column('reminder_date', sa.Date(), nullable=True),
-        schema='crm'
+        schema='pycrm'
     )
 
 
 def downgrade() -> None:
     # Remove reminder_date column from tasks table
-    op.drop_column('tasks', 'reminder_date', schema='crm')
+    op.drop_column('tasks', 'reminder_date', schema='pycrm')

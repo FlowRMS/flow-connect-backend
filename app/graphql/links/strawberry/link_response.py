@@ -20,7 +20,7 @@ class LinkRelationType(DTOMixin[LinkRelation]):
     target_entity_type: EntityType
     target_entity_id: UUID
     created_at: datetime
-    created_by: UUID
+    # created_by: UUID
 
     @classmethod
     def from_orm_model(cls, model: LinkRelation) -> "LinkRelationType":
@@ -32,5 +32,5 @@ class LinkRelationType(DTOMixin[LinkRelation]):
             target_entity_type=model.target_entity_type,
             target_entity_id=model.target_entity_id,
             created_at=model.created_at,
-            created_by=model.created_by,
+            # created_by=model.created_by,
         )

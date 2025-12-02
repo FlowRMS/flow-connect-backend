@@ -14,7 +14,7 @@ class AddressResponse(DTOMixin[CompanyAddress]):
 
     id: UUID
     created_at: datetime
-    created_by: UUID
+    # created_by: UUID
     company_id: UUID
     address_type: AddressType
     address_line_1: str | None
@@ -29,7 +29,7 @@ class AddressResponse(DTOMixin[CompanyAddress]):
         return cls(
             id=model.id,
             created_at=model.created_at,
-            created_by=model.created_by,
+            # created_by=model.created_by,
             company_id=model.company_id,
             address_type=model.address_type,
             address_line_1=model.address_line_1,

@@ -24,20 +24,20 @@ def upgrade() -> None:
     op.add_column(
         'jobs',
         sa.Column('tags', postgresql.ARRAY(sa.String()), nullable=True),
-        schema='crm'
+        schema='pycrm'
     )
 
     # Add tags column to pre_opportunities table
     op.add_column(
         'pre_opportunities',
         sa.Column('tags', postgresql.ARRAY(sa.String()), nullable=True),
-        schema='crm'
+        schema='pycrm'
     )
 
 
 def downgrade() -> None:
     # Remove tags column from pre_opportunities table
-    op.drop_column('pre_opportunities', 'tags', schema='crm')
+    op.drop_column('pre_opportunities', 'tags', schema='pycrm')
 
     # Remove tags column from jobs table
-    op.drop_column('jobs', 'tags', schema='crm')
+    op.drop_column('jobs', 'tags', schema='pycrm')

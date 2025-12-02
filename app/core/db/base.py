@@ -3,8 +3,9 @@
 import datetime
 import uuid
 
+from commons.db.models import User
 from commons.db.models.base import BaseModel
-from sqlalchemy import func
+from sqlalchemy import ForeignKey, func
 from sqlalchemy.dialects.postgresql import TIMESTAMP
 from sqlalchemy.dialects.postgresql import UUID as PG_UUID
 from sqlalchemy.orm import Mapped, MappedAsDataclass, mapped_column
@@ -12,7 +13,7 @@ from sqlalchemy.orm import Mapped, MappedAsDataclass, mapped_column
 
 class CrmBaseModel(BaseModel):
     __abstract__ = True
-    __table_args__ = {"schema": "crm"}
+    __table_args__ = {"schema": "pycrm"}
 
 
 class HasCreatedAt(MappedAsDataclass):
@@ -24,8 +25,9 @@ class HasCreatedAt(MappedAsDataclass):
 
 
 class HasCreatedBy(MappedAsDataclass):
-    created_by: Mapped[uuid.UUID] = mapped_column(
+    created_by_id: Mapped[uuid.UUID] = mapped_column(
         PG_UUID(as_uuid=True),
+        ForeignKey(User.id),
         init=False,
         nullable=False,
     )

@@ -42,6 +42,7 @@ from app.graphql.schemas.id_scalar import IdScalar
 from app.graphql.schemas.json_scalar import JsonScalar
 from app.graphql.tasks.mutations.tasks_mutations import TasksMutations
 from app.graphql.tasks.queries.tasks_queries import TasksQueries
+from app.graphql.users.queries.users_queries import UsersQueries
 
 Query = merge_types(
     name="Query",
@@ -60,6 +61,7 @@ Query = merge_types(
         InvoicesQueries,
         ChecksQueries,
         LandingPageQueries,
+        UsersQueries,
     ),
 )
 

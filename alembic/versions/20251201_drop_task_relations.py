@@ -21,8 +21,8 @@ depends_on: str | Sequence[str] | None = None
 
 def upgrade() -> None:
     # Drop index and table for task_relations (replaced by link_relations)
-    op.drop_index('ix_crm_task_relations_task_id_related_type_related_id', table_name='task_relations', schema='crm')
-    op.drop_table('task_relations', schema='crm')
+    op.drop_index('ix_crm_task_relations_task_id_related_type_related_id', table_name='task_relations', schema='pycrm')
+    op.drop_table('task_relations', schema='pycrm')
 
 
 def downgrade() -> None:
@@ -33,9 +33,9 @@ def downgrade() -> None:
         sa.Column('task_id', postgresql.UUID(as_uuid=True), nullable=False),
         sa.Column('related_type', sa.SmallInteger(), nullable=False),
         sa.Column('related_id', postgresql.UUID(as_uuid=True), nullable=False),
-        sa.ForeignKeyConstraint(['task_id'], ['crm.tasks.id'], name='fk_task_relations_task_id'),
+        sa.ForeignKeyConstraint(['task_id'], ['pycrm.tasks.id'], name='fk_task_relations_task_id'),
         sa.PrimaryKeyConstraint('id'),
-        schema='crm'
+        schema='pycrm'
     )
 
     # Recreate index
@@ -43,5 +43,5 @@ def downgrade() -> None:
         'ix_crm_task_relations_task_id_related_type_related_id',
         'task_relations',
         ['task_id', 'related_type', 'related_id'],
-        schema='crm'
+        schema='pycrm'
     )

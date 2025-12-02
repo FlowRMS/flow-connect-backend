@@ -1,0 +1,1 @@
+"""Queries for user module."""

@@ -28,7 +28,7 @@ def upgrade() -> None:
         sa.Column('discount', sa.Numeric(precision=10, scale=2), server_default='0', nullable=False),
         sa.Column('discount_rate', sa.Numeric(precision=5, scale=2), server_default='0', nullable=False),
         sa.PrimaryKeyConstraint('id'),
-        schema='crm'
+        schema='pycrm'
     )
 
     # Create pre_opportunities table
@@ -36,7 +36,7 @@ def upgrade() -> None:
         'pre_opportunities',
         sa.Column('id', postgresql.UUID(as_uuid=True), nullable=False),
         sa.Column('created_at', postgresql.TIMESTAMP(timezone=True), server_default=sa.text('now()'), nullable=False),
-        sa.Column('created_by', postgresql.UUID(as_uuid=True), nullable=False),
+        sa.Column('created_by_id', postgresql.UUID(as_uuid=True), nullable=False),
         sa.Column('status', sa.SmallInteger(), nullable=False),
         sa.Column('entity_number', sa.String(length=255), nullable=False, unique=True),
         sa.Column('entity_date', sa.Date(), nullable=False),
@@ -54,11 +54,11 @@ def upgrade() -> None:
         sa.Column('freight_terms', sa.String(length=255), nullable=True),
         sa.ForeignKeyConstraint(['sold_to_customer_id'], ['core.customers.id'], name='fk_pre_opportunities_sold_to_customer'),
         sa.ForeignKeyConstraint(['bill_to_customer_id'], ['core.customers.id'], name='fk_pre_opportunities_bill_to_customer'),
-        sa.ForeignKeyConstraint(['job_id'], ['crm.jobs.id'], name='fk_pre_opportunities_job'),
-        sa.ForeignKeyConstraint(['balance_id'], ['crm.pre_opportunity_balances.id'], name='fk_pre_opportunities_balance'),
+        sa.ForeignKeyConstraint(['job_id'], ['pycrm.jobs.id'], name='fk_pre_opportunities_job'),
+        sa.ForeignKeyConstraint(['balance_id'], ['pycrm.pre_opportunity_balances.id'], name='fk_pre_opportunities_balance'),
         sa.PrimaryKeyConstraint('id'),
         sa.UniqueConstraint('balance_id', name='uq_pre_opportunities_balance_id'),
-        schema='crm'
+        schema='pycrm'
     )
 
     # Create pre_opportunity_details table
@@ -77,12 +77,11 @@ def upgrade() -> None:
         sa.Column('product_cpn_id', postgresql.UUID(as_uuid=True), nullable=True),
         sa.Column('end_user_id', postgresql.UUID(as_uuid=True), nullable=False),
         sa.Column('lead_time', sa.String(length=255), nullable=True),
-        sa.ForeignKeyConstraint(['pre_opportunity_id'], ['crm.pre_opportunities.id'], name='fk_pre_opportunity_details_pre_opportunity'),
+        sa.ForeignKeyConstraint(['pre_opportunity_id'], ['pycrm.pre_opportunities.id'], name='fk_pre_opportunity_details_pre_opportunity'),
         sa.ForeignKeyConstraint(['product_id'], ['core.products.id'], name='fk_pre_opportunity_details_product'),
-        sa.ForeignKeyConstraint(['factory_id'], ['core.factories.id'], name='fk_pre_opportunity_details_factory'),
         sa.ForeignKeyConstraint(['end_user_id'], ['core.customers.id'], name='fk_pre_opportunity_details_end_user'),
         sa.PrimaryKeyConstraint('id'),
-        schema='crm'
+        schema='pycrm'
     )
 
     # Create index on pre_opportunity_details for efficient lookups
@@ -90,12 +89,12 @@ def upgrade() -> None:
         'ix_crm_pre_opportunity_details_pre_opportunity_id',
         'pre_opportunity_details',
         ['pre_opportunity_id'],
-        schema='crm'
+        schema='pycrm'
     )
 
 def downgrade() -> None:
     # Drop tables in reverse order
-    op.drop_index('ix_crm_pre_opportunity_details_pre_opportunity_id', table_name='pre_opportunity_details', schema='crm')
-    op.drop_table('pre_opportunity_details', schema='crm')
-    op.drop_table('pre_opportunities', schema='crm')
-    op.drop_table('pre_opportunity_balances', schema='crm')
+    op.drop_index('ix_crm_pre_opportunity_details_pre_opportunity_id', table_name='pre_opportunity_details', schema='pycrm')
+    op.drop_table('pre_opportunity_details', schema='pycrm')
+    op.drop_table('pre_opportunities', schema='pycrm')
+    op.drop_table('pre_opportunity_balances', schema='pycrm')

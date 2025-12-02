@@ -5,7 +5,7 @@ from typing import TYPE_CHECKING
 from uuid import UUID
 
 from commons.db.int_enum import IntEnum
-from commons.db.models import Customer
+from commons.db.models import Customer, User
 from sqlalchemy import ARRAY, Date, ForeignKey, String
 from sqlalchemy.dialects.postgresql import UUID as PG_UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
@@ -100,6 +100,7 @@ class PreOpportunity(CrmBaseModel, HasCreatedAt, HasCreatedBy, kw_only=True):
     )
 
     job: Mapped["Job | None"] = relationship(init=False, lazy="joined")
+    created_by: Mapped[User] = relationship(init=False, lazy="joined")
 
     def __repr__(self) -> str:
         """String representation of the PreOpportunity."""

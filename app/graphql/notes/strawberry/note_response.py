@@ -9,13 +9,13 @@ import strawberry
 from app.core.db.adapters.dto import DTOMixin
 from app.graphql.notes.models.note_conversation_model import NoteConversation
 from app.graphql.notes.models.note_model import Note
+from app.graphql.users.strawberry.user_response import UserResponse
 
 
 @strawberry.type
 class NoteConversationType(DTOMixin[NoteConversation]):
     id: UUID
     created_at: datetime
-    created_by: UUID
     note_id: UUID
     content: str
 
@@ -24,7 +24,6 @@ class NoteConversationType(DTOMixin[NoteConversation]):
         return cls(
             id=model.id,
             created_at=model.created_at,
-            created_by=model.created_by,
             note_id=model.note_id,
             content=model.content,
         )
@@ -35,7 +34,6 @@ class NoteType(DTOMixin[Note]):
     _instance: strawberry.Private[Note]
     id: UUID
     created_at: datetime
-    created_by: UUID
     title: str
     content: str
     tags: list[str] | None
@@ -47,12 +45,15 @@ class NoteType(DTOMixin[Note]):
             _instance=model,
             id=model.id,
             created_at=model.created_at,
-            created_by=model.created_by,
             title=model.title,
             content=model.content,
             tags=model.tags,
             mentions=model.mentions,
         )
+
+    @strawberry.field
+    def created_by(self) -> UserResponse:
+        return UserResponse.from_orm_model(self._instance.created_by)
 
     # @strawberry.field
     # def conversations(self) -> list[NoteConversationType]:

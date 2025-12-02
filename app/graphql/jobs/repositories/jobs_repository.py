@@ -62,7 +62,7 @@ class JobsRepository(BaseRepository[Job]):
             .select_from(Job)
             .options(lazyload("*"))
             .join(JobStatus, JobStatus.id == Job.status_id)
-            .join(User, User.id == Job.created_by)
+            .join(User, User.id == Job.created_by_id)
             .outerjoin(user_owner_alias, user_owner_alias.id == Job.job_owner_id)
             .outerjoin(requester_alias, requester_alias.id == Job.requester_id)
         )

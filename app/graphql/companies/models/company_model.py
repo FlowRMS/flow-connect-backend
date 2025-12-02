@@ -4,6 +4,7 @@ from typing import TYPE_CHECKING
 from uuid import UUID
 
 from commons.db.int_enum import IntEnum
+from commons.db.models import User
 from sqlalchemy import ARRAY, String
 from sqlalchemy.dialects.postgresql import UUID as PG_UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
@@ -43,6 +44,7 @@ class Company(CrmBaseModel, HasCreatedAt, HasCreatedBy, kw_only=True):
         init=False,
         back_populates="company",
     )
+    created_by: Mapped[User] = relationship(init=False, lazy="joined")
 
     def __repr__(self) -> str:
         """String representation of the Company."""

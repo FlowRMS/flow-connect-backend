@@ -48,7 +48,7 @@ class TasksRepository(BaseRepository[Task]):
             )
             .select_from(Task)
             .options(lazyload("*"))
-            .join(User, User.id == Task.created_by)
+            .join(User, User.id == Task.created_by_id)
             .outerjoin(assigned_to_alias, assigned_to_alias.id == Task.assigned_to_id)
         )
 

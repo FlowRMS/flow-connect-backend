@@ -18,7 +18,7 @@ class PreOpportunityLiteResponse(DTOMixin[PreOpportunity]):
     _instance: strawberry.Private[PreOpportunity]
     id: UUID
     created_at: datetime
-    created_by: UUID
+    created_by_id: UUID
     status: PreOpportunityStatus
     entity_number: str
     entity_date: date
@@ -42,7 +42,7 @@ class PreOpportunityLiteResponse(DTOMixin[PreOpportunity]):
             _instance=model,
             id=model.id,
             created_at=model.created_at,
-            created_by=model.created_by,
+            created_by_id=model.created_by_id,
             status=model.status,
             entity_number=model.entity_number,
             entity_date=model.entity_date,

@@ -3,6 +3,7 @@ from typing import TYPE_CHECKING
 from uuid import UUID
 
 from commons.db.int_enum import IntEnum
+from commons.db.models import User
 from sqlalchemy import ARRAY, Date, String, Text
 from sqlalchemy.dialects.postgresql import UUID as PG_UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
@@ -36,6 +37,7 @@ class Task(CrmBaseModel, HasCreatedAt, HasCreatedBy, kw_only=True):
     reminder_date: Mapped[date | None] = mapped_column(Date, nullable=True)
     tags: Mapped[list[str] | None] = mapped_column(ARRAY(String), nullable=True)
 
+    created_by: Mapped[User] = relationship(init=False, lazy="joined")
     conversations: Mapped[list["TaskConversation"]] = relationship(
         init=False, back_populates="task", cascade="all, delete, delete-orphan"
     )

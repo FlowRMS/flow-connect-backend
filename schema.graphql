@@ -35,13 +35,13 @@ type CompanyLandingPage implements LandingPageInterfaceBase {
 type CompanyResponse {
   id: UUID!
   createdAt: datetime!
-  createdBy: UUID!
   name: String!
   companySourceType: CompanyType!
   website: String
   phone: String
   tags: [String!]
   parentCompanyId: UUID
+  createdBy: UserResponse!
 }
 
 enum CompanyType {
@@ -76,7 +76,6 @@ type ContactLandingPage implements LandingPageInterfaceBase {
 type ContactResponse {
   id: UUID!
   createdAt: datetime!
-  createdBy: UUID!
   firstName: String!
   lastName: String!
   email: String
@@ -219,7 +218,6 @@ type JobStatusType {
 type JobType {
   id: UUID!
   createdAt: datetime!
-  createdBy: UUID!
   jobName: String!
   startDate: Date
   endDate: Date
@@ -231,6 +229,7 @@ type JobType {
   requesterId: UUID
   tags: [String!]
   status: JobStatusType!
+  createdBy: UserResponse!
 }
 
 interface LandingPageInterfaceBase {
@@ -264,7 +263,6 @@ type LinkRelationType {
   targetEntityType: EntityType!
   targetEntityId: UUID!
   createdAt: datetime!
-  createdBy: UUID!
 }
 
 type Mutation {
@@ -306,7 +304,6 @@ input NoteConversationInput {
 type NoteConversationType {
   id: UUID!
   createdAt: datetime!
-  createdBy: UUID!
   noteId: UUID!
   content: String!
 }
@@ -338,11 +335,11 @@ type NoteRelatedEntitiesResponse {
 type NoteType {
   id: UUID!
   createdAt: datetime!
-  createdBy: UUID!
   title: String!
   content: String!
   tags: [String!]
   mentions: [UUID!]
+  createdBy: UserResponse!
 }
 
 input OrderBy {
@@ -446,7 +443,7 @@ type PreOpportunityLandingPage implements LandingPageInterfaceBase {
 type PreOpportunityLiteResponse {
   id: UUID!
   createdAt: datetime!
-  createdBy: UUID!
+  createdById: UUID!
   status: PreOpportunityStatus!
   entityNumber: String!
   entityDate: Date!
@@ -467,7 +464,7 @@ type PreOpportunityLiteResponse {
 type PreOpportunityResponse {
   id: UUID!
   createdAt: datetime!
-  createdBy: UUID!
+  createdById: UUID!
   status: PreOpportunityStatus!
   entityNumber: String!
   entityDate: Date!
@@ -486,6 +483,7 @@ type PreOpportunityResponse {
   balance: PreOpportunityBalanceResponse!
   details: [PreOpportunityDetailResponse!]!
   job: JobType
+  createdBy: UserResponse!
 }
 
 enum PreOpportunityStatus {
@@ -533,6 +531,7 @@ type Query {
   invoiceSearch(searchTerm: String!, limit: Int! = 20): [InvoiceResponse!]!
   checkSearch(searchTerm: String!, limit: Int! = 20): [CheckResponse!]!
   findLandingPages(sourceType: LandingSourceType!, filters: [Filter!] = null, orderBy: [OrderBy!] = null, limit: Int = 10, offset: Int = 0): GenericLandingPage!
+  userSearch(searchTerm: String!, limit: Int! = 20): [UserResponse!]!
 }
 
 type QuoteResponse {
@@ -557,7 +556,6 @@ input TaskConversationInput {
 type TaskConversationType {
   id: UUID!
   createdAt: datetime!
-  createdBy: UUID!
   taskId: UUID!
   content: String!
 }
@@ -611,7 +609,6 @@ enum TaskStatus {
 type TaskType {
   id: UUID!
   createdAt: datetime!
-  createdBy: UUID!
   title: String!
   status: TaskStatus!
   priority: TaskPriority!
@@ -620,9 +617,18 @@ type TaskType {
   dueDate: Date
   reminderDate: Date
   tags: [String!]
+  createdBy: UserResponse!
 }
 
 scalar UUID
+
+type UserResponse {
+  id: UUID!
+  firstName: String!
+  lastName: String!
+  email: String!
+  fullName: String!
+}
 
 """A date and time"""
 scalar datetime

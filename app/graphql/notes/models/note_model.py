@@ -10,6 +10,8 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 from app.core.db.base import CrmBaseModel, HasCreatedAt, HasCreatedBy
 
 if TYPE_CHECKING:
+    from commons.db.models import User
+
     from app.graphql.notes.models.note_conversation_model import NoteConversation
 
 
@@ -24,6 +26,8 @@ class Note(CrmBaseModel, HasCreatedAt, HasCreatedBy, kw_only=True):
     mentions: Mapped[list[UUID] | None] = mapped_column(
         ARRAY(PG_UUID(as_uuid=True)), nullable=True
     )
+
+    created_by: Mapped["User"] = relationship(init=False, lazy="joined")
 
     conversations: Mapped[list["NoteConversation"]] = relationship(
         init=False, back_populates="note", cascade="all, delete, delete-orphan"
