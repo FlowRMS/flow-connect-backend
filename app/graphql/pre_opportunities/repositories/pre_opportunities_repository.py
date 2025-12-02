@@ -4,12 +4,14 @@ from typing import Any
 from uuid import UUID
 
 from commons.db.models import User
-from sqlalchemy import Select, select
+from sqlalchemy import Select, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import lazyload
 
 from app.core.context_wrapper import ContextWrapper
 from app.graphql.base_repository import BaseRepository
+from app.graphql.links.models.entity_type import EntityType
+from app.graphql.links.models.link_relation_model import LinkRelation
 from app.graphql.pre_opportunities.models.pre_opportunity_balance_model import (
     PreOpportunityBalance,
 )
@@ -114,6 +116,62 @@ class PreOpportunitiesRepository(BaseRepository[PreOpportunity]):
         """Get all pre-opportunities for a specific customer."""
         stmt = select(PreOpportunity).where(
             PreOpportunity.sold_to_customer_id == customer_id
+        )
+        result = await self.session.execute(stmt)
+        return list(result.scalars().all())
+
+    async def search_by_entity_number(
+        self, search_term: str, limit: int = 20
+    ) -> list[PreOpportunity]:
+        """
+        Search pre-opportunities by entity number using case-insensitive pattern matching.
+
+        Args:
+            search_term: The search term to match against entity number
+            limit: Maximum number of pre-opportunities to return (default: 20)
+
+        Returns:
+            List of PreOpportunity objects matching the search criteria
+        """
+        stmt = (
+            select(PreOpportunity)
+            .where(PreOpportunity.entity_number.ilike(f"%{search_term}%"))
+            .limit(limit)
+        )
+        result = await self.session.execute(stmt)
+        return list(result.scalars().all())
+
+    async def find_by_entity(
+        self, entity_type: EntityType, entity_id: UUID
+    ) -> list[PreOpportunity]:
+        """
+        Find all pre-opportunities linked to a specific entity via link relations.
+
+        Args:
+            entity_type: The type of entity to find pre-opportunities for
+            entity_id: The ID of the entity
+
+        Returns:
+            List of PreOpportunity objects linked to the entity
+        """
+        stmt = select(PreOpportunity).join(
+            LinkRelation,
+            or_(
+                # PreOpportunity as source, entity as target
+                (
+                    (LinkRelation.source_entity_type == EntityType.PRE_OPPORTUNITY)
+                    & (LinkRelation.target_entity_type == entity_type)
+                    & (LinkRelation.target_entity_id == entity_id)
+                    & (LinkRelation.source_entity_id == PreOpportunity.id)
+                ),
+                # Entity as source, PreOpportunity as target
+                (
+                    (LinkRelation.source_entity_type == entity_type)
+                    & (LinkRelation.target_entity_type == EntityType.PRE_OPPORTUNITY)
+                    & (LinkRelation.source_entity_id == entity_id)
+                    & (LinkRelation.target_entity_id == PreOpportunity.id)
+                ),
+            ),
         )
         result = await self.session.execute(stmt)
         return list(result.scalars().all())

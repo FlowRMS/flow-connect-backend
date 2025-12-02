@@ -5,6 +5,7 @@ from uuid import UUID
 from commons.auth import AuthInfo
 
 from app.errors.common_errors import NotFoundError
+from app.graphql.links.models.entity_type import EntityType
 from app.graphql.pre_opportunities.models.pre_opportunity_model import PreOpportunity
 from app.graphql.pre_opportunities.repositories.pre_opportunities_repository import (
     PreOpportunitiesRepository,
@@ -82,3 +83,33 @@ class PreOpportunitiesService:
     async def get_by_customer_id(self, customer_id: UUID) -> list[PreOpportunity]:
         """Get all pre-opportunities for a specific customer."""
         return await self.repository.get_by_customer_id(customer_id)
+
+    async def search_pre_opportunities(
+        self, search_term: str, limit: int = 20
+    ) -> list[PreOpportunity]:
+        """
+        Search pre-opportunities by entity number.
+
+        Args:
+            search_term: The search term to match against entity number
+            limit: Maximum number of pre-opportunities to return (default: 20)
+
+        Returns:
+            List of PreOpportunity objects matching the search criteria
+        """
+        return await self.repository.search_by_entity_number(search_term, limit)
+
+    async def find_by_entity(
+        self, entity_type: EntityType, entity_id: UUID
+    ) -> list[PreOpportunity]:
+        """
+        Find all pre-opportunities linked to a specific entity.
+
+        Args:
+            entity_type: The type of entity to find pre-opportunities for
+            entity_id: The ID of the entity
+
+        Returns:
+            List of PreOpportunity objects linked to the entity
+        """
+        return await self.repository.find_by_entity(entity_type, entity_id)

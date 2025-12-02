@@ -14,6 +14,12 @@ from app.graphql.jobs.services.jobs_service import JobsService
 from app.graphql.jobs.strawberry.job_response import JobType
 from app.graphql.links.models.entity_type import EntityType
 from app.graphql.notes.services.notes_service import NotesService
+from app.graphql.pre_opportunities.services.pre_opportunities_service import (
+    PreOpportunitiesService,
+)
+from app.graphql.pre_opportunities.strawberry.pre_opportunity_lite_response import (
+    PreOpportunityLiteResponse,
+)
 from app.graphql.notes.strawberry.note_related_entities_response import (
     NoteRelatedEntitiesResponse,
 )
@@ -109,6 +115,7 @@ class NotesQueries:
         tasks_service: Injected[TasksService],
         contacts_service: Injected[ContactsService],
         companies_service: Injected[CompaniesService],
+        pre_opportunities_service: Injected[PreOpportunitiesService],
     ) -> NoteRelatedEntitiesResponse:
         """Get all entities related to a note."""
         # Verify note exists
@@ -119,10 +126,16 @@ class NotesQueries:
         tasks = await tasks_service.find_tasks_by_note_id(note_id)
         contacts = await contacts_service.find_contacts_by_note_id(note_id)
         companies = await companies_service.find_companies_by_note_id(note_id)
+        pre_opportunities = await pre_opportunities_service.find_by_entity(
+            EntityType.NOTE, note_id
+        )
 
         return NoteRelatedEntitiesResponse(
             jobs=JobType.from_orm_model_list(jobs),
             tasks=TaskType.from_orm_model_list(tasks),
             contacts=ContactResponse.from_orm_model_list(contacts),
             companies=CompanyResponse.from_orm_model_list(companies),
+            pre_opportunities=PreOpportunityLiteResponse.from_orm_model_list(
+                pre_opportunities
+            ),
         )

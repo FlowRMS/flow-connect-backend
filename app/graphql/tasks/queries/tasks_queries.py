@@ -13,6 +13,12 @@ from app.graphql.jobs.strawberry.job_response import JobType
 from app.graphql.links.models.entity_type import EntityType
 from app.graphql.notes.services.notes_service import NotesService
 from app.graphql.notes.strawberry.note_response import NoteType
+from app.graphql.pre_opportunities.services.pre_opportunities_service import (
+    PreOpportunitiesService,
+)
+from app.graphql.pre_opportunities.strawberry.pre_opportunity_lite_response import (
+    PreOpportunityLiteResponse,
+)
 from app.graphql.tasks.services.tasks_service import TasksService
 from app.graphql.tasks.strawberry.task_conversation_response import (
     TaskConversationType,
@@ -83,6 +89,7 @@ class TasksQueries:
         contacts_service: Injected[ContactsService],
         companies_service: Injected[CompaniesService],
         notes_service: Injected[NotesService],
+        pre_opportunities_service: Injected[PreOpportunitiesService],
     ) -> TaskRelatedEntitiesResponse:
         """Get all entities related to a task."""
         # Verify task exists
@@ -93,10 +100,37 @@ class TasksQueries:
         contacts = await contacts_service.find_contacts_by_task_id(task_id)
         companies = await companies_service.find_companies_by_task_id(task_id)
         notes = await notes_service.find_notes_by_entity(EntityType.TASK, task_id)
+        pre_opportunities = await pre_opportunities_service.find_by_entity(
+            EntityType.TASK, task_id
+        )
 
         return TaskRelatedEntitiesResponse(
             jobs=JobType.from_orm_model_list(jobs),
             contacts=ContactResponse.from_orm_model_list(contacts),
             companies=CompanyResponse.from_orm_model_list(companies),
             notes=NoteType.from_orm_model_list(notes),
+            pre_opportunities=PreOpportunityLiteResponse.from_orm_model_list(
+                pre_opportunities
+            ),
         )
+
+    @strawberry.field
+    @inject
+    async def tasks_by_entity(
+        self,
+        entity_type: EntityType,
+        entity_id: UUID,
+        service: Injected[TasksService],
+    ) -> list[TaskType]:
+        """
+        Find all tasks linked to a specific entity.
+
+        Args:
+            entity_type: The type of entity to find tasks for
+            entity_id: The ID of the entity
+
+        Returns:
+            List of TaskType objects linked to the entity
+        """
+        tasks = await service.find_tasks_by_entity(entity_type, entity_id)
+        return TaskType.from_orm_model_list(tasks)

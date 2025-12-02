@@ -330,6 +330,7 @@ type NoteRelatedEntitiesResponse {
   tasks: [TaskType!]!
   contacts: [ContactResponse!]!
   companies: [CompanyResponse!]!
+  preOpportunities: [PreOpportunityLiteResponse!]!
 }
 
 type NoteType {
@@ -511,6 +512,7 @@ type Query {
   taskConversations(taskId: UUID!): [TaskConversationType!]!
   taskSearch(searchTerm: String!, limit: Int! = 20): [TaskType!]!
   taskRelatedEntities(taskId: UUID!): TaskRelatedEntitiesResponse!
+  tasksByEntity(entityType: EntityType!, entityId: UUID!): [TaskType!]!
   note(id: UUID!): NoteType!
   notes(limit: Int! = 20, offset: Int! = 0): [NoteType!]!
   notesByEntity(entityType: EntityType!, entityId: UUID!): [NoteType!]!
@@ -523,6 +525,7 @@ type Query {
   contactsByCompany(companyId: UUID!): [ContactResponse!]!
   contactSearch(searchTerm: String!, limit: Int! = 20): [ContactResponse!]!
   preOpportunity(id: UUID!): PreOpportunityResponse!
+  preOpportunitySearch(searchTerm: String!, limit: Int! = 20): [PreOpportunityLiteResponse!]!
   productSearch(searchTerm: String!, factoryId: UUID, limit: Int! = 20): [ProductResponse!]!
   factorySearch(searchTerm: String!, published: Boolean! = true, limit: Int! = 20): [FactoryResponse!]!
   customerSearch(searchTerm: String!, published: Boolean! = true, limit: Int! = 20): [CustomerResponse!]!
@@ -597,6 +600,7 @@ type TaskRelatedEntitiesResponse {
   contacts: [ContactResponse!]!
   companies: [CompanyResponse!]!
   notes: [NoteType!]!
+  preOpportunities: [PreOpportunityLiteResponse!]!
 }
 
 enum TaskStatus {

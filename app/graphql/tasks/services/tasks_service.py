@@ -103,3 +103,18 @@ class TasksService:
     async def find_tasks_by_note_id(self, note_id: UUID) -> list[Task]:
         """Find all tasks linked to the given note ID."""
         return await self.repository.find_by_entity(EntityType.NOTE, note_id)
+
+    async def find_tasks_by_entity(
+        self, entity_type: EntityType, entity_id: UUID
+    ) -> list[Task]:
+        """
+        Find all tasks linked to a specific entity.
+
+        Args:
+            entity_type: The type of entity to find tasks for
+            entity_id: The ID of the entity
+
+        Returns:
+            List of Task objects linked to the entity
+        """
+        return await self.repository.find_by_entity(entity_type, entity_id)
