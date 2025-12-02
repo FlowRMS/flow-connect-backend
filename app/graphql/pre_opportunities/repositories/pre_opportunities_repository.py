@@ -59,7 +59,7 @@ class PreOpportunitiesRepository(BaseRepository[PreOpportunity]):
             )
             .select_from(PreOpportunity)
             .options(lazyload("*"))
-            .join(User, User.id == PreOpportunity.created_by)
+            .join(User, User.id == PreOpportunity.created_by_id)
             .join(
                 PreOpportunityBalance,
                 PreOpportunityBalance.id == PreOpportunity.balance_id,
