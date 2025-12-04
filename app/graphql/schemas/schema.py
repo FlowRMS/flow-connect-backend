@@ -25,6 +25,7 @@ from app.graphql.invoices.queries.invoices_queries import InvoicesQueries
 from app.graphql.jobs.mutations.jobs_mutations import JobsMutations
 from app.graphql.jobs.queries.jobs_queries import JobsQueries
 from app.graphql.links.mutations.links_mutations import LinksMutations
+from app.graphql.links.queries.links_queries import LinksQueries
 from app.graphql.notes.mutations.notes_mutations import NotesMutations
 from app.graphql.notes.queries.notes_queries import NotesQueries
 from app.graphql.orders.queries.orders_queries import OrdersQueries
@@ -62,6 +63,7 @@ Query = merge_types(
         ChecksQueries,
         LandingPageQueries,
         UsersQueries,
+        LinksQueries,
     ),
 )
 

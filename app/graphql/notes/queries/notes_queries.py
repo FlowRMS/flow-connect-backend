@@ -14,18 +14,18 @@ from app.graphql.jobs.services.jobs_service import JobsService
 from app.graphql.jobs.strawberry.job_response import JobType
 from app.graphql.links.models.entity_type import EntityType
 from app.graphql.notes.services.notes_service import NotesService
-from app.graphql.pre_opportunities.services.pre_opportunities_service import (
-    PreOpportunitiesService,
-)
-from app.graphql.pre_opportunities.strawberry.pre_opportunity_lite_response import (
-    PreOpportunityLiteResponse,
-)
 from app.graphql.notes.strawberry.note_related_entities_response import (
     NoteRelatedEntitiesResponse,
 )
 from app.graphql.notes.strawberry.note_response import (
     NoteConversationType,
     NoteType,
+)
+from app.graphql.pre_opportunities.services.pre_opportunities_service import (
+    PreOpportunitiesService,
+)
+from app.graphql.pre_opportunities.strawberry.pre_opportunity_lite_response import (
+    PreOpportunityLiteResponse,
 )
 from app.graphql.tasks.services.tasks_service import TasksService
 from app.graphql.tasks.strawberry.task_response import TaskType

@@ -535,6 +535,10 @@ type Query {
   checkSearch(searchTerm: String!, limit: Int! = 20): [CheckResponse!]!
   findLandingPages(sourceType: LandingSourceType!, filters: [Filter!] = null, orderBy: [OrderBy!] = null, limit: Int = 10, offset: Int = 0): GenericLandingPage!
   userSearch(searchTerm: String!, limit: Int! = 20): [UserResponse!]!
+  link(id: UUID!): LinkRelationType!
+  linksByEntity(entityType: EntityType!, entityId: UUID!): [LinkRelationType!]!
+  linksFromSource(sourceType: EntityType!, sourceId: UUID!): [LinkRelationType!]!
+  linksToTarget(targetType: EntityType!, targetId: UUID!): [LinkRelationType!]!
 }
 
 type QuoteResponse {
