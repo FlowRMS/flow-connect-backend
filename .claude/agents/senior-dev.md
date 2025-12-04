@@ -112,7 +112,7 @@ async def process_and_stage(
 
 ## Code Standards Reference
 
-Follow patterns from `/Users/jsaied/FlowRMS/flow-ai/ARCHITECTURE_GUIDE.md`:
+Follow patterns from `/Users/jsaied/FlowRMS/flow-py-crm/ARCHITECTURE_GUIDE.md`:
 
 ### Repository Pattern
 ```python

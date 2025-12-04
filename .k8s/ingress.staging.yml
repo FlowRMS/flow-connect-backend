@@ -1,0 +1,27 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: ingress-flow-py-crm
+  namespace: default
+  annotations:
+    cert-manager.io/issuer: letsencrypt-nginx-new
+    nginx.ingress.kubernetes.io/proxy-read-timeout: "600"
+    nginx.ingress.kubernetes.io/proxy-send-timeout: "600"
+    nginx.ingress.kubernetes.io/proxy-body-size: "25m"
+spec:
+  tls:
+    - hosts:
+        - staging.py.crm.flowrms.com
+      secretName: letsencrypt-nginx-flow-py-crm-ai-tls
+  rules:
+    - host: staging.py.crm.flowrms.com
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: flow-py-crm-service
+                port:
+                  number: 8000
+  ingressClassName: nginx

@@ -75,7 +75,7 @@ Flow AI is a scalable, AI-powered document processing platform built with FastAP
 ## Project Structure
 
 ```
-flow-ai/
+flow-py-crm/
 ├── app/                          # Main application code
 │   ├── agents/                   # AI agent implementations
 │   │   ├── {agent_name}/
@@ -2409,20 +2409,20 @@ CMD uv run alembic upgrade head && \
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: flow-ai
+  name: flow-py-crm
 spec:
   replicas: 3
   selector:
     matchLabels:
-      app: flow-ai
+      app: flow-py-crm
   template:
     metadata:
       labels:
-        app: flow-ai
+        app: flow-py-crm
     spec:
       containers:
-      - name: flow-ai
-        image: flowrms/flow-ai:latest
+      - name: flow-py-crm
+        image: flowrms/flow-py-crm:latest
         ports:
         - containerPort: 8000
         env:
@@ -2431,7 +2431,7 @@ spec:
         - name: PG_URL
           valueFrom:
             secretKeyRef:
-              name: flow-ai-secrets
+              name: flow-py-crm-secrets
               key: pg-url
         resources:
           requests:
@@ -2450,14 +2450,14 @@ spec:
 import modal
 from app.core.config.settings import Settings
 
-app = modal.App("flow-ai-jobs")
+app = modal.App("flow-py-crm-jobs")
 
 # Define image with dependencies
 image = modal.Image.debian_slim().pip_install_from_pyproject("pyproject.toml")
 
 @app.function(
     image=image,
-    secrets=[modal.Secret.from_name("flow-ai-secrets")],
+    secrets=[modal.Secret.from_name("flow-py-crm-secrets")],
     timeout=3600,
 )
 async def process_large_document(file_id: str):

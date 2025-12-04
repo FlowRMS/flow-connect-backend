@@ -1,0 +1,50 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: flow-py-crm
+  labels:
+    app: flow-py-crm
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: flow-py-crm
+  template:
+    metadata:
+      labels:
+        app: flow-py-crm
+    spec:
+      nodeSelector:
+        pool: flow-py-crm-pool
+      initContainers:
+        - name: migrations
+          image: ${IMAGE_TAG}
+          command: ["python", "run_migrations.py"]
+          envFrom:
+            - secretRef:
+                name: flow-py-crm-secret
+      containers:
+        - name: flow-py-crm
+          image: ${IMAGE_TAG}
+          ports:
+            - containerPort: 8000
+          envFrom:
+            - secretRef:
+                name: flow-py-crm-secret
+          readinessProbe:                   # Add readiness probe here
+            httpGet:
+              path: /api/health                # Path for health check endpoint
+              port: 8000                   # Port where the endpoint is exposed
+            initialDelaySeconds: 25         # Wait before starting checks
+            periodSeconds: 10              # Interval between checks
+            successThreshold: 1            # Number of successes required
+            failureThreshold: 10            # Number of failures before marking unready
+          livenessProbe:                   # Optionally, add a liveness probe
+            httpGet:
+              path: /api/health                # Path for health check endpoint
+              port: 8000                   # Port where the endpoint is exposed
+            initialDelaySeconds: 30        # Wait before starting checks
+            periodSeconds: 20              # Interval between checks
+            failureThreshold: 10            # Number of failures before restarting
+      imagePullSecrets:
+        - name: github-credentials

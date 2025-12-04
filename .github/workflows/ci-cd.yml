@@ -1,0 +1,94 @@
+name: Build, Push, and Deploy to K8S
+
+on:
+  push:
+    branches:
+      - main
+      - development
+      - staging
+
+jobs:
+  build-and-push:
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push'
+    permissions:
+      contents: write
+      packages: write
+
+    outputs:
+      environment: ${{ env.ENVIRONMENT }}
+
+    steps:
+      - name: Check out the repo
+        uses: actions/checkout@v3
+
+      - name: Set Environment
+        uses: flowrms/flow-commons-github/.github/actions/github-set-env@main
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v1
+
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v1
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.WORKFLOW_TOKEN }}
+
+      - name: Set IMAGE_TAG
+        id: set_tags
+        run: |
+          echo "image_tag=${{ env.IMAGE_TAG }}" >> $GITHUB_OUTPUT
+
+      - name: Build and push
+        uses: docker/build-push-action@v2
+        with:
+          context: .
+          file: ./Dockerfile
+          push: true
+          tags: ${{ steps.set_tags.outputs.image_tag }}
+          build-args: |
+            UV_INDEX_URL=${{ secrets.UV_INDEX_URL }}
+
+      - name: Verify the image was pushed
+        run: |
+          echo "The image was pushed with tag ${{ steps.set_tag.outputs.image_tag }}"
+
+  deploy:
+    needs: [build-and-push]
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push'
+    environment: ${{ github.ref_name == 'production' && 'production' || github.ref_name == 'main' && 'production' || github.ref_name == 'staging' && 'staging' || github.ref_name == 'development' && 'development' || github.ref_name == 'beta' && 'beta' || 'development'}}
+    permissions:
+      contents: read
+    steps:
+      - name: Check out the repo
+        uses: actions/checkout@v3
+
+      - name: K8S Push
+        uses: flowrms/flow-commons-github/.github/actions/k8s-push@main
+        env:
+          KUBE_CLUSTER_NAME_PRODUCTION_2: ${{ secrets.KUBE_CLUSTER_NAME_PRODUCTION_2 }}
+          KUBE_CLUSTER_NAME_PRODUCTION: ${{ secrets.KUBE_CLUSTER_NAME_PRODUCTION }}
+          KUBE_CLUSTER_NAME_STAGING: ${{ secrets.KUBE_CLUSTER_NAME_STAGING }}
+          KUBE_CLUSTER_NAME_DEVELOPMENT: ${{ secrets.KUBE_CLUSTER_NAME_DEVELOPMENT }}
+          KUBE_CLUSTER_NAME_BETA: ${{ secrets.KUBE_CLUSTER_NAME_BETA }}
+          DOCR_ACCESS_TOKEN: ${{ secrets.DOCR_ACCESS_TOKEN }}
+
+      - name: Install kubectl
+        run: |
+          curl -LO "https://storage.googleapis.com/kubernetes-release/release/$(curl -s https://storage.googleapis.com/kubernetes-release/release/stable.txt)/bin/linux/amd64/kubectl"
+          chmod +x ./kubectl
+          sudo mv ./kubectl /usr/local/bin/kubectl
+
+      - name: Create Kubernetes secret
+        run: |
+          kubectl create secret generic flow-py-crm-secret \
+            --from-literal=PG_URL=${{ secrets.PG_URL }} \
+            --from-literal=AUTH_URL=${{ secrets.AUTH_URL }} \
+            --from-literal=CLIENT_ID=${{ secrets.CLIENT_ID }} \
+            --from-literal=CLIENT_SECRET=${{ secrets.CLIENT_SECRET }} \
+            --from-literal=PORT=8000 \
+            --from-literal=ENVIRONMENT=${{ secrets.ENVIRONMENT }} \
+            --from-literal=LOG_LEVEL=${{ secrets.LOG_LEVEL }} \
+            -o yaml --dry-run=client | kubectl apply -f -
