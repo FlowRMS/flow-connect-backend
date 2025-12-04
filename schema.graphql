@@ -117,6 +117,9 @@ enum EntityType {
   ORDER
   INVOICE
   CHECK
+  FACTORY
+  CUSTOMER
+  PRODUCT
 }
 
 type FactoryResponse {

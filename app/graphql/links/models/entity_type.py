@@ -19,3 +19,6 @@ class EntityType(IntEnum):
     ORDER = auto()
     INVOICE = auto()
     CHECK = auto()
+    FACTORY = auto()
+    CUSTOMER = auto()
+    PRODUCT = auto()
