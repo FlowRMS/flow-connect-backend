@@ -3,6 +3,7 @@ name: Build, Push, and Deploy to K8S
 on:
   push:
     branches:
+      - production
       - main
       - development
       - staging
