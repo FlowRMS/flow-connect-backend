@@ -4,6 +4,7 @@ from commons.auth import AuthInfo
 from commons.db.models import Check
 
 from app.graphql.checks.repositories.checks_repository import ChecksRepository
+from app.graphql.links.models.entity_type import EntityType
 
 
 class CheckService:
@@ -34,3 +35,9 @@ class CheckService:
     async def find_checks_by_job_id(self, job_id: UUID) -> list[Check]:
         """Find all checks linked to the given job ID."""
         return await self.repository.find_by_job_id(job_id)
+
+    async def find_by_entity(
+        self, entity_type: EntityType, entity_id: UUID
+    ) -> list[Check]:
+        """Find all checks linked to a specific entity."""
+        return await self.repository.find_by_entity(entity_type, entity_id)

@@ -1,7 +1,10 @@
+from uuid import UUID
+
 from commons.auth import AuthInfo
 from commons.db.models import Customer
 
 from app.graphql.customers.repositories.customers_repository import CustomersRepository
+from app.graphql.links.models.entity_type import EntityType
 
 
 class CustomerService:
@@ -33,3 +36,9 @@ class CustomerService:
         return await self.repository.search_by_company_name(
             search_term, published, limit
         )
+
+    async def find_by_entity(
+        self, entity_type: EntityType, entity_id: UUID
+    ) -> list[Customer]:
+        """Find all customers linked to a specific entity."""
+        return await self.repository.find_by_entity(entity_type, entity_id)

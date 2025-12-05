@@ -1,3 +1,5 @@
+"""Repository for Quote entity with specific database operations."""
+
 from uuid import UUID
 
 from commons.db.models import Quote
@@ -12,6 +14,8 @@ from app.graphql.links.models.link_relation_model import LinkRelation
 
 class QuotesRepository(BaseRepository[Quote]):
     """Repository for Quotes entity."""
+
+    entity_type = EntityType.QUOTE
 
     def __init__(self, context_wrapper: ContextWrapper, session: AsyncSession) -> None:
         super().__init__(session, context_wrapper, Quote)

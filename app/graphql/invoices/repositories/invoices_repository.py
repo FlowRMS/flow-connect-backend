@@ -1,3 +1,5 @@
+"""Repository for Invoice entity with specific database operations."""
+
 from uuid import UUID
 
 from commons.db.models import Invoice
@@ -12,6 +14,8 @@ from app.graphql.links.models.link_relation_model import LinkRelation
 
 class InvoicesRepository(BaseRepository[Invoice]):
     """Repository for Invoices entity."""
+
+    entity_type = EntityType.INVOICE
 
     def __init__(self, context_wrapper: ContextWrapper, session: AsyncSession) -> None:
         super().__init__(session, context_wrapper, Invoice)

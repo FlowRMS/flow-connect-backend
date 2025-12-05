@@ -1,4 +1,6 @@
-import uuid
+"""Repository for Product entity with specific database operations."""
+
+from uuid import UUID
 
 from commons.db.models import Product
 from sqlalchemy import select
@@ -6,16 +8,19 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.context_wrapper import ContextWrapper
 from app.graphql.base_repository import BaseRepository
+from app.graphql.links.models.entity_type import EntityType
 
 
 class ProductsRepository(BaseRepository[Product]):
     """Repository for Products entity."""
 
+    entity_type = EntityType.PRODUCT
+
     def __init__(self, context_wrapper: ContextWrapper, session: AsyncSession) -> None:
         super().__init__(session, context_wrapper, Product)
 
     async def search_by_fpn(
-        self, search_term: str, factory_id: uuid.UUID | None, limit: int = 20
+        self, search_term: str, factory_id: UUID | None, limit: int = 20
     ) -> list[Product]:
         """
         Search products by factory part number using case-insensitive pattern matching.

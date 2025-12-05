@@ -3,22 +3,36 @@ from uuid import UUID
 import strawberry
 from aioinject import Injected
 
+from app.graphql.checks.services.check_service import CheckService
+from app.graphql.checks.strawberry.check_response import CheckResponse
 from app.graphql.companies.services.companies_service import CompaniesService
 from app.graphql.companies.strawberry.company_response import CompanyResponse
 from app.graphql.contacts.services.contacts_service import ContactsService
 from app.graphql.contacts.strawberry.contact_response import ContactResponse
+from app.graphql.customers.services.customer_service import CustomerService
+from app.graphql.customers.strawberry.customer_response import CustomerResponse
+from app.graphql.factories.services.factory_service import FactoryService
+from app.graphql.factories.strawberry.factory_response import FactoryResponse
 from app.graphql.inject import inject
+from app.graphql.invoices.services.invoice_service import InvoiceService
+from app.graphql.invoices.strawberry.invoice_response import InvoiceResponse
 from app.graphql.jobs.services.jobs_service import JobsService
 from app.graphql.jobs.strawberry.job_response import JobType
 from app.graphql.links.models.entity_type import EntityType
 from app.graphql.notes.services.notes_service import NotesService
 from app.graphql.notes.strawberry.note_response import NoteType
+from app.graphql.orders.services.order_service import OrderService
+from app.graphql.orders.strawberry.order_response import OrderResponse
 from app.graphql.pre_opportunities.services.pre_opportunities_service import (
     PreOpportunitiesService,
 )
 from app.graphql.pre_opportunities.strawberry.pre_opportunity_lite_response import (
     PreOpportunityLiteResponse,
 )
+from app.graphql.products.services.product_service import ProductService
+from app.graphql.products.strawberry.product_response import ProductResponse
+from app.graphql.quotes.services.quote_service import QuoteService
+from app.graphql.quotes.strawberry.quote_response import QuoteResponse
 from app.graphql.tasks.services.tasks_service import TasksService
 from app.graphql.tasks.strawberry.task_conversation_response import (
     TaskConversationType,
@@ -90,6 +104,13 @@ class TasksQueries:
         companies_service: Injected[CompaniesService],
         notes_service: Injected[NotesService],
         pre_opportunities_service: Injected[PreOpportunitiesService],
+        quote_service: Injected[QuoteService],
+        order_service: Injected[OrderService],
+        invoice_service: Injected[InvoiceService],
+        check_service: Injected[CheckService],
+        factory_service: Injected[FactoryService],
+        product_service: Injected[ProductService],
+        customer_service: Injected[CustomerService],
     ) -> TaskRelatedEntitiesResponse:
         """Get all entities related to a task."""
         # Verify task exists
@@ -103,6 +124,13 @@ class TasksQueries:
         pre_opportunities = await pre_opportunities_service.find_by_entity(
             EntityType.TASK, task_id
         )
+        quotes = await quote_service.find_by_entity(EntityType.TASK, task_id)
+        orders = await order_service.find_by_entity(EntityType.TASK, task_id)
+        invoices = await invoice_service.find_by_entity(EntityType.TASK, task_id)
+        checks = await check_service.find_by_entity(EntityType.TASK, task_id)
+        factories = await factory_service.find_by_entity(EntityType.TASK, task_id)
+        products = await product_service.find_by_entity(EntityType.TASK, task_id)
+        customers = await customer_service.find_by_entity(EntityType.TASK, task_id)
 
         return TaskRelatedEntitiesResponse(
             jobs=JobType.from_orm_model_list(jobs),
@@ -112,6 +140,13 @@ class TasksQueries:
             pre_opportunities=PreOpportunityLiteResponse.from_orm_model_list(
                 pre_opportunities
             ),
+            quotes=QuoteResponse.from_orm_model_list(quotes),
+            orders=OrderResponse.from_orm_model_list(orders),
+            invoices=InvoiceResponse.from_orm_model_list(invoices),
+            checks=CheckResponse.from_orm_model_list(checks),
+            factories=FactoryResponse.from_orm_model_list(factories),
+            products=ProductResponse.from_orm_model_list(products),
+            customers=CustomerResponse.from_orm_model_list(customers),
         )
 
     @strawberry.field

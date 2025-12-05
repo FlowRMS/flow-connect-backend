@@ -1,17 +1,19 @@
 """Base repository with common CRUD operations for all entities."""
 
 import uuid
-from typing import Generic, TypeVar
+from typing import ClassVar, Generic, TypeVar
 from uuid import UUID
 
 import pendulum
-from sqlalchemy import func, select
+from sqlalchemy import func, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.sql.base import ExecutableOption
 
 from app.core.context_wrapper import ContextWrapper
 from app.core.db.base import BaseModel
 from app.errors.common_errors import NotFoundError
+from app.graphql.links.models.entity_type import EntityType
+from app.graphql.links.models.link_relation_model import LinkRelation
 
 T = TypeVar("T", bound=BaseModel)
 
@@ -22,6 +24,8 @@ class BaseRepository(Generic[T]):
 
     Type parameter T should be the SQLAlchemy model class.
     """
+
+    entity_type: ClassVar[EntityType | None] = None
 
     def __init__(
         self,
@@ -215,3 +219,45 @@ class BaseRepository(Generic[T]):
         for entity in entities:
             await self.session.refresh(entity)
         return entities
+
+    async def find_by_entity(self, entity_type: EntityType, entity_id: UUID) -> list[T]:
+        """
+        Find all entities of this type linked to a specific entity via link relations.
+
+        Requires the repository to define an `entity_type` class attribute.
+
+        Args:
+            entity_type: The type of entity to find links for
+            entity_id: The ID of the entity
+
+        Returns:
+            List of entities linked to the specified entity
+
+        Raises:
+            ValueError: If entity_type class attribute is not defined
+        """
+        if self.entity_type is None:
+            raise ValueError(
+                f"{self.__class__.__name__} must define an entity_type class attribute "
+                "to use find_by_entity"
+            )
+
+        stmt = select(self.model_class).join(
+            LinkRelation,
+            or_(
+                (
+                    (LinkRelation.source_entity_type == self.entity_type)
+                    & (LinkRelation.target_entity_type == entity_type)
+                    & (LinkRelation.target_entity_id == entity_id)
+                    & (LinkRelation.source_entity_id == self.model_class.id)
+                ),
+                (
+                    (LinkRelation.source_entity_type == entity_type)
+                    & (LinkRelation.target_entity_type == self.entity_type)
+                    & (LinkRelation.source_entity_id == entity_id)
+                    & (LinkRelation.target_entity_id == self.model_class.id)
+                ),
+            ),
+        )
+        result = await self.session.execute(stmt)
+        return list(result.scalars().all())

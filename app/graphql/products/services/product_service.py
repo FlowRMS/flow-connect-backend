@@ -1,8 +1,9 @@
-import uuid
+from uuid import UUID
 
 from commons.auth import AuthInfo
 from commons.db.models import Product
 
+from app.graphql.links.models.entity_type import EntityType
 from app.graphql.products.repositories.products_repository import ProductsRepository
 
 
@@ -19,7 +20,7 @@ class ProductService:
         self.auth_info = auth_info
 
     async def search_products(
-        self, search_term: str, factory_id: uuid.UUID | None, limit: int = 20
+        self, search_term: str, factory_id: UUID | None, limit: int = 20
     ) -> list[Product]:
         """
         Search products by factory part number.
@@ -33,3 +34,9 @@ class ProductService:
             List of Product objects matching the search criteria
         """
         return await self.repository.search_by_fpn(search_term, factory_id, limit)
+
+    async def find_by_entity(
+        self, entity_type: EntityType, entity_id: UUID
+    ) -> list[Product]:
+        """Find all products linked to a specific entity."""
+        return await self.repository.find_by_entity(entity_type, entity_id)

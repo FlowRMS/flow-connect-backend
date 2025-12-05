@@ -211,6 +211,9 @@ type JobRelatedEntitiesResponse {
   orders: [OrderResponse!]!
   invoices: [InvoiceResponse!]!
   checks: [CheckResponse!]!
+  factories: [FactoryResponse!]!
+  products: [ProductResponse!]!
+  customers: [CustomerResponse!]!
 }
 
 type JobStatusType {
@@ -334,6 +337,13 @@ type NoteRelatedEntitiesResponse {
   contacts: [ContactResponse!]!
   companies: [CompanyResponse!]!
   preOpportunities: [PreOpportunityLiteResponse!]!
+  quotes: [QuoteResponse!]!
+  orders: [OrderResponse!]!
+  invoices: [InvoiceResponse!]!
+  checks: [CheckResponse!]!
+  factories: [FactoryResponse!]!
+  products: [ProductResponse!]!
+  customers: [CustomerResponse!]!
 }
 
 type NoteType {
@@ -608,6 +618,13 @@ type TaskRelatedEntitiesResponse {
   companies: [CompanyResponse!]!
   notes: [NoteType!]!
   preOpportunities: [PreOpportunityLiteResponse!]!
+  quotes: [QuoteResponse!]!
+  orders: [OrderResponse!]!
+  invoices: [InvoiceResponse!]!
+  checks: [CheckResponse!]!
+  factories: [FactoryResponse!]!
+  products: [ProductResponse!]!
+  customers: [CustomerResponse!]!
 }
 
 enum TaskStatus {

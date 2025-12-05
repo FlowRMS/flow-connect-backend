@@ -11,6 +11,10 @@ from app.graphql.companies.services.companies_service import CompaniesService
 from app.graphql.companies.strawberry.company_response import CompanyResponse
 from app.graphql.contacts.services.contacts_service import ContactsService
 from app.graphql.contacts.strawberry.contact_response import ContactResponse
+from app.graphql.customers.services.customer_service import CustomerService
+from app.graphql.customers.strawberry.customer_response import CustomerResponse
+from app.graphql.factories.services.factory_service import FactoryService
+from app.graphql.factories.strawberry.factory_response import FactoryResponse
 from app.graphql.invoices.services.invoice_service import InvoiceService
 from app.graphql.invoices.strawberry.invoice_response import InvoiceResponse
 from app.graphql.jobs.models.jobs_model import Job
@@ -19,6 +23,7 @@ from app.graphql.jobs.strawberry.job_input import JobInput
 from app.graphql.jobs.strawberry.job_related_entities_response import (
     JobRelatedEntitiesResponse,
 )
+from app.graphql.links.models.entity_type import EntityType
 from app.graphql.orders.services.order_service import OrderService
 from app.graphql.orders.strawberry.order_response import OrderResponse
 from app.graphql.pre_opportunities.services.pre_opportunities_service import (
@@ -27,6 +32,8 @@ from app.graphql.pre_opportunities.services.pre_opportunities_service import (
 from app.graphql.pre_opportunities.strawberry.pre_opportunity_lite_response import (
     PreOpportunityLiteResponse,
 )
+from app.graphql.products.services.product_service import ProductService
+from app.graphql.products.strawberry.product_response import ProductResponse
 from app.graphql.quotes.services.quote_service import QuoteService
 from app.graphql.quotes.strawberry.quote_response import QuoteResponse
 
@@ -49,6 +56,9 @@ class JobsService:
         order_service: OrderService,
         invoice_service: InvoiceService,
         check_service: CheckService,
+        factory_service: FactoryService,
+        product_service: ProductService,
+        customer_service: CustomerService,
     ) -> None:
         super().__init__()
         self.repository = repository
@@ -60,6 +70,9 @@ class JobsService:
         self.order_service = order_service
         self.invoice_service = invoice_service
         self.check_service = check_service
+        self.factory_service = factory_service
+        self.product_service = product_service
+        self.customer_service = customer_service
 
     async def create_job(
         self,
@@ -131,6 +144,9 @@ class JobsService:
         orders = await self.order_service.find_orders_by_job_id(job_id)
         invoices = await self.invoice_service.find_invoices_by_job_id(job_id)
         checks = await self.check_service.find_checks_by_job_id(job_id)
+        factories = await self.factory_service.find_by_entity(EntityType.JOB, job_id)
+        products = await self.product_service.find_by_entity(EntityType.JOB, job_id)
+        customers = await self.customer_service.find_by_entity(EntityType.JOB, job_id)
 
         return JobRelatedEntitiesResponse(
             pre_opportunities=PreOpportunityLiteResponse.from_orm_model_list(
@@ -142,6 +158,9 @@ class JobsService:
             orders=OrderResponse.from_orm_model_list(orders),
             invoices=InvoiceResponse.from_orm_model_list(invoices),
             checks=CheckResponse.from_orm_model_list(checks),
+            factories=FactoryResponse.from_orm_model_list(factories),
+            products=ProductResponse.from_orm_model_list(products),
+            customers=CustomerResponse.from_orm_model_list(customers),
         )
 
     async def search_jobs(self, search_term: str, limit: int = 20) -> list[Job]:

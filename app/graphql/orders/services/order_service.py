@@ -3,6 +3,7 @@ from uuid import UUID
 from commons.auth import AuthInfo
 from commons.db.models import Order
 
+from app.graphql.links.models.entity_type import EntityType
 from app.graphql.orders.repositories.orders_repository import OrdersRepository
 
 
@@ -34,3 +35,9 @@ class OrderService:
     async def find_orders_by_job_id(self, job_id: UUID) -> list[Order]:
         """Find all orders linked to the given job ID."""
         return await self.repository.find_by_job_id(job_id)
+
+    async def find_by_entity(
+        self, entity_type: EntityType, entity_id: UUID
+    ) -> list[Order]:
+        """Find all orders linked to a specific entity."""
+        return await self.repository.find_by_entity(entity_type, entity_id)

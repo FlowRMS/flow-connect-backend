@@ -1,3 +1,5 @@
+"""Repository for Check entity with specific database operations."""
+
 from uuid import UUID
 
 from commons.db.models import Check
@@ -12,6 +14,8 @@ from app.graphql.links.models.link_relation_model import LinkRelation
 
 class ChecksRepository(BaseRepository[Check]):
     """Repository for Checks entity."""
+
+    entity_type = EntityType.CHECK
 
     def __init__(self, context_wrapper: ContextWrapper, session: AsyncSession) -> None:
         super().__init__(session, context_wrapper, Check)

@@ -1,13 +1,18 @@
+"""Repository for Factory entity with specific database operations."""
+
 from commons.db.models import Factory
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.context_wrapper import ContextWrapper
 from app.graphql.base_repository import BaseRepository
+from app.graphql.links.models.entity_type import EntityType
 
 
 class FactoriesRepository(BaseRepository[Factory]):
     """Repository for Factories entity."""
+
+    entity_type = EntityType.FACTORY
 
     def __init__(self, context_wrapper: ContextWrapper, session: AsyncSession) -> None:
         super().__init__(session, context_wrapper, Factory)

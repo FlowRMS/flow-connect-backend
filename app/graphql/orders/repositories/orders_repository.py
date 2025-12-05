@@ -1,3 +1,5 @@
+"""Repository for Order entity with specific database operations."""
+
 from uuid import UUID
 
 from commons.db.models import Order
@@ -12,6 +14,8 @@ from app.graphql.links.models.link_relation_model import LinkRelation
 
 class OrdersRepository(BaseRepository[Order]):
     """Repository for Orders entity."""
+
+    entity_type = EntityType.ORDER
 
     def __init__(self, context_wrapper: ContextWrapper, session: AsyncSession) -> None:
         super().__init__(session, context_wrapper, Order)
