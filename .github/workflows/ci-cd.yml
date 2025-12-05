@@ -22,7 +22,7 @@ jobs:
             --url "${{ secrets.GRAPHQL_ENDPOINT }}" \
             --author "${{ github.actor }}" \
             --commit "${{ github.sha }}" \
-            --target "flowrms/flowrms/${{ github.ref_name }}" schema.graphql
+            --target "flowrms/flowrms/${{ secrets.ENVIRONMENT }}" schema.graphql
   build-and-push:
     runs-on: ubuntu-latest
     needs: publish-graphql-schema
