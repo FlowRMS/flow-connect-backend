@@ -516,6 +516,7 @@ type ProductResponse {
 
 type Query {
   _service: _Service!
+  dummyField: String!
   job(id: UUID!): JobType!
   jobStatuses: [JobStatusType!]!
   jobRelatedEntities(jobId: UUID!): JobRelatedEntitiesResponse!

@@ -8,8 +8,22 @@ on:
       - staging
 
 jobs:
+  publish-graphql-schema:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-node@v3
+      - run: npm install -g @graphql-hive/cli
+      - run: |
+          hive schema:publish \
+            --registry.accessToken ${{ secrets.HIVE_PUBLISHING_TOKEN }} \
+            --service "crm" \
+            --url "${{ secrets.GRAPHQL_ENDPOINT }}" \
+            --author "${{ github.actor }}" \
+            --commit "${{ github.sha }}"
   build-and-push:
     runs-on: ubuntu-latest
+    needs: publish-graphql-schema
     if: github.event_name == 'push'
     permissions:
       contents: write
