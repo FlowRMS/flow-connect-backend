@@ -5,6 +5,7 @@ from uuid import UUID
 from commons.db.models import Check
 from sqlalchemy import or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import lazyload
 
 from app.core.context_wrapper import ContextWrapper
 from app.graphql.base_repository import BaseRepository
@@ -35,6 +36,7 @@ class ChecksRepository(BaseRepository[Check]):
         """
         stmt = (
             select(Check)
+            .options(lazyload("*"))
             .where(Check.check_number.ilike(f"%{search_term}%"))
             .limit(limit)
         )

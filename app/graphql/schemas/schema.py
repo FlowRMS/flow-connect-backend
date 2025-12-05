@@ -81,7 +81,7 @@ Mutation = merge_types(
 )
 
 
-schema = strawberry.Schema(  # pyright: ignore[reportArgumentType]
+schema = strawberry.federation.Schema(  # pyright: ignore[reportArgumentType]
     Query,
     mutation=Mutation,
     extensions=[
