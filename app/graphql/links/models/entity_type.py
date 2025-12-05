@@ -5,7 +5,7 @@ from enum import IntEnum, auto
 import strawberry
 
 
-@strawberry.enum
+@strawberry.enum(name="CRMEntityType")
 class EntityType(IntEnum):
     """Type of entity that can be linked in a link relation."""
 

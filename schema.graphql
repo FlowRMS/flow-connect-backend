@@ -1,3 +1,19 @@
+enum CRMEntityType {
+  JOB
+  TASK
+  CONTACT
+  COMPANY
+  NOTE
+  PRE_OPPORTUNITY
+  QUOTE
+  ORDER
+  INVOICE
+  CHECK
+  FACTORY
+  CUSTOMER
+  PRODUCT
+}
+
 type CheckResponse {
   id: UUID!
   entryDate: datetime!
@@ -100,26 +116,10 @@ scalar Date
 scalar Decimal
 
 input DeleteLinkByEntitiesInput {
-  sourceEntityType: EntityType!
+  sourceEntityType: CRMEntityType!
   sourceEntityId: UUID!
-  targetEntityType: EntityType!
+  targetEntityType: CRMEntityType!
   targetEntityId: UUID!
-}
-
-enum EntityType {
-  JOB
-  TASK
-  CONTACT
-  COMPANY
-  NOTE
-  PRE_OPPORTUNITY
-  QUOTE
-  ORDER
-  INVOICE
-  CHECK
-  FACTORY
-  CUSTOMER
-  PRODUCT
 }
 
 type FactoryResponse {
@@ -256,17 +256,17 @@ enum LandingSourceType {
 }
 
 input LinkRelationInput {
-  sourceEntityType: EntityType!
+  sourceEntityType: CRMEntityType!
   sourceEntityId: UUID!
-  targetEntityType: EntityType!
+  targetEntityType: CRMEntityType!
   targetEntityId: UUID!
 }
 
 type LinkRelationType {
   id: UUID!
-  sourceEntityType: EntityType!
+  sourceEntityType: CRMEntityType!
   sourceEntityId: UUID!
-  targetEntityType: EntityType!
+  targetEntityType: CRMEntityType!
   targetEntityId: UUID!
   createdAt: datetime!
 }
@@ -526,10 +526,10 @@ type Query {
   taskConversations(taskId: UUID!): [TaskConversationType!]!
   taskSearch(searchTerm: String!, limit: Int! = 20): [TaskType!]!
   taskRelatedEntities(taskId: UUID!): TaskRelatedEntitiesResponse!
-  tasksByEntity(entityType: EntityType!, entityId: UUID!): [TaskType!]!
+  tasksByEntity(entityType: CRMEntityType!, entityId: UUID!): [TaskType!]!
   note(id: UUID!): NoteType!
   notes(limit: Int! = 20, offset: Int! = 0): [NoteType!]!
-  notesByEntity(entityType: EntityType!, entityId: UUID!): [NoteType!]!
+  notesByEntity(entityType: CRMEntityType!, entityId: UUID!): [NoteType!]!
   noteConversations(noteId: UUID!): [NoteConversationType!]!
   noteSearch(searchTerm: String!, limit: Int! = 20): [NoteType!]!
   noteRelatedEntities(noteId: UUID!): NoteRelatedEntitiesResponse!
@@ -550,9 +550,9 @@ type Query {
   findLandingPages(sourceType: LandingSourceType!, filters: [Filter!] = null, orderBy: [OrderBy!] = null, limit: Int = 10, offset: Int = 0): GenericLandingPage!
   userSearch(searchTerm: String!, limit: Int! = 20): [UserResponse!]!
   link(id: UUID!): LinkRelationType!
-  linksByEntity(entityType: EntityType!, entityId: UUID!): [LinkRelationType!]!
-  linksFromSource(sourceType: EntityType!, sourceId: UUID!): [LinkRelationType!]!
-  linksToTarget(targetType: EntityType!, targetId: UUID!): [LinkRelationType!]!
+  linksByEntity(entityType: CRMEntityType!, entityId: UUID!): [LinkRelationType!]!
+  linksFromSource(sourceType: CRMEntityType!, sourceId: UUID!): [LinkRelationType!]!
+  linksToTarget(targetType: CRMEntityType!, targetId: UUID!): [LinkRelationType!]!
 }
 
 type QuoteResponse {
