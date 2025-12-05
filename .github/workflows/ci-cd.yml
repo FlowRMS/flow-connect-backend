@@ -18,10 +18,11 @@ jobs:
       - run: |
           hive schema:publish \
             --registry.accessToken ${{ secrets.HIVE_PUBLISHING_TOKEN }} \
-            --service "crm" \
+            --service "flow-crm" \
             --url "${{ secrets.GRAPHQL_ENDPOINT }}" \
             --author "${{ github.actor }}" \
-            --commit "${{ github.sha }}"
+            --commit "${{ github.sha }}" \
+            --target "flowrms/flowrms/${{ github.ref_name }}" schema.graphql
   build-and-push:
     runs-on: ubuntu-latest
     needs: publish-graphql-schema
