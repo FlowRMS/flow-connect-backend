@@ -54,7 +54,7 @@ class ChecksRepository(BaseRepository[Check]):
         Returns:
             List of Check objects linked to the given job ID
         """
-        stmt = select(Check).join(
+        stmt = select(Check).options(lazyload("*")).join(
             LinkRelation,
             or_(
                 (

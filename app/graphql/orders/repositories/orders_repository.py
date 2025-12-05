@@ -54,7 +54,7 @@ class OrdersRepository(BaseRepository[Order]):
         Returns:
             List of Order objects linked to the given job ID
         """
-        stmt = select(Order).join(
+        stmt = select(Order).options(lazyload("*")).join(
             LinkRelation,
             or_(
                 (

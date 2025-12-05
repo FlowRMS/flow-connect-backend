@@ -54,7 +54,7 @@ class QuotesRepository(BaseRepository[Quote]):
         Returns:
             List of Quote objects linked to the given job ID
         """
-        stmt = select(Quote).join(
+        stmt = select(Quote).options(lazyload("*")).join(
             LinkRelation,
             or_(
                 (

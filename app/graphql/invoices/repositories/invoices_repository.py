@@ -54,7 +54,7 @@ class InvoicesRepository(BaseRepository[Invoice]):
         Returns:
             List of Invoice objects linked to the given job ID
         """
-        stmt = select(Invoice).join(
+        stmt = select(Invoice).options(lazyload("*")).join(
             LinkRelation,
             or_(
                 (
