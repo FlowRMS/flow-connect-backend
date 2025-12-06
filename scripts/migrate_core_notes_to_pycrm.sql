@@ -37,7 +37,9 @@ SELECT
     CASE n.entity_type
         WHEN 0 THEN 7   -- QUOTE -> QUOTE
         WHEN 1 THEN 8   -- ORDER -> ORDER
+        WHEN 2 THEN 11  -- FACTORY -> FACTORY
         WHEN 3 THEN 4   -- CUSTOMER -> COMPANY
+        WHEN 4 THEN 13  -- PRODUCT -> PRODUCT
         WHEN 5 THEN 10  -- CHECK -> CHECK
         WHEN 6 THEN 9   -- INVOICE -> INVOICE
         WHEN 7 THEN 1   -- JOB -> JOB
@@ -47,7 +49,7 @@ SELECT
     n.source_id AS target_entity_id
 FROM core.notes n
 WHERE n.parent_id IS NULL  -- Only top-level notes
-  AND n.entity_type IN (0, 1, 3, 5, 6, 7, 8, 9)  -- Exclude FACTORY(2) and PRODUCT(4) - no mapping
+  AND n.entity_type IN (0, 1, 2, 3, 4, 5, 6, 7, 8, 9)  -- All entity types
 ON CONFLICT DO NOTHING;
 
 -- Step 3: Migrate note replies to pycrm.note_conversations
