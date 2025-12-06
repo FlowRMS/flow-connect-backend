@@ -54,22 +54,26 @@ class OrdersRepository(BaseRepository[Order]):
         Returns:
             List of Order objects linked to the given job ID
         """
-        stmt = select(Order).options(lazyload("*")).join(
-            LinkRelation,
-            or_(
-                (
-                    (LinkRelation.source_entity_type == EntityType.ORDER)
-                    & (LinkRelation.target_entity_type == EntityType.JOB)
-                    & (LinkRelation.target_entity_id == job_id)
-                    & (LinkRelation.source_entity_id == Order.id)
+        stmt = (
+            select(Order)
+            .options(lazyload("*"))
+            .join(
+                LinkRelation,
+                or_(
+                    (
+                        (LinkRelation.source_entity_type == EntityType.ORDER)
+                        & (LinkRelation.target_entity_type == EntityType.JOB)
+                        & (LinkRelation.target_entity_id == job_id)
+                        & (LinkRelation.source_entity_id == Order.id)
+                    ),
+                    (
+                        (LinkRelation.source_entity_type == EntityType.JOB)
+                        & (LinkRelation.target_entity_type == EntityType.ORDER)
+                        & (LinkRelation.source_entity_id == job_id)
+                        & (LinkRelation.target_entity_id == Order.id)
+                    ),
                 ),
-                (
-                    (LinkRelation.source_entity_type == EntityType.JOB)
-                    & (LinkRelation.target_entity_type == EntityType.ORDER)
-                    & (LinkRelation.source_entity_id == job_id)
-                    & (LinkRelation.target_entity_id == Order.id)
-                ),
-            ),
+            )
         )
         result = await self.session.execute(stmt)
         return list(result.scalars().all())

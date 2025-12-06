@@ -54,22 +54,26 @@ class ChecksRepository(BaseRepository[Check]):
         Returns:
             List of Check objects linked to the given job ID
         """
-        stmt = select(Check).options(lazyload("*")).join(
-            LinkRelation,
-            or_(
-                (
-                    (LinkRelation.source_entity_type == EntityType.CHECK)
-                    & (LinkRelation.target_entity_type == EntityType.JOB)
-                    & (LinkRelation.target_entity_id == job_id)
-                    & (LinkRelation.source_entity_id == Check.id)
+        stmt = (
+            select(Check)
+            .options(lazyload("*"))
+            .join(
+                LinkRelation,
+                or_(
+                    (
+                        (LinkRelation.source_entity_type == EntityType.CHECK)
+                        & (LinkRelation.target_entity_type == EntityType.JOB)
+                        & (LinkRelation.target_entity_id == job_id)
+                        & (LinkRelation.source_entity_id == Check.id)
+                    ),
+                    (
+                        (LinkRelation.source_entity_type == EntityType.JOB)
+                        & (LinkRelation.target_entity_type == EntityType.CHECK)
+                        & (LinkRelation.source_entity_id == job_id)
+                        & (LinkRelation.target_entity_id == Check.id)
+                    ),
                 ),
-                (
-                    (LinkRelation.source_entity_type == EntityType.JOB)
-                    & (LinkRelation.target_entity_type == EntityType.CHECK)
-                    & (LinkRelation.source_entity_id == job_id)
-                    & (LinkRelation.target_entity_id == Check.id)
-                ),
-            ),
+            )
         )
         result = await self.session.execute(stmt)
         return list(result.scalars().all())

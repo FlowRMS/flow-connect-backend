@@ -9,8 +9,9 @@ import strawberry
 class PreOpportunityStatus(IntEnum):
     """Status values for pre-opportunities."""
 
-    DRAFT = auto()
-    PENDING = auto()
-    APPROVED = auto()
-    REJECTED = auto()
-    CONVERTED = auto()
+    QUALIFIED = auto()
+    NEGOTIATION = auto()
+    FOLLOW_UP = auto()
+    WAITING_ON_FACTORY = auto()
+    LOST = auto()
+    WON = auto()

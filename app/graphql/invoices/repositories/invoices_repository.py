@@ -54,22 +54,26 @@ class InvoicesRepository(BaseRepository[Invoice]):
         Returns:
             List of Invoice objects linked to the given job ID
         """
-        stmt = select(Invoice).options(lazyload("*")).join(
-            LinkRelation,
-            or_(
-                (
-                    (LinkRelation.source_entity_type == EntityType.INVOICE)
-                    & (LinkRelation.target_entity_type == EntityType.JOB)
-                    & (LinkRelation.target_entity_id == job_id)
-                    & (LinkRelation.source_entity_id == Invoice.id)
+        stmt = (
+            select(Invoice)
+            .options(lazyload("*"))
+            .join(
+                LinkRelation,
+                or_(
+                    (
+                        (LinkRelation.source_entity_type == EntityType.INVOICE)
+                        & (LinkRelation.target_entity_type == EntityType.JOB)
+                        & (LinkRelation.target_entity_id == job_id)
+                        & (LinkRelation.source_entity_id == Invoice.id)
+                    ),
+                    (
+                        (LinkRelation.source_entity_type == EntityType.JOB)
+                        & (LinkRelation.target_entity_type == EntityType.INVOICE)
+                        & (LinkRelation.source_entity_id == job_id)
+                        & (LinkRelation.target_entity_id == Invoice.id)
+                    ),
                 ),
-                (
-                    (LinkRelation.source_entity_type == EntityType.JOB)
-                    & (LinkRelation.target_entity_type == EntityType.INVOICE)
-                    & (LinkRelation.source_entity_id == job_id)
-                    & (LinkRelation.target_entity_id == Invoice.id)
-                ),
-            ),
+            )
         )
         result = await self.session.execute(stmt)
         return list(result.scalars().all())

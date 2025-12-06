@@ -501,11 +501,12 @@ type PreOpportunityResponse {
 }
 
 enum PreOpportunityStatus {
-  DRAFT
-  PENDING
-  APPROVED
-  REJECTED
-  CONVERTED
+  QUALIFIED
+  NEGOTIATION
+  FOLLOW_UP
+  WAITING_ON_FACTORY
+  LOST
+  WON
 }
 
 type ProductResponse {

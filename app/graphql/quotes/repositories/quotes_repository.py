@@ -54,22 +54,26 @@ class QuotesRepository(BaseRepository[Quote]):
         Returns:
             List of Quote objects linked to the given job ID
         """
-        stmt = select(Quote).options(lazyload("*")).join(
-            LinkRelation,
-            or_(
-                (
-                    (LinkRelation.source_entity_type == EntityType.QUOTE)
-                    & (LinkRelation.target_entity_type == EntityType.JOB)
-                    & (LinkRelation.target_entity_id == job_id)
-                    & (LinkRelation.source_entity_id == Quote.id)
+        stmt = (
+            select(Quote)
+            .options(lazyload("*"))
+            .join(
+                LinkRelation,
+                or_(
+                    (
+                        (LinkRelation.source_entity_type == EntityType.QUOTE)
+                        & (LinkRelation.target_entity_type == EntityType.JOB)
+                        & (LinkRelation.target_entity_id == job_id)
+                        & (LinkRelation.source_entity_id == Quote.id)
+                    ),
+                    (
+                        (LinkRelation.source_entity_type == EntityType.JOB)
+                        & (LinkRelation.target_entity_type == EntityType.QUOTE)
+                        & (LinkRelation.source_entity_id == job_id)
+                        & (LinkRelation.target_entity_id == Quote.id)
+                    ),
                 ),
-                (
-                    (LinkRelation.source_entity_type == EntityType.JOB)
-                    & (LinkRelation.target_entity_type == EntityType.QUOTE)
-                    & (LinkRelation.source_entity_id == job_id)
-                    & (LinkRelation.target_entity_id == Quote.id)
-                ),
-            ),
+            )
         )
         result = await self.session.execute(stmt)
         return list(result.scalars().all())
