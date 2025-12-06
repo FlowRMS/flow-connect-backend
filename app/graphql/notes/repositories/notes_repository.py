@@ -3,19 +3,33 @@
 from typing import Any
 from uuid import UUID
 
-from commons.db.models import User
-from sqlalchemy import Select, or_, select
+from commons.db.models import (
+    Check,
+    Customer,
+    Factory,
+    Invoice,
+    Order,
+    Product,
+    Quote,
+    User,
+)
+from sqlalchemy import ARRAY, Select, String, case, func, literal, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import lazyload
 
 from app.core.context_wrapper import ContextWrapper
 from app.graphql.base_repository import BaseRepository
+from app.graphql.companies.models.company_model import Company
+from app.graphql.contacts.models.contact_model import Contact
+from app.graphql.jobs.models.jobs_model import Job
 from app.graphql.links.models.entity_type import EntityType
 from app.graphql.links.models.link_relation_model import LinkRelation
 from app.graphql.notes.models.note_model import Note
 from app.graphql.notes.strawberry.note_landing_page_response import (
     NoteLandingPageResponse,
 )
+from app.graphql.pre_opportunities.models.pre_opportunity_model import PreOpportunity
+from app.graphql.tasks.models.task_model import Task
 
 
 class NotesRepository(BaseRepository[Note]):
@@ -33,6 +47,147 @@ class NotesRepository(BaseRepository[Note]):
         Returns:
             SQLAlchemy select statement with columns for landing page
         """
+        # Build a CTE that flattens link relations with entity info
+        # This ensures proper handling of the bidirectional link structure
+        note_id_col = case(
+            (
+                LinkRelation.source_entity_type == EntityType.NOTE,
+                LinkRelation.source_entity_id,
+            ),
+            else_=LinkRelation.target_entity_id,
+        ).label("note_id")
+
+        entity_type_col = case(
+            (
+                LinkRelation.source_entity_type == EntityType.NOTE,
+                LinkRelation.target_entity_type,
+            ),
+            else_=LinkRelation.source_entity_type,
+        ).label("entity_type")
+
+        entity_id_col = case(
+            (
+                LinkRelation.source_entity_type == EntityType.NOTE,
+                LinkRelation.target_entity_id,
+            ),
+            else_=LinkRelation.source_entity_id,
+        ).label("entity_id")
+
+        # CTE to extract note links with entity type and id
+        links_cte = (
+            select(note_id_col, entity_type_col, entity_id_col)
+            .select_from(LinkRelation)
+            .where(
+                or_(
+                    LinkRelation.source_entity_type == EntityType.NOTE,
+                    LinkRelation.target_entity_type == EntityType.NOTE,
+                )
+            )
+            .cte("note_links")
+        )
+
+        # Build CASE expression to get title based on entity type
+        linked_title = case(
+            (links_cte.c.entity_type == EntityType.JOB, Job.job_name),
+            (links_cte.c.entity_type == EntityType.TASK, Task.title),
+            (
+                links_cte.c.entity_type == EntityType.CONTACT,
+                Contact.first_name + literal(" ") + Contact.last_name,
+            ),
+            (links_cte.c.entity_type == EntityType.COMPANY, Company.name),
+            (
+                links_cte.c.entity_type == EntityType.PRE_OPPORTUNITY,
+                PreOpportunity.entity_number,
+            ),
+            (links_cte.c.entity_type == EntityType.QUOTE, Quote.quote_number),
+            (links_cte.c.entity_type == EntityType.ORDER, Order.order_number),
+            (links_cte.c.entity_type == EntityType.INVOICE, Invoice.invoice_number),
+            (links_cte.c.entity_type == EntityType.CHECK, Check.check_number),
+            (links_cte.c.entity_type == EntityType.FACTORY, Factory.title),
+            (
+                links_cte.c.entity_type == EntityType.PRODUCT,
+                Product.factory_part_number,
+            ),
+            (links_cte.c.entity_type == EntityType.CUSTOMER, Customer.company_name),
+            else_=literal(None),
+        )
+
+        # Subquery to aggregate linked titles for each note
+        linked_titles_subq = (
+            select(
+                links_cte.c.note_id,
+                func.coalesce(
+                    func.array_agg(func.distinct(linked_title)).filter(
+                        linked_title.isnot(None)
+                    ),
+                    literal([]).cast(ARRAY(String)),
+                ).label("linked_titles"),
+            )
+            .select_from(links_cte)
+            .outerjoin(
+                Job,
+                (links_cte.c.entity_type == EntityType.JOB)
+                & (links_cte.c.entity_id == Job.id),
+            )
+            .outerjoin(
+                Task,
+                (links_cte.c.entity_type == EntityType.TASK)
+                & (links_cte.c.entity_id == Task.id),
+            )
+            .outerjoin(
+                Contact,
+                (links_cte.c.entity_type == EntityType.CONTACT)
+                & (links_cte.c.entity_id == Contact.id),
+            )
+            .outerjoin(
+                Company,
+                (links_cte.c.entity_type == EntityType.COMPANY)
+                & (links_cte.c.entity_id == Company.id),
+            )
+            .outerjoin(
+                PreOpportunity,
+                (links_cte.c.entity_type == EntityType.PRE_OPPORTUNITY)
+                & (links_cte.c.entity_id == PreOpportunity.id),
+            )
+            .outerjoin(
+                Quote,
+                (links_cte.c.entity_type == EntityType.QUOTE)
+                & (links_cte.c.entity_id == Quote.id),
+            )
+            .outerjoin(
+                Order,
+                (links_cte.c.entity_type == EntityType.ORDER)
+                & (links_cte.c.entity_id == Order.id),
+            )
+            .outerjoin(
+                Invoice,
+                (links_cte.c.entity_type == EntityType.INVOICE)
+                & (links_cte.c.entity_id == Invoice.id),
+            )
+            .outerjoin(
+                Check,
+                (links_cte.c.entity_type == EntityType.CHECK)
+                & (links_cte.c.entity_id == Check.id),
+            )
+            .outerjoin(
+                Factory,
+                (links_cte.c.entity_type == EntityType.FACTORY)
+                & (links_cte.c.entity_id == Factory.id),
+            )
+            .outerjoin(
+                Product,
+                (links_cte.c.entity_type == EntityType.PRODUCT)
+                & (links_cte.c.entity_id == Product.id),
+            )
+            .outerjoin(
+                Customer,
+                (links_cte.c.entity_type == EntityType.CUSTOMER)
+                & (links_cte.c.entity_id == Customer.id),
+            )
+            .group_by(links_cte.c.note_id)
+            .subquery()
+        )
+
         return (
             select(
                 Note.id,
@@ -42,10 +197,14 @@ class NotesRepository(BaseRepository[Note]):
                 Note.content,
                 Note.tags,
                 Note.mentions,
+                func.coalesce(
+                    linked_titles_subq.c.linked_titles, literal([]).cast(ARRAY(String))
+                ).label("linked_titles"),
             )
             .select_from(Note)
             .options(lazyload("*"))
             .join(User, User.id == Note.created_by_id)
+            .outerjoin(linked_titles_subq, linked_titles_subq.c.note_id == Note.id)
         )
 
     async def find_by_entity(

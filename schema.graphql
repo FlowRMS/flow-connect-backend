@@ -329,6 +329,7 @@ type NoteLandingPage implements LandingPageInterfaceBase {
   content: String!
   tags: [String!]
   mentions: [UUID!]
+  linkedTitles: [String!]!
 }
 
 type NoteRelatedEntitiesResponse {
@@ -606,6 +607,7 @@ type TaskLandingPage implements LandingPageInterfaceBase {
   dueDate: Date
   reminderDate: Date
   tags: [String!]
+  linkedTitles: [String!]!
 }
 
 enum TaskPriority {

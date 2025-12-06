@@ -15,3 +15,4 @@ class NoteLandingPageResponse(LandingPageInterfaceBase):
     content: str
     tags: list[str] | None
     mentions: list[UUID] | None
+    linked_titles: list[str]
