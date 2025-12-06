@@ -35,8 +35,8 @@ async def get_engine(
 async def create_multitenant_controller(settings: Settings) -> MultiTenantController:
     controller = MultiTenantController(
         pg_url=settings.pg_url.unicode_string(),
-        app_name="FlowAI App",
-        echo=True,
+        app_name="Flow Py CRM App",
+        echo=settings.log_level == "DEBUG",
         connect_args={
             "timeout": 5,
             "command_timeout": 90,
