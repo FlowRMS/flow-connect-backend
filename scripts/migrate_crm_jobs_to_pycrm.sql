@@ -62,9 +62,37 @@ FROM crm.jobs j
 JOIN pycrm.job_statuses js ON UPPER(js.name) = UPPER(TRIM(j.status))
 ON CONFLICT (id) DO NOTHING;
 
--- Step 3: Create link_relations for jobs (if needed for entity linking)
--- Note: Jobs link to themselves as the primary entity, no separate link needed
--- unless you want to preserve user_owner_ids relationships
+-- Step 3: Create link_relations for jobs linked to quotes
+-- EntityType: JOB=1, QUOTE=7
+INSERT INTO pycrm.link_relations (id, created_at, created_by_id, source_entity_type, source_entity_id, target_entity_type, target_entity_id)
+SELECT
+    gen_random_uuid() AS id,
+    q.entry_date AT TIME ZONE 'UTC' AS created_at,
+    q.created_by AS created_by_id,
+    1 AS source_entity_type,  -- JOB = 1
+    q.job_id AS source_entity_id,
+    7 AS target_entity_type,  -- QUOTE = 7
+    q.id AS target_entity_id
+FROM crm.quotes q
+WHERE q.job_id IS NOT NULL
+  AND EXISTS (SELECT 1 FROM pycrm.jobs j WHERE j.id = q.job_id)
+ON CONFLICT DO NOTHING;
+
+-- Step 4: Create link_relations for jobs linked to orders
+-- EntityType: JOB=1, ORDER=8
+INSERT INTO pycrm.link_relations (id, created_at, created_by_id, source_entity_type, source_entity_id, target_entity_type, target_entity_id)
+SELECT
+    gen_random_uuid() AS id,
+    o.entry_date AT TIME ZONE 'UTC' AS created_at,
+    o.created_by AS created_by_id,
+    1 AS source_entity_type,  -- JOB = 1
+    o.job_id AS source_entity_id,
+    8 AS target_entity_type,  -- ORDER = 8
+    o.id AS target_entity_id
+FROM commission.orders o
+WHERE o.job_id IS NOT NULL
+  AND EXISTS (SELECT 1 FROM pycrm.jobs j WHERE j.id = o.job_id)
+ON CONFLICT DO NOTHING;
 
 COMMIT;
 
@@ -75,3 +103,7 @@ COMMIT;
 -- FROM pycrm.jobs j
 -- JOIN pycrm.job_statuses js ON j.status_id = js.id
 -- GROUP BY js.name;
+-- SELECT COUNT(*) AS job_quote_links FROM pycrm.link_relations WHERE source_entity_type = 1 AND target_entity_type = 7;
+-- SELECT COUNT(*) AS job_order_links FROM pycrm.link_relations WHERE source_entity_type = 1 AND target_entity_type = 8;
+-- SELECT COUNT(*) AS quotes_with_job FROM crm.quotes WHERE job_id IS NOT NULL;
+-- SELECT COUNT(*) AS orders_with_job FROM commission.orders WHERE job_id IS NOT NULL;

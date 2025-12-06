@@ -1,7 +1,7 @@
 -- Migration script: crm.pre_opportunities -> pycrm.pre_opportunities
 --
--- Old status (varchar): 'DRAFT', 'PENDING', 'APPROVED', 'REJECTED', 'CONVERTED'
--- New PreOpportunityStatus (IntEnum): DRAFT=1, PENDING=2, APPROVED=3, REJECTED=4, CONVERTED=5
+-- Old status (varchar): 'QUALIFIED', 'NEGOTIATION', 'FOLLOW_UP', 'WAITING_ON_FACTORY', 'LOST', 'WON'
+-- New PreOpportunityStatus (IntEnum): QUALIFIED=1, NEGOTIATION=2, FOLLOW_UP=3, WAITING_ON_FACTORY=4, LOST=5, WON=6
 --
 -- Dropped fields from pre_opportunities:
 --   - user_owner_ids, creation_type, published, participant_ids
@@ -40,12 +40,13 @@ SELECT
     p.entry_date AT TIME ZONE 'UTC' AS created_at,
     p.created_by AS created_by_id,
     CASE p.status
-        WHEN 'DRAFT' THEN 1
-        WHEN 'PENDING' THEN 2
-        WHEN 'APPROVED' THEN 3
-        WHEN 'REJECTED' THEN 4
-        WHEN 'CONVERTED' THEN 5
-        ELSE 1  -- Default to DRAFT if unknown
+        WHEN 'QUALIFIED' THEN 1
+        WHEN 'NEGOTIATION' THEN 2
+        WHEN 'FOLLOW_UP' THEN 3
+        WHEN 'WAITING_ON_FACTORY' THEN 4
+        WHEN 'LOST' THEN 5
+        WHEN 'WON' THEN 6
+        ELSE 1  -- Default to QUALIFIED if unknown
     END AS status,
     p.entity_number,
     p.entity_date,
