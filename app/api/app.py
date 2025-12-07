@@ -7,6 +7,7 @@ from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from sqlalchemy.orm import configure_mappers
+from starlette.middleware.trustedhost import TrustedHostMiddleware
 
 from app.api.auth_router import router as auth_router
 from app.core.container import create_container
@@ -35,10 +36,15 @@ def create_app() -> FastAPI:
 
     app.add_middleware(
         CORSMiddleware,
-        allow_origins=["*"],
+        allow_origin_regex=r"https?://.*\.?flowrms\.com",
         allow_credentials=True,
         allow_methods=["*"],
         allow_headers=["*"],
+    )
+
+    app.add_middleware(
+        TrustedHostMiddleware,
+        allowed_hosts=["*.flowrms.com", "flowrms.com", "localhost", "127.0.0.1"],
     )
 
     @app.middleware("http")
