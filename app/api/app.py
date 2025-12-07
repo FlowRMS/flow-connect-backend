@@ -7,8 +7,8 @@ from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from sqlalchemy.orm import configure_mappers
-from starlette.middleware.trustedhost import TrustedHostMiddleware
 
+# from starlette.middleware.trustedhost import TrustedHostMiddleware
 from app.api.auth_router import router as auth_router
 from app.core.container import create_container
 from app.graphql.app import create_graphql_app
@@ -36,16 +36,17 @@ def create_app() -> FastAPI:
 
     app.add_middleware(
         CORSMiddleware,
-        allow_origin_regex=r"https?://.*\.?flowrms\.com",
+        allow_origins=["*"],
+        # allow_origin_regex=r"https?://.*\.?flowrms\.com",
         allow_credentials=True,
         allow_methods=["*"],
         allow_headers=["*"],
     )
 
-    app.add_middleware(
-        TrustedHostMiddleware,
-        allowed_hosts=["*.flowrms.com", "flowrms.com", "localhost", "127.0.0.1"],
-    )
+    # app.add_middleware(
+    #     TrustedHostMiddleware,
+    #     allowed_hosts=["*.flowrms.com", "flowrms.com", "localhost", "127.0.0.1"],
+    # )
 
     @app.middleware("http")
     async def add_process_time_header(request: Request, call_next: Any) -> JSONResponse:  # pyright: ignore[reportUnusedFunction]

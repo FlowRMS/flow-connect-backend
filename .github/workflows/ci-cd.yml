@@ -108,4 +108,5 @@ jobs:
             --from-literal=PORT=8000 \
             --from-literal=ENVIRONMENT=${{ secrets.ENVIRONMENT }} \
             --from-literal=LOG_LEVEL=${{ secrets.LOG_LEVEL }} \
+            --from-literal=MAX_NUMBER_OF_WORKERS=${{ secrets.MAX_NUMBER_OF_WORKERS }} \
             -o yaml --dry-run=client | kubectl apply -f -
