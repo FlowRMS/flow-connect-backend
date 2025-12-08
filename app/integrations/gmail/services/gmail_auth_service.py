@@ -218,7 +218,7 @@ class GmailAuthService:
             if response.status_code != 200:
                 error_data = response.json()
                 # Deactivate token if refresh fails
-                await self.repository.deactivate_token(user_id)
+                _ = await self.repository.deactivate_token(user_id)
                 raise GmailAuthError(
                     message=error_data.get("error_description", "Token refresh failed"),
                     error_code=error_data.get("error"),
@@ -336,16 +336,12 @@ class GmailAuthService:
             SendEmailResult with success status and optional message_id or error
         """
         try:
-            access_token = await self.get_valid_token(
-                uuid.UUID(self.auth_info.user_id)
-            )
+            access_token = await self.get_valid_token(uuid.UUID(self.auth_info.user_id))
         except (NotFoundError, GmailAuthError) as e:
             return SendEmailResult(success=False, error=str(e))
 
         # Get sender email from stored token
-        token = await self.repository.get_by_user_id(
-            uuid.UUID(self.auth_info.user_id)
-        )
+        token = await self.repository.get_by_user_id(uuid.UUID(self.auth_info.user_id))
         if not token:
             return SendEmailResult(success=False, error="No Gmail token found")
 
@@ -392,9 +388,7 @@ class GmailAuthService:
         Returns:
             True if token was deactivated, False if no token found
         """
-        return await self.repository.deactivate_token(
-            uuid.UUID(self.auth_info.user_id)
-        )
+        return await self.repository.deactivate_token(uuid.UUID(self.auth_info.user_id))
 
     async def get_connection_status(self) -> GmailConnectionStatus:
         """
@@ -403,9 +397,7 @@ class GmailAuthService:
         Returns:
             GmailConnectionStatus with connection details
         """
-        token = await self.repository.get_by_user_id(
-            uuid.UUID(self.auth_info.user_id)
-        )
+        token = await self.repository.get_by_user_id(uuid.UUID(self.auth_info.user_id))
 
         if not token or not token.is_active:
             return GmailConnectionStatus(is_connected=False)

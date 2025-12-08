@@ -8,7 +8,9 @@ class GmailSettings(BaseSettings):
 
     gmail_client_id: str
     gmail_client_secret: str
-    gmail_redirect_uri: str  # e.g., "https://yourapp.com/api/integrations/gmail/callback"
+    gmail_redirect_uri: (
+        str  # e.g., "https://yourapp.com/api/integrations/gmail/callback"
+    )
 
     model_config = SettingsConfigDict(
         env_file_encoding="utf-8",

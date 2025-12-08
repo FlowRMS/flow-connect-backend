@@ -1,7 +1,7 @@
 """Repository for Gmail user token operations."""
 
 import uuid
-from datetime import datetime, timezone
+from datetime import datetime
 
 import pendulum
 from sqlalchemy import select, update
@@ -139,10 +139,10 @@ class GmailTokenRepository(BaseRepository[GmailUserToken]):
         Args:
             token_id: The token's ID
         """
-        await self.session.execute(
+        _ = await self.session.execute(
             update(GmailUserToken)
             .where(GmailUserToken.id == token_id)
-            .values(last_used_at=pendulum.now(tz=timezone.utc))
+            .values(last_used_at=pendulum.now(tz="UTC"))
         )
         await self.session.flush()
 
@@ -165,7 +165,7 @@ class GmailTokenRepository(BaseRepository[GmailUserToken]):
         Returns:
             Updated token entity
         """
-        await self.session.execute(
+        _ = await self.session.execute(
             update(GmailUserToken)
             .where(GmailUserToken.id == token_id)
             .values(

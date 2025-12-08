@@ -112,4 +112,7 @@ jobs:
             --from-literal=O365_CLIENT_ID=${{ secrets.O365_CLIENT_ID }} \
             --from-literal=O365_CLIENT_SECRET=${{ secrets.O365_CLIENT_SECRET }} \
             --from-literal=O365_REDIRECT_URI=${{ secrets.O365_REDIRECT_URI }} \
+            --from-literal=GMAIL_CLIENT_ID=${{ secrets.GMAIL_CLIENT_ID }} \
+            --from-literal=GMAIL_CLIENT_SECRET=${{ secrets.GMAIL_CLIENT_SECRET }} \
+            --from-literal=GMAIL_REDIRECT_URI=${{ secrets.GMAIL_REDIRECT_URI }} \
             -o yaml --dry-run=client | kubectl apply -f -

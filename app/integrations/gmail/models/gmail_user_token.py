@@ -38,7 +38,6 @@ class GmailUserToken(CrmBaseModel, HasCreatedAt, kw_only=True):
     access_token: Mapped[str] = mapped_column(Text, nullable=False)
     refresh_token: Mapped[str] = mapped_column(Text, nullable=False)
 
-
     # Token metadata
     expires_at: Mapped[datetime.datetime] = mapped_column(
         TIMESTAMP(timezone=True),
@@ -53,7 +52,7 @@ class GmailUserToken(CrmBaseModel, HasCreatedAt, kw_only=True):
         nullable=True,
         default=None,
     )
-    
+
     token_type: Mapped[str] = mapped_column(
         String(50),
         nullable=False,
