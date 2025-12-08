@@ -1,31 +1,31 @@
-"""GraphQL mutations for O365 integration."""
+"""GraphQL mutations for Gmail integration."""
 
 import strawberry
 from aioinject import Injected
 
 from app.graphql.inject import inject
-from app.graphql.integrations.o365_types import (
-    O365ConnectionResultType,
-    O365SendEmailInput,
-    O365SendEmailResultType,
+from app.graphql.integrations.gmail_types import (
+    GmailConnectionResultType,
+    GmailSendEmailInput,
+    GmailSendEmailResultType,
 )
-from app.integrations.microsoft_o365.services.o365_auth_service import (
-    O365AuthError,
-    O365AuthService,
+from app.integrations.gmail.services.gmail_auth_service import (
+    GmailAuthError,
+    GmailAuthService,
 )
 
 
 @strawberry.type
-class O365Mutations:
-    """GraphQL mutations for O365 integration."""
+class GmailMutations:
+    """GraphQL mutations for Gmail integration."""
 
     @strawberry.mutation
     @inject
-    async def o365_connect(
+    async def gmail_connect(
         self,
         code: str,
-        service: Injected[O365AuthService],
-    ) -> O365ConnectionResultType:
+        service: Injected[GmailAuthService],
+    ) -> GmailConnectionResultType:
         """
         Complete OAuth flow with authorization code.
 
@@ -33,28 +33,28 @@ class O365Mutations:
             code: Authorization code from OAuth callback
 
         Returns:
-            O365ConnectionResultType with success status and email or error
+            GmailConnectionResultType with success status and email or error
         """
         try:
             token = await service.exchange_code_for_token(code)
-            return O365ConnectionResultType(
+            return GmailConnectionResultType(
                 success=True,
-                microsoft_email=token.microsoft_email,
+                google_email=token.google_email,
             )
-        except O365AuthError as e:
-            return O365ConnectionResultType(
+        except GmailAuthError as e:
+            return GmailConnectionResultType(
                 success=False,
                 error=str(e),
             )
 
     @strawberry.mutation
     @inject
-    async def o365_disconnect(
+    async def gmail_disconnect(
         self,
-        service: Injected[O365AuthService],
+        service: Injected[GmailAuthService],
     ) -> bool:
         """
-        Revoke O365 integration for current user.
+        Revoke Gmail integration for current user.
 
         Returns:
             True if disconnected successfully, False if no connection found
@@ -63,19 +63,19 @@ class O365Mutations:
 
     @strawberry.mutation
     @inject
-    async def o365_send_email(
+    async def gmail_send_email(
         self,
-        input: O365SendEmailInput,
-        service: Injected[O365AuthService],
-    ) -> O365SendEmailResultType:
+        input: GmailSendEmailInput,
+        service: Injected[GmailAuthService],
+    ) -> GmailSendEmailResultType:
         """
-        Send email via user's O365 account.
+        Send email via user's Gmail account.
 
         Args:
             input: Email details (to, subject, body, etc.)
 
         Returns:
-            O365SendEmailResultType with success status and optional error
+            GmailSendEmailResultType with success status and optional error
         """
         result = await service.send_email(
             to=input.to,
@@ -85,7 +85,7 @@ class O365Mutations:
             cc=input.cc,
             bcc=input.bcc,
         )
-        return O365SendEmailResultType(
+        return GmailSendEmailResultType(
             success=result.success,
             message_id=result.message_id,
             error=result.error,
