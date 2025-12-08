@@ -4,7 +4,7 @@ from uuid import UUID
 
 from commons.auth import AuthInfo
 
-from app.errors.common_errors import NotFoundError
+from app.errors.common_errors import NameAlreadyExistsError, NotFoundError
 from app.graphql.links.models.entity_type import EntityType
 from app.graphql.pre_opportunities.models.pre_opportunity_model import PreOpportunity
 from app.graphql.pre_opportunities.repositories.pre_opportunities_repository import (
@@ -38,7 +38,15 @@ class PreOpportunitiesService:
 
         Returns:
             Created pre-opportunity entity
+
+        Raises:
+            NameAlreadyExistsError: If a pre-opportunity with the same entity number exists
         """
+        if await self.repository.entity_number_exists(
+            pre_opportunity_input.entity_number
+        ):
+            raise NameAlreadyExistsError(pre_opportunity_input.entity_number)
+
         pre_opportunity = pre_opportunity_input.to_orm_model()
         return await self.repository.create_with_balance(pre_opportunity)
 

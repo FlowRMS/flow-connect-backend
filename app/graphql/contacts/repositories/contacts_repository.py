@@ -51,8 +51,42 @@ class ContactsRepository(BaseRepository[Contact]):
         )
 
     async def get_by_company_id(self, company_id: UUID) -> list[Contact]:
-        """Get all contacts for a specific company."""
-        stmt = select(Contact).where(Contact.company_id == company_id)
+        """
+        Get all contacts for a specific company.
+
+        Finds contacts that are either:
+        - Directly linked via Contact.company_id
+        - Linked via LinkRelation table (company <-> contact)
+        """
+        stmt = (
+            select(Contact)
+            .distinct()
+            .outerjoin(
+                LinkRelation,
+                or_(
+                    # Contact as source, Company as target
+                    (
+                        (LinkRelation.source_entity_type == EntityType.CONTACT)
+                        & (LinkRelation.target_entity_type == EntityType.COMPANY)
+                        & (LinkRelation.target_entity_id == company_id)
+                        & (LinkRelation.source_entity_id == Contact.id)
+                    ),
+                    # Company as source, Contact as target
+                    (
+                        (LinkRelation.source_entity_type == EntityType.COMPANY)
+                        & (LinkRelation.target_entity_type == EntityType.CONTACT)
+                        & (LinkRelation.source_entity_id == company_id)
+                        & (LinkRelation.target_entity_id == Contact.id)
+                    ),
+                ),
+            )
+            .where(
+                or_(
+                    Contact.company_id == company_id,
+                    LinkRelation.id.isnot(None),
+                )
+            )
+        )
         result = await self.session.execute(stmt)
         return list(result.scalars().all())
 
