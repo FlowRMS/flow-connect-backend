@@ -47,7 +47,36 @@ class ContactsRepository(BaseRepository[Contact]):
             .select_from(Contact)
             .options(lazyload("*"))
             .join(User, User.id == Contact.created_by_id)
-            .outerjoin(Company, Company.id == Contact.company_id)
+            .outerjoin(
+                LinkRelation,
+                or_(
+                    (
+                        (LinkRelation.source_entity_type == EntityType.CONTACT)
+                        & (LinkRelation.target_entity_type == EntityType.COMPANY)
+                        & (LinkRelation.source_entity_id == Contact.id)
+                    ),
+                    (
+                        (LinkRelation.source_entity_type == EntityType.COMPANY)
+                        & (LinkRelation.target_entity_type == EntityType.CONTACT)
+                        & (LinkRelation.target_entity_id == Contact.id)
+                    ),
+                ),
+            )
+            .outerjoin(
+                Company,
+                or_(
+                    (
+                        (LinkRelation.source_entity_type == EntityType.CONTACT)
+                        & (LinkRelation.target_entity_type == EntityType.COMPANY)
+                        & (Company.id == LinkRelation.target_entity_id)
+                    ),
+                    (
+                        (LinkRelation.source_entity_type == EntityType.COMPANY)
+                        & (LinkRelation.target_entity_type == EntityType.CONTACT)
+                        & (Company.id == LinkRelation.source_entity_id)
+                    ),
+                ),
+            )
         )
 
     async def get_by_company_id(self, company_id: UUID) -> list[Contact]:
@@ -61,7 +90,7 @@ class ContactsRepository(BaseRepository[Contact]):
         stmt = (
             select(Contact)
             .distinct()
-            .outerjoin(
+            .join(
                 LinkRelation,
                 or_(
                     # Contact as source, Company as target
@@ -79,12 +108,6 @@ class ContactsRepository(BaseRepository[Contact]):
                         & (LinkRelation.target_entity_id == Contact.id)
                     ),
                 ),
-            )
-            .where(
-                or_(
-                    Contact.company_id == company_id,
-                    LinkRelation.id.isnot(None),
-                )
             )
         )
         result = await self.session.execute(stmt)

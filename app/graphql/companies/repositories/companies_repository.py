@@ -158,3 +158,35 @@ class CompaniesRepository(BaseRepository[Company]):
         )
         result = await self.session.execute(stmt)
         return list(result.scalars().all())
+
+    async def find_by_contact_id(self, contact_id: UUID) -> list[Company]:
+        """
+        Find all companies linked to the given contact ID.
+
+        Args:
+            contact_id: The contact ID to find companies for
+
+        Returns:
+            List of Company objects linked to the given contact ID
+        """
+        stmt = select(Company).join(
+            LinkRelation,
+            or_(
+                # Companies as source, Contacts as target
+                (
+                    (LinkRelation.source_entity_type == EntityType.COMPANY)
+                    & (LinkRelation.target_entity_type == EntityType.CONTACT)
+                    & (LinkRelation.target_entity_id == contact_id)
+                    & (LinkRelation.source_entity_id == Company.id)
+                ),
+                # Contacts as source, Companies as target
+                (
+                    (LinkRelation.source_entity_type == EntityType.CONTACT)
+                    & (LinkRelation.target_entity_type == EntityType.COMPANY)
+                    & (LinkRelation.source_entity_id == contact_id)
+                    & (LinkRelation.target_entity_id == Company.id)
+                ),
+            ),
+        )
+        result = await self.session.execute(stmt)
+        return list(result.scalars().all())

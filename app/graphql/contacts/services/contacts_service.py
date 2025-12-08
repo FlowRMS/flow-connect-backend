@@ -1,11 +1,19 @@
 from uuid import UUID
 
+import strawberry
 from commons.auth import AuthInfo
 
 from app.errors.common_errors import NotFoundError
+from app.graphql.companies.services.companies_service import CompaniesService
+from app.graphql.companies.strawberry.company_response import CompanyResponse
 from app.graphql.contacts.models.contact_model import Contact
 from app.graphql.contacts.repositories.contacts_repository import ContactsRepository
 from app.graphql.contacts.strawberry.contact_input import ContactInput
+from app.graphql.contacts.strawberry.contact_related_entities_response import (
+    ContactRelatedEntitiesResponse,
+)
+from app.graphql.links.models.entity_type import EntityType
+from app.graphql.links.services.links_service import LinksService
 
 
 class ContactsService:
@@ -15,15 +23,31 @@ class ContactsService:
         self,
         repository: ContactsRepository,
         auth_info: AuthInfo,
+        link_service: LinksService,
+        companies_service: CompaniesService,
     ) -> None:
         super().__init__()
         self.repository = repository
         self.auth_info = auth_info
+        self.link_service = link_service
+        self.companies_service = companies_service
 
     async def create_contact(self, contact_input: ContactInput) -> Contact:
         """Create a new contact."""
-        contact = contact_input.to_orm_model()
-        return await self.repository.create(contact)
+        contact = await self.repository.create(contact_input.to_orm_model())
+
+        if (
+            contact_input.company_id != strawberry.UNSET
+            and contact_input.company_id is not None
+        ):
+            _ = await self.link_service.create_link(
+                source_type=EntityType.CONTACT,
+                source_id=contact.id,
+                target_type=EntityType.COMPANY,
+                target_id=contact_input.company_id,
+            )
+
+        return contact
 
     async def delete_contact(self, contact_id: UUID | str) -> bool:
         """Delete a contact by ID."""
@@ -97,3 +121,29 @@ class ContactsService:
     async def find_contacts_by_note_id(self, note_id: UUID) -> list[Contact]:
         """Find all contacts linked to the given note ID."""
         return await self.repository.find_by_note_id(note_id)
+
+    async def get_contact_related_entities(
+        self, contact_id: UUID
+    ) -> ContactRelatedEntitiesResponse:
+        """
+        Get all entities related to a contact.
+
+        Args:
+            contact_id: The contact ID to get related entities for
+
+        Returns:
+            ContactRelatedEntitiesResponse containing all related entities
+
+        Raises:
+            NotFoundError: If the contact doesn't exist
+        """
+        if not await self.repository.exists(contact_id):
+            raise NotFoundError(str(contact_id))
+
+        companies = await self.companies_service.find_companies_by_contact_id(
+            contact_id
+        )
+
+        return ContactRelatedEntitiesResponse(
+            companies=CompanyResponse.from_orm_model_list(companies),
+        )

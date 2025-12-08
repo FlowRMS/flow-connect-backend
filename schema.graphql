@@ -117,6 +117,10 @@ type ContactLandingPage implements LandingPageInterfaceBase {
   companyName: String
 }
 
+type ContactRelatedEntitiesResponse {
+  companies: [CompanyResponse!]!
+}
+
 type ContactResponse {
   id: UUID!
   createdAt: datetime!
@@ -128,7 +132,6 @@ type ContactResponse {
   territory: String
   tags: [String!]
   notes: String
-  companyId: UUID
 }
 
 type CustomerResponse {
@@ -647,6 +650,7 @@ type Query {
   contact(id: UUID!): ContactResponse!
   contactsByCompany(companyId: UUID!): [ContactResponse!]!
   contactSearch(searchTerm: String!, limit: Int! = 20): [ContactResponse!]!
+  contactRelatedEntities(contactId: UUID!): ContactRelatedEntitiesResponse!
   customerSearch(searchTerm: String!, published: Boolean! = true, limit: Int! = 20): [CustomerResponse!]!
   factorySearch(searchTerm: String!, published: Boolean! = true, limit: Int! = 20): [FactoryResponse!]!
   gmailAuthUrl(state: String = null): String!
@@ -683,6 +687,7 @@ type Query {
   taskSearch(searchTerm: String!, limit: Int! = 20): [TaskType!]!
   taskRelatedEntities(taskId: UUID!): TaskRelatedEntitiesResponse!
   tasksByEntity(entityType: CRMEntityType!, entityId: UUID!): [TaskType!]!
+  user(id: UUID!): UserResponse!
   userSearch(searchTerm: String!, limit: Int! = 20): [UserResponse!]!
 }
 

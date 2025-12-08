@@ -4,6 +4,9 @@ import strawberry
 from aioinject import Injected
 
 from app.graphql.contacts.services.contacts_service import ContactsService
+from app.graphql.contacts.strawberry.contact_related_entities_response import (
+    ContactRelatedEntitiesResponse,
+)
 from app.graphql.contacts.strawberry.contact_response import ContactResponse
 from app.graphql.inject import inject
 
@@ -54,3 +57,21 @@ class ContactsQueries:
         return ContactResponse.from_orm_model_list(
             await service.search_contacts(search_term, limit)
         )
+
+    @strawberry.field
+    @inject
+    async def contact_related_entities(
+        self,
+        contact_id: UUID,
+        service: Injected[ContactsService],
+    ) -> ContactRelatedEntitiesResponse:
+        """
+        Get all entities related to a contact.
+
+        Args:
+            contact_id: The contact ID to get related entities for
+
+        Returns:
+            ContactRelatedEntitiesResponse containing companies related to the contact
+        """
+        return await service.get_contact_related_entities(contact_id)

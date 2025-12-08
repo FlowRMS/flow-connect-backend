@@ -31,5 +31,4 @@ class ContactInput(BaseInputGQL[Contact]):
             territory=self.optional_field(self.territory),
             tags=self.optional_field(self.tags),
             notes=self.optional_field(self.notes),
-            company_id=self.optional_field(self.company_id),
         )

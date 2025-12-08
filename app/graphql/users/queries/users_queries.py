@@ -1,5 +1,7 @@
 """GraphQL queries for Users entity."""
 
+from uuid import UUID
+
 import strawberry
 from aioinject import Injected
 
@@ -11,6 +13,16 @@ from app.graphql.users.strawberry.user_response import UserResponse
 @strawberry.type
 class UsersQueries:
     """GraphQL queries for Users entity."""
+
+    @strawberry.field
+    @inject
+    async def user(
+        self,
+        id: UUID,
+        service: Injected[UsersService],
+    ) -> UserResponse:
+        """Get a user by ID."""
+        return UserResponse.from_orm_model(await service.get_user(id))
 
     @strawberry.field
     @inject

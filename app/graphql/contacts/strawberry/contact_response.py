@@ -1,4 +1,5 @@
 from datetime import datetime
+from typing import Self
 from uuid import UUID
 
 import strawberry
@@ -22,11 +23,9 @@ class ContactResponse(DTOMixin[Contact]):
     territory: str | None
     tags: list[str] | None
     notes: str | None
-    company_id: UUID | None
 
     @classmethod
-    def from_orm_model(cls, model: Contact) -> "ContactResponse":
-        """Convert ORM model to GraphQL type."""
+    def from_orm_model(cls, model: Contact) -> Self:
         return cls(
             id=model.id,
             created_at=model.created_at,
@@ -39,5 +38,4 @@ class ContactResponse(DTOMixin[Contact]):
             territory=model.territory,
             tags=model.tags,
             notes=model.notes,
-            company_id=model.company_id,
         )

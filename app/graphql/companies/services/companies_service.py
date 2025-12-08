@@ -83,3 +83,7 @@ class CompaniesService:
     async def find_companies_by_note_id(self, note_id: UUID) -> list[Company]:
         """Find all companies linked to the given note ID."""
         return await self.repository.find_by_note_id(note_id)
+
+    async def find_companies_by_contact_id(self, contact_id: UUID) -> list[Company]:
+        """Find all companies linked to the given contact ID."""
+        return await self.repository.find_by_contact_id(contact_id)
