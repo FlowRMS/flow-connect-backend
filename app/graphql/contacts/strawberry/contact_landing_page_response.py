@@ -15,3 +15,4 @@ class ContactLandingPageResponse(LandingPageInterfaceBase):
     phone: str | None
     role: str | None
     company_name: str | None
+    tags: list[str] | None
