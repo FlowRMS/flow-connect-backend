@@ -5,7 +5,7 @@ import multiprocessing
 
 def get_workers() -> int:
     cores = multiprocessing.cpu_count()
-    max_workers = int(os.getenv("MAX_NUMBER_OF_WORKERS", "4"))
+    max_workers = int(os.getenv("MAX_NUMBER_OF_WORKERS", "5"))
     return min((2 * cores) + 1, max_workers)
 
 

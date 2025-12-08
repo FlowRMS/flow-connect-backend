@@ -1,3 +1,31 @@
+input AddressInput {
+  companyId: UUID!
+  addressType: AddressType!
+  addressLine1: String = null
+  addressLine2: String = null
+  city: String = null
+  state: String = null
+  zipCode: String = null
+}
+
+type AddressResponse {
+  id: UUID!
+  createdAt: datetime!
+  companyId: UUID!
+  addressType: AddressType!
+  addressLine1: String
+  addressLine2: String
+  city: String
+  state: String
+  zipCode: String
+}
+
+enum AddressType {
+  BILLING
+  SHIPPING
+  OTHER
+}
+
 enum CRMEntityType {
   JOB
   TASK
@@ -158,6 +186,34 @@ type GenericLandingPage {
   total: Int!
 }
 
+type GmailConnectionResultType {
+  success: Boolean!
+  googleEmail: String
+  error: String
+}
+
+type GmailConnectionStatusType {
+  isConnected: Boolean!
+  googleEmail: String
+  expiresAt: datetime
+  lastUsedAt: datetime
+}
+
+input GmailSendEmailInput {
+  to: [String!]!
+  subject: String!
+  body: String!
+  bodyType: String! = "HTML"
+  cc: [String!] = null
+  bcc: [String!] = null
+}
+
+type GmailSendEmailResultType {
+  success: Boolean!
+  messageId: String
+  error: String
+}
+
 type InvoiceResponse {
   id: UUID!
   entryDate: datetime!
@@ -274,15 +330,26 @@ type LinkRelationType {
 }
 
 type Mutation {
+  createAddress(input: AddressInput!): AddressResponse!
+  deleteAddress(id: UUID!): Boolean!
+  createCompany(input: CompanyInput!): CompanyResponse!
+  deleteCompany(id: UUID!): Boolean!
+  updateCompany(id: UUID!, input: CompanyInput!): CompanyResponse!
+  createContact(input: ContactInput!): ContactResponse!
+  deleteContact(id: UUID!): Boolean!
+  updateContact(id: UUID!, input: ContactInput!): ContactResponse!
+  gmailConnect(code: String!): GmailConnectionResultType!
+  gmailDisconnect: Boolean!
+  gmailSendEmail(input: GmailSendEmailInput!): GmailSendEmailResultType!
+  o365Connect(code: String!): O365ConnectionResultType!
+  o365Disconnect: Boolean!
+  o365SendEmail(input: O365SendEmailInput!): O365SendEmailResultType!
   createJob(input: JobInput!): JobType!
   updateJob(id: UUID!, input: JobInput!): JobType!
   deleteJob(id: UUID!): Boolean!
-  createTask(input: TaskInput!): TaskType!
-  updateTask(id: UUID!, input: TaskInput!): TaskType!
-  deleteTask(id: UUID!): Boolean!
-  addTaskConversation(input: TaskConversationInput!): TaskConversationType!
-  updateTaskConversation(id: UUID!, input: TaskConversationInput!): TaskConversationType!
-  deleteTaskConversation(id: UUID!): Boolean!
+  createLink(input: LinkRelationInput!): LinkRelationType!
+  deleteLink(id: UUID!): Boolean!
+  deleteLinkByEntities(input: DeleteLinkByEntitiesInput!): Boolean!
   createNote(input: NoteInput!): NoteType!
   updateNote(id: UUID!, input: NoteInput!): NoteType!
   deleteNote(id: UUID!): Boolean!
@@ -290,18 +357,15 @@ type Mutation {
   updateNoteConversation(noteConversationId: UUID!, input: NoteConversationInput!): NoteConversationType!
   deleteNoteConversation(conversationId: UUID!): Boolean!
   deleteNoteConversations(noteId: UUID!): Boolean!
-  createCompany(input: CompanyInput!): CompanyResponse!
-  deleteCompany(id: UUID!): Boolean!
-  updateCompany(id: UUID!, input: CompanyInput!): CompanyResponse!
-  createContact(input: ContactInput!): ContactResponse!
-  deleteContact(id: UUID!): Boolean!
-  updateContact(id: UUID!, input: ContactInput!): ContactResponse!
-  createLink(input: LinkRelationInput!): LinkRelationType!
-  deleteLink(id: UUID!): Boolean!
-  deleteLinkByEntities(input: DeleteLinkByEntitiesInput!): Boolean!
   createPreOpportunity(input: PreOpportunityInput!): PreOpportunityResponse!
   updatePreOpportunity(input: PreOpportunityInput!): PreOpportunityResponse!
   deletePreOpportunity(id: UUID!): Boolean!
+  createTask(input: TaskInput!): TaskType!
+  updateTask(id: UUID!, input: TaskInput!): TaskType!
+  deleteTask(id: UUID!): Boolean!
+  addTaskConversation(input: TaskConversationInput!): TaskConversationType!
+  updateTaskConversation(id: UUID!, input: TaskConversationInput!): TaskConversationType!
+  deleteTaskConversation(id: UUID!): Boolean!
 }
 
 input NoteConversationInput {
@@ -357,6 +421,61 @@ type NoteType {
   tags: [String!]
   mentions: [UUID!]
   createdBy: UserResponse!
+}
+
+type O365CalendarAttendeeType {
+  email: String!
+  name: String
+  responseStatus: String
+}
+
+type O365CalendarEventType {
+  id: String!
+  subject: String!
+  start: datetime!
+  end: datetime!
+  isAllDay: Boolean!
+  location: String
+  bodyPreview: String
+  organizerEmail: String
+  organizerName: String
+  attendees: [O365CalendarAttendeeType!]
+  webLink: String
+  isCancelled: Boolean!
+}
+
+type O365CalendarEventsResultType {
+  success: Boolean!
+  events: [O365CalendarEventType!]
+  error: String
+}
+
+type O365ConnectionResultType {
+  success: Boolean!
+  microsoftEmail: String
+  error: String
+}
+
+type O365ConnectionStatusType {
+  isConnected: Boolean!
+  microsoftEmail: String
+  expiresAt: datetime
+  lastUsedAt: datetime
+}
+
+input O365SendEmailInput {
+  to: [String!]!
+  subject: String!
+  body: String!
+  bodyType: String! = "HTML"
+  cc: [String!] = null
+  bcc: [String!] = null
+}
+
+type O365SendEmailResultType {
+  success: Boolean!
+  messageId: String
+  error: String
 }
 
 input OrderBy {
@@ -520,6 +639,25 @@ type ProductResponse {
 
 type Query {
   _service: _Service!
+  address(id: UUID!): AddressResponse!
+  addresses(limit: Int! = 100, offset: Int! = 0): [AddressResponse!]!
+  addressesByCompany(companyId: UUID!): [AddressResponse!]!
+  checkSearch(searchTerm: String!, limit: Int! = 20): [CheckResponse!]!
+  findLandingPages(sourceType: LandingSourceType!, filters: [Filter!] = null, orderBy: [OrderBy!] = null, limit: Int = 10, offset: Int = 0): GenericLandingPage!
+  company(id: UUID!): CompanyResponse!
+  companySearch(searchTerm: String!, limit: Int! = 20): [CompanyResponse!]!
+  contact(id: UUID!): ContactResponse!
+  contactsByCompany(companyId: UUID!): [ContactResponse!]!
+  contactSearch(searchTerm: String!, limit: Int! = 20): [ContactResponse!]!
+  customerSearch(searchTerm: String!, published: Boolean! = true, limit: Int! = 20): [CustomerResponse!]!
+  factorySearch(searchTerm: String!, published: Boolean! = true, limit: Int! = 20): [FactoryResponse!]!
+  gmailAuthUrl(state: String = null): String!
+  gmailConnectionStatus: GmailConnectionStatusType!
+  o365AuthUrl(state: String = null): String!
+  o365ConnectionStatus: O365ConnectionStatusType!
+  o365CalendarEvents(top: Int! = 50, skip: Int! = 0): O365CalendarEventsResultType!
+  o365CalendarEventsInRange(startDate: datetime!, endDate: datetime!, top: Int! = 100): O365CalendarEventsResultType!
+  invoiceSearch(searchTerm: String!, limit: Int! = 20): [InvoiceResponse!]!
   dummyField: String!
   job(id: UUID!): JobType!
   jobStatuses: [JobStatusType!]!
@@ -527,37 +665,27 @@ type Query {
   jobSearch(searchTerm: String!, limit: Int! = 20): [JobType!]!
   jobsByContact(contactId: UUID!): [JobType!]!
   jobsByCompany(companyId: UUID!): [JobType!]!
-  task(id: UUID!): TaskType!
-  taskConversations(taskId: UUID!): [TaskConversationType!]!
-  taskSearch(searchTerm: String!, limit: Int! = 20): [TaskType!]!
-  taskRelatedEntities(taskId: UUID!): TaskRelatedEntitiesResponse!
-  tasksByEntity(entityType: CRMEntityType!, entityId: UUID!): [TaskType!]!
+  link(id: UUID!): LinkRelationType!
+  linksByEntity(entityType: CRMEntityType!, entityId: UUID!): [LinkRelationType!]!
+  linksFromSource(sourceType: CRMEntityType!, sourceId: UUID!): [LinkRelationType!]!
+  linksToTarget(targetType: CRMEntityType!, targetId: UUID!): [LinkRelationType!]!
   note(id: UUID!): NoteType!
   notes(limit: Int! = 20, offset: Int! = 0): [NoteType!]!
   notesByEntity(entityType: CRMEntityType!, entityId: UUID!): [NoteType!]!
   noteConversations(noteId: UUID!): [NoteConversationType!]!
   noteSearch(searchTerm: String!, limit: Int! = 20): [NoteType!]!
   noteRelatedEntities(noteId: UUID!): NoteRelatedEntitiesResponse!
-  company(id: UUID!): CompanyResponse!
-  companySearch(searchTerm: String!, limit: Int! = 20): [CompanyResponse!]!
-  contact(id: UUID!): ContactResponse!
-  contactsByCompany(companyId: UUID!): [ContactResponse!]!
-  contactSearch(searchTerm: String!, limit: Int! = 20): [ContactResponse!]!
+  orderSearch(searchTerm: String!, limit: Int! = 20): [OrderResponse!]!
   preOpportunity(id: UUID!): PreOpportunityResponse!
   preOpportunitySearch(searchTerm: String!, limit: Int! = 20): [PreOpportunityLiteResponse!]!
   productSearch(searchTerm: String!, factoryId: UUID, limit: Int! = 20): [ProductResponse!]!
-  factorySearch(searchTerm: String!, published: Boolean! = true, limit: Int! = 20): [FactoryResponse!]!
-  customerSearch(searchTerm: String!, published: Boolean! = true, limit: Int! = 20): [CustomerResponse!]!
   quoteSearch(searchTerm: String!, limit: Int! = 20): [QuoteResponse!]!
-  orderSearch(searchTerm: String!, limit: Int! = 20): [OrderResponse!]!
-  invoiceSearch(searchTerm: String!, limit: Int! = 20): [InvoiceResponse!]!
-  checkSearch(searchTerm: String!, limit: Int! = 20): [CheckResponse!]!
-  findLandingPages(sourceType: LandingSourceType!, filters: [Filter!] = null, orderBy: [OrderBy!] = null, limit: Int = 10, offset: Int = 0): GenericLandingPage!
+  task(id: UUID!): TaskType!
+  taskConversations(taskId: UUID!): [TaskConversationType!]!
+  taskSearch(searchTerm: String!, limit: Int! = 20): [TaskType!]!
+  taskRelatedEntities(taskId: UUID!): TaskRelatedEntitiesResponse!
+  tasksByEntity(entityType: CRMEntityType!, entityId: UUID!): [TaskType!]!
   userSearch(searchTerm: String!, limit: Int! = 20): [UserResponse!]!
-  link(id: UUID!): LinkRelationType!
-  linksByEntity(entityType: CRMEntityType!, entityId: UUID!): [LinkRelationType!]!
-  linksFromSource(sourceType: CRMEntityType!, sourceId: UUID!): [LinkRelationType!]!
-  linksToTarget(targetType: CRMEntityType!, targetId: UUID!): [LinkRelationType!]!
 }
 
 type QuoteResponse {
