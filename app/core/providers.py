@@ -13,13 +13,14 @@ from app.core.context_wrapper import create_context_wrapper
 from app.core.db import db_provider
 from app.graphql.repositories import repository_providers
 from app.graphql.service_providers import service_providers
+from app.integrations.microsoft_o365.config import O365Settings
 
 modules: Iterable[Iterable[aioinject.Provider[Any]]] = [
     auth_provider.providers,
     db_provider.providers,
 ]
 
-settings_classes: Iterable[type[BaseSettings]] = [Settings, AuthSettings]
+settings_classes: Iterable[type[BaseSettings]] = [Settings, AuthSettings, O365Settings]
 
 
 def providers() -> Iterable[aioinject.Provider[Any]]:
