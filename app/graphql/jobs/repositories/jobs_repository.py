@@ -4,7 +4,7 @@ from typing import Any
 from uuid import UUID
 
 from commons.db.models import User
-from sqlalchemy import Select, or_, select
+from sqlalchemy import Select, func, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import aliased, lazyload
 
@@ -66,6 +66,21 @@ class JobsRepository(BaseRepository[Job]):
             .outerjoin(user_owner_alias, user_owner_alias.id == Job.job_owner_id)
             .outerjoin(requester_alias, requester_alias.id == Job.requester_id)
         )
+
+    async def name_exists(self, job_name: str) -> bool:
+        """
+        Check if a job with the given name already exists.
+
+        Args:
+            job_name: The job name to check
+
+        Returns:
+            True if a job with this name exists, False otherwise
+        """
+        result = await self.session.execute(
+            select(func.count()).select_from(Job).where(Job.job_name == job_name)
+        )
+        return result.scalar_one() > 0
 
     async def search_by_name(self, search_term: str, limit: int = 20) -> list[Job]:
         """

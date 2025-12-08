@@ -4,7 +4,7 @@ from uuid import UUID
 
 from commons.auth import AuthInfo
 
-from app.errors.common_errors import NotFoundError
+from app.errors.common_errors import NameAlreadyExistsError, NotFoundError
 from app.graphql.checks.services.check_service import CheckService
 from app.graphql.checks.strawberry.check_response import CheckResponse
 from app.graphql.companies.services.companies_service import CompaniesService
@@ -78,6 +78,21 @@ class JobsService:
         self,
         job_input: JobInput,
     ) -> Job:
+        """
+        Create a new job.
+
+        Args:
+            job_input: The job data to create
+
+        Returns:
+            The created job entity
+
+        Raises:
+            NameAlreadyExistsError: If a job with the same name already exists
+        """
+        if await self.repository.name_exists(job_input.job_name):
+            raise NameAlreadyExistsError(job_input.job_name)
+
         job = job_input.to_orm_model()
         return await self.repository.create(job)
 

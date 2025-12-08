@@ -4,7 +4,7 @@ from typing import Any
 from uuid import UUID
 
 from commons.db.models import User
-from sqlalchemy import Select, or_, select
+from sqlalchemy import Select, func, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import lazyload
 
@@ -105,6 +105,23 @@ class PreOpportunitiesRepository(BaseRepository[PreOpportunity]):
         )
         await self.session.refresh(updated)
         return updated
+
+    async def entity_number_exists(self, entity_number: str) -> bool:
+        """
+        Check if a pre-opportunity with the given entity number already exists.
+
+        Args:
+            entity_number: The entity number to check
+
+        Returns:
+            True if a pre-opportunity with this entity number exists, False otherwise
+        """
+        result = await self.session.execute(
+            select(func.count())
+            .select_from(PreOpportunity)
+            .where(PreOpportunity.entity_number == entity_number)
+        )
+        return result.scalar_one() > 0
 
     async def get_by_job_id(self, job_id: UUID) -> list[PreOpportunity]:
         """Get all pre-opportunities for a specific job."""
