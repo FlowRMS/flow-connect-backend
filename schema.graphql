@@ -184,6 +184,34 @@ type GenericLandingPage {
   total: Int!
 }
 
+type GmailConnectionResultType {
+  success: Boolean!
+  googleEmail: String
+  error: String
+}
+
+type GmailConnectionStatusType {
+  isConnected: Boolean!
+  googleEmail: String
+  expiresAt: datetime
+  lastUsedAt: datetime
+}
+
+input GmailSendEmailInput {
+  to: [String!]!
+  subject: String!
+  body: String!
+  bodyType: String! = "HTML"
+  cc: [String!] = null
+  bcc: [String!] = null
+}
+
+type GmailSendEmailResultType {
+  success: Boolean!
+  messageId: String
+  error: String
+}
+
 type InvoiceResponse {
   id: UUID!
   entryDate: datetime!
@@ -308,6 +336,9 @@ type Mutation {
   createContact(input: ContactInput!): ContactResponse!
   deleteContact(id: UUID!): Boolean!
   updateContact(id: UUID!, input: ContactInput!): ContactResponse!
+  gmailConnect(code: String!): GmailConnectionResultType!
+  gmailDisconnect: Boolean!
+  gmailSendEmail(input: GmailSendEmailInput!): GmailSendEmailResultType!
   o365Connect(code: String!): O365ConnectionResultType!
   o365Disconnect: Boolean!
   o365SendEmail(input: O365SendEmailInput!): O365SendEmailResultType!
@@ -388,6 +419,33 @@ type NoteType {
   tags: [String!]
   mentions: [UUID!]
   createdBy: UserResponse!
+}
+
+type O365CalendarAttendeeType {
+  email: String!
+  name: String
+  responseStatus: String
+}
+
+type O365CalendarEventType {
+  id: String!
+  subject: String!
+  start: datetime!
+  end: datetime!
+  isAllDay: Boolean!
+  location: String
+  bodyPreview: String
+  organizerEmail: String
+  organizerName: String
+  attendees: [O365CalendarAttendeeType!]
+  webLink: String
+  isCancelled: Boolean!
+}
+
+type O365CalendarEventsResultType {
+  success: Boolean!
+  events: [O365CalendarEventType!]
+  error: String
 }
 
 type O365ConnectionResultType {
@@ -591,8 +649,12 @@ type Query {
   contactSearch(searchTerm: String!, limit: Int! = 20): [ContactResponse!]!
   customerSearch(searchTerm: String!, published: Boolean! = true, limit: Int! = 20): [CustomerResponse!]!
   factorySearch(searchTerm: String!, published: Boolean! = true, limit: Int! = 20): [FactoryResponse!]!
+  gmailAuthUrl(state: String = null): String!
+  gmailConnectionStatus: GmailConnectionStatusType!
   o365AuthUrl(state: String = null): String!
   o365ConnectionStatus: O365ConnectionStatusType!
+  o365CalendarEvents(top: Int! = 50, skip: Int! = 0): O365CalendarEventsResultType!
+  o365CalendarEventsInRange(startDate: datetime!, endDate: datetime!, top: Int! = 100): O365CalendarEventsResultType!
   invoiceSearch(searchTerm: String!, limit: Int! = 20): [InvoiceResponse!]!
   dummyField: String!
   job(id: UUID!): JobType!

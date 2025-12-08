@@ -13,9 +13,10 @@ AUTHORIZE_ENDPOINT = (
 )
 TOKEN_ENDPOINT = f"{MICROSOFT_AUTHORITY}/{MICROSOFT_TENANT_ID}/oauth2/v2.0/token"
 
-# Required scopes for sending email on behalf of user
+# Required scopes for O365 integration
 O365_SCOPES = [
     "offline_access",  # Required for refresh token
     "User.Read",  # Read user profile
     "Mail.Send",  # Send mail as user
+    "Calendars.Read",  # Read calendar events
 ]

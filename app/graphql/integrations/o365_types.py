@@ -43,3 +43,39 @@ class O365ConnectionResultType:
     success: bool
     microsoft_email: str | None = None
     error: str | None = None
+
+
+@strawberry.type
+class O365CalendarAttendeeType:
+    """Attendee for a calendar event."""
+
+    email: str
+    name: str | None = None
+    response_status: str | None = None
+
+
+@strawberry.type
+class O365CalendarEventType:
+    """Calendar event from O365."""
+
+    id: str
+    subject: str
+    start: datetime
+    end: datetime
+    is_all_day: bool = False
+    location: str | None = None
+    body_preview: str | None = None
+    organizer_email: str | None = None
+    organizer_name: str | None = None
+    attendees: list[O365CalendarAttendeeType] | None = None
+    web_link: str | None = None
+    is_cancelled: bool = False
+
+
+@strawberry.type
+class O365CalendarEventsResultType:
+    """Result of fetching calendar events."""
+
+    success: bool
+    events: list[O365CalendarEventType] | None = None
+    error: str | None = None
