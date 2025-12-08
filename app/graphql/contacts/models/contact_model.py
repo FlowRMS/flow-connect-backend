@@ -1,10 +1,9 @@
 """SQLAlchemy ORM model for Contact entity."""
 
 from sqlalchemy import ARRAY, String, Text
-from sqlalchemy.orm import Mapped, mapped_column, relationship
+from sqlalchemy.orm import Mapped, mapped_column
 
 from app.core.db.base import CrmBaseModel, HasCreatedAt, HasCreatedBy
-from app.graphql.companies.models.company_model import Company
 
 
 class Contact(CrmBaseModel, HasCreatedAt, HasCreatedBy, kw_only=True):
@@ -25,9 +24,6 @@ class Contact(CrmBaseModel, HasCreatedAt, HasCreatedBy, kw_only=True):
     territory: Mapped[str | None] = mapped_column(String(100), nullable=True)
     tags: Mapped[list[str] | None] = mapped_column(ARRAY(String), nullable=True)
     notes: Mapped[str | None] = mapped_column(Text, nullable=True)
-    company: Mapped[Company | None] = relationship(
-        init=False, back_populates="contacts"
-    )
 
     def __repr__(self) -> str:
         """String representation of the Contact."""

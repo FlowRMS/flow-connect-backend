@@ -14,7 +14,6 @@ from app.graphql.companies.models.company_type import CompanyType
 
 if TYPE_CHECKING:
     from app.graphql.addresses.models.address_model import CompanyAddress
-    from app.graphql.contacts.models.contact_model import Contact
 
 
 class Company(CrmBaseModel, HasCreatedAt, HasCreatedBy, kw_only=True):
@@ -39,10 +38,6 @@ class Company(CrmBaseModel, HasCreatedAt, HasCreatedBy, kw_only=True):
     )
     addresses: Mapped[list["CompanyAddress"]] = relationship(
         init=False, back_populates="company", cascade="all, delete-orphan"
-    )
-    contacts: Mapped[list["Contact"]] = relationship(
-        init=False,
-        back_populates="company",
     )
     created_by: Mapped[User] = relationship(init=False, lazy="joined")
 
