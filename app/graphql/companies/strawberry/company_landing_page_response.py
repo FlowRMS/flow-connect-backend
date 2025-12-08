@@ -13,3 +13,4 @@ class CompanyLandingPageResponse(LandingPageInterfaceBase):
     company_source_type: str
     website: str | None
     phone: str | None
+    tags: list[str] | None

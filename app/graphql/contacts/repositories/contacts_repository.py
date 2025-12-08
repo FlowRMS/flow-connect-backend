@@ -43,6 +43,7 @@ class ContactsRepository(BaseRepository[Contact]):
                 Contact.phone,
                 Contact.role,
                 Company.name.label("company_name"),
+                Contact.tags,
             )
             .select_from(Contact)
             .options(lazyload("*"))

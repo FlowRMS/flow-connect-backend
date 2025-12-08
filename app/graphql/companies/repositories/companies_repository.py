@@ -40,6 +40,7 @@ class CompaniesRepository(BaseRepository[Company]):
                 Company.company_source_type,
                 Company.website,
                 Company.phone,
+                Company.tags,
             )
             .select_from(Company)
             .options(lazyload("*"))

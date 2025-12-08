@@ -74,6 +74,7 @@ type CompanyLandingPage implements LandingPageInterfaceBase {
   companySourceType: String!
   website: String
   phone: String
+  tags: [String!]
 }
 
 type CompanyResponse {
@@ -115,6 +116,7 @@ type ContactLandingPage implements LandingPageInterfaceBase {
   phone: String
   role: String
   companyName: String
+  tags: [String!]
 }
 
 type ContactRelatedEntitiesResponse {
