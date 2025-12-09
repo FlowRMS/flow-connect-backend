@@ -1,0 +1,16 @@
+"""Common type for linked entities."""
+
+from uuid import UUID
+
+import strawberry
+
+from app.graphql.links.models.entity_type import EntityType
+
+
+@strawberry.type(name="LinkedEntity")
+class LinkedEntity:
+    """Represents a linked entity with its id, title, and type."""
+
+    id: UUID
+    title: str
+    entity_type: EntityType

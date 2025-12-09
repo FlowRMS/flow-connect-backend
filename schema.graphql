@@ -332,6 +332,12 @@ type LinkRelationType {
   createdAt: datetime!
 }
 
+type LinkedEntity {
+  id: UUID!
+  title: String!
+  entityType: CRMEntityType!
+}
+
 type Mutation {
   createAddress(input: AddressInput!): AddressResponse!
   deleteAddress(id: UUID!): Boolean!
@@ -398,7 +404,7 @@ type NoteLandingPage implements LandingPageInterfaceBase {
   content: String!
   tags: [String!]
   mentions: [UUID!]
-  linkedTitles: [String!]!
+  linkedEntities: [LinkedEntity!]!
 }
 
 type NoteRelatedEntitiesResponse {
@@ -742,7 +748,7 @@ type TaskLandingPage implements LandingPageInterfaceBase {
   dueDate: Date
   reminderDate: Date
   tags: [String!]
-  linkedTitles: [String!]!
+  linkedEntities: [LinkedEntity!]!
 }
 
 enum TaskPriority {

@@ -11,7 +11,8 @@ from commons.db.models import (
     Quote,
     User,
 )
-from sqlalchemy import ARRAY, Select, String, case, func, literal, or_, select
+from sqlalchemy import Select, case, func, literal, or_, select
+from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import aliased, lazyload
 
@@ -114,16 +115,24 @@ class TasksRepository(BaseRepository[Task]):
             else_=literal(None),
         )
 
-        # Subquery to aggregate linked titles for each task
-        linked_titles_subq = (
+        # Build JSON object for linked entity with id, title, and entity_type
+        linked_entity_json = func.jsonb_build_object(
+            literal("id"),
+            links_cte.c.entity_id,
+            literal("title"),
+            linked_title,
+            literal("entity_type"),
+            links_cte.c.entity_type,
+        )
+
+        # Subquery to aggregate linked entities for each task
+        linked_entities_subq = (
             select(
                 links_cte.c.task_id,
                 func.coalesce(
-                    func.array_agg(func.distinct(linked_title)).filter(
-                        linked_title.isnot(None)
-                    ),
-                    literal([]).cast(ARRAY(String)),
-                ).label("linked_titles"),
+                    func.jsonb_agg(linked_entity_json).filter(linked_title.isnot(None)),
+                    literal("[]").cast(JSONB),
+                ).label("linked_entities"),
             )
             .select_from(links_cte)
             .outerjoin(
@@ -204,14 +213,14 @@ class TasksRepository(BaseRepository[Task]):
                 Task.reminder_date,
                 Task.tags,
                 func.coalesce(
-                    linked_titles_subq.c.linked_titles, literal([]).cast(ARRAY(String))
-                ).label("linked_titles"),
+                    linked_entities_subq.c.linked_entities, literal("[]").cast(JSONB)
+                ).label("linked_entities"),
             )
             .select_from(Task)
             .options(lazyload("*"))
             .join(User, User.id == Task.created_by_id)
             .outerjoin(assigned_to_alias, assigned_to_alias.id == Task.assigned_to_id)
-            .outerjoin(linked_titles_subq, linked_titles_subq.c.task_id == Task.id)
+            .outerjoin(linked_entities_subq, linked_entities_subq.c.task_id == Task.id)
         )
 
     async def search_by_title(self, search_term: str, limit: int = 20) -> list[Task]:
