@@ -9,6 +9,9 @@ from commons.graphql.pagination import get_pagination_window as _get_pagination_
 from sqlalchemy import Select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.graphql.campaigns.strawberry.campaign_landing_page_response import (
+    CampaignLandingPageResponse,
+)
 from app.graphql.companies.strawberry.company_landing_page_response import (
     CompanyLandingPageResponse,
 )
@@ -35,6 +38,7 @@ LandingRecord = strawberry.union(
         PreOpportunityLandingPageResponse,
         NoteLandingPageResponse,
         TaskLandingPageResponse,
+        CampaignLandingPageResponse,
     ],
 )
 

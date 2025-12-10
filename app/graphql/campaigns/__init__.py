@@ -1,0 +1,1 @@
+"""Campaigns GraphQL module."""
