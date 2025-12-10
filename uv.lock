@@ -794,7 +794,7 @@ requires-dist = [
     { name = "asyncpg", specifier = ">=0.30.0" },
     { name = "cryptography", specifier = ">=46.0.2" },
     { name = "fastapi", extras = ["standard"], specifier = ">=0.110.0" },
-    { name = "flowbot-commons", specifier = "==0.100.2", index = "https://pypi.flowrms.com/simple/" },
+    { name = "flowbot-commons", specifier = "==0.100.3", index = "https://pypi.flowrms.com/simple/" },
     { name = "greenlet", specifier = ">=3.2.4" },
     { name = "httpx", specifier = ">=0.27.0" },
     { name = "loguru", specifier = ">=0.7.2,<0.8" },
@@ -830,7 +830,7 @@ dev = [
 
 [[package]]
 name = "flowbot-commons"
-version = "0.100.2"
+version = "0.100.3"
 source = { registry = "https://pypi.flowrms.com/simple/" }
 dependencies = [
     { name = "aiobotocore" },
@@ -868,9 +868,9 @@ dependencies = [
     { name = "xlrd" },
     { name = "xlsx2csv" },
 ]
-sdist = { url = "https://pypi.flowrms.com/packages/flowbot_commons-0.100.2.tar.gz", hash = "sha256:b2d82a37df4f7e36f4b433b03b31ad86e74f8e959ed9d65abcafea03fee6029b" }
+sdist = { url = "https://pypi.flowrms.com/packages/flowbot_commons-0.100.3.tar.gz", hash = "sha256:efb84dcdc1e4480981c4cea24b612728fe37662e381f25bf9a5875f97c94dd8a" }
 wheels = [
-    { url = "https://pypi.flowrms.com/packages/flowbot_commons-0.100.2-py3-none-any.whl", hash = "sha256:99d375a6fa85b4172b0545efb5d2261f9b9ef7456a00d02c40ab81c8aab530f9" },
+    { url = "https://pypi.flowrms.com/packages/flowbot_commons-0.100.3-py3-none-any.whl", hash = "sha256:c9fac17449ee5c72b5142a6ac027a6eabf00875fc04d35d1b0d80a2928dd3a03" },
 ]
 
 [[package]]
