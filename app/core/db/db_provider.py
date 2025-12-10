@@ -15,8 +15,12 @@ async def create_session(
     controller: MultiTenantController,
     auth_info: AuthInfo,
 ) -> AsyncIterator[AsyncSession]:
-    # async with controller.scoped_session("nts") as session:
-    async with controller.scoped_session(auth_info.tenant) as session:
+    # Look up tenant to get the actual database name
+    tenant = await controller.find_tenant(auth_info.tenant)
+    if tenant is None:
+        raise ValueError(f"Tenant '{auth_info.tenant}' not found")
+    
+    async with controller.scoped_session(tenant.tenant_name) as session:
         async with session.begin():
             yield session
 
@@ -26,9 +30,14 @@ async def get_engine(
     controller: MultiTenantController,
     auth_info: AuthInfo,
 ) -> AsyncIterator[AsyncEngine]:
-    db_vars = controller.ro_engines.get(auth_info.tenant)
-    if db_vars is None:
+    # Look up tenant to get the actual database name
+    tenant = await controller.find_tenant(auth_info.tenant)
+    if tenant is None:
         raise ValueError(f"Tenant '{auth_info.tenant}' not found")
+    
+    db_vars = controller.ro_engines.get(tenant.tenant_name)
+    if db_vars is None:
+        raise ValueError(f"Tenant '{auth_info.tenant}' not found in read-only engines")
     yield db_vars.engine
 
 

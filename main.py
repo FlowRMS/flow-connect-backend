@@ -1,4 +1,5 @@
 if __name__ == "__main__":
+    import sys
     import uvicorn
     import argparse
     from app.core.config.base_settings import get_settings_local
@@ -14,4 +15,17 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     settings = get_settings_local(env=args.env, cls=Settings)
-    uvicorn.run("app.api.app:create_app", port=8006, factory=True, reload=True, loop="uvloop")
+    
+    # Configure uvicorn options based on platform
+    uvicorn_config = {
+        "app": "app.api.app:create_app",
+        "port": 8006,
+        "factory": True,
+        "reload": True,
+    }
+    
+    # Use uvloop only on non-Windows platforms
+    if sys.platform != "win32":
+        uvicorn_config["loop"] = "uvloop"
+    
+    uvicorn.run(**uvicorn_config)
