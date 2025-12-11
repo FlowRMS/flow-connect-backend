@@ -1,9 +1,11 @@
-"""Entry point for running the TaskIQ campaign worker."""
+"""Entry point for running the TaskIQ campaign worker and scheduler."""
 
 import asyncio
 import logging
 import os
 import sys
+
+from taskiq.api.scheduler import run_scheduler_task
 
 # Add the project root to the path
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
@@ -15,45 +17,39 @@ logging.basicConfig(
 
 logger = logging.getLogger(__name__)
 
-# How often to check for campaigns (in seconds)
-CHECK_INTERVAL = 60  # 1 minute
 
+async def run_all() -> None:
+    """
+    Run both scheduler and worker together.
 
-async def run_scheduler() -> None:
-    """Run the campaign processing task on a schedule using TaskIQ."""
-    from app.workers.broker import broker
-    from app.workers.tasks import check_and_process_campaigns_task
+    Uses TaskIQ's run_scheduler_task which handles the cron loop properly.
+    For InMemoryBroker, tasks are executed in the same process.
+    """
+    from app.workers.broker import broker, scheduler
 
-    # Start the broker
+    # Import tasks to register them with the broker
+    from app.workers import tasks  # noqa: F401
+
+    logger.info("Starting TaskIQ broker...")
     await broker.startup()
     logger.info("TaskIQ broker started")
 
+    logger.info("Starting TaskIQ scheduler with cron schedule...")
     try:
-        while True:
-            logger.info("Scheduling campaign processing task...")
-            try:
-                # Kick off the task using TaskIQ
-                task = await check_and_process_campaigns_task.kiq()
-                # Wait for result
-                result = await task.wait_result(timeout=300)
-                if result.is_err:
-                    logger.error(f"Task failed: {result.error}")
-                else:
-                    logger.info(f"Task completed: {result.return_value}")
-            except Exception as e:
-                logger.exception(f"Error running campaign task: {e}")
-
-            # Wait before next run
-            await asyncio.sleep(CHECK_INTERVAL)
+        # run_scheduler_task handles the scheduler loop and cron checking
+        await run_scheduler_task(scheduler, run_startup=False)
+    except asyncio.CancelledError:
+        logger.info("Shutting down...")
     finally:
+        await scheduler.shutdown()
         await broker.shutdown()
-        logger.info("TaskIQ broker stopped")
+        logger.info("TaskIQ broker and scheduler stopped")
 
 
 async def main() -> None:
     """Main entry point for the worker."""
     logger.info("Starting TaskIQ campaign email worker...")
-    await run_scheduler()
+    await run_all()
 
 
 if __name__ == "__main__":
