@@ -1,4 +1,4 @@
-"""Background worker for processing campaign emails."""
+"""TaskIQ tasks for campaign email processing."""
 
 import logging
 from datetime import datetime, timedelta, timezone
@@ -10,15 +10,15 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
+from app.core.config.base_settings import get_settings
+from app.core.config.settings import Settings
+from app.workers.broker import broker
+
 if TYPE_CHECKING:
     from app.integrations.gmail.models.gmail_user_token import GmailUserToken
     from app.integrations.microsoft_o365.models.o365_user_token import O365UserToken
 
-from app.core.config.base_settings import get_settings
-from app.core.config.settings import Settings
-
 # Import Contact model to register it with SQLAlchemy before CampaignRecipient
-# This is needed because CampaignRecipient has a relationship to Contact
 from app.graphql.contacts.models.contact_model import Contact
 
 _ = Contact  # Register model with SQLAlchemy mapper
@@ -58,146 +58,6 @@ async def get_multitenant_controller() -> MultiTenantController:
     return controller
 
 
-async def process_campaign_batch(
-    session: AsyncSession,
-    campaign: Campaign,
-    user_id: str,
-) -> dict[str, object]:
-    """
-    Process a batch of emails for a campaign.
-
-    Args:
-        session: Database session for the tenant
-        campaign: The campaign to process
-        user_id: UUID of the user who owns the campaign (for email provider auth)
-
-    Returns:
-        Dict with batch processing results
-    """
-    from app.graphql.campaigns.models.campaign_send_log_model import CampaignSendLog
-
-    campaign_id = str(campaign.id)
-
-    # Check if campaign should be processed
-    if campaign.status not in (CampaignStatus.SENDING, CampaignStatus.SCHEDULED):
-        logger.info(f"Campaign {campaign_id} is not in SENDING status: {campaign.status}")
-        return {"status": campaign.status.name, "emails_sent": 0}
-
-    # Update SCHEDULED to SENDING
-    if campaign.status == CampaignStatus.SCHEDULED:
-        # Check if scheduled time has passed
-        if campaign.scheduled_at and campaign.scheduled_at > datetime.now(timezone.utc):
-            logger.info(f"Campaign {campaign_id} scheduled for {campaign.scheduled_at}, not yet due")
-            return {"status": "SCHEDULED", "emails_sent": 0, "scheduled_at": str(campaign.scheduled_at)}
-        campaign.status = CampaignStatus.SENDING
-        await session.flush()
-
-    # Get today's send log
-    today = datetime.now(timezone.utc).date()
-    log_stmt = select(CampaignSendLog).where(
-        CampaignSendLog.campaign_id == campaign.id,
-        CampaignSendLog.send_date == today,
-    )
-    log_result = await session.execute(log_stmt)
-    send_log = log_result.scalar_one_or_none()
-
-    if not send_log:
-        send_log = CampaignSendLog(
-            campaign_id=campaign.id,
-            send_date=today,
-            emails_sent=0,
-        )
-        session.add(send_log)
-        await session.flush()
-
-    # Check daily limit
-    max_per_day = campaign.max_emails_per_day or DEFAULT_MAX_EMAILS_PER_DAY
-    remaining_today = max(0, max_per_day - send_log.emails_sent)
-
-    if remaining_today == 0:
-        logger.info(f"Campaign {campaign_id} reached daily limit of {max_per_day}")
-        return {
-            "status": "DAILY_LIMIT_REACHED",
-            "emails_sent": 0,
-            "today_sent": send_log.emails_sent,
-            "max_per_day": max_per_day,
-        }
-
-    # Calculate batch size based on pace
-    pace = campaign.send_pace or SendPace.MEDIUM
-    emails_per_hour = PACE_LIMITS.get(pace, PACE_LIMITS[SendPace.MEDIUM])
-    # Process ~2 minutes worth at a time
-    batch_size = max(1, emails_per_hour // 30)
-    batch_size = min(batch_size, remaining_today)
-
-    # Get pending recipients
-    pending_stmt = (
-        select(CampaignRecipient)
-        .where(
-            CampaignRecipient.campaign_id == campaign.id,
-            CampaignRecipient.email_status == EmailStatus.PENDING,
-        )
-        .options(selectinload(CampaignRecipient.contact))
-        .limit(batch_size)
-    )
-    pending_result = await session.execute(pending_stmt)
-    recipients = list(pending_result.scalars().all())
-
-    if not recipients:
-        # No more pending - mark as completed
-        campaign.status = CampaignStatus.COMPLETED
-        logger.info(f"Campaign {campaign_id} completed - no more pending recipients")
-        return {"status": "COMPLETED", "emails_sent": 0}
-
-    # Send emails
-    sent_count = 0
-    failed_count = 0
-    errors: list[str] = []
-
-    for recipient in recipients:
-        try:
-            success = await _send_email_to_recipient(
-                session=session,
-                campaign=campaign,
-                recipient=recipient,
-                user_id=user_id,
-            )
-            if success:
-                sent_count += 1
-            else:
-                failed_count += 1
-        except Exception as e:
-            logger.exception(f"Error sending to {recipient.contact.email}: {e}")
-            recipient.email_status = EmailStatus.FAILED
-            failed_count += 1
-            errors.append(str(e))
-
-    # Update send log
-    send_log.emails_sent += sent_count
-    send_log.last_sent_at = datetime.now(timezone.utc)
-
-    # Check if all done
-    pending_count_stmt = select(CampaignRecipient).where(
-        CampaignRecipient.campaign_id == campaign.id,
-        CampaignRecipient.email_status == EmailStatus.PENDING,
-    )
-    pending_count_result = await session.execute(pending_count_stmt)
-    remaining_pending = len(list(pending_count_result.scalars().all()))
-
-    if remaining_pending == 0:
-        campaign.status = CampaignStatus.COMPLETED
-        logger.info(f"Campaign {campaign_id} completed")
-
-    return {
-        "status": campaign.status.name,
-        "emails_sent": sent_count,
-        "emails_failed": failed_count,
-        "remaining_pending": remaining_pending,
-        "today_sent": send_log.emails_sent,
-        "errors": errors[:5],  # Limit error messages
-    }
-
-
 async def _refresh_o365_token_if_needed(
     session: AsyncSession,
     token: "O365UserToken",
@@ -209,14 +69,12 @@ async def _refresh_o365_token_if_needed(
     from app.integrations.microsoft_o365.config import O365Settings
     from app.integrations.microsoft_o365.constants import O365_SCOPES, TOKEN_ENDPOINT
 
-    # Check if token needs refresh (5 minute buffer)
     now = datetime.now(timezone.utc)
     refresh_threshold = token.expires_at - timedelta(seconds=300)
 
     if now < refresh_threshold:
         return token.access_token
 
-    # Token needs refresh
     logger.info(f"Refreshing O365 token for user {token.user_id}")
     settings = get_settings(O365Settings)
 
@@ -239,7 +97,6 @@ async def _refresh_o365_token_if_needed(
 
             token_data = response.json()
 
-        # Update token in database
         expires_in = token_data.get("expires_in", 3600)
         token.access_token = token_data["access_token"]
         token.refresh_token = token_data.get("refresh_token", token.refresh_token)
@@ -262,14 +119,12 @@ async def _refresh_gmail_token_if_needed(
     from app.core.config.base_settings import get_settings
     from app.integrations.gmail.config import GmailSettings
 
-    # Check if token needs refresh (5 minute buffer)
     now = datetime.now(timezone.utc)
     refresh_threshold = token.expires_at - timedelta(seconds=300)
 
     if now < refresh_threshold:
         return token.access_token
 
-    # Token needs refresh
     logger.info(f"Refreshing Gmail token for user {token.user_id}")
     settings = get_settings(GmailSettings)
 
@@ -295,7 +150,6 @@ async def _refresh_gmail_token_if_needed(
 
             token_data = response.json()
 
-        # Update token in database
         expires_in = token_data.get("expires_in", 3600)
         token.access_token = token_data["access_token"]
         if "refresh_token" in token_data:
@@ -307,88 +161,6 @@ async def _refresh_gmail_token_if_needed(
     except Exception as e:
         logger.exception(f"Error refreshing Gmail token: {e}")
         return None
-
-
-async def _send_email_to_recipient(
-    session: AsyncSession,
-    campaign: Campaign,
-    recipient: CampaignRecipient,
-    user_id: str,
-) -> bool:
-    """Send email to a single recipient using the user's connected email provider."""
-    from app.integrations.gmail.models.gmail_user_token import GmailUserToken
-    from app.integrations.microsoft_o365.models.o365_user_token import O365UserToken
-
-    contact = recipient.contact
-    if not contact.email:
-        recipient.email_status = EmailStatus.FAILED
-        return False
-
-    # Prepare email content
-    subject = campaign.email_subject or "Campaign Email"
-    body = recipient.personalized_content or campaign.email_body or ""
-
-    user_uuid = UUID(user_id)
-
-    # Try O365 first
-    o365_stmt = select(O365UserToken).where(
-        O365UserToken.user_id == user_uuid,
-        O365UserToken.is_active == True,  # noqa: E712
-    )
-    o365_result = await session.execute(o365_stmt)
-    o365_token = o365_result.scalar_one_or_none()
-
-    if o365_token:
-        # Refresh token if needed
-        access_token = await _refresh_o365_token_if_needed(session, o365_token)
-        if not access_token:
-            logger.warning(f"O365 token expired and refresh failed for user {user_id}")
-        else:
-            success = await _send_via_o365(
-                access_token=access_token,
-                to=contact.email,
-                subject=subject,
-                body=body,
-            )
-            if success:
-                recipient.email_status = EmailStatus.SENT
-                recipient.sent_at = datetime.now(timezone.utc)
-                return True
-            recipient.email_status = EmailStatus.FAILED
-            return False
-
-    # Try Gmail
-    gmail_stmt = select(GmailUserToken).where(
-        GmailUserToken.user_id == user_uuid,
-        GmailUserToken.is_active == True,  # noqa: E712
-    )
-    gmail_result = await session.execute(gmail_stmt)
-    gmail_token = gmail_result.scalar_one_or_none()
-
-    if gmail_token:
-        # Refresh token if needed
-        access_token = await _refresh_gmail_token_if_needed(session, gmail_token)
-        if not access_token:
-            logger.warning(f"Gmail token expired and refresh failed for user {user_id}")
-        else:
-            success = await _send_via_gmail(
-                access_token=access_token,
-                sender=gmail_token.google_email,
-                to=contact.email,
-                subject=subject,
-                body=body,
-            )
-            if success:
-                recipient.email_status = EmailStatus.SENT
-                recipient.sent_at = datetime.now(timezone.utc)
-                return True
-            recipient.email_status = EmailStatus.FAILED
-            return False
-
-    # No email provider connected
-    logger.warning(f"No email provider connected for user {user_id}")
-    recipient.email_status = EmailStatus.FAILED
-    return False
 
 
 async def _send_via_o365(
@@ -457,12 +229,206 @@ async def _send_via_gmail(
         return response.status_code == 200
 
 
-async def check_and_process_campaigns() -> dict[str, object]:
-    """
-    Check for campaigns that need processing and process them.
+async def _send_email_to_recipient(
+    session: AsyncSession,
+    campaign: Campaign,
+    recipient: CampaignRecipient,
+    user_id: str,
+) -> bool:
+    """Send email to a single recipient using the user's connected email provider."""
+    from app.integrations.gmail.models.gmail_user_token import GmailUserToken
+    from app.integrations.microsoft_o365.models.o365_user_token import O365UserToken
 
-    This is the main periodic task that runs every minute to find
-    campaigns in SENDING or SCHEDULED status and process them.
+    contact = recipient.contact
+    if not contact.email:
+        recipient.email_status = EmailStatus.FAILED
+        return False
+
+    subject = campaign.email_subject or "Campaign Email"
+    body = recipient.personalized_content or campaign.email_body or ""
+
+    user_uuid = UUID(user_id)
+
+    # Try O365 first
+    o365_stmt = select(O365UserToken).where(
+        O365UserToken.user_id == user_uuid,
+        O365UserToken.is_active == True,  # noqa: E712
+    )
+    o365_result = await session.execute(o365_stmt)
+    o365_token = o365_result.scalar_one_or_none()
+
+    if o365_token:
+        access_token = await _refresh_o365_token_if_needed(session, o365_token)
+        if not access_token:
+            logger.warning(f"O365 token expired and refresh failed for user {user_id}")
+        else:
+            success = await _send_via_o365(
+                access_token=access_token,
+                to=contact.email,
+                subject=subject,
+                body=body,
+            )
+            if success:
+                recipient.email_status = EmailStatus.SENT
+                recipient.sent_at = datetime.now(timezone.utc)
+                return True
+            recipient.email_status = EmailStatus.FAILED
+            return False
+
+    # Try Gmail
+    gmail_stmt = select(GmailUserToken).where(
+        GmailUserToken.user_id == user_uuid,
+        GmailUserToken.is_active == True,  # noqa: E712
+    )
+    gmail_result = await session.execute(gmail_stmt)
+    gmail_token = gmail_result.scalar_one_or_none()
+
+    if gmail_token:
+        access_token = await _refresh_gmail_token_if_needed(session, gmail_token)
+        if not access_token:
+            logger.warning(f"Gmail token expired and refresh failed for user {user_id}")
+        else:
+            success = await _send_via_gmail(
+                access_token=access_token,
+                sender=gmail_token.google_email,
+                to=contact.email,
+                subject=subject,
+                body=body,
+            )
+            if success:
+                recipient.email_status = EmailStatus.SENT
+                recipient.sent_at = datetime.now(timezone.utc)
+                return True
+            recipient.email_status = EmailStatus.FAILED
+            return False
+
+    logger.warning(f"No email provider connected for user {user_id}")
+    recipient.email_status = EmailStatus.FAILED
+    return False
+
+
+async def _process_campaign_batch(
+    session: AsyncSession,
+    campaign: Campaign,
+    user_id: str,
+) -> dict[str, object]:
+    """Process a batch of emails for a campaign."""
+    from app.graphql.campaigns.models.campaign_send_log_model import CampaignSendLog
+
+    campaign_id = str(campaign.id)
+
+    if campaign.status not in (CampaignStatus.SENDING, CampaignStatus.SCHEDULED):
+        logger.info(f"Campaign {campaign_id} is not in SENDING status: {campaign.status}")
+        return {"status": campaign.status.name, "emails_sent": 0}
+
+    if campaign.status == CampaignStatus.SCHEDULED:
+        if campaign.scheduled_at and campaign.scheduled_at > datetime.now(timezone.utc):
+            logger.info(f"Campaign {campaign_id} scheduled for {campaign.scheduled_at}, not yet due")
+            return {"status": "SCHEDULED", "emails_sent": 0, "scheduled_at": str(campaign.scheduled_at)}
+        campaign.status = CampaignStatus.SENDING
+        await session.flush()
+
+    today = datetime.now(timezone.utc).date()
+    log_stmt = select(CampaignSendLog).where(
+        CampaignSendLog.campaign_id == campaign.id,
+        CampaignSendLog.send_date == today,
+    )
+    log_result = await session.execute(log_stmt)
+    send_log = log_result.scalar_one_or_none()
+
+    if not send_log:
+        send_log = CampaignSendLog(
+            campaign_id=campaign.id,
+            send_date=today,
+            emails_sent=0,
+        )
+        session.add(send_log)
+        await session.flush()
+
+    max_per_day = campaign.max_emails_per_day or DEFAULT_MAX_EMAILS_PER_DAY
+    remaining_today = max(0, max_per_day - send_log.emails_sent)
+
+    if remaining_today == 0:
+        logger.info(f"Campaign {campaign_id} reached daily limit of {max_per_day}")
+        return {
+            "status": "DAILY_LIMIT_REACHED",
+            "emails_sent": 0,
+            "today_sent": send_log.emails_sent,
+            "max_per_day": max_per_day,
+        }
+
+    pace = campaign.send_pace or SendPace.MEDIUM
+    emails_per_hour = PACE_LIMITS.get(pace, PACE_LIMITS[SendPace.MEDIUM])
+    batch_size = max(1, emails_per_hour // 30)
+    batch_size = min(batch_size, remaining_today)
+
+    pending_stmt = (
+        select(CampaignRecipient)
+        .where(
+            CampaignRecipient.campaign_id == campaign.id,
+            CampaignRecipient.email_status == EmailStatus.PENDING,
+        )
+        .options(selectinload(CampaignRecipient.contact))
+        .limit(batch_size)
+    )
+    pending_result = await session.execute(pending_stmt)
+    recipients = list(pending_result.scalars().all())
+
+    if not recipients:
+        campaign.status = CampaignStatus.COMPLETED
+        logger.info(f"Campaign {campaign_id} completed - no more pending recipients")
+        return {"status": "COMPLETED", "emails_sent": 0}
+
+    sent_count = 0
+    failed_count = 0
+    errors: list[str] = []
+
+    for recipient in recipients:
+        try:
+            success = await _send_email_to_recipient(
+                session=session,
+                campaign=campaign,
+                recipient=recipient,
+                user_id=user_id,
+            )
+            if success:
+                sent_count += 1
+            else:
+                failed_count += 1
+        except Exception as e:
+            logger.exception(f"Error sending to {recipient.contact.email}: {e}")
+            recipient.email_status = EmailStatus.FAILED
+            failed_count += 1
+            errors.append(str(e))
+
+    send_log.emails_sent += sent_count
+    send_log.last_sent_at = datetime.now(timezone.utc)
+
+    pending_count_stmt = select(CampaignRecipient).where(
+        CampaignRecipient.campaign_id == campaign.id,
+        CampaignRecipient.email_status == EmailStatus.PENDING,
+    )
+    pending_count_result = await session.execute(pending_count_stmt)
+    remaining_pending = len(list(pending_count_result.scalars().all()))
+
+    if remaining_pending == 0:
+        campaign.status = CampaignStatus.COMPLETED
+        logger.info(f"Campaign {campaign_id} completed")
+
+    return {
+        "status": campaign.status.name,
+        "emails_sent": sent_count,
+        "emails_failed": failed_count,
+        "remaining_pending": remaining_pending,
+        "today_sent": send_log.emails_sent,
+        "errors": errors[:5],
+    }
+
+
+@broker.task
+async def check_and_process_campaigns_task() -> dict[str, object]:
+    """
+    TaskIQ task: Check for campaigns that need processing and process them.
     Iterates through all tenant databases.
     """
     controller = await get_multitenant_controller()
@@ -471,7 +437,6 @@ async def check_and_process_campaigns() -> dict[str, object]:
     total_processed: list[str] = []
     tenants_checked = 0
 
-    # Iterate through all tenant databases
     for tenant_name in controller.ro_engines:
         tenants_checked += 1
         logger.debug(f"Checking tenant: {tenant_name}")
@@ -479,7 +444,6 @@ async def check_and_process_campaigns() -> dict[str, object]:
         try:
             async with controller.scoped_session(tenant_name) as session:
                 async with session.begin():
-                    # Find campaigns that need processing
                     stmt = select(Campaign).where(
                         Campaign.status.in_([CampaignStatus.SENDING, CampaignStatus.SCHEDULED])
                     )
@@ -492,14 +456,12 @@ async def check_and_process_campaigns() -> dict[str, object]:
                     total_campaigns_found += len(campaigns)
 
                     for campaign in campaigns:
-                        # For scheduled campaigns, check if it's time
                         if campaign.status == CampaignStatus.SCHEDULED:
                             if campaign.scheduled_at and campaign.scheduled_at > datetime.now(timezone.utc):
                                 continue
 
-                        # Process the campaign batch
                         try:
-                            batch_result = await process_campaign_batch(
+                            batch_result = await _process_campaign_batch(
                                 session=session,
                                 campaign=campaign,
                                 user_id=str(campaign.created_by_id),

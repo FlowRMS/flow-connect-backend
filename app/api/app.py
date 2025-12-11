@@ -1,4 +1,3 @@
-import asyncio
 import contextlib
 import logging
 import time
@@ -9,29 +8,16 @@ from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from sqlalchemy.orm import configure_mappers
+from taskiq_fastapi import init
 
 # from starlette.middleware.trustedhost import TrustedHostMiddleware
 from app.api.auth_router import router as auth_router
 from app.api.o365_router import router as o365_router
 from app.core.container import create_container
 from app.graphql.app import create_graphql_app
+from app.workers.broker import broker
 
 logger = logging.getLogger(__name__)
-
-
-async def _run_campaign_worker() -> None:
-    """Background task that runs the campaign email worker."""
-    from app.workers.campaign_worker import check_and_process_campaigns
-
-    logger.info("Campaign worker starting...")
-    while True:
-        try:
-            logger.info("Checking for campaigns to process...")
-            result = await check_and_process_campaigns()
-            logger.info(f"Campaign check result: {result}")
-        except Exception as e:
-            logger.exception(f"Error in campaign worker: {e}")
-        await asyncio.sleep(60)  # Run every 60 seconds
 
 
 def create_app() -> FastAPI:
@@ -41,18 +27,17 @@ def create_app() -> FastAPI:
     async def lifespan(_app: FastAPI):
         configure_mappers()
         async with container:
-            # Start the campaign worker as a background task
-            worker_task = asyncio.create_task(_run_campaign_worker())
-            logger.info("Campaign email worker started as background task")
+            # Initialize TaskIQ broker on startup
+            if not broker.is_worker_process:
+                await broker.startup()
+                logger.info("TaskIQ broker started")
             try:
                 yield
             finally:
-                # Cancel the worker task when the app shuts down
-                worker_task.cancel()
-                try:
-                    await worker_task
-                except asyncio.CancelledError:
-                    logger.info("Campaign worker stopped")
+                # Shutdown TaskIQ broker on app shutdown
+                if not broker.is_worker_process:
+                    await broker.shutdown()
+                    logger.info("TaskIQ broker stopped")
 
     app = FastAPI(
         title="Flow Py Report Backend API",
@@ -61,6 +46,10 @@ def create_app() -> FastAPI:
         lifespan=lifespan,
         openapi_url=None,
     )
+
+    # Initialize TaskIQ with FastAPI
+    init(broker, app)
+
     app.add_middleware(AioInjectMiddleware, container=container)
     app.include_router(create_graphql_app(), prefix="/graphql")
     app.include_router(auth_router, prefix="/api")
