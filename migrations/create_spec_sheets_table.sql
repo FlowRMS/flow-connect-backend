@@ -21,6 +21,7 @@ CREATE TABLE IF NOT EXISTS spec_sheets (
     -- Categorization
     categories VARCHAR[] NOT NULL,
     tags VARCHAR[],
+    folder_path VARCHAR(500),
 
     -- Status
     needs_review BOOLEAN NOT NULL DEFAULT FALSE,
@@ -45,11 +46,13 @@ CREATE INDEX IF NOT EXISTS idx_spec_sheets_categories ON spec_sheets USING GIN(c
 CREATE INDEX IF NOT EXISTS idx_spec_sheets_published ON spec_sheets(published);
 CREATE INDEX IF NOT EXISTS idx_spec_sheets_created_at ON spec_sheets(created_at DESC);
 CREATE INDEX IF NOT EXISTS idx_spec_sheets_display_name ON spec_sheets(display_name);
+CREATE INDEX IF NOT EXISTS idx_spec_sheets_folder_path ON spec_sheets(folder_path);
 
 -- Add comment to table
 COMMENT ON TABLE spec_sheets IS 'Stores manufacturer specification sheets and cut sheets';
 COMMENT ON COLUMN spec_sheets.manufacturer_id IS 'Reference to the factory/manufacturer';
 COMMENT ON COLUMN spec_sheets.upload_source IS 'Source of upload: url or file';
 COMMENT ON COLUMN spec_sheets.categories IS 'Array of category tags (indoor, outdoor, sports_lighting, etc.)';
+COMMENT ON COLUMN spec_sheets.folder_path IS 'Path for folder organization within manufacturer (e.g., Indoor/Commercial/Linear)';
 COMMENT ON COLUMN spec_sheets.usage_count IS 'Number of times this spec sheet has been used';
 COMMENT ON COLUMN spec_sheets.highlight_count IS 'Number of highlights/annotations on this spec sheet';

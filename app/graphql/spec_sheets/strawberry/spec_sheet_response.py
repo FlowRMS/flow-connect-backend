@@ -25,6 +25,7 @@ class SpecSheetResponse(DTOMixin[SpecSheet]):
     page_count: int
     categories: list[str]
     tags: list[str] | None
+    folder_path: str | None
     needs_review: bool
     published: bool
     usage_count: int
@@ -55,6 +56,7 @@ class SpecSheetResponse(DTOMixin[SpecSheet]):
             page_count=model.page_count,
             categories=model.categories,
             tags=model.tags,
+            folder_path=model.folder_path,
             needs_review=model.needs_review,
             published=model.published,
             usage_count=model.usage_count,

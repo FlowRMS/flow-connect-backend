@@ -20,6 +20,7 @@ class CreateSpecSheetInput:
     page_count: int = 1
     categories: list[str]
     tags: list[str] | None = None
+    folder_path: str | None = None
     needs_review: bool = False
     published: bool = True
     file: Upload | None = None  # Added file upload field
@@ -32,5 +33,15 @@ class UpdateSpecSheetInput:
     display_name: str | None = None
     categories: list[str] | None = None
     tags: list[str] | None = None
+    folder_path: str | None = None
     needs_review: bool | None = None
     published: bool | None = None
+
+
+@strawberry.input
+class MoveFolderInput:
+    """Input for moving a folder to a new location."""
+
+    manufacturer_id: UUID
+    old_folder_path: str  # Current path like "Folder1/Folder2"
+    new_folder_path: str  # New path like "Folder3" or empty string for root

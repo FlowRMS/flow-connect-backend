@@ -110,3 +110,53 @@ class SpecSheetsRepository(BaseRepository[SpecSheet]):
         if spec_sheet:
             spec_sheet.usage_count += 1
             await self.session.commit()
+
+    async def update_folder_paths(
+        self,
+        manufacturer_id: UUID,
+        old_path: str,
+        new_path: str,
+    ) -> int:
+        """
+        Update folder paths for all spec sheets matching the old path.
+
+        This updates both exact matches and nested paths.
+        E.g., moving "Folder1/Folder2" to "Folder1" would update:
+        - "Folder1/Folder2" -> "Folder2"
+        - "Folder1/Folder2/Folder3" -> "Folder2/Folder3"
+
+        Args:
+            manufacturer_id: UUID of the manufacturer
+            old_path: The current folder path prefix
+            new_path: The new folder path (empty string for root level)
+
+        Returns:
+            Number of spec sheets updated
+        """
+        # Find all spec sheets with paths starting with old_path
+        stmt = select(SpecSheet).where(
+            SpecSheet.manufacturer_id == manufacturer_id,
+            or_(
+                SpecSheet.folder_path == old_path,
+                SpecSheet.folder_path.like(f"{old_path}/%"),
+            ),
+        )
+
+        result = await self.session.execute(stmt)
+        spec_sheets = list(result.scalars().all())
+
+        count = 0
+        for spec_sheet in spec_sheets:
+            if spec_sheet.folder_path == old_path:
+                # Exact match - set to new path
+                spec_sheet.folder_path = new_path if new_path else None
+            else:
+                # Nested path - replace prefix
+                suffix = spec_sheet.folder_path[len(old_path) + 1 :]  # +1 for the /
+                spec_sheet.folder_path = f"{new_path}/{suffix}" if new_path else suffix
+            count += 1
+
+        if count > 0:
+            await self.session.commit()
+
+        return count

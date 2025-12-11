@@ -75,6 +75,7 @@ class SpecSheetsService:
             page_count=input_data.page_count,
             categories=input_data.categories,
             tags=input_data.tags,
+            folder_path=input_data.folder_path,
             needs_review=input_data.needs_review,
             published=input_data.published,
             usage_count=0,
@@ -110,6 +111,8 @@ class SpecSheetsService:
             spec_sheet.categories = input_data.categories
         if input_data.tags is not None:
             spec_sheet.tags = input_data.tags
+        if input_data.folder_path is not None:
+            spec_sheet.folder_path = input_data.folder_path
         if input_data.needs_review is not None:
             spec_sheet.needs_review = input_data.needs_review
         if input_data.published is not None:
@@ -191,3 +194,26 @@ class SpecSheetsService:
             spec_sheet_id: UUID of the spec sheet
         """
         await self.repository.increment_usage_count(spec_sheet_id)
+
+    async def move_folder(
+        self,
+        manufacturer_id: UUID,
+        old_folder_path: str,
+        new_folder_path: str,
+    ) -> int:
+        """
+        Move a folder to a new location within the same manufacturer.
+
+        This updates the folder_path of all spec sheets in the folder.
+
+        Args:
+            manufacturer_id: UUID of the manufacturer
+            old_folder_path: Current path of the folder (e.g., "Folder1/Folder2")
+            new_folder_path: New path for the folder (e.g., "Folder3" or "" for root)
+
+        Returns:
+            Number of spec sheets updated
+        """
+        return await self.repository.update_folder_paths(
+            manufacturer_id, old_folder_path, new_folder_path
+        )

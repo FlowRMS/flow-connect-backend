@@ -9,6 +9,7 @@ from app.graphql.inject import inject
 from app.graphql.spec_sheets.services.spec_sheets_service import SpecSheetsService
 from app.graphql.spec_sheets.strawberry.spec_sheet_input import (
     CreateSpecSheetInput,
+    MoveFolderInput,
     UpdateSpecSheetInput,
 )
 from app.graphql.spec_sheets.strawberry.spec_sheet_response import SpecSheetResponse
@@ -94,3 +95,27 @@ class SpecSheetsMutations:
         """
         await service.increment_usage(id)
         return True
+
+    @strawberry.mutation
+    @inject
+    async def move_folder(
+        self,
+        service: Injected[SpecSheetsService],
+        input: MoveFolderInput,
+    ) -> int:
+        """
+        Move a folder to a new location within the same manufacturer.
+
+        Updates the folder_path of all spec sheets in the folder.
+
+        Args:
+            input: Move folder data with manufacturer_id, old_folder_path, new_folder_path
+
+        Returns:
+            Number of spec sheets updated
+        """
+        return await service.move_folder(
+            input.manufacturer_id,
+            input.old_folder_path,
+            input.new_folder_path,
+        )

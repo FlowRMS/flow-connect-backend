@@ -35,8 +35,36 @@ class FactoryService:
         """
         return await self.repository.search_by_title(search_term, published, limit)
 
+    async def search_factories_ordered(
+        self, search_term: str, published: bool = True, limit: int = 20
+    ) -> list[Factory]:
+        """
+        Search factories by title with custom sort order applied.
+
+        Args:
+            search_term: The search term to match against title
+            published: Filter by published status (default: True)
+            limit: Maximum number of factories to return (default: 20)
+
+        Returns:
+            List of Factory objects sorted by custom order, then by title
+        """
+        return await self.repository.search_by_title_ordered(search_term, published, limit)
+
     async def find_by_entity(
         self, entity_type: EntityType, entity_id: UUID
     ) -> list[Factory]:
         """Find all factories linked to a specific entity."""
         return await self.repository.find_by_entity(entity_type, entity_id)
+
+    async def update_manufacturer_order(self, factory_ids: list[UUID]) -> int:
+        """
+        Update the display order of manufacturers.
+
+        Args:
+            factory_ids: List of factory IDs in the desired order
+
+        Returns:
+            Number of manufacturers updated
+        """
+        return await self.repository.update_manufacturer_order(factory_ids)
