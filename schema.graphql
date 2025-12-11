@@ -136,6 +136,21 @@ type ContactResponse {
   notes: String
 }
 
+input CreateSpecSheetInput {
+  manufacturerId: UUID!
+  fileName: String!
+  displayName: String = null
+  uploadSource: String!
+  sourceUrl: String = null
+  fileUrl: String!
+  fileSize: Int!
+  pageCount: Int! = 1
+  categories: [String!]!
+  tags: [String!] = null
+  needsReview: Boolean! = false
+  published: Boolean! = true
+}
+
 type CustomerResponse {
   id: UUID!
   companyName: String!
@@ -369,6 +384,10 @@ type Mutation {
   createPreOpportunity(input: PreOpportunityInput!): PreOpportunityResponse!
   updatePreOpportunity(input: PreOpportunityInput!): PreOpportunityResponse!
   deletePreOpportunity(id: UUID!): Boolean!
+  createSpecSheet(input: CreateSpecSheetInput!): SpecSheetResponse!
+  updateSpecSheet(id: UUID!, input: UpdateSpecSheetInput!): SpecSheetResponse!
+  deleteSpecSheet(id: UUID!): Boolean!
+  incrementSpecSheetUsage(id: UUID!): Boolean!
   createTask(input: TaskInput!): TaskType!
   updateTask(id: UUID!, input: TaskInput!): TaskType!
   deleteTask(id: UUID!): Boolean!
@@ -690,6 +709,9 @@ type Query {
   preOpportunitySearch(searchTerm: String!, limit: Int! = 20): [PreOpportunityLiteResponse!]!
   productSearch(searchTerm: String!, factoryId: UUID, limit: Int! = 20): [ProductResponse!]!
   quoteSearch(searchTerm: String!, limit: Int! = 20): [QuoteResponse!]!
+  specSheet(id: UUID!): SpecSheetResponse
+  specSheetsByManufacturer(manufacturerId: UUID!, publishedOnly: Boolean! = true): [SpecSheetResponse!]!
+  specSheetSearch(searchTerm: String! = "", manufacturerId: UUID = null, categories: [String!] = null, publishedOnly: Boolean! = true, limit: Int! = 50): [SpecSheetResponse!]!
   task(id: UUID!): TaskType!
   taskConversations(taskId: UUID!): [TaskConversationType!]!
   taskSearch(searchTerm: String!, limit: Int! = 20): [TaskType!]!
@@ -711,6 +733,26 @@ type QuoteResponse {
   jobName: String
   expDate: Date
   blanket: Boolean!
+}
+
+type SpecSheetResponse {
+  id: UUID!
+  manufacturerId: UUID!
+  fileName: String!
+  displayName: String!
+  uploadSource: String!
+  sourceUrl: String
+  fileUrl: String!
+  fileSize: Int!
+  pageCount: Int!
+  categories: [String!]!
+  tags: [String!]
+  needsReview: Boolean!
+  published: Boolean!
+  usageCount: Int!
+  highlightCount: Int!
+  createdAt: datetime!
+  createdBy: String!
 }
 
 input TaskConversationInput {
@@ -795,6 +837,14 @@ type TaskType {
 }
 
 scalar UUID
+
+input UpdateSpecSheetInput {
+  displayName: String = null
+  categories: [String!] = null
+  tags: [String!] = null
+  needsReview: Boolean = null
+  published: Boolean = null
+}
 
 type UserResponse {
   id: UUID!
