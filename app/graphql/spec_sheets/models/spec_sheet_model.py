@@ -37,17 +37,15 @@ class SpecSheet(CrmBaseModel, HasCreatedAt, HasCreatedBy, kw_only=True):
 
     # File Metadata
     file_size: Mapped[int] = mapped_column(BigInteger, nullable=False)
-    page_count: Mapped[int] = mapped_column(Integer, nullable=False, default=1)
 
     # Categorization
     categories: Mapped[list[str]] = mapped_column(ARRAY(String), nullable=False)
     tags: Mapped[list[str] | None] = mapped_column(ARRAY(String), nullable=True)
 
-    # Status
+    # Fields with defaults must come after fields without defaults
+    page_count: Mapped[int] = mapped_column(Integer, nullable=False, default=1)
     needs_review: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
     published: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True)
-
-    # Usage tracking
     usage_count: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
     highlight_count: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
 

@@ -1,7 +1,7 @@
 """create_spec_sheets_table
 
 Revision ID: 1a2b3c4d5e6f
-Revises: c9gdgp6mze3d
+Revises: c4b9f784a484
 Create Date: 2025-12-10 17:30:00.000000
 
 """
@@ -14,7 +14,7 @@ from sqlalchemy.dialects import postgresql
 
 # revision identifiers, used by Alembic.
 revision: str = '1a2b3c4d5e6f'
-down_revision: str | None = 'c9gdgp6mze3d'
+down_revision: str | None = 'c4b9f784a484'
 branch_labels: str | Sequence[str] | None = None
 depends_on: str | Sequence[str] | None = None
 
@@ -57,7 +57,7 @@ def upgrade() -> None:
         sa.Column('updated_at', sa.DateTime(timezone=True), nullable=False, server_default=sa.text('CURRENT_TIMESTAMP')),
 
         # Foreign key constraint
-        sa.ForeignKeyConstraint(['created_by_id'], ['pycrm.users.id'], name='fk_spec_sheets_created_by', ondelete='RESTRICT'),
+        sa.ForeignKeyConstraint(['created_by_id'], ['user.users.id'], name='fk_spec_sheets_created_by', ondelete='RESTRICT'),
 
         schema='pycrm'
     )

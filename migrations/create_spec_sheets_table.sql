@@ -36,7 +36,7 @@ CREATE TABLE IF NOT EXISTS spec_sheets (
     updated_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
     -- Indexes
-    CONSTRAINT fk_created_by FOREIGN KEY (created_by_id) REFERENCES users(id) ON DELETE RESTRICT
+    CONSTRAINT fk_created_by FOREIGN KEY (created_by_id) REFERENCES "user".users(id) ON DELETE RESTRICT
 );
 
 -- Create indexes for better query performance
