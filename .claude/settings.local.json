@@ -1,0 +1,10 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(python -m app.workers.run_worker:*)",
+      "Bash(dir:*)",
+      "Bash(.venv/Scripts/python.exe:*)",
+      "Bash(findstr:*)"
+    ]
+  }
+}

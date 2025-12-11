@@ -20,6 +20,7 @@ from app.graphql.campaigns.repositories.campaigns_repository import CampaignsRep
 from app.graphql.campaigns.services.criteria_evaluator_service import (
     CriteriaEvaluatorService,
 )
+from app.graphql.campaigns.services.email_provider_service import EmailProviderService
 from app.graphql.campaigns.strawberry.campaign_input import CampaignInput
 from app.graphql.campaigns.strawberry.criteria_input import (
     CampaignCriteriaInput,
@@ -32,6 +33,15 @@ from app.graphql.contacts.models.contact_model import Contact
 from app.graphql.links.models.entity_type import EntityType
 
 
+class NoEmailProviderError(Exception):
+    """Raised when user has no email provider connected."""
+
+    def __init__(self) -> None:
+        super().__init__(
+            "No email provider connected. Please connect O365 or Gmail before creating a campaign."
+        )
+
+
 class CampaignsService:
     """Service for Campaigns entity business logic."""
 
@@ -40,16 +50,26 @@ class CampaignsService:
         repository: CampaignsRepository,
         recipients_repository: CampaignRecipientsRepository,
         criteria_evaluator: CriteriaEvaluatorService,
+        email_provider: EmailProviderService,
         auth_info: AuthInfo,
     ) -> None:
         super().__init__()
         self.repository = repository
         self.recipients_repository = recipients_repository
         self.criteria_evaluator = criteria_evaluator
+        self.email_provider = email_provider
         self.auth_info = auth_info
 
     async def create_campaign(self, campaign_input: CampaignInput) -> Campaign:
-        """Create a new campaign with recipients."""
+        """Create a new campaign with recipients.
+
+        Raises:
+            NoEmailProviderError: If user has no O365 or Gmail connected.
+        """
+        # Check if user has email provider connected
+        if not await self.email_provider.has_connected_provider():
+            raise NoEmailProviderError()
+
         campaign = await self.repository.create(campaign_input.to_orm_model())
 
         match campaign_input.recipient_list_type:

@@ -1,4 +1,5 @@
 from logging.config import fileConfig
+import os
 
 import sqlalchemy as sa
 from sqlalchemy import engine_from_config, pool
@@ -11,6 +12,13 @@ config = context.config
 if config.config_file_name is not None:
     fileConfig(config.config_file_name)
 
+# Get database URL from environment variable
+# Convert async URL to sync URL for alembic
+db_url = os.environ.get("PG_URL", "")
+if db_url:
+    # Convert asyncpg to psycopg2 for sync operations
+    sync_url = db_url.replace("postgresql+asyncpg://", "postgresql://")
+    config.set_main_option("sqlalchemy.url", sync_url)
 
 target_metadata = Base.metadata
 

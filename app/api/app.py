@@ -1,4 +1,6 @@
+import asyncio
 import contextlib
+import logging
 import time
 from typing import Any
 
@@ -14,6 +16,23 @@ from app.api.o365_router import router as o365_router
 from app.core.container import create_container
 from app.graphql.app import create_graphql_app
 
+logger = logging.getLogger(__name__)
+
+
+async def _run_campaign_worker() -> None:
+    """Background task that runs the campaign email worker."""
+    from app.workers.campaign_worker import check_and_process_campaigns
+
+    logger.info("Campaign worker starting...")
+    while True:
+        try:
+            logger.info("Checking for campaigns to process...")
+            result = await check_and_process_campaigns()
+            logger.info(f"Campaign check result: {result}")
+        except Exception as e:
+            logger.exception(f"Error in campaign worker: {e}")
+        await asyncio.sleep(60)  # Run every 60 seconds
+
 
 def create_app() -> FastAPI:
     container = create_container()
@@ -22,7 +41,18 @@ def create_app() -> FastAPI:
     async def lifespan(_app: FastAPI):
         configure_mappers()
         async with container:
-            yield
+            # Start the campaign worker as a background task
+            worker_task = asyncio.create_task(_run_campaign_worker())
+            logger.info("Campaign email worker started as background task")
+            try:
+                yield
+            finally:
+                # Cancel the worker task when the app shuts down
+                worker_task.cancel()
+                try:
+                    await worker_task
+                except asyncio.CancelledError:
+                    logger.info("Campaign worker stopped")
 
     app = FastAPI(
         title="Flow Py Report Backend API",

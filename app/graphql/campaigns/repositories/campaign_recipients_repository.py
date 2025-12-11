@@ -1,5 +1,6 @@
 """Repository for CampaignRecipient entity with database operations."""
 
+from datetime import datetime, timezone
 from uuid import UUID
 
 from sqlalchemy import delete, func, select
@@ -90,3 +91,69 @@ class CampaignRecipientsRepository(BaseRepository[CampaignRecipient]):
         )
         result = await self.session.execute(stmt)
         return set(result.scalars().all())
+
+    async def get_pending_recipients(
+        self,
+        campaign_id: UUID,
+        limit: int,
+    ) -> list[CampaignRecipient]:
+        """Get pending recipients for a campaign, ordered by ID, with contacts loaded."""
+        stmt = (
+            select(CampaignRecipient)
+            .where(
+                CampaignRecipient.campaign_id == campaign_id,
+                CampaignRecipient.email_status == EmailStatus.PENDING,
+            )
+            .options(selectinload(CampaignRecipient.contact))
+            .order_by(CampaignRecipient.id)
+            .limit(limit)
+        )
+        result = await self.session.execute(stmt)
+        return list(result.scalars().all())
+
+    async def update_email_status(
+        self,
+        recipient_id: UUID,
+        status: EmailStatus,
+        sent_at: datetime | None = None,
+    ) -> CampaignRecipient:
+        """Update the email status of a recipient."""
+        recipient = await self.get_by_id(recipient_id)
+        if not recipient:
+            raise ValueError(f"Recipient {recipient_id} not found")
+
+        recipient.email_status = status
+        if sent_at:
+            recipient.sent_at = sent_at
+        elif status == EmailStatus.SENT:
+            recipient.sent_at = datetime.now(timezone.utc)
+
+        await self.session.flush()
+        return recipient
+
+    async def mark_as_sent(self, recipient_id: UUID) -> CampaignRecipient:
+        """Mark a recipient as sent."""
+        return await self.update_email_status(
+            recipient_id=recipient_id,
+            status=EmailStatus.SENT,
+        )
+
+    async def mark_as_failed(self, recipient_id: UUID) -> CampaignRecipient:
+        """Mark a recipient as failed."""
+        return await self.update_email_status(
+            recipient_id=recipient_id,
+            status=EmailStatus.FAILED,
+        )
+
+    async def get_status_counts(self, campaign_id: UUID) -> dict[EmailStatus, int]:
+        """Get counts for each email status in a campaign."""
+        stmt = (
+            select(
+                CampaignRecipient.email_status,
+                func.count().label("count"),
+            )
+            .where(CampaignRecipient.campaign_id == campaign_id)
+            .group_by(CampaignRecipient.email_status)
+        )
+        result = await self.session.execute(stmt)
+        return {row.email_status: row.count for row in result.all()}

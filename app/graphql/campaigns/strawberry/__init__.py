@@ -8,6 +8,11 @@ from app.graphql.campaigns.strawberry.campaign_recipient_response import (
     CampaignRecipientResponse,
 )
 from app.graphql.campaigns.strawberry.campaign_response import CampaignResponse
+from app.graphql.campaigns.strawberry.campaign_sending_status_response import (
+    CampaignSendingStatusResponse,
+    SendBatchResultResponse,
+    SendTestEmailResponse,
+)
 from app.graphql.campaigns.strawberry.criteria_input import (
     CampaignCriteriaInput,
     CriteriaConditionInput,
@@ -24,6 +29,9 @@ __all__ = [
     "CampaignResponse",
     "CampaignLandingPageResponse",
     "CampaignRecipientResponse",
+    "CampaignSendingStatusResponse",
+    "SendBatchResultResponse",
+    "SendTestEmailResponse",
     "CampaignCriteriaInput",
     "CriteriaConditionInput",
     "CriteriaGroupInput",

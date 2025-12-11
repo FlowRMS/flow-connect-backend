@@ -16,16 +16,20 @@ app/graphql/campaigns/
 │   ├── campaign_model.py          # Campaign entity
 │   ├── campaign_recipient_model.py # Links campaigns to contacts
 │   ├── campaign_criteria_model.py  # Stores filter rules as JSON
+│   ├── campaign_send_log_model.py  # Daily email count tracking
 │   ├── campaign_status.py          # DRAFT, SCHEDULED, SENDING, COMPLETED, PAUSED
 │   ├── recipient_list_type.py      # STATIC, CRITERIA_BASED, DYNAMIC
 │   ├── email_status.py             # PENDING, SENT, FAILED, BOUNCED
 │   └── send_pace.py                # SLOW(50/hr), MEDIUM(200/hr), FAST(500/hr)
 ├── repositories/
 │   ├── campaigns_repository.py     # Campaign CRUD + landing page query
-│   └── campaign_recipients_repository.py # Recipient operations
+│   ├── campaign_recipients_repository.py # Recipient operations
+│   └── campaign_send_log_repository.py   # Daily send log operations
 ├── services/
 │   ├── campaigns_service.py        # Business logic for campaigns
-│   └── criteria_evaluator_service.py # Dynamic SQL query builder
+│   ├── criteria_evaluator_service.py # Dynamic SQL query builder
+│   ├── email_provider_service.py   # O365/Gmail abstraction layer
+│   └── campaign_email_sender_service.py # Email sending with pacing
 ├── queries/
 │   └── campaigns_queries.py        # GraphQL queries
 ├── mutations/
@@ -35,6 +39,7 @@ app/graphql/campaigns/
     ├── campaign_response.py        # Full campaign response
     ├── campaign_landing_page_response.py # List view response
     ├── campaign_recipient_response.py    # Recipient with contact
+    ├── campaign_sending_status_response.py # Sending status response
     ├── criteria_input.py           # Criteria condition/group inputs
     └── estimate_recipients_response.py   # Preview count response
 ```
@@ -77,6 +82,17 @@ app/graphql/campaigns/
 | criteria_json | JSONB | Filter rules |
 | is_dynamic | BOOLEAN | True for auto-updating |
 
+### campaign_send_logs
+| Column | Type | Description |
+|--------|------|-------------|
+| id | UUID | Primary key |
+| campaign_id | UUID | FK to campaigns |
+| send_date | DATE | The date of sending |
+| emails_sent | INTEGER | Count sent on this date |
+| last_sent_at | TIMESTAMP | Last email sent time |
+
+**Unique constraint**: `(campaign_id, send_date)` - one record per campaign per day
+
 ## GraphQL API
 
 ### Queries
@@ -101,6 +117,9 @@ estimateRecipients(
 
 # Get campaigns list via landing page system
 findLandingPages(sourceType: CAMPAIGNS): GenericLandingPage
+
+# Get real-time sending status of a campaign
+campaignSendingStatus(campaignId: UUID!): CampaignSendingStatusResponse
 ```
 
 ### EstimateRecipientsResponse
@@ -144,8 +163,34 @@ resumeCampaign(id: UUID!): CampaignResponse
 # Re-evaluate dynamic criteria and add new matches
 refreshDynamicRecipients(campaignId: UUID!): CampaignResponse
 
-# Send test email (placeholder)
-sendTestEmail(campaignId: UUID!, testEmail: String!): Boolean
+# Send test email to verify campaign content
+sendTestEmail(campaignId: UUID!, testEmail: String!): SendTestEmailResponse
+
+# Start campaign sending - background worker handles the rest
+startCampaignSending(campaignId: UUID!): CampaignResponse
+```
+
+### CampaignSendingStatusResponse
+
+```graphql
+type CampaignSendingStatusResponse {
+  campaignId: UUID!
+  status: CampaignStatus!
+  totalRecipients: Int!
+  sentCount: Int!
+  pendingCount: Int!
+  failedCount: Int!
+  bouncedCount: Int!
+  todaySentCount: Int!
+  maxEmailsPerDay: Int!
+  remainingToday: Int!
+  sendPace: SendPace
+  emailsPerHour: Int!
+  progressPercentage: Float!
+  isCompleted: Boolean!
+  canSendMoreToday: Boolean!
+  progressDisplay: String!  # "sent_count / total_recipients"
+}
 ```
 
 ## Criteria System
@@ -255,4 +300,43 @@ This logic is in [campaign_input.py](../app/graphql/campaigns/strawberry/campaig
 ### New Files Created
 - All files under `app/graphql/campaigns/`
 - `alembic/versions/20251210_add_campaigns.py` - Database migration
+- `alembic/versions/20251211_add_campaign_send_logs.py` - Send logs migration
 - `tests/campaigns/test_campaigns.py` - Unit tests
+
+## Email Sending
+
+For detailed documentation on email sending functionality, see [CAMPAIGN_EMAIL_SENDING.md](./CAMPAIGN_EMAIL_SENDING.md).
+
+### Quick Overview
+
+Email sending is handled by a **background worker** - no frontend polling required:
+
+1. **Start Campaign**: Call `startCampaignSending` to set status to SENDING
+2. **Background Worker**: Automatically processes campaigns every 60 seconds
+3. **Monitor Progress**: Use `campaignSendingStatus` query
+4. **Control**: Use `pauseCampaign` / `resumeCampaign` as needed
+
+### Running the Worker
+
+```bash
+# API server
+python start.py
+
+# Worker (separate process)
+python -m app.workers.run_worker
+```
+
+### Send Pace
+
+| Pace | Emails/Hour |
+|------|-------------|
+| SLOW | 50 |
+| MEDIUM | 200 |
+| FAST | 500 |
+
+### Daily Limits
+
+- Default: 1000 emails/day per campaign
+- Configurable via `max_emails_per_day` field
+- Enforced via `campaign_send_logs` table
+- Resets automatically each day
