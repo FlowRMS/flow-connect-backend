@@ -1,7 +1,6 @@
 """Service for sending campaign emails with pacing and daily limits."""
 
 from dataclasses import dataclass
-from datetime import datetime, timezone
 from uuid import UUID
 
 from commons.auth import AuthInfo
@@ -20,7 +19,6 @@ from app.graphql.campaigns.repositories.campaign_send_log_repository import (
 )
 from app.graphql.campaigns.repositories.campaigns_repository import CampaignsRepository
 from app.graphql.campaigns.services.email_provider_service import EmailProviderService
-
 
 # Emails per hour for each pace
 PACE_LIMITS: dict[SendPace, int] = {
@@ -186,7 +184,9 @@ class CampaignEmailSenderService:
                 emails_failed=0,
                 emails_remaining=0,
                 is_completed=False,
-                errors=[f"Campaign is not in SENDING or SCHEDULED status. Current: {campaign.status.name}"],
+                errors=[
+                    f"Campaign is not in SENDING or SCHEDULED status. Current: {campaign.status.name}"
+                ],
             )
 
         # Update to SENDING if scheduled
@@ -237,16 +237,16 @@ class CampaignEmailSenderService:
 
         for recipient in recipients:
             result = await self._send_email_to_recipient(campaign, recipient)
-            if result.success:
+            if result.emails_sent > 0:
                 sent += 1
             else:
                 failed += 1
-                if result.error:
-                    errors.append(f"{recipient.contact.email}: {result.error}")
+                if result.errors:
+                    errors.append(f"{recipient.contact.email}: {result.errors[0]}")
 
         # Update send log
         if sent > 0:
-            await self.send_log_repository.increment_sent_count(campaign_id, sent)
+            _ = await self.send_log_repository.increment_sent_count(campaign_id, sent)
 
         # Check if campaign is completed
         remaining = await self.recipients_repository.count_by_status(
@@ -274,7 +274,7 @@ class CampaignEmailSenderService:
 
         # Check if contact has email
         if not contact.email:
-            await self.recipients_repository.mark_as_failed(recipient.id)
+            _ = await self.recipients_repository.mark_as_failed(recipient.id)
             return SendBatchResult(
                 emails_sent=0,
                 emails_failed=1,
@@ -297,7 +297,7 @@ class CampaignEmailSenderService:
 
         # Update recipient status
         if result.success:
-            await self.recipients_repository.mark_as_sent(recipient.id)
+            _ = await self.recipients_repository.mark_as_sent(recipient.id)
             return SendBatchResult(
                 emails_sent=1,
                 emails_failed=0,
@@ -306,7 +306,7 @@ class CampaignEmailSenderService:
                 errors=[],
             )
 
-        await self.recipients_repository.mark_as_failed(recipient.id)
+        _ = await self.recipients_repository.mark_as_failed(recipient.id)
         return SendBatchResult(
             emails_sent=0,
             emails_failed=1,
@@ -390,9 +390,7 @@ class CampaignEmailSenderService:
             raise NotFoundError(f"Campaign {campaign_id} not found")
 
         if campaign.status not in (CampaignStatus.DRAFT, CampaignStatus.PAUSED):
-            raise ValueError(
-                f"Cannot start campaign in {campaign.status.name} status"
-            )
+            raise ValueError(f"Cannot start campaign in {campaign.status.name} status")
 
         campaign.status = CampaignStatus.SENDING
         await self.campaigns_repository.session.flush()

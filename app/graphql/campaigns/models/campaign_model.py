@@ -60,5 +60,8 @@ class Campaign(CrmBaseModel, HasCreatedAt, HasCreatedBy, kw_only=True):
         init=False, back_populates="campaign", cascade="all, delete-orphan"
     )
     criteria: Mapped["CampaignCriteria | None"] = relationship(
-        init=False, back_populates="campaign", cascade="all, delete-orphan", uselist=False
+        init=False,
+        back_populates="campaign",
+        cascade="all, delete-orphan",
+        uselist=False,
     )

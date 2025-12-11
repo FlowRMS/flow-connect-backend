@@ -4,7 +4,8 @@ from datetime import date, datetime
 from typing import Any
 from uuid import UUID
 
-from sqlalchemy import ARRAY, Date, String, Text, and_, cast, func, or_, select
+from commons.db.int_enum import IntEnum as IntEnumColumn
+from sqlalchemy import ARRAY, Date, String, Text, and_, func, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.sql import Select
 
@@ -21,7 +22,6 @@ from app.graphql.jobs.models.jobs_model import Job
 from app.graphql.links.models.entity_type import EntityType
 from app.graphql.links.models.link_relation_model import LinkRelation
 from app.graphql.tasks.models.task_model import Task
-from commons.db.int_enum import IntEnum as IntEnumColumn
 
 
 class CriteriaEvaluatorService:
@@ -35,6 +35,7 @@ class CriteriaEvaluatorService:
     }
 
     def __init__(self, session: AsyncSession) -> None:
+        super().__init__()
         self.session = session
 
     async def evaluate_criteria(
@@ -291,7 +292,7 @@ class CriteriaEvaluatorService:
         """Apply operator to column comparison with automatic type conversion."""
         # Check if column is an array type
         is_array = self._is_array_column(column)
-        
+
         # Handle empty string values
         if isinstance(value, str) and not value.strip():
             # For array columns with empty value, skip the condition
@@ -319,7 +320,10 @@ class CriteriaEvaluatorService:
             value = self._convert_value(column, value)
 
         # Skip None values that resulted from conversion failures
-        if value is None and operator not in (CriteriaOperator.IS_NULL, CriteriaOperator.IS_NOT_NULL):
+        if value is None and operator not in (
+            CriteriaOperator.IS_NULL,
+            CriteriaOperator.IS_NOT_NULL,
+        ):
             return None
 
         # Check if column is string type for case-insensitive comparisons
@@ -372,14 +376,26 @@ class CriteriaEvaluatorService:
             case CriteriaOperator.IS_NOT_NULL:
                 return column.isnot(None)
             case CriteriaOperator.IN:
-                converted = self._convert_value(column, value if isinstance(value, list) else [value])
+                converted = self._convert_value(
+                    column, value if isinstance(value, list) else [value]
+                )
                 # Use case-insensitive IN for string columns
-                if is_string and converted and all(isinstance(v, str) for v in converted):
+                if (
+                    is_string
+                    and converted
+                    and all(isinstance(v, str) for v in converted)
+                ):
                     return func.lower(column).in_([v.lower() for v in converted])
                 return column.in_(converted)
             case CriteriaOperator.NOT_IN:
-                converted = self._convert_value(column, value if isinstance(value, list) else [value])
-                if is_string and converted and all(isinstance(v, str) for v in converted):
+                converted = self._convert_value(
+                    column, value if isinstance(value, list) else [value]
+                )
+                if (
+                    is_string
+                    and converted
+                    and all(isinstance(v, str) for v in converted)
+                ):
                     return ~func.lower(column).in_([v.lower() for v in converted])
                 return ~column.in_(converted)
             case _:

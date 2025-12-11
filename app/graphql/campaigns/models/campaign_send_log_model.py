@@ -4,7 +4,8 @@ from datetime import date, datetime
 from uuid import UUID
 
 from sqlalchemy import Date, ForeignKey, Integer, UniqueConstraint
-from sqlalchemy.dialects.postgresql import TIMESTAMP, UUID as PG_UUID
+from sqlalchemy.dialects.postgresql import TIMESTAMP
+from sqlalchemy.dialects.postgresql import UUID as PG_UUID
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.core.db.base import CrmBaseModel, HasCreatedAt

@@ -37,9 +37,11 @@ class CampaignResponse(DTOMixin[Campaign]):
 
     @classmethod
     def from_orm_model(cls, model: Campaign) -> Self:
-        sent_count = sum(
-            1 for r in model.recipients if r.email_status == EmailStatus.SENT
-        ) if model.recipients else 0
+        sent_count = (
+            sum(1 for r in model.recipients if r.email_status == EmailStatus.SENT)
+            if model.recipients
+            else 0
+        )
 
         return cls(
             id=model.id,
@@ -50,11 +52,11 @@ class CampaignResponse(DTOMixin[Campaign]):
             description=model.description,
             email_subject=model.email_subject,
             email_body=model.email_body,
-            ai_personalization_enabled=model.ai_personalization_enabled,
-            send_pace=model.send_pace,
+            ai_personalization_enabled=model.ai_personalization_enabled or False,
+            send_pace=model.send_pace or SendPace.MEDIUM,
             max_emails_per_day=model.max_emails_per_day,
             scheduled_at=model.scheduled_at,
-            send_immediately=model.send_immediately,
+            send_immediately=model.send_immediately or False,
             recipients_count=len(model.recipients) if model.recipients else 0,
             sent_count=sent_count,
             criteria_json=model.criteria.criteria_json if model.criteria else None,

@@ -8,7 +8,9 @@ import sys
 from taskiq.api.scheduler import run_scheduler_task
 
 # Add the project root to the path
-sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
+sys.path.insert(
+    0, os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+)
 
 logging.basicConfig(
     level=logging.INFO,
@@ -25,10 +27,11 @@ async def run_all() -> None:
     Uses TaskIQ's run_scheduler_task which handles the cron loop properly.
     For InMemoryBroker, tasks are executed in the same process.
     """
+    # Import tasks to register them with the broker
+    from app.workers import tasks as _tasks  # noqa: F401
     from app.workers.broker import broker, scheduler
 
-    # Import tasks to register them with the broker
-    from app.workers import tasks  # noqa: F401
+    del _tasks  # Silence unused import warning
 
     logger.info("Starting TaskIQ broker...")
     await broker.startup()

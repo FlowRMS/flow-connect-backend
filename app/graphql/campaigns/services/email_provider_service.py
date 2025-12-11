@@ -7,10 +7,14 @@ from commons.auth import AuthInfo
 
 from app.integrations.gmail.services.gmail_auth_service import (
     GmailAuthService,
+)
+from app.integrations.gmail.services.gmail_auth_service import (
     SendEmailResult as GmailSendResult,
 )
 from app.integrations.microsoft_o365.services.o365_auth_service import (
     O365AuthService,
+)
+from app.integrations.microsoft_o365.services.o365_auth_service import (
     SendEmailResult as O365SendResult,
 )
 

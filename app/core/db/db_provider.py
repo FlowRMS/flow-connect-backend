@@ -19,7 +19,7 @@ async def create_session(
     tenant = await controller.find_tenant(auth_info.tenant)
     if tenant is None:
         raise ValueError(f"Tenant '{auth_info.tenant}' not found")
-    
+
     async with controller.scoped_session(tenant.tenant_name) as session:
         async with session.begin():
             yield session
@@ -34,7 +34,7 @@ async def get_engine(
     tenant = await controller.find_tenant(auth_info.tenant)
     if tenant is None:
         raise ValueError(f"Tenant '{auth_info.tenant}' not found")
-    
+
     db_vars = controller.ro_engines.get(tenant.tenant_name)
     if db_vars is None:
         raise ValueError(f"Tenant '{auth_info.tenant}' not found in read-only engines")

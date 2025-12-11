@@ -94,7 +94,9 @@ class CampaignsRepository(BaseRepository[Campaign]):
 
     async def get_dynamic_campaigns(self) -> list[Campaign]:
         """Get all campaigns with dynamic recipient lists."""
-        from app.graphql.campaigns.models.campaign_criteria_model import CampaignCriteria
+        from app.graphql.campaigns.models.campaign_criteria_model import (
+            CampaignCriteria,
+        )
 
         stmt = (
             select(Campaign)

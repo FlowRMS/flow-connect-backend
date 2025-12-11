@@ -254,8 +254,8 @@ class CampaignsService:
         current_contacts = await self.criteria_evaluator.evaluate_criteria(criteria)
         current_contact_ids = {c.id for c in current_contacts}
 
-        existing_contact_ids = await self.recipients_repository.get_contact_ids_for_campaign(
-            campaign_id
+        existing_contact_ids = (
+            await self.recipients_repository.get_contact_ids_for_campaign(campaign_id)
         )
 
         new_contact_ids = current_contact_ids - existing_contact_ids

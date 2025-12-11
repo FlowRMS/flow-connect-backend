@@ -54,6 +54,7 @@ class WorkerEmailService:
         o365_settings: O365Settings,
         gmail_settings: GmailSettings,
     ) -> None:
+        super().__init__()
         self.o365_settings = o365_settings
         self.gmail_settings = gmail_settings
 
@@ -73,7 +74,9 @@ class WorkerEmailService:
             Valid access token or None if refresh failed
         """
         now = datetime.now(timezone.utc)
-        refresh_threshold = token.expires_at - timedelta(seconds=TOKEN_REFRESH_BUFFER_SECONDS)
+        refresh_threshold = token.expires_at - timedelta(
+            seconds=TOKEN_REFRESH_BUFFER_SECONDS
+        )
 
         if now < refresh_threshold:
             return token.access_token
@@ -102,7 +105,9 @@ class WorkerEmailService:
             expires_in = token_data.get("expires_in", 3600)
             token.access_token = token_data["access_token"]
             token.refresh_token = token_data.get("refresh_token", token.refresh_token)
-            token.expires_at = datetime.now(timezone.utc) + timedelta(seconds=expires_in)
+            token.expires_at = datetime.now(timezone.utc) + timedelta(
+                seconds=expires_in
+            )
             await session.flush()
 
             return token.access_token
@@ -126,7 +131,9 @@ class WorkerEmailService:
             Valid access token or None if refresh failed
         """
         now = datetime.now(timezone.utc)
-        refresh_threshold = token.expires_at - timedelta(seconds=TOKEN_REFRESH_BUFFER_SECONDS)
+        refresh_threshold = token.expires_at - timedelta(
+            seconds=TOKEN_REFRESH_BUFFER_SECONDS
+        )
 
         if now < refresh_threshold:
             return token.access_token
@@ -159,7 +166,9 @@ class WorkerEmailService:
             token.access_token = token_data["access_token"]
             if "refresh_token" in token_data:
                 token.refresh_token = token_data["refresh_token"]
-            token.expires_at = datetime.now(timezone.utc) + timedelta(seconds=expires_in)
+            token.expires_at = datetime.now(timezone.utc) + timedelta(
+                seconds=expires_in
+            )
             await session.flush()
 
             return token.access_token
@@ -303,12 +312,16 @@ class WorkerEmailService:
         o365_result = await session.execute(o365_stmt)
         o365_token = o365_result.scalar_one_or_none()
 
-        logger.info(f"O365 token lookup for user {user_id}: {'found' if o365_token else 'not found'}")
+        logger.info(
+            f"O365 token lookup for user {user_id}: {'found' if o365_token else 'not found'}"
+        )
 
         if o365_token:
             access_token = await self.refresh_o365_token_if_needed(session, o365_token)
             if not access_token:
-                logger.warning(f"O365 token expired and refresh failed for user {user_id}")
+                logger.warning(
+                    f"O365 token expired and refresh failed for user {user_id}"
+                )
             else:
                 result = await self.send_via_o365(
                     access_token=access_token,
@@ -332,12 +345,18 @@ class WorkerEmailService:
         gmail_result = await session.execute(gmail_stmt)
         gmail_token = gmail_result.scalar_one_or_none()
 
-        logger.info(f"Gmail token lookup for user {user_id}: {'found' if gmail_token else 'not found'}")
+        logger.info(
+            f"Gmail token lookup for user {user_id}: {'found' if gmail_token else 'not found'}"
+        )
 
         if gmail_token:
-            access_token = await self.refresh_gmail_token_if_needed(session, gmail_token)
+            access_token = await self.refresh_gmail_token_if_needed(
+                session, gmail_token
+            )
             if not access_token:
-                logger.warning(f"Gmail token expired and refresh failed for user {user_id}")
+                logger.warning(
+                    f"Gmail token expired and refresh failed for user {user_id}"
+                )
             else:
                 result = await self.send_via_gmail(
                     access_token=access_token,

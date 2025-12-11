@@ -6,7 +6,8 @@ from uuid import UUID
 
 from commons.db.int_enum import IntEnum
 from sqlalchemy import ForeignKey, Text
-from sqlalchemy.dialects.postgresql import TIMESTAMP, UUID as PG_UUID
+from sqlalchemy.dialects.postgresql import TIMESTAMP
+from sqlalchemy.dialects.postgresql import UUID as PG_UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.core.db.base import CrmBaseModel

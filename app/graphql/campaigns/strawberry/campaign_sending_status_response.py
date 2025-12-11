@@ -37,7 +37,9 @@ class CampaignSendingStatusResponse:
         return f"{self.sent_count} / {self.total_recipients}"
 
     @classmethod
-    def from_dataclass(cls, status: CampaignSendingStatus) -> "CampaignSendingStatusResponse":
+    def from_dataclass(
+        cls, status: CampaignSendingStatus
+    ) -> "CampaignSendingStatusResponse":
         """Create response from service dataclass."""
         return cls(
             campaign_id=status.campaign_id,

@@ -9,6 +9,6 @@ import strawberry
 class SendPace(IntEnum):
     """Send pace for campaign emails."""
 
-    SLOW = auto()      # 50/hr
-    MEDIUM = auto()    # 200/hr
-    FAST = auto()      # 500/hr
+    SLOW = auto()  # 50/hr
+    MEDIUM = auto()  # 200/hr
+    FAST = auto()  # 500/hr

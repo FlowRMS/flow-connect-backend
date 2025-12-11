@@ -65,7 +65,8 @@ class CampaignRecipientsRepository(BaseRepository[CampaignRecipient]):
             CampaignRecipient.campaign_id == campaign_id
         )
         result = await self.session.execute(stmt)
-        return result.rowcount
+        # rowcount is available on CursorResult from delete operations
+        return getattr(result, "rowcount", 0) or 0
 
     async def contact_exists_in_campaign(
         self,
@@ -156,4 +157,5 @@ class CampaignRecipientsRepository(BaseRepository[CampaignRecipient]):
             .group_by(CampaignRecipient.email_status)
         )
         result = await self.session.execute(stmt)
-        return {row.email_status: row.count for row in result.all()}
+        rows = result.all()
+        return {EmailStatus(row[0]): int(row[1]) for row in rows}

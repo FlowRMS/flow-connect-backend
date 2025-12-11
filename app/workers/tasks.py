@@ -86,13 +86,21 @@ async def process_campaign_batch(
     campaign_id = str(campaign.id)
 
     if campaign.status not in (CampaignStatus.SENDING, CampaignStatus.SCHEDULED):
-        logger.info(f"Campaign {campaign_id} is not in SENDING status: {campaign.status}")
+        logger.info(
+            f"Campaign {campaign_id} is not in SENDING status: {campaign.status}"
+        )
         return {"status": campaign.status.name, "emails_sent": 0}
 
     if campaign.status == CampaignStatus.SCHEDULED:
         if campaign.scheduled_at and campaign.scheduled_at > datetime.now(timezone.utc):
-            logger.info(f"Campaign {campaign_id} scheduled for {campaign.scheduled_at}, not yet due")
-            return {"status": "SCHEDULED", "emails_sent": 0, "scheduled_at": str(campaign.scheduled_at)}
+            logger.info(
+                f"Campaign {campaign_id} scheduled for {campaign.scheduled_at}, not yet due"
+            )
+            return {
+                "status": "SCHEDULED",
+                "emails_sent": 0,
+                "scheduled_at": str(campaign.scheduled_at),
+            }
         campaign.status = CampaignStatus.SENDING
         await session.flush()
 
@@ -208,7 +216,9 @@ async def check_and_process_campaigns_task() -> dict[str, object]:
     """
     start_time = datetime.now(timezone.utc)
     logger.info("=" * 60)
-    logger.info(f"[{start_time.strftime('%Y-%m-%d %H:%M:%S UTC')}] CAMPAIGN CHECK STARTED")
+    logger.info(
+        f"[{start_time.strftime('%Y-%m-%d %H:%M:%S UTC')}] CAMPAIGN CHECK STARTED"
+    )
     logger.info("=" * 60)
 
     container = create_container()
@@ -232,33 +242,47 @@ async def check_and_process_campaigns_task() -> dict[str, object]:
         tenants_checked = 0
         tenant_names = list(controller.ro_engines.keys())
 
-        logger.info(f"[{start_time.strftime('%H:%M:%S')}] Found {len(tenant_names)} tenants to check: {tenant_names}")
+        logger.info(
+            f"[{start_time.strftime('%H:%M:%S')}] Found {len(tenant_names)} tenants to check: {tenant_names}"
+        )
 
         for tenant_name in tenant_names:
             tenants_checked += 1
             tenant_start = datetime.now(timezone.utc)
-            logger.info(f"[{tenant_start.strftime('%H:%M:%S')}] Checking tenant: {tenant_name}")
+            logger.info(
+                f"[{tenant_start.strftime('%H:%M:%S')}] Checking tenant: {tenant_name}"
+            )
 
             try:
                 async with controller.scoped_session(tenant_name) as session:
                     async with session.begin():
                         stmt = select(Campaign).where(
-                            Campaign.status.in_([CampaignStatus.SENDING, CampaignStatus.SCHEDULED])
+                            Campaign.status.in_(
+                                [CampaignStatus.SENDING, CampaignStatus.SCHEDULED]
+                            )
                         )
                         result = await session.execute(stmt)
                         campaigns = list(result.scalars().all())
 
                         if not campaigns:
-                            logger.info(f"[{tenant_start.strftime('%H:%M:%S')}]   └── No active campaigns in {tenant_name}")
+                            logger.info(
+                                f"[{tenant_start.strftime('%H:%M:%S')}]   └── No active campaigns in {tenant_name}"
+                            )
                             continue
 
                         total_campaigns_found += len(campaigns)
-                        logger.info(f"[{tenant_start.strftime('%H:%M:%S')}]   └── Found {len(campaigns)} active campaign(s)")
+                        logger.info(
+                            f"[{tenant_start.strftime('%H:%M:%S')}]   └── Found {len(campaigns)} active campaign(s)"
+                        )
 
                         for campaign in campaigns:
                             campaign_time = datetime.now(timezone.utc)
                             if campaign.status == CampaignStatus.SCHEDULED:
-                                if campaign.scheduled_at and campaign.scheduled_at > datetime.now(timezone.utc):
+                                if (
+                                    campaign.scheduled_at
+                                    and campaign.scheduled_at
+                                    > datetime.now(timezone.utc)
+                                ):
                                     logger.info(
                                         f"[{campaign_time.strftime('%H:%M:%S')}]       └── Campaign '{campaign.name}' "
                                         f"scheduled for {campaign.scheduled_at}, skipping"
@@ -287,15 +311,21 @@ async def check_and_process_campaigns_task() -> dict[str, object]:
                                 )
                                 total_processed.append(str(campaign.id))
                             except Exception as e:
-                                logger.exception(f"[{campaign_time.strftime('%H:%M:%S')}] Error processing campaign {campaign.id}: {e}")
+                                logger.exception(
+                                    f"[{campaign_time.strftime('%H:%M:%S')}] Error processing campaign {campaign.id}: {e}"
+                                )
             except Exception as e:
-                logger.warning(f"[{tenant_start.strftime('%H:%M:%S')}]   └── Error checking tenant {tenant_name}: {type(e).__name__}")
+                logger.warning(
+                    f"[{tenant_start.strftime('%H:%M:%S')}]   └── Error checking tenant {tenant_name}: {type(e).__name__}"
+                )
 
         end_time = datetime.now(timezone.utc)
         duration = (end_time - start_time).total_seconds()
 
         logger.info("-" * 60)
-        logger.info(f"[{end_time.strftime('%Y-%m-%d %H:%M:%S UTC')}] CAMPAIGN CHECK COMPLETED")
+        logger.info(
+            f"[{end_time.strftime('%Y-%m-%d %H:%M:%S UTC')}] CAMPAIGN CHECK COMPLETED"
+        )
         logger.info(f"  Duration: {duration:.2f}s")
         logger.info(f"  Tenants checked: {tenants_checked}")
         logger.info(f"  Campaigns found: {total_campaigns_found}")

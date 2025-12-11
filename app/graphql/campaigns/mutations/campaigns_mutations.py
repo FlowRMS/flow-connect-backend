@@ -62,7 +62,9 @@ class CampaignsMutations:
         service: Injected[CampaignsService],
     ) -> CampaignResponse:
         """Pause a campaign that is currently sending."""
-        return CampaignResponse.from_orm_model(await service.pause_campaign(campaign_id=id))
+        return CampaignResponse.from_orm_model(
+            await service.pause_campaign(campaign_id=id)
+        )
 
     @strawberry.mutation
     @inject
