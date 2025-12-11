@@ -85,7 +85,7 @@ class CampaignsService:
             )
             for contact_id in contact_ids
         ]
-        await self.recipients_repository.bulk_create(recipients)
+        _ = await self.recipients_repository.bulk_create(recipients)
 
     async def _add_criteria_based_recipients(
         self,
@@ -115,7 +115,7 @@ class CampaignsService:
             for contact in contacts
         ]
         if recipients:
-            await self.recipients_repository.bulk_create(recipients)
+            _ = await self.recipients_repository.bulk_create(recipients)
 
     def _criteria_to_dict(self, criteria: CampaignCriteriaInput) -> dict[str, Any]:
         """Convert criteria input to JSON-serializable dict."""
@@ -248,7 +248,7 @@ class CampaignsService:
                 )
                 for contact_id in new_contact_ids
             ]
-            await self.recipients_repository.bulk_create(new_recipients)
+            _ = await self.recipients_repository.bulk_create(new_recipients)
 
         return await self.repository.get_with_relations(campaign_id)  # type: ignore[return-value]
 
