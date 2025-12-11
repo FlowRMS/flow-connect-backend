@@ -303,6 +303,8 @@ class WorkerEmailService:
         o365_result = await session.execute(o365_stmt)
         o365_token = o365_result.scalar_one_or_none()
 
+        logger.info(f"O365 token lookup for user {user_id}: {'found' if o365_token else 'not found'}")
+
         if o365_token:
             access_token = await self.refresh_o365_token_if_needed(session, o365_token)
             if not access_token:
@@ -329,6 +331,8 @@ class WorkerEmailService:
         )
         gmail_result = await session.execute(gmail_stmt)
         gmail_token = gmail_result.scalar_one_or_none()
+
+        logger.info(f"Gmail token lookup for user {user_id}: {'found' if gmail_token else 'not found'}")
 
         if gmail_token:
             access_token = await self.refresh_gmail_token_if_needed(session, gmail_token)

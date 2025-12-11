@@ -206,6 +206,11 @@ async def check_and_process_campaigns_task() -> dict[str, object]:
     Returns:
         Dictionary with task results including tenants checked and campaigns processed
     """
+    start_time = datetime.now(timezone.utc)
+    logger.info("=" * 60)
+    logger.info(f"[{start_time.strftime('%Y-%m-%d %H:%M:%S UTC')}] CAMPAIGN CHECK STARTED")
+    logger.info("=" * 60)
+
     container = create_container()
 
     async with container.context() as ctx:
@@ -225,10 +230,14 @@ async def check_and_process_campaigns_task() -> dict[str, object]:
         total_campaigns_found = 0
         total_processed: list[str] = []
         tenants_checked = 0
+        tenant_names = list(controller.ro_engines.keys())
 
-        for tenant_name in controller.ro_engines:
+        logger.info(f"[{start_time.strftime('%H:%M:%S')}] Found {len(tenant_names)} tenants to check: {tenant_names}")
+
+        for tenant_name in tenant_names:
             tenants_checked += 1
-            logger.debug(f"Checking tenant: {tenant_name}")
+            tenant_start = datetime.now(timezone.utc)
+            logger.info(f"[{tenant_start.strftime('%H:%M:%S')}] Checking tenant: {tenant_name}")
 
             try:
                 async with controller.scoped_session(tenant_name) as session:
@@ -240,14 +249,26 @@ async def check_and_process_campaigns_task() -> dict[str, object]:
                         campaigns = list(result.scalars().all())
 
                         if not campaigns:
+                            logger.info(f"[{tenant_start.strftime('%H:%M:%S')}]   └── No active campaigns in {tenant_name}")
                             continue
 
                         total_campaigns_found += len(campaigns)
+                        logger.info(f"[{tenant_start.strftime('%H:%M:%S')}]   └── Found {len(campaigns)} active campaign(s)")
 
                         for campaign in campaigns:
+                            campaign_time = datetime.now(timezone.utc)
                             if campaign.status == CampaignStatus.SCHEDULED:
                                 if campaign.scheduled_at and campaign.scheduled_at > datetime.now(timezone.utc):
+                                    logger.info(
+                                        f"[{campaign_time.strftime('%H:%M:%S')}]       └── Campaign '{campaign.name}' "
+                                        f"scheduled for {campaign.scheduled_at}, skipping"
+                                    )
                                     continue
+
+                            logger.info(
+                                f"[{campaign_time.strftime('%H:%M:%S')}]       └── Processing campaign: "
+                                f"'{campaign.name}' (status: {campaign.status.name})"
+                            )
 
                             try:
                                 batch_result = await process_campaign_batch(
@@ -256,17 +277,34 @@ async def check_and_process_campaigns_task() -> dict[str, object]:
                                     user_id=campaign.created_by_id,
                                     email_service=email_service,
                                 )
+                                result_time = datetime.now(timezone.utc)
                                 logger.info(
-                                    f"Campaign {campaign.id} (tenant: {tenant_name}) batch result: {batch_result}"
+                                    f"[{result_time.strftime('%H:%M:%S')}]           └── Result: "
+                                    f"sent={batch_result.get('emails_sent', 0)}, "
+                                    f"failed={batch_result.get('emails_failed', 0)}, "
+                                    f"remaining={batch_result.get('remaining_pending', 0)}, "
+                                    f"status={batch_result.get('status', 'UNKNOWN')}"
                                 )
                                 total_processed.append(str(campaign.id))
                             except Exception as e:
-                                logger.exception(f"Error processing campaign {campaign.id}: {e}")
+                                logger.exception(f"[{campaign_time.strftime('%H:%M:%S')}] Error processing campaign {campaign.id}: {e}")
             except Exception as e:
-                logger.exception(f"Error checking tenant {tenant_name}: {e}")
+                logger.warning(f"[{tenant_start.strftime('%H:%M:%S')}]   └── Error checking tenant {tenant_name}: {type(e).__name__}")
+
+        end_time = datetime.now(timezone.utc)
+        duration = (end_time - start_time).total_seconds()
+
+        logger.info("-" * 60)
+        logger.info(f"[{end_time.strftime('%Y-%m-%d %H:%M:%S UTC')}] CAMPAIGN CHECK COMPLETED")
+        logger.info(f"  Duration: {duration:.2f}s")
+        logger.info(f"  Tenants checked: {tenants_checked}")
+        logger.info(f"  Campaigns found: {total_campaigns_found}")
+        logger.info(f"  Campaigns processed: {len(total_processed)}")
+        logger.info("=" * 60)
 
         return {
             "tenants_checked": tenants_checked,
             "campaigns_found": total_campaigns_found,
             "campaigns_processed": total_processed,
+            "duration_seconds": duration,
         }

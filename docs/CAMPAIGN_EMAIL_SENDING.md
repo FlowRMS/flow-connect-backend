@@ -2,7 +2,7 @@
 
 ## Overview
 
-The campaign email sending system enables sending marketing emails to campaign recipients with configurable pacing and daily limits. It uses a **background worker** that automatically processes campaigns - no frontend polling required.
+The campaign email sending system enables sending marketing emails to campaign recipients with configurable pacing and daily limits. It uses **TaskIQ** with a cron-based scheduler that automatically processes campaigns - no frontend polling required.
 
 ## Prerequisites
 
@@ -12,16 +12,16 @@ The campaign email sending system enables sending marketing emails to campaign r
 
 ```
 ┌─────────────────┐     ┌──────────────────┐     ┌─────────────────┐
-│   Frontend      │     │   FastAPI App    │     │ Background      │
-│   (React)       │────▶│   (GraphQL)      │     │ Worker          │
-└─────────────────┘     └──────────────────┘     └────────┬────────┘
-                                                         │
-        User calls                                       │ Runs every
-        startCampaignSending()                           │ 60 seconds
-                                                         │
-                        ┌──────────────────┐             │
-                        │   PostgreSQL     │◀────────────┘
-                        │   Database       │
+│   Frontend      │     │   FastAPI App    │     │ TaskIQ Worker   │
+│   (React)       │────▶│   (GraphQL)      │     │ (Separate       │
+└─────────────────┘     └──────────────────┘     │  Process)       │
+                                                 └────────┬────────┘
+        User calls                                        │
+        startCampaignSending()                            │ Cron: every
+                                                          │ minute
+                        ┌──────────────────┐              │
+                        │   PostgreSQL     │◀─────────────┘
+                        │   (Multi-tenant) │
                         └──────────────────┘
                                │
                         ┌──────┴──────┐
@@ -32,80 +32,214 @@ The campaign email sending system enables sending marketing emails to campaign r
                    └────────┘   └──────────┘
 ```
 
-### Components
+## Worker Components
 
 ```
 app/workers/
 ├── __init__.py
-├── campaign_worker.py     # Background email processing tasks
-└── run_worker.py          # Worker entry point
-
-app/graphql/campaigns/
-├── models/
-│   └── campaign_send_log_model.py    # Daily send count tracking
-├── repositories/
-│   └── campaign_send_log_repository.py # Send log data access
-├── services/
-│   ├── email_provider_service.py      # O365/Gmail abstraction
-│   └── campaign_email_sender_service.py # Test email & status
-└── strawberry/
-    └── campaign_sending_status_response.py # GraphQL types
+├── broker.py                 # TaskIQ broker & scheduler config
+├── tasks.py                  # Cron task for campaign processing
+├── run_worker.py             # Worker entry point
+└── services/
+    ├── __init__.py
+    └── worker_email_service.py  # Email sending service for workers
 ```
 
-## Frontend Integration Guide
+### Key Files
 
-### Step 1: Check Email Provider Status (Optional)
+| File | Purpose |
+|------|---------|
+| [broker.py](../app/workers/broker.py) | TaskIQ InMemoryBroker + TaskiqScheduler with LabelScheduleSource |
+| [tasks.py](../app/workers/tasks.py) | Main `check_and_process_campaigns_task` with cron schedule |
+| [run_worker.py](../app/workers/run_worker.py) | Entry point using `run_scheduler_task()` |
+| [worker_email_service.py](../app/workers/services/worker_email_service.py) | O365/Gmail sending with token refresh |
 
-Before showing campaign creation UI, you can check if user has email connected:
+## How It Works
 
-```graphql
-query {
-  o365ConnectionStatus {
-    isConnected
-    microsoftEmail
-  }
-  gmailConnectionStatus {
-    isConnected
-    gmailEmail
-  }
+### 1. TaskIQ Cron Scheduler
+
+The worker uses TaskIQ's built-in cron scheduling:
+
+```python
+# In broker.py
+from taskiq import InMemoryBroker, TaskiqScheduler
+from taskiq.schedule_sources import LabelScheduleSource
+
+broker = InMemoryBroker()
+scheduler = TaskiqScheduler(
+    broker=broker,
+    sources=[LabelScheduleSource(broker)],
+)
+```
+
+```python
+# In tasks.py
+CAMPAIGN_PROCESSING_CRON = "* * * * *"  # Every minute
+
+@broker.task(schedule=[{"cron": CAMPAIGN_PROCESSING_CRON}])
+async def check_and_process_campaigns_task():
+    # Process all tenants and their active campaigns
+```
+
+### 2. Multi-Tenant Processing
+
+The worker iterates through all tenant databases:
+
+```python
+controller = await get_multitenant_controller(settings)
+for tenant_name in controller.ro_engines.keys():
+    async with controller.scoped_session(tenant_name) as session:
+        # Find campaigns with status SENDING or SCHEDULED
+        # Process each campaign
+```
+
+### 3. Dependency Injection
+
+Settings are resolved via the DI container:
+
+```python
+container = create_container()
+async with container.context() as ctx:
+    settings = await ctx.resolve(Settings)
+    o365_settings = await ctx.resolve(O365Settings)
+    gmail_settings = await ctx.resolve(GmailSettings)
+```
+
+### 4. Batch Processing
+
+Each run processes a batch of emails based on pace:
+
+```python
+PACE_LIMITS = {
+    SendPace.SLOW: 50,      # 50 emails/hour
+    SendPace.MEDIUM: 200,   # 200 emails/hour
+    SendPace.FAST: 500,     # 500 emails/hour
 }
+
+# Batch size = emails_per_hour / 30 (roughly 2 minutes worth)
+# For MEDIUM: 200 / 30 ≈ 6-7 emails per minute
+batch_size = max(1, emails_per_hour // 30)
 ```
 
-### Step 2: Create Campaign
+## Running the Worker
 
-```graphql
-mutation CreateCampaign($input: CampaignInput!) {
-  createCampaign(input: $input) {
-    id
-    name
-    status  # Returns "DRAFT"
-  }
-}
+The worker runs as a **separate process** from the FastAPI app:
+
+```bash
+# Terminal 1: Start the main API server
+uv run main.py
+# or
+python start.py
+
+# Terminal 2: Start the campaign worker
+uv run -m app.workers.run_worker
+# or
+python -m app.workers.run_worker
 ```
 
-**Error if no email provider**:
-```json
-{
-  "errors": [{
-    "message": "No email provider connected. Please connect O365 or Gmail before creating a campaign."
-  }]
-}
+**IMPORTANT**: Running `main.py` does NOT start the worker. You must run the worker separately.
+
+### Production Deployment
+
+Use a process manager or containers:
+
+```bash
+# Docker Compose example
+services:
+  api:
+    command: python start.py
+
+  worker:
+    command: python -m app.workers.run_worker
 ```
 
-### Step 3: Send Test Email (Optional)
+Or `supervisord`:
+```ini
+[program:api]
+command=python start.py
 
-```graphql
-mutation SendTestEmail($campaignId: UUID!, $testEmail: String!) {
-  sendTestEmail(campaignId: $campaignId, testEmail: $testEmail) {
-    success
-    error
-  }
-}
+[program:campaign_worker]
+command=python -m app.workers.run_worker
 ```
 
-### Step 4: Start Campaign Sending
+## Adjusting the Cron Schedule
 
-For **immediate sending**:
+The cron schedule is defined in [tasks.py:41](../app/workers/tasks.py#L41):
+
+```python
+CAMPAIGN_PROCESSING_CRON = "* * * * *"  # Every minute
+```
+
+Common patterns:
+
+| Schedule | Cron Expression |
+|----------|-----------------|
+| Every minute | `* * * * *` |
+| Every 5 minutes | `*/5 * * * *` |
+| Every 10 minutes | `*/10 * * * *` |
+| Every 30 minutes | `*/30 * * * *` |
+| Every hour | `0 * * * *` |
+
+**Note**: If you increase the interval, adjust the batch size calculation accordingly:
+```python
+# For 5-minute intervals: emails_per_hour // 12 instead of // 30
+batch_size = max(1, emails_per_hour // 12)
+```
+
+## Send Pace Configuration
+
+| Pace | Emails/Hour | Batch Size (per minute) | Use Case |
+|------|-------------|------------------------|----------|
+| SLOW | 50 | ~1-2 | Careful sending, new domains |
+| MEDIUM | 200 | ~6-7 | Standard campaigns |
+| FAST | 500 | ~16-17 | Time-sensitive campaigns |
+
+## Daily Limit Enforcement
+
+1. Default limit: **1000 emails/day** per campaign
+2. Configurable via `max_emails_per_day` field
+3. Tracked in `campaign_send_logs` table (one record per campaign per day)
+4. Resets at midnight UTC
+
+When limit is reached:
+- Worker logs "Campaign X reached daily limit of Y"
+- Skips that campaign for the day
+- `canSendMoreToday` query returns `false`
+- Resumes automatically the next day
+
+## Email Provider Selection
+
+The worker uses the campaign creator's connected email provider:
+
+1. **O365** - Tried first if connected
+2. **Gmail** - Fallback if O365 not available
+
+### Token Refresh
+
+The `WorkerEmailService` automatically handles OAuth token refresh:
+
+```python
+# 5-minute buffer before expiration
+TOKEN_REFRESH_BUFFER_SECONDS = 300
+
+async def refresh_o365_token_if_needed(self, session, token):
+    now = datetime.now(timezone.utc)
+    refresh_threshold = token.expires_at - timedelta(seconds=TOKEN_REFRESH_BUFFER_SECONDS)
+
+    if now < refresh_threshold:
+        return token.access_token  # Still valid
+
+    # Refresh the token
+    response = await client.post(TOKEN_ENDPOINT, data={...})
+    token.access_token = response["access_token"]
+    token.expires_at = now + timedelta(seconds=response["expires_in"])
+    await session.flush()
+```
+
+## GraphQL API
+
+### Start Campaign Sending
+
 ```graphql
 mutation StartCampaign($campaignId: UUID!) {
   startCampaignSending(campaignId: $campaignId) {
@@ -115,11 +249,7 @@ mutation StartCampaign($campaignId: UUID!) {
 }
 ```
 
-For **scheduled sending**, set `scheduledAt` when creating the campaign and set status to `SCHEDULED`. The backend worker will automatically start sending when the time arrives.
-
-### Step 5: Monitor Progress
-
-Poll this query to show progress (recommended: every 10-30 seconds):
+### Monitor Progress
 
 ```graphql
 query CampaignStatus($campaignId: UUID!) {
@@ -142,7 +272,7 @@ query CampaignStatus($campaignId: UUID!) {
 }
 ```
 
-### Step 6: Pause/Resume (Optional)
+### Pause/Resume
 
 ```graphql
 mutation PauseCampaign($id: UUID!) {
@@ -160,6 +290,17 @@ mutation ResumeCampaign($id: UUID!) {
 }
 ```
 
+### Send Test Email
+
+```graphql
+mutation SendTestEmail($campaignId: UUID!, $testEmail: String!) {
+  sendTestEmail(campaignId: $campaignId, testEmail: $testEmail) {
+    success
+    error
+  }
+}
+```
+
 ## Campaign Status Flow
 
 ```
@@ -173,59 +314,51 @@ DRAFT ──────────▶ SENDING ──────────�
                                     (resume)
 
 SCHEDULED ──────▶ SENDING ──────────▶ COMPLETED
-   (when scheduled_at time passes - handled by backend worker)
+   (when scheduled_at time passes - handled by worker)
 ```
 
-### Status Descriptions
-
-| Status | Description | Frontend Action |
+| Status | Description | Worker Behavior |
 |--------|-------------|-----------------|
-| `DRAFT` | Campaign created, not started | Show "Start Sending" button |
-| `SCHEDULED` | Waiting for scheduled time | Show countdown/scheduled time |
-| `SENDING` | Worker is processing emails | Show progress bar, poll status |
-| `PAUSED` | User paused the campaign | Show "Resume" button |
-| `COMPLETED` | All emails sent | Show completion message |
+| `DRAFT` | Not started | Ignored |
+| `SCHEDULED` | Waiting for scheduled time | Starts when `scheduled_at <= now` |
+| `SENDING` | Actively processing | Processes batch each minute |
+| `PAUSED` | User paused | Ignored |
+| `COMPLETED` | All emails sent | Ignored |
 
-## Email Status (per recipient)
+## Worker Logs
 
-| Status | Description |
-|--------|-------------|
-| `PENDING` | Not yet sent |
-| `SENT` | Successfully delivered to email provider |
-| `FAILED` | Send attempt failed |
-| `BOUNCED` | Email bounced (future feature) |
+The worker produces detailed logs:
 
-## Running the Worker
-
-The worker runs as a **separate process** from the main FastAPI app:
-
-```bash
-# Start the main API server
-python start.py
-
-# In another terminal, start the worker
-python -m app.workers.run_worker
+```
+============================================================
+[2025-12-11 04:44:00 UTC] CAMPAIGN CHECK STARTED
+============================================================
+[04:44:00] Found 2 tenants to check: ['staging', 'staging2']
+[04:44:00] Checking tenant: staging
+[04:44:00]   └── Found 1 active campaign(s)
+[04:44:00]       └── Processing campaign: 'Welcome Series' (status: SENDING)
+[04:44:01]           └── Result: sent=5, failed=0, remaining=45, status=SENDING
+[04:44:01] Checking tenant: staging2
+[04:44:01]   └── No active campaigns in staging2
+------------------------------------------------------------
+[2025-12-11 04:44:01 UTC] CAMPAIGN CHECK COMPLETED
+  Duration: 0.51s
+  Tenants checked: 2
+  Campaigns found: 1
+  Campaigns processed: 1
+============================================================
 ```
 
-### Production Deployment
+## Error Handling
 
-Run both processes:
-```bash
-# API server (handles GraphQL requests)
-gunicorn app.api.app:create_app --workers 4
-
-# Campaign worker (processes emails in background)
-python -m app.workers.run_worker
-```
-
-Or use a process manager like `supervisord`:
-```ini
-[program:api]
-command=python start.py
-
-[program:campaign_worker]
-command=python -m app.workers.run_worker
-```
+| Scenario | Behavior |
+|----------|----------|
+| No email provider connected | Recipient marked FAILED, logged as warning |
+| O365 token expired | Auto-refresh attempted |
+| Token refresh fails | Provider skipped, tries Gmail if available |
+| API rate limit | Recipient stays PENDING, retried next batch |
+| Invalid email address | Recipient marked FAILED |
+| Network error | Logged, retried next cycle |
 
 ## Database Schema
 
@@ -243,65 +376,18 @@ Tracks daily email counts per campaign.
 
 **Unique constraint**: `(campaign_id, send_date)` - one record per campaign per day
 
-## Send Pace Configuration
+## Known Limitations
 
-| Pace | Emails/Hour | Batch Size (per minute) |
-|------|-------------|------------------------|
-| SLOW | 50 | ~1-2 |
-| MEDIUM | 200 | ~6-7 |
-| FAST | 500 | ~16-17 |
+1. **Single-instance broker**: Current implementation uses `InMemoryBroker` which doesn't support multiple worker instances. For horizontal scaling, switch to Redis broker.
 
-## Daily Limit Enforcement
+2. **No retry queue**: Failed emails are marked FAILED immediately. Consider adding a retry mechanism for transient failures.
 
-1. Default limit: **1000 emails/day** per campaign
-2. Configurable via `max_emails_per_day` field
-3. Tracked in `campaign_send_logs` table
-4. Resets at midnight (UTC)
+3. **No campaign locking**: Currently, users can edit SENDING campaigns. Most CRMs block this - pause first, edit, then resume.
 
-When limit is reached:
-- Worker stops processing that campaign for the day
-- `canSendMoreToday` returns `false`
-- Resumes automatically the next day
+## Future Improvements
 
-## Email Provider Selection
-
-The worker automatically uses the campaign creator's connected email provider:
-
-1. **O365** (preferred if connected)
-2. **Gmail** (fallback)
-
-If no provider is connected, campaign creation is blocked.
-
-### Token Refresh
-
-The worker automatically refreshes expired OAuth tokens:
-- Checks token expiration before each send (5-minute buffer)
-- Refreshes using stored refresh token if expired
-- Updates database with new access token
-- If refresh fails, marks token as inactive
-
-## Error Handling
-
-| Scenario | Behavior |
-|----------|----------|
-| No email provider on create | Returns error, blocks creation |
-| Token expired | Auto-refresh attempted |
-| Token refresh fails | Provider skipped, recipient marked FAILED |
-| API rate limit | Retries in next batch |
-| Invalid email | Recipient marked FAILED |
-| Network error | Logged, retries next cycle |
-
-## File Locations
-
-| File | Purpose |
-|------|---------|
-| [campaign_worker.py](../app/workers/campaign_worker.py) | Background tasks |
-| [run_worker.py](../app/workers/run_worker.py) | Worker entry point |
-| [campaign_send_log_model.py](../app/graphql/campaigns/models/campaign_send_log_model.py) | Daily count model |
-| [campaigns_service.py](../app/graphql/campaigns/services/campaigns_service.py) | Campaign CRUD with provider check |
-| [email_provider_service.py](../app/graphql/campaigns/services/email_provider_service.py) | O365/Gmail abstraction |
-
-## Dependencies
-
-- Microsoft O365 integration (`app/integrations/microsoft_o365/`)
-- Gmail integration (`app/integrations/gmail/`)
+- [ ] Add Redis broker for multi-instance support
+- [ ] Implement retry queue for transient failures
+- [ ] Add campaign editing guards (block editing SENDING campaigns)
+- [ ] Add bounce tracking via webhooks
+- [ ] Add unsubscribe handling

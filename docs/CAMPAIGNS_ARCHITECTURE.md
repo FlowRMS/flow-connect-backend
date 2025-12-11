@@ -309,34 +309,57 @@ For detailed documentation on email sending functionality, see [CAMPAIGN_EMAIL_S
 
 ### Quick Overview
 
-Email sending is handled by a **background worker** - no frontend polling required:
+Email sending is handled by a **TaskIQ background worker** - no frontend polling required:
 
 1. **Start Campaign**: Call `startCampaignSending` to set status to SENDING
-2. **Background Worker**: Automatically processes campaigns every 60 seconds
+2. **TaskIQ Worker**: Cron-scheduled task runs every minute, processes all tenants
 3. **Monitor Progress**: Use `campaignSendingStatus` query
 4. **Control**: Use `pauseCampaign` / `resumeCampaign` as needed
 
+### Worker Architecture
+
+```
+app/workers/
+├── __init__.py
+├── broker.py                 # TaskIQ InMemoryBroker + TaskiqScheduler
+├── tasks.py                  # @broker.task with cron schedule
+├── run_worker.py             # Entry point using run_scheduler_task()
+└── services/
+    ├── __init__.py
+    └── worker_email_service.py  # O365/Gmail sending with token refresh
+```
+
 ### Running the Worker
 
-```bash
-# API server
-python start.py
+**IMPORTANT**: The worker runs separately from the main app.
 
-# Worker (separate process)
-python -m app.workers.run_worker
+```bash
+# Terminal 1: API server
+uv run main.py
+
+# Terminal 2: Campaign worker (REQUIRED for email sending)
+uv run -m app.workers.run_worker
 ```
 
 ### Send Pace
 
-| Pace | Emails/Hour |
-|------|-------------|
-| SLOW | 50 |
-| MEDIUM | 200 |
-| FAST | 500 |
+| Pace | Emails/Hour | Batch Size (per minute) |
+|------|-------------|------------------------|
+| SLOW | 50 | ~1-2 |
+| MEDIUM | 200 | ~6-7 |
+| FAST | 500 | ~16-17 |
 
 ### Daily Limits
 
 - Default: 1000 emails/day per campaign
 - Configurable via `max_emails_per_day` field
 - Enforced via `campaign_send_logs` table
-- Resets automatically each day
+- Resets automatically at midnight UTC
+
+### Cron Schedule
+
+Configurable in [tasks.py](../app/workers/tasks.py):
+
+```python
+CAMPAIGN_PROCESSING_CRON = "* * * * *"  # Every minute
+```
