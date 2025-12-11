@@ -1,11 +1,13 @@
 import contextlib
 import time
+from pathlib import Path
 from typing import Any
 
 from aioinject.ext.fastapi import AioInjectMiddleware
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
+from fastapi.staticfiles import StaticFiles
 from sqlalchemy.orm import configure_mappers
 
 # from starlette.middleware.trustedhost import TrustedHostMiddleware
@@ -13,6 +15,10 @@ from app.api.auth_router import router as auth_router
 from app.api.o365_router import router as o365_router
 from app.core.container import create_container
 from app.graphql.app import create_graphql_app
+
+# Define uploads directory
+UPLOADS_DIR = Path(__file__).parent.parent.parent / "uploads"
+UPLOADS_DIR.mkdir(exist_ok=True)
 
 
 def create_app() -> FastAPI:
@@ -70,5 +76,8 @@ def create_app() -> FastAPI:
     @app.get("/api/health", include_in_schema=True)
     def health_check():  # pyright: ignore[reportUnusedFunction]
         return {"status": "ok"}
+
+    # Mount static files for uploads
+    app.mount("/uploads", StaticFiles(directory=str(UPLOADS_DIR)), name="uploads")
 
     return app

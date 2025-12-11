@@ -1,6 +1,10 @@
 """Service layer for SpecSheets business logic."""
 
-from uuid import UUID
+import os
+from pathlib import Path
+from uuid import UUID, uuid4
+
+import aiofiles
 
 from app.graphql.spec_sheets.models.spec_sheet_model import SpecSheet
 from app.graphql.spec_sheets.repositories.spec_sheets_repository import (
@@ -10,6 +14,10 @@ from app.graphql.spec_sheets.strawberry.spec_sheet_input import (
     CreateSpecSheetInput,
     UpdateSpecSheetInput,
 )
+
+# Define uploads directory
+UPLOADS_DIR = Path(__file__).parent.parent.parent.parent.parent / "uploads"
+UPLOADS_DIR.mkdir(exist_ok=True)
 
 
 class SpecSheetsService:
@@ -34,6 +42,25 @@ class SpecSheetsService:
         Returns:
             Created SpecSheet model
         """
+        # Handle file upload if provided
+        file_url = input_data.file_url
+        file_size = input_data.file_size
+
+        if input_data.file and input_data.upload_source == 'file':
+            # Generate unique filename
+            file_extension = os.path.splitext(input_data.file_name)[1] or '.pdf'
+            unique_filename = f"{uuid4()}{file_extension}"
+            file_path = UPLOADS_DIR / unique_filename
+
+            # Save file to disk
+            async with aiofiles.open(file_path, 'wb') as f:
+                content = await input_data.file.read()
+                await f.write(content)
+
+            # Update file_url and file_size
+            file_url = f"/uploads/{unique_filename}"
+            file_size = len(content)
+
         # Use display_name if provided, otherwise use file_name
         display_name = input_data.display_name or input_data.file_name
 
@@ -43,8 +70,8 @@ class SpecSheetsService:
             display_name=display_name,
             upload_source=input_data.upload_source,
             source_url=input_data.source_url,
-            file_url=input_data.file_url,
-            file_size=input_data.file_size,
+            file_url=file_url or "",
+            file_size=file_size or 0,
             page_count=input_data.page_count,
             categories=input_data.categories,
             tags=input_data.tags,
