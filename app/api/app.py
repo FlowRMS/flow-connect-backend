@@ -6,13 +6,16 @@ from aioinject.ext.fastapi import AioInjectMiddleware
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
+from loguru import logger
 from sqlalchemy.orm import configure_mappers
+from taskiq_fastapi import init
 
 # from starlette.middleware.trustedhost import TrustedHostMiddleware
 from app.api.auth_router import router as auth_router
 from app.api.o365_router import router as o365_router
 from app.core.container import create_container
 from app.graphql.app import create_graphql_app
+from app.workers.broker import broker
 
 
 def create_app() -> FastAPI:
@@ -22,7 +25,17 @@ def create_app() -> FastAPI:
     async def lifespan(_app: FastAPI):
         configure_mappers()
         async with container:
-            yield
+            # Initialize TaskIQ broker on startup
+            if not broker.is_worker_process:
+                await broker.startup()
+                logger.info("TaskIQ broker started")
+            try:
+                yield
+            finally:
+                # Shutdown TaskIQ broker on app shutdown
+                if not broker.is_worker_process:
+                    await broker.shutdown()
+                    logger.info("TaskIQ broker stopped")
 
     app = FastAPI(
         title="Flow Py Report Backend API",
@@ -31,6 +44,10 @@ def create_app() -> FastAPI:
         lifespan=lifespan,
         openapi_url=None,
     )
+
+    # Initialize TaskIQ with FastAPI
+    init(broker, app)
+
     app.add_middleware(AioInjectMiddleware, container=container)
     app.include_router(create_graphql_app(), prefix="/graphql")
     app.include_router(auth_router, prefix="/api")

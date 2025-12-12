@@ -3,6 +3,7 @@
 from commons.graphql.filter_types import Filter
 from commons.graphql.order_by_types import OrderBy
 
+from app.graphql.campaigns.repositories.campaigns_repository import CampaignsRepository
 from app.graphql.common.landing_repository_protocol import LandingRepositoryProtocol
 from app.graphql.common.landing_source_type import LandingSourceType
 from app.graphql.common.paginated_landing_page import PaginatedLandingPageInterface
@@ -27,6 +28,7 @@ class LandingPageService:
         pre_opportunities_repository: PreOpportunitiesRepository,
         tasks_repository: TasksRepository,
         notes_repository: NotesRepository,
+        campaigns_repository: CampaignsRepository,
     ) -> None:
         """
         Initialize the generic landing page service.
@@ -38,6 +40,7 @@ class LandingPageService:
             pre_opportunities_repository: Pre-opportunities repository instance
             tasks_repository: Tasks repository instance
             notes_repository: Notes repository instance
+            campaigns_repository: Campaigns repository instance
         """
         super().__init__()
         self._repository_map: dict[LandingSourceType, LandingRepositoryProtocol] = {
@@ -47,6 +50,7 @@ class LandingPageService:
             LandingSourceType.PRE_OPPORTUNITIES: pre_opportunities_repository,
             LandingSourceType.TASKS: tasks_repository,
             LandingSourceType.NOTES: notes_repository,
+            LandingSourceType.CAMPAIGNS: campaigns_repository,
         }
 
     async def find_landing_pages(

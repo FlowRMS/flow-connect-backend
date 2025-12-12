@@ -2,7 +2,7 @@
 
 from uuid import UUID
 
-from commons.db.models import Product
+from commons.db.models import Product, ProductCategory
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -20,7 +20,11 @@ class ProductsRepository(BaseRepository[Product]):
         super().__init__(session, context_wrapper, Product)
 
     async def search_by_fpn(
-        self, search_term: str, factory_id: UUID | None, limit: int = 20
+        self,
+        search_term: str,
+        factory_id: UUID | None,
+        product_category_ids: list[UUID],
+        limit: int = 20,
     ) -> list[Product]:
         """
         Search products by factory part number using case-insensitive pattern matching.
@@ -28,6 +32,7 @@ class ProductsRepository(BaseRepository[Product]):
         Args:
             search_term: The search term to match against factory part number
             factory_id: The UUID of the factory to filter products by (optional)
+            product_category_id: The UUID of the product category to filter by (optional)
             limit: Maximum number of products to return (default: 20)
 
         Returns:
@@ -41,6 +46,35 @@ class ProductsRepository(BaseRepository[Product]):
 
         if factory_id is not None:
             stmt = stmt.where(Product.factory_id == factory_id)
+
+        if product_category_ids:
+            stmt = stmt.where(Product.product_category_id.in_(product_category_ids))
+
+        result = await self.session.execute(stmt)
+        return list(result.scalars().all())
+
+    async def search_product_categories(
+        self, search_term: str, factory_id: UUID | None, limit: int = 20
+    ) -> list[ProductCategory]:
+        """
+        Search product categories by title using case-insensitive pattern matching.
+
+        Args:
+            search_term: The search term to match against category title
+            factory_id: The UUID of the factory to filter categories by (optional)
+            limit: Maximum number of categories to return (default: 20)
+
+        Returns:
+            List of ProductCategory objects matching the search criteria
+        """
+        stmt = (
+            select(ProductCategory)
+            .where(ProductCategory.title.ilike(f"%{search_term}%"))
+            .limit(limit)
+        )
+
+        if factory_id is not None:
+            stmt = stmt.where(ProductCategory.factory_id == factory_id)
 
         result = await self.session.execute(stmt)
         return list(result.scalars().all())

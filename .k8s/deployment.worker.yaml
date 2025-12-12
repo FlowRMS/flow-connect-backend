@@ -20,7 +20,7 @@ spec:
       containers:
         - name: flow-py-crm-worker
           image: ${IMAGE_TAG}
-          command: ["sh", "-c", "taskiq worker worker.broker:broker --fs-discover --tasks-pattern 'worker/tasks.py' --tasks-pattern 'app/**/tasks/**/*.py'"]
+          command: ["sh", "-c", "taskiq worker app.workers.broker:broker --fs-discover --tasks-pattern 'app/workers/tasks.py' --tasks-pattern 'app/**/tasks/**/*.py'"]
           envFrom:
             - secretRef:
                 name: flow-py-crm-secret
