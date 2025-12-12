@@ -50,8 +50,8 @@ class SpecSheetsService:
             Created SpecSheet model
         """
         # Handle file upload if provided
-        file_url = input_data.file_url
-        file_size = input_data.file_size
+        file_url: str | None = None
+        file_size: int = 0
 
         if input_data.file and input_data.upload_source == 'file':
             # Generate unique filename
@@ -80,6 +80,9 @@ class SpecSheetsService:
             )
 
             logger.info(f"Upload successful, presigned URL generated")
+        elif input_data.upload_source == 'url' and input_data.source_url:
+            # For URL uploads, use source_url as file_url
+            file_url = input_data.source_url
 
         # Use display_name if provided, otherwise use file_name
         display_name = input_data.display_name or input_data.file_name

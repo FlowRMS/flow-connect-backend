@@ -15,12 +15,10 @@ class CreateSpecSheetInput:
     display_name: str | None = None
     upload_source: str  # 'url' or 'file'
     source_url: str | None = None
-    file_url: str | None = None  # Made optional since it will be generated for file uploads
-    file_size: int | None = None  # Made optional since it will be calculated for file uploads
     page_count: int = 1
     categories: list[str]
     tags: list[str] | None = None
     folder_path: str | None = None
     needs_review: bool = False
     published: bool = True
-    file: Upload | None = None  # Added file upload field
+    file: Upload | None = None  # File upload field for 'file' upload_source
