@@ -15,6 +15,7 @@ from app.graphql.users.strawberry.user_response import UserResponse
 class SpecSheetResponse(DTOMixin[SpecSheet]):
     """Response type for SpecSheet."""
 
+    _instance: strawberry.Private[SpecSheet]
     id: UUID
     factory_id: UUID
     file_name: str
@@ -32,17 +33,12 @@ class SpecSheetResponse(DTOMixin[SpecSheet]):
     usage_count: int
     highlight_count: int
     created_at: datetime
-    created_by: UserResponse | None
 
     @classmethod
     def from_orm_model(cls, model: SpecSheet) -> Self:
         """Convert ORM model to GraphQL response."""
-        # Handle created_by User object
-        created_by_user = None
-        if hasattr(model, "created_by") and model.created_by:
-            created_by_user = UserResponse.from_orm_model(model.created_by)
-
         return cls(
+            _instance=model,
             id=model.id,
             factory_id=model.factory_id,
             file_name=model.file_name,
@@ -60,5 +56,9 @@ class SpecSheetResponse(DTOMixin[SpecSheet]):
             usage_count=model.usage_count,
             highlight_count=model.highlight_count,
             created_at=model.created_at,
-            created_by=created_by_user,
         )
+
+    @strawberry.field
+    def created_by(self) -> UserResponse:
+        """Resolve created_by from the ORM instance."""
+        return UserResponse.from_orm_model(self._instance.created_by)
