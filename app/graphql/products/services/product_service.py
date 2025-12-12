@@ -1,7 +1,7 @@
 from uuid import UUID
 
 from commons.auth import AuthInfo
-from commons.db.models import Product
+from commons.db.models import Product, ProductCategory
 
 from app.graphql.links.models.entity_type import EntityType
 from app.graphql.products.repositories.products_repository import ProductsRepository
@@ -20,7 +20,11 @@ class ProductService:
         self.auth_info = auth_info
 
     async def search_products(
-        self, search_term: str, factory_id: UUID | None, limit: int = 20
+        self,
+        search_term: str,
+        factory_id: UUID | None,
+        product_category_id: UUID | None,
+        limit: int = 20,
     ) -> list[Product]:
         """
         Search products by factory part number.
@@ -28,12 +32,33 @@ class ProductService:
         Args:
             search_term: The search term to match against factory part number
             factory_id: The UUID of the factory to filter products by (optional)
+            product_category_id: The UUID of the product category to filter by (optional)
             limit: Maximum number of products to return (default: 20)
 
         Returns:
             List of Product objects matching the search criteria
         """
-        return await self.repository.search_by_fpn(search_term, factory_id, limit)
+        return await self.repository.search_by_fpn(
+            search_term, factory_id, product_category_id, limit
+        )
+
+    async def search_product_categories(
+        self, search_term: str, factory_id: UUID | None, limit: int = 20
+    ) -> list[ProductCategory]:
+        """
+        Search product categories by title.
+
+        Args:
+            search_term: The search term to match against category title
+            factory_id: The UUID of the factory to filter categories by (optional)
+            limit: Maximum number of categories to return (default: 20)
+
+        Returns:
+            List of ProductCategory objects matching the search criteria
+        """
+        return await self.repository.search_product_categories(
+            search_term, factory_id, limit
+        )
 
     async def find_by_entity(
         self, entity_type: EntityType, entity_id: UUID
