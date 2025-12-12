@@ -1,26 +1,26 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: flow-py-crm-worker
+  name: flow-py-crm-${WORKER_TYPE}
   labels:
-    app: flow-py-crm-worker
+    app: flow-py-crm-${WORKER_TYPE}
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: flow-py-crm-worker
+      app: flow-py-crm-${WORKER_TYPE}
   template:
     metadata:
       labels:
-        app: flow-py-crm-worker
+        app: flow-py-crm-${WORKER_TYPE}
     spec:
       terminationGracePeriodSeconds: 45
       nodeSelector:
         pool: flow-py-crm-worker-pool
       containers:
-        - name: flow-py-crm-worker
+        - name: flow-py-crm-${WORKER_TYPE}
           image: ${IMAGE_TAG}
-          command: ["sh", "-c", "taskiq worker app.workers.broker:broker --fs-discover --tasks-pattern 'app/workers/tasks.py' --tasks-pattern 'app/**/tasks/**/*.py'"]
+          command: ["sh", "-c", "${WORKER_COMMAND}"]
           envFrom:
             - secretRef:
                 name: flow-py-crm-secret
