@@ -2,6 +2,7 @@
 
 import base64
 import logging
+from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from datetime import datetime, timedelta, timezone
 from email.mime.multipart import MIMEMultipart
@@ -40,39 +41,122 @@ class WorkerSendEmailResult:
     error: str | None = None
 
 
-class WorkerEmailService:
-    """
-    Service for sending emails in worker context without AuthInfo.
+class EmailStrategy(ABC):
+    """Abstract base class for email sending strategies."""
 
-    This service is designed for background workers that process campaigns
-    across all tenants and users. It handles token refresh and email sending
-    for both O365 and Gmail providers.
-    """
+    @property
+    @abstractmethod
+    def name(self) -> str:
+        """Return the strategy name for logging."""
+        ...
 
-    def __init__(
-        self,
-        o365_settings: O365Settings,
-        gmail_settings: GmailSettings,
-    ) -> None:
-        super().__init__()
-        self.o365_settings = o365_settings
-        self.gmail_settings = gmail_settings
-
-    async def refresh_o365_token_if_needed(
+    @abstractmethod
+    async def get_token(
         self,
         session: AsyncSession,
-        token: O365UserToken,
+        user_id: UUID,
+    ) -> object | None:
+        """
+        Get the user's token for this email provider.
+
+        Args:
+            session: Database session
+            user_id: User ID to look up token for
+
+        Returns:
+            Token object if available and active, None otherwise
+        """
+        ...
+
+    @abstractmethod
+    async def refresh_token_if_needed(
+        self,
+        session: AsyncSession,
+        token: object,
     ) -> str | None:
         """
-        Refresh O365 token if expired or about to expire.
+        Refresh token if expired or about to expire.
 
         Args:
             session: Database session for updating token
-            token: O365 token to potentially refresh
+            token: Token to potentially refresh
 
         Returns:
             Valid access token or None if refresh failed
         """
+        ...
+
+    @abstractmethod
+    async def send(
+        self,
+        access_token: str,
+        to: str,
+        subject: str,
+        body: str,
+        sender: str | None = None,
+    ) -> WorkerSendEmailResult:
+        """
+        Send an email using this provider.
+
+        Args:
+            access_token: Valid access token
+            to: Recipient email address
+            subject: Email subject
+            body: HTML email body
+            sender: Sender email (required for some providers)
+
+        Returns:
+            WorkerSendEmailResult with success status
+        """
+        ...
+
+    async def is_available(
+        self,
+        session: AsyncSession,
+        user_id: UUID,
+    ) -> bool:
+        """
+        Check if this strategy is available for the user.
+
+        Args:
+            session: Database session
+            user_id: User ID to check availability for
+
+        Returns:
+            True if strategy is available, False otherwise
+        """
+        token = await self.get_token(session, user_id)
+        return token is not None
+
+
+class O365EmailStrategy(EmailStrategy):
+    """Email strategy for Microsoft Office 365."""
+
+    def __init__(self, settings: O365Settings) -> None:
+        super().__init__()
+        self.settings = settings
+
+    @property
+    def name(self) -> str:
+        return "O365"
+
+    async def get_token(
+        self,
+        session: AsyncSession,
+        user_id: UUID,
+    ) -> O365UserToken | None:
+        stmt = select(O365UserToken).where(
+            O365UserToken.user_id == user_id,
+            O365UserToken.is_active == True,  # noqa: E712
+        )
+        result = await session.execute(stmt)
+        return result.scalar_one_or_none()
+
+    async def refresh_token_if_needed(
+        self,
+        session: AsyncSession,
+        token: O365UserToken,
+    ) -> str | None:
         now = datetime.now(timezone.utc)
         refresh_threshold = token.expires_at - timedelta(
             seconds=TOKEN_REFRESH_BUFFER_SECONDS
@@ -84,8 +168,8 @@ class WorkerEmailService:
         logger.info(f"Refreshing O365 token for user {token.user_id}")
 
         data = {
-            "client_id": self.o365_settings.o365_client_id,
-            "client_secret": self.o365_settings.o365_client_secret,
+            "client_id": self.settings.o365_client_id,
+            "client_secret": self.settings.o365_client_secret,
             "refresh_token": token.refresh_token,
             "grant_type": "refresh_token",
             "scope": " ".join(O365_SCOPES),
@@ -115,21 +199,74 @@ class WorkerEmailService:
             logger.exception(f"Error refreshing O365 token: {e}")
             return None
 
-    async def refresh_gmail_token_if_needed(
+    async def send(
+        self,
+        access_token: str,
+        to: str,
+        subject: str,
+        body: str,
+        sender: str | None = None,
+    ) -> WorkerSendEmailResult:
+        message = {
+            "message": {
+                "subject": subject,
+                "body": {"contentType": "HTML", "content": body},
+                "toRecipients": [{"emailAddress": {"address": to}}],
+            },
+            "saveToSentItems": "true",
+        }
+
+        try:
+            async with httpx.AsyncClient() as client:
+                response = await client.post(
+                    f"{MICROSOFT_GRAPH_API}/me/sendMail",
+                    headers={
+                        "Authorization": f"Bearer {access_token}",
+                        "Content-Type": "application/json",
+                    },
+                    json=message,
+                    timeout=30.0,
+                )
+
+                if response.status_code == 202:
+                    return WorkerSendEmailResult(success=True)
+
+                return WorkerSendEmailResult(
+                    success=False,
+                    error=f"O365 API error: {response.status_code} - {response.text}",
+                )
+        except Exception as e:
+            return WorkerSendEmailResult(success=False, error=str(e))
+
+
+class GmailEmailStrategy(EmailStrategy):
+    """Email strategy for Gmail."""
+
+    def __init__(self, settings: GmailSettings) -> None:
+        super().__init__()
+        self.settings = settings
+
+    @property
+    def name(self) -> str:
+        return "Gmail"
+
+    async def get_token(
+        self,
+        session: AsyncSession,
+        user_id: UUID,
+    ) -> GmailUserToken | None:
+        stmt = select(GmailUserToken).where(
+            GmailUserToken.user_id == user_id,
+            GmailUserToken.is_active == True,  # noqa: E712
+        )
+        result = await session.execute(stmt)
+        return result.scalar_one_or_none()
+
+    async def refresh_token_if_needed(
         self,
         session: AsyncSession,
         token: GmailUserToken,
     ) -> str | None:
-        """
-        Refresh Gmail token if expired or about to expire.
-
-        Args:
-            session: Database session for updating token
-            token: Gmail token to potentially refresh
-
-        Returns:
-            Valid access token or None if refresh failed
-        """
         now = datetime.now(timezone.utc)
         refresh_threshold = token.expires_at - timedelta(
             seconds=TOKEN_REFRESH_BUFFER_SECONDS
@@ -141,8 +278,8 @@ class WorkerEmailService:
         logger.info(f"Refreshing Gmail token for user {token.user_id}")
 
         data = {
-            "client_id": self.gmail_settings.gmail_client_id,
-            "client_secret": self.gmail_settings.gmail_client_secret,
+            "client_id": self.settings.gmail_client_id,
+            "client_secret": self.settings.gmail_client_secret,
             "refresh_token": token.refresh_token,
             "grant_type": "refresh_token",
         }
@@ -176,77 +313,19 @@ class WorkerEmailService:
             logger.exception(f"Error refreshing Gmail token: {e}")
             return None
 
-    async def send_via_o365(
+    async def send(
         self,
         access_token: str,
         to: str,
         subject: str,
         body: str,
+        sender: str | None = None,
     ) -> WorkerSendEmailResult:
-        """
-        Send email via Microsoft Graph API.
+        if not sender:
+            return WorkerSendEmailResult(
+                success=False, error="Gmail requires sender email"
+            )
 
-        Args:
-            access_token: Valid O365 access token
-            to: Recipient email address
-            subject: Email subject
-            body: HTML email body
-
-        Returns:
-            WorkerSendEmailResult with success status
-        """
-        message = {
-            "message": {
-                "subject": subject,
-                "body": {"contentType": "HTML", "content": body},
-                "toRecipients": [{"emailAddress": {"address": to}}],
-            },
-            "saveToSentItems": "true",
-        }
-
-        try:
-            async with httpx.AsyncClient() as client:
-                response = await client.post(
-                    f"{MICROSOFT_GRAPH_API}/me/sendMail",
-                    headers={
-                        "Authorization": f"Bearer {access_token}",
-                        "Content-Type": "application/json",
-                    },
-                    json=message,
-                    timeout=30.0,
-                )
-
-                if response.status_code == 202:
-                    return WorkerSendEmailResult(success=True)
-
-                return WorkerSendEmailResult(
-                    success=False,
-                    error=f"O365 API error: {response.status_code} - {response.text}",
-                )
-        except Exception as e:
-            return WorkerSendEmailResult(success=False, error=str(e))
-
-    async def send_via_gmail(
-        self,
-        access_token: str,
-        sender: str,
-        to: str,
-        subject: str,
-        body: str,
-    ) -> WorkerSendEmailResult:
-        """
-        Send email via Gmail API.
-
-        Args:
-            access_token: Valid Gmail access token
-            sender: Sender email address
-            to: Recipient email address
-            subject: Email subject
-            body: HTML email body
-
-        Returns:
-            WorkerSendEmailResult with success status
-        """
         message = MIMEMultipart("alternative")
         message["From"] = sender
         message["To"] = to
@@ -277,6 +356,58 @@ class WorkerEmailService:
         except Exception as e:
             return WorkerSendEmailResult(success=False, error=str(e))
 
+
+class WorkerEmailService:
+    """
+    Service for sending emails in worker context without AuthInfo.
+
+    This service is designed for background workers that process campaigns
+    across all tenants and users. It uses registered email strategies
+    (O365, Gmail) with automatic fallback.
+    """
+
+    def __init__(
+        self,
+        o365_settings: O365Settings,
+        gmail_settings: GmailSettings,
+    ) -> None:
+        super().__init__()
+        # Register strategies in priority order (O365 first, Gmail second)
+        self._strategies: list[EmailStrategy] = [
+            O365EmailStrategy(o365_settings),
+            GmailEmailStrategy(gmail_settings),
+        ]
+
+    @property
+    def strategies(self) -> list[EmailStrategy]:
+        """Return the list of registered email strategies."""
+        return self._strategies
+
+    async def get_strategy(
+        self,
+        session: AsyncSession,
+        user_id: UUID,
+    ) -> tuple[EmailStrategy, object] | None:
+        """
+        Get the first available email strategy for the user.
+
+        Tries O365 first, then falls back to Gmail.
+
+        Args:
+            session: Database session
+            user_id: User ID to find strategy for
+
+        Returns:
+            Tuple of (strategy, token) if available, None otherwise
+        """
+        for strategy in self._strategies:
+            token = await strategy.get_token(session, user_id)
+            if token:
+                logger.info(f"{strategy.name} token lookup for user {user_id}: found")
+                return (strategy, token)
+            logger.info(f"{strategy.name} token lookup for user {user_id}: not found")
+        return None
+
     async def send_email_to_recipient(
         self,
         session: AsyncSession,
@@ -304,75 +435,38 @@ class WorkerEmailService:
         subject = campaign.email_subject or "Campaign Email"
         body = recipient.personalized_content or campaign.email_body or ""
 
-        # Try O365 first
-        o365_stmt = select(O365UserToken).where(
-            O365UserToken.user_id == user_id,
-            O365UserToken.is_active == True,  # noqa: E712
-        )
-        o365_result = await session.execute(o365_stmt)
-        o365_token = o365_result.scalar_one_or_none()
+        strategy_result = await self.get_strategy(session, user_id)
+        if not strategy_result:
+            logger.warning(f"No email provider connected for user {user_id}")
+            recipient.email_status = EmailStatus.FAILED
+            return False
 
-        logger.info(
-            f"O365 token lookup for user {user_id}: {'found' if o365_token else 'not found'}"
-        )
+        strategy, token = strategy_result
 
-        if o365_token:
-            access_token = await self.refresh_o365_token_if_needed(session, o365_token)
-            if not access_token:
-                logger.warning(
-                    f"O365 token expired and refresh failed for user {user_id}"
-                )
-            else:
-                result = await self.send_via_o365(
-                    access_token=access_token,
-                    to=contact.email,
-                    subject=subject,
-                    body=body,
-                )
-                if result.success:
-                    recipient.email_status = EmailStatus.SENT
-                    recipient.sent_at = datetime.now(timezone.utc)
-                    return True
-                logger.error(f"O365 send failed: {result.error}")
-                recipient.email_status = EmailStatus.FAILED
-                return False
-
-        # Try Gmail
-        gmail_stmt = select(GmailUserToken).where(
-            GmailUserToken.user_id == user_id,
-            GmailUserToken.is_active == True,  # noqa: E712
-        )
-        gmail_result = await session.execute(gmail_stmt)
-        gmail_token = gmail_result.scalar_one_or_none()
-
-        logger.info(
-            f"Gmail token lookup for user {user_id}: {'found' if gmail_token else 'not found'}"
-        )
-
-        if gmail_token:
-            access_token = await self.refresh_gmail_token_if_needed(
-                session, gmail_token
+        access_token = await strategy.refresh_token_if_needed(session, token)
+        if not access_token:
+            logger.warning(
+                f"{strategy.name} token expired and refresh failed for user {user_id}"
             )
-            if not access_token:
-                logger.warning(
-                    f"Gmail token expired and refresh failed for user {user_id}"
-                )
-            else:
-                result = await self.send_via_gmail(
-                    access_token=access_token,
-                    sender=gmail_token.google_email,
-                    to=contact.email,
-                    subject=subject,
-                    body=body,
-                )
-                if result.success:
-                    recipient.email_status = EmailStatus.SENT
-                    recipient.sent_at = datetime.now(timezone.utc)
-                    return True
-                logger.error(f"Gmail send failed: {result.error}")
-                recipient.email_status = EmailStatus.FAILED
-                return False
+            recipient.email_status = EmailStatus.FAILED
+            return False
 
-        logger.warning(f"No email provider connected for user {user_id}")
+        # Get sender email for Gmail (from token)
+        sender = getattr(token, "google_email", None)
+
+        result = await strategy.send(
+            access_token=access_token,
+            to=contact.email,
+            subject=subject,
+            body=body,
+            sender=sender,
+        )
+
+        if result.success:
+            recipient.email_status = EmailStatus.SENT
+            recipient.sent_at = datetime.now(timezone.utc)
+            return True
+
+        logger.error(f"{strategy.name} send failed: {result.error}")
         recipient.email_status = EmailStatus.FAILED
         return False
