@@ -1,9 +1,10 @@
-from pydantic import PostgresDsn
+from pydantic import PostgresDsn, RedisDsn
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
 class Settings(BaseSettings):
     pg_url: PostgresDsn
+    redis_url: RedisDsn
     environment: str
 
     log_level: str = "INFO"

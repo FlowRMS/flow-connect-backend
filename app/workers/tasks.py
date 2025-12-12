@@ -1,10 +1,10 @@
 """TaskIQ tasks for campaign email processing."""
 
-import logging
 from datetime import datetime, timezone
 from uuid import UUID
 
 from commons.db.controller import MultiTenantController
+from loguru import logger
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
@@ -25,8 +25,6 @@ from app.workers.services.worker_email_service import WorkerEmailService
 
 # Register Contact model with SQLAlchemy mapper (needed before CampaignRecipient)
 _ = Contact
-
-logger = logging.getLogger(__name__)
 
 # Emails per hour for each pace
 PACE_LIMITS: dict[SendPace, int] = {

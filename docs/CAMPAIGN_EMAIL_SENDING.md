@@ -62,10 +62,11 @@ The worker uses TaskIQ's built-in cron scheduling:
 
 ```python
 # In broker.py
-from taskiq import InMemoryBroker, TaskiqScheduler
+from taskiq import TaskiqScheduler
 from taskiq.schedule_sources import LabelScheduleSource
+from taskiq_redis import RedisStreamBroker
 
-broker = InMemoryBroker()
+broker = RedisStreamBroker(url=redis_url)
 scheduler = TaskiqScheduler(
     broker=broker,
     sources=[LabelScheduleSource(broker)],
@@ -378,15 +379,13 @@ Tracks daily email counts per campaign.
 
 ## Known Limitations
 
-1. **Single-instance broker**: Current implementation uses `InMemoryBroker` which doesn't support multiple worker instances. For horizontal scaling, switch to Redis broker.
+1. **No retry queue**: Failed emails are marked FAILED immediately. Consider adding a retry mechanism for transient failures.
 
-2. **No retry queue**: Failed emails are marked FAILED immediately. Consider adding a retry mechanism for transient failures.
-
-3. **No campaign locking**: Currently, users can edit SENDING campaigns. Most CRMs block this - pause first, edit, then resume.
+2. **No campaign locking**: Currently, users can edit SENDING campaigns. Most CRMs block this - pause first, edit, then resume.
 
 ## Future Improvements
 
-- [ ] Add Redis broker for multi-instance support
+- [x] Add Redis broker for multi-instance support
 - [ ] Implement retry queue for transient failures
 - [ ] Add campaign editing guards (block editing SENDING campaigns)
 - [ ] Add bounce tracking via webhooks

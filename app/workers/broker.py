@@ -1,14 +1,14 @@
 """TaskIQ broker configuration for background tasks."""
 
-from taskiq import InMemoryBroker, TaskiqScheduler
+import os
+
+from taskiq import TaskiqScheduler
 from taskiq.schedule_sources import LabelScheduleSource
+from taskiq_redis import RedisStreamBroker
 
-# Using InMemoryBroker for simplicity - works well for single-instance deployments
-# For production with multiple workers, consider using Redis broker:
-# from taskiq_redis import ListQueueBroker
-# broker = ListQueueBroker(url="redis://localhost:6379")
+REDIS_URL = os.environ.get("REDIS_URL", "redis://localhost:6379")
 
-broker = InMemoryBroker()
+broker = RedisStreamBroker(url=REDIS_URL)
 
 # Create scheduler with label-based source (reads cron config from task decorators)
 scheduler = TaskiqScheduler(

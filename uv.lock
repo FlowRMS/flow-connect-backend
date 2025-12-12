@@ -768,6 +768,7 @@ dependencies = [
     { name = "strawberry-graphql", extra = ["debug-server", "fastapi"] },
     { name = "taskiq" },
     { name = "taskiq-fastapi" },
+    { name = "taskiq-redis" },
     { name = "uvicorn", extra = ["standard"] },
 ]
 
@@ -811,6 +812,7 @@ requires-dist = [
     { name = "strawberry-graphql", extras = ["debug-server", "fastapi"], specifier = ">=0.278.0" },
     { name = "taskiq", specifier = ">=0.11.0" },
     { name = "taskiq-fastapi", specifier = ">=0.3.0" },
+    { name = "taskiq-redis", specifier = ">=1.0.0" },
     { name = "uvicorn", extras = ["standard"], specifier = ">=0.35.0" },
 ]
 
@@ -2816,6 +2818,15 @@ wheels = [
 ]
 
 [[package]]
+name = "redis"
+version = "6.4.0"
+source = { registry = "https://pypi.flowrms.com/simple/" }
+sdist = { url = "https://files.pythonhosted.org/packages/0d/d6/e8b92798a5bd67d659d51a18170e91c16ac3b59738d91894651ee255ed49/redis-6.4.0.tar.gz", hash = "sha256:b01bc7282b8444e28ec36b261df5375183bb47a07eb9c603f284e89cbc5ef010", size = 4647399, upload-time = "2025-08-07T08:10:11.441Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/e8/02/89e2ed7e85db6c93dfa9e8f691c5087df4e3551ab39081a4d7c6d1f90e05/redis-6.4.0-py3-none-any.whl", hash = "sha256:f0544fa9604264e9464cdf4814e7d4830f74b165d52f2a330a760a88dd248b7f", size = 279847, upload-time = "2025-08-07T08:10:09.84Z" },
+]
+
+[[package]]
 name = "regex"
 version = "2025.11.3"
 source = { registry = "https://pypi.flowrms.com/simple/" }
@@ -3188,6 +3199,19 @@ dependencies = [
 sdist = { url = "https://files.pythonhosted.org/packages/cf/fe/f9e885a4dd6bd4d4224e3dee05d9b38bf58102a0ef5e553e812d654dfa72/taskiq_fastapi-0.4.0.tar.gz", hash = "sha256:f683ab0aab1ab2db117d1e121e5e534f3ba4a4e5f382177012e29eca986863fb", size = 5819, upload-time = "2025-11-29T15:22:59.191Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/39/58/11eacc48d615703618f93ff44812409dca94cb465ab5cb173a8a90e079b1/taskiq_fastapi-0.4.0-py3-none-any.whl", hash = "sha256:9e7e57fa337b4fad2641c8761cafc7b54a63bf7bf726423a28fc2b15c55fd0bc", size = 5369, upload-time = "2025-11-29T15:23:00.185Z" },
+]
+
+[[package]]
+name = "taskiq-redis"
+version = "1.1.2"
+source = { registry = "https://pypi.flowrms.com/simple/" }
+dependencies = [
+    { name = "redis" },
+    { name = "taskiq" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/d2/0b/5006792cbdf6e78abaab45407968d96e2a1ffd0238cd41b13a62b33880cf/taskiq_redis-1.1.2.tar.gz", hash = "sha256:f878a047abc1a0fa0ddda6e4b063d742f030858d5a4409de96261a00a992c9c9", size = 16225, upload-time = "2025-10-07T10:46:13.666Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/73/20/9bf19b05eb7cb275a04871f3c38bf088c108579c4c19ea2a1358d2a81334/taskiq_redis-1.1.2-py3-none-any.whl", hash = "sha256:3b69468ff99da33243314c84acfa137a4a014abad10dd44e62195bc5e4ae9947", size = 20424, upload-time = "2025-10-07T10:46:12.779Z" },
 ]
 
 [[package]]
