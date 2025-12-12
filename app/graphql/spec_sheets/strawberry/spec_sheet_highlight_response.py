@@ -11,6 +11,7 @@ from app.graphql.spec_sheets.models.spec_sheet_highlight_model import (
     SpecSheetHighlightRegion,
     SpecSheetHighlightVersion,
 )
+from app.graphql.users.strawberry.user_response import UserResponse
 
 
 @strawberry.type
@@ -51,6 +52,7 @@ class HighlightRegionResponse(DTOMixin[SpecSheetHighlightRegion]):
 class HighlightVersionResponse(DTOMixin[SpecSheetHighlightVersion]):
     """Response type for a highlight version."""
 
+    _instance: strawberry.Private[SpecSheetHighlightVersion]
     id: UUID
     spec_sheet_id: UUID
     name: str
@@ -60,20 +62,15 @@ class HighlightVersionResponse(DTOMixin[SpecSheetHighlightVersion]):
     regions: list[HighlightRegionResponse]
     region_count: int
     created_at: datetime
-    created_by: str
 
     @classmethod
     def from_orm_model(cls, model: SpecSheetHighlightVersion) -> Self:
         """Convert ORM model to GraphQL response."""
-        # Handle created_by User object
-        created_by_str = ""
-        if model.created_by:
-            created_by_str = model.created_by.full_name or model.created_by.email or ""
-
         # Convert regions
         regions = [HighlightRegionResponse.from_orm_model(r) for r in model.regions]
 
         return cls(
+            _instance=model,
             id=model.id,
             spec_sheet_id=model.spec_sheet_id,
             name=model.name,
@@ -83,5 +80,9 @@ class HighlightVersionResponse(DTOMixin[SpecSheetHighlightVersion]):
             regions=regions,
             region_count=len(regions),
             created_at=model.created_at,
-            created_by=created_by_str,
         )
+
+    @strawberry.field
+    def created_by(self) -> UserResponse:
+        """Resolve created_by from the ORM instance."""
+        return UserResponse.from_orm_model(self._instance.created_by)
