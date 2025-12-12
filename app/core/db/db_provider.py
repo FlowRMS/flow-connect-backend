@@ -57,16 +57,17 @@ async def create_multitenant_controller(settings: Settings) -> MultiTenantContro
 
 
 async def create_multitenant_for_migration_controller(
-    pg_url: str,
+    pg_url: str, env: str
 ) -> MultiTenantController:
     controller = MultiTenantController(
         pg_url=pg_url,
-        app_name="FlowAI App (Migration)",
+        app_name="FlowAI Py CRM (Migration)",
         echo=True,
         connect_args={
             "timeout": 5,
             "command_timeout": 90,
         },
+        env=env,
     )
     await controller.load_data_sources()
     return controller
