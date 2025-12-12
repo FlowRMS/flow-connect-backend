@@ -26,7 +26,7 @@ def upgrade() -> None:
         sa.Column('id', postgresql.UUID(as_uuid=True), primary_key=True, server_default=sa.text('gen_random_uuid()')),
 
         # Basic Information
-        sa.Column('manufacturer_id', postgresql.UUID(as_uuid=True), nullable=False),
+        sa.Column('factory_id', postgresql.UUID(as_uuid=True), nullable=False),
         sa.Column('file_name', sa.String(255), nullable=False),
         sa.Column('display_name', sa.String(255), nullable=False),
 
@@ -64,9 +64,9 @@ def upgrade() -> None:
 
     # Create indexes
     op.create_index(
-        'idx_spec_sheets_manufacturer_id',
+        'idx_spec_sheets_factory_id',
         'spec_sheets',
-        ['manufacturer_id'],
+        ['factory_id'],
         schema='pycrm'
     )
     op.create_index(
@@ -110,5 +110,5 @@ def downgrade() -> None:
     op.drop_index('idx_spec_sheets_created_at', table_name='spec_sheets', schema='pycrm')
     op.drop_index('idx_spec_sheets_published', table_name='spec_sheets', schema='pycrm')
     op.drop_index('idx_spec_sheets_categories', table_name='spec_sheets', schema='pycrm')
-    op.drop_index('idx_spec_sheets_manufacturer_id', table_name='spec_sheets', schema='pycrm')
+    op.drop_index('idx_spec_sheets_factory_id', table_name='spec_sheets', schema='pycrm')
     op.drop_table('spec_sheets', schema='pycrm')
