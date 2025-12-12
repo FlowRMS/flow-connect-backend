@@ -104,19 +104,30 @@ class SpecSheetsService:
         if not spec_sheet:
             raise ValueError(f"SpecSheet with id {spec_sheet_id} not found")
 
-        # Update fields if provided
-        if input_data.display_name is not None:
-            spec_sheet.display_name = input_data.display_name
-        if input_data.categories is not None:
-            spec_sheet.categories = input_data.categories
-        if input_data.tags is not None:
-            spec_sheet.tags = input_data.tags
-        if input_data.folder_path is not None:
-            spec_sheet.folder_path = input_data.folder_path
-        if input_data.needs_review is not None:
-            spec_sheet.needs_review = input_data.needs_review
-        if input_data.published is not None:
-            spec_sheet.published = input_data.published
+        # Update fields if provided (using optional_field to handle UNSET)
+        display_name = input_data.optional_field(input_data.display_name)
+        if display_name is not None:
+            spec_sheet.display_name = display_name
+
+        categories = input_data.optional_field(input_data.categories)
+        if categories is not None:
+            spec_sheet.categories = categories
+
+        tags = input_data.optional_field(input_data.tags)
+        if tags is not None:
+            spec_sheet.tags = tags
+
+        folder_path = input_data.optional_field(input_data.folder_path)
+        if folder_path is not None:
+            spec_sheet.folder_path = folder_path
+
+        needs_review = input_data.optional_field(input_data.needs_review)
+        if needs_review is not None:
+            spec_sheet.needs_review = needs_review
+
+        published = input_data.optional_field(input_data.published)
+        if published is not None:
+            spec_sheet.published = published
 
         return await self.repository.update(spec_sheet)
 
