@@ -1,5 +1,3 @@
-"""TaskIQ broker configuration for background tasks."""
-
 import os
 
 from taskiq import TaskiqScheduler
@@ -14,7 +12,6 @@ REDIS_URL = os.environ.get("REDIS_URL", "redis://localhost:6379")
 
 broker = RedisStreamBroker(url=REDIS_URL)
 
-# Create scheduler with label-based source (reads cron config from task decorators)
 scheduler = TaskiqScheduler(
     broker=broker,
     sources=[LabelScheduleSource(broker)],
