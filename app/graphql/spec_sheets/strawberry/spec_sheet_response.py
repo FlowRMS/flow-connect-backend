@@ -16,7 +16,7 @@ class SpecSheetResponse(DTOMixin[SpecSheet]):
     """Response type for SpecSheet."""
 
     id: UUID
-    manufacturer_id: UUID
+    factory_id: UUID
     file_name: str
     display_name: str
     upload_source: str
@@ -44,7 +44,7 @@ class SpecSheetResponse(DTOMixin[SpecSheet]):
 
         return cls(
             id=model.id,
-            manufacturer_id=model.manufacturer_id,
+            factory_id=model.factory_id,
             file_name=model.file_name,
             display_name=model.display_name,
             upload_source=model.upload_source,

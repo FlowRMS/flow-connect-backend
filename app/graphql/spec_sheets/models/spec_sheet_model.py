@@ -16,13 +16,13 @@ class SpecSheet(CrmBaseModel, HasCreatedAt, HasCreatedBy, kw_only=True):
     """
     SpecSheet entity representing a specification sheet/cut sheet in the CRM system.
 
-    Spec sheets store manufacturer product specifications with metadata and categorization.
+    Spec sheets store factory product specifications with metadata and categorization.
     """
 
     __tablename__ = "spec_sheets"
 
     # Basic Information
-    manufacturer_id: Mapped[uuid.UUID] = mapped_column(
+    factory_id: Mapped[uuid.UUID] = mapped_column(
         PG_UUID(as_uuid=True), nullable=False, index=True
     )
     file_name: Mapped[str] = mapped_column(String(255), nullable=False)
@@ -55,4 +55,4 @@ class SpecSheet(CrmBaseModel, HasCreatedAt, HasCreatedBy, kw_only=True):
 
     def __repr__(self) -> str:
         """String representation of the SpecSheet."""
-        return f"<SpecSheet(id={self.id}, display_name='{self.display_name}', manufacturer_id={self.manufacturer_id})>"
+        return f"<SpecSheet(id={self.id}, display_name='{self.display_name}', factory_id={self.factory_id})>"

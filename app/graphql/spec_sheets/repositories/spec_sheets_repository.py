@@ -28,20 +28,20 @@ class SpecSheetsRepository(BaseRepository[SpecSheet]):
         """
         super().__init__(session, context_wrapper, SpecSheet)
 
-    async def find_by_manufacturer(
-        self, manufacturer_id: UUID, published_only: bool = True
+    async def find_by_factory(
+        self, factory_id: UUID, published_only: bool = True
     ) -> list[SpecSheet]:
         """
-        Find all spec sheets for a given manufacturer.
+        Find all spec sheets for a given factory.
 
         Args:
-            manufacturer_id: UUID of the manufacturer
+            factory_id: UUID of the factory
             published_only: Filter only published spec sheets
 
         Returns:
             List of SpecSheet models
         """
-        stmt = select(SpecSheet).where(SpecSheet.manufacturer_id == manufacturer_id)
+        stmt = select(SpecSheet).where(SpecSheet.factory_id == factory_id)
 
         if published_only:
             stmt = stmt.where(SpecSheet.published == True)  # noqa: E712
@@ -52,17 +52,17 @@ class SpecSheetsRepository(BaseRepository[SpecSheet]):
     async def search_spec_sheets(
         self,
         search_term: str,
-        manufacturer_id: UUID | None = None,
+        factory_id: UUID | None = None,
         categories: list[str] | None = None,
         published_only: bool = True,
         limit: int = 50,
     ) -> list[SpecSheet]:
         """
-        Search spec sheets by term, manufacturer, and categories.
+        Search spec sheets by term, factory, and categories.
 
         Args:
             search_term: Term to search in display_name and file_name
-            manufacturer_id: Optional manufacturer filter
+            factory_id: Optional factory filter
             categories: Optional categories filter
             published_only: Filter only published spec sheets
             limit: Maximum number of results
@@ -82,9 +82,9 @@ class SpecSheetsRepository(BaseRepository[SpecSheet]):
                 )
             )
 
-        # Manufacturer filter
-        if manufacturer_id:
-            stmt = stmt.where(SpecSheet.manufacturer_id == manufacturer_id)
+        # Factory filter
+        if factory_id:
+            stmt = stmt.where(SpecSheet.factory_id == factory_id)
 
         # Categories filter
         if categories:
@@ -113,7 +113,7 @@ class SpecSheetsRepository(BaseRepository[SpecSheet]):
 
     async def update_folder_paths(
         self,
-        manufacturer_id: UUID,
+        factory_id: UUID,
         old_path: str,
         new_path: str,
     ) -> int:
@@ -126,7 +126,7 @@ class SpecSheetsRepository(BaseRepository[SpecSheet]):
         - "Folder1/Folder2/Folder3" -> "Folder2/Folder3"
 
         Args:
-            manufacturer_id: UUID of the manufacturer
+            factory_id: UUID of the factory
             old_path: The current folder path prefix
             new_path: The new folder path (empty string for root level)
 
@@ -135,7 +135,7 @@ class SpecSheetsRepository(BaseRepository[SpecSheet]):
         """
         # Find all spec sheets with paths starting with old_path
         stmt = select(SpecSheet).where(
-            SpecSheet.manufacturer_id == manufacturer_id,
+            SpecSheet.factory_id == factory_id,
             or_(
                 SpecSheet.folder_path == old_path,
                 SpecSheet.folder_path.like(f"{old_path}/%"),

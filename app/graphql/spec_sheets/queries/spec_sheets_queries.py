@@ -37,24 +37,24 @@ class SpecSheetsQueries:
 
     @strawberry.field
     @inject
-    async def spec_sheets_by_manufacturer(
+    async def spec_sheets_by_factory(
         self,
         service: Injected[SpecSheetsService],
-        manufacturer_id: UUID,
+        factory_id: UUID,
         published_only: bool = True,
     ) -> list[SpecSheetResponse]:
         """
-        Get all spec sheets for a manufacturer.
+        Get all spec sheets for a factory.
 
         Args:
-            manufacturer_id: UUID of the manufacturer
+            factory_id: UUID of the factory
             published_only: Filter only published spec sheets
 
         Returns:
             List of SpecSheetResponse
         """
-        spec_sheets = await service.get_spec_sheets_by_manufacturer(
-            manufacturer_id, published_only
+        spec_sheets = await service.get_spec_sheets_by_factory(
+            factory_id, published_only
         )
         return SpecSheetResponse.from_orm_model_list(spec_sheets)
 
@@ -64,7 +64,7 @@ class SpecSheetsQueries:
         self,
         service: Injected[SpecSheetsService],
         search_term: str = "",
-        manufacturer_id: UUID | None = None,
+        factory_id: UUID | None = None,
         categories: list[str] | None = None,
         published_only: bool = True,
         limit: int = 50,
@@ -74,7 +74,7 @@ class SpecSheetsQueries:
 
         Args:
             search_term: Search term for display_name and file_name
-            manufacturer_id: Optional manufacturer filter
+            factory_id: Optional factory filter
             categories: Optional categories filter
             published_only: Filter only published spec sheets
             limit: Maximum number of results
@@ -83,6 +83,6 @@ class SpecSheetsQueries:
             List of matching SpecSheetResponse
         """
         spec_sheets = await service.search_spec_sheets(
-            search_term, manufacturer_id, categories, published_only, limit
+            search_term, factory_id, categories, published_only, limit
         )
         return SpecSheetResponse.from_orm_model_list(spec_sheets)

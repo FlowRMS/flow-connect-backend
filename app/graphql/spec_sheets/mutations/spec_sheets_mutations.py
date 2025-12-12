@@ -104,18 +104,18 @@ class SpecSheetsMutations:
         input: MoveFolderInput,
     ) -> int:
         """
-        Move a folder to a new location within the same manufacturer.
+        Move a folder to a new location within the same factory.
 
         Updates the folder_path of all spec sheets in the folder.
 
         Args:
-            input: Move folder data with manufacturer_id, old_folder_path, new_folder_path
+            input: Move folder data with factory_id, old_folder_path, new_folder_path
 
         Returns:
             Number of spec sheets updated
         """
         return await service.move_folder(
-            input.manufacturer_id,
+            input.factory_id,
             input.old_folder_path,
             input.new_folder_path,
         )

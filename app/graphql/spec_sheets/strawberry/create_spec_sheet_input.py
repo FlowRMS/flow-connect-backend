@@ -10,7 +10,7 @@ from strawberry.file_uploads import Upload
 class CreateSpecSheetInput:
     """Input for creating a new spec sheet."""
 
-    manufacturer_id: UUID
+    factory_id: UUID
     file_name: str
     display_name: str | None = None
     upload_source: str  # 'url' or 'file'

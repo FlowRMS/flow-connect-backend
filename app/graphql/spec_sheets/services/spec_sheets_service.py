@@ -88,7 +88,7 @@ class SpecSheetsService:
         display_name = input_data.display_name or input_data.file_name
 
         spec_sheet = SpecSheet(
-            manufacturer_id=input_data.manufacturer_id,
+            factory_id=input_data.factory_id,
             file_name=input_data.file_name,
             display_name=display_name,
             upload_source=input_data.upload_source,
@@ -178,27 +178,27 @@ class SpecSheetsService:
         """
         return await self.repository.get_by_id(spec_sheet_id)
 
-    async def get_spec_sheets_by_manufacturer(
-        self, manufacturer_id: UUID, published_only: bool = True
+    async def get_spec_sheets_by_factory(
+        self, factory_id: UUID, published_only: bool = True
     ) -> list[SpecSheet]:
         """
-        Get all spec sheets for a manufacturer.
+        Get all spec sheets for a factory.
 
         Args:
-            manufacturer_id: UUID of the manufacturer
+            factory_id: UUID of the factory
             published_only: Filter only published spec sheets
 
         Returns:
             List of SpecSheet models
         """
-        return await self.repository.find_by_manufacturer(
-            manufacturer_id, published_only
+        return await self.repository.find_by_factory(
+            factory_id, published_only
         )
 
     async def search_spec_sheets(
         self,
         search_term: str = "",
-        manufacturer_id: UUID | None = None,
+        factory_id: UUID | None = None,
         categories: list[str] | None = None,
         published_only: bool = True,
         limit: int = 50,
@@ -208,7 +208,7 @@ class SpecSheetsService:
 
         Args:
             search_term: Search term for display_name and file_name
-            manufacturer_id: Optional manufacturer filter
+            factory_id: Optional factory filter
             categories: Optional categories filter
             published_only: Filter only published spec sheets
             limit: Maximum number of results
@@ -217,7 +217,7 @@ class SpecSheetsService:
             List of matching SpecSheet models
         """
         return await self.repository.search_spec_sheets(
-            search_term, manufacturer_id, categories, published_only, limit
+            search_term, factory_id, categories, published_only, limit
         )
 
     async def increment_usage(self, spec_sheet_id: UUID) -> None:
@@ -231,17 +231,17 @@ class SpecSheetsService:
 
     async def move_folder(
         self,
-        manufacturer_id: UUID,
+        factory_id: UUID,
         old_folder_path: str,
         new_folder_path: str,
     ) -> int:
         """
-        Move a folder to a new location within the same manufacturer.
+        Move a folder to a new location within the same factory.
 
         This updates the folder_path of all spec sheets in the folder.
 
         Args:
-            manufacturer_id: UUID of the manufacturer
+            factory_id: UUID of the factory
             old_folder_path: Current path of the folder (e.g., "Folder1/Folder2")
             new_folder_path: New path for the folder (e.g., "Folder3" or "" for root)
 
@@ -249,5 +249,5 @@ class SpecSheetsService:
             Number of spec sheets updated
         """
         return await self.repository.update_folder_paths(
-            manufacturer_id, old_folder_path, new_folder_path
+            factory_id, old_folder_path, new_folder_path
         )
