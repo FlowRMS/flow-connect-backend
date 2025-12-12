@@ -8,8 +8,8 @@ import strawberry
 
 from app.core.db.adapters.dto import DTOMixin
 from app.graphql.spec_sheets.models.spec_sheet_highlight_model import (
-    SpecSheetHighlightVersion,
     SpecSheetHighlightRegion,
+    SpecSheetHighlightVersion,
 )
 
 
@@ -67,16 +67,11 @@ class HighlightVersionResponse(DTOMixin[SpecSheetHighlightVersion]):
         """Convert ORM model to GraphQL response."""
         # Handle created_by User object
         created_by_str = ""
-        if hasattr(model, "created_by") and model.created_by:
-            if hasattr(model.created_by, "full_name"):
-                created_by_str = model.created_by.full_name or ""
-            elif hasattr(model.created_by, "email"):
-                created_by_str = model.created_by.email or ""
+        if model.created_by:
+            created_by_str = model.created_by.full_name or model.created_by.email or ""
 
         # Convert regions
-        regions = []
-        if hasattr(model, "regions") and model.regions:
-            regions = [HighlightRegionResponse.from_orm_model(r) for r in model.regions]
+        regions = [HighlightRegionResponse.from_orm_model(r) for r in model.regions]
 
         return cls(
             id=model.id,

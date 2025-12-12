@@ -1,11 +1,10 @@
 """SQLAlchemy ORM models for SpecSheet Highlights."""
 
 import uuid
-from datetime import datetime
-from typing import Any
 
-from sqlalchemy import Boolean, Float, Integer, String, Text, ForeignKey
-from sqlalchemy.dialects.postgresql import UUID as PG_UUID, JSONB
+from commons.db.models import User
+from sqlalchemy import Boolean, Float, ForeignKey, Integer, String, Text
+from sqlalchemy.dialects.postgresql import UUID as PG_UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.core.db.base import CrmBaseModel, HasCreatedAt, HasCreatedBy
@@ -25,11 +24,13 @@ class SpecSheetHighlightVersion(CrmBaseModel, HasCreatedAt, HasCreatedBy, kw_onl
         PG_UUID(as_uuid=True),
         ForeignKey("pycrm.spec_sheets.id", ondelete="CASCADE"),
         nullable=False,
-        index=True
+        index=True,
     )
 
     # Version metadata
-    name: Mapped[str] = mapped_column(String(255), nullable=False, default="Default Highlights")
+    name: Mapped[str] = mapped_column(
+        String(255), nullable=False, default="Default Highlights"
+    )
     description: Mapped[str | None] = mapped_column(Text, nullable=True, default=None)
     version_number: Mapped[int] = mapped_column(Integer, nullable=False, default=1)
 
@@ -42,8 +43,9 @@ class SpecSheetHighlightVersion(CrmBaseModel, HasCreatedAt, HasCreatedBy, kw_onl
         back_populates="version",
         cascade="all, delete-orphan",
         lazy="selectin",
-        init=False
+        init=False,
     )
+    created_by: Mapped[User] = relationship(init=False, lazy="joined")
 
     def __repr__(self) -> str:
         """String representation."""
@@ -64,7 +66,7 @@ class SpecSheetHighlightRegion(CrmBaseModel, HasCreatedAt, kw_only=True):
         PG_UUID(as_uuid=True),
         ForeignKey("pycrm.spec_sheet_highlight_versions.id", ondelete="CASCADE"),
         nullable=False,
-        index=True
+        index=True,
     )
 
     # Page information
@@ -77,7 +79,9 @@ class SpecSheetHighlightRegion(CrmBaseModel, HasCreatedAt, kw_only=True):
     height: Mapped[float] = mapped_column(Float, nullable=False)
 
     # Shape properties
-    shape_type: Mapped[str] = mapped_column(String(50), nullable=False)  # 'rectangle', 'oval', 'highlight'
+    shape_type: Mapped[str] = mapped_column(
+        String(50), nullable=False
+    )  # 'rectangle', 'oval', 'highlight'
     color: Mapped[str] = mapped_column(String(20), nullable=False)  # hex color
 
     # Optional annotation/note
@@ -85,9 +89,7 @@ class SpecSheetHighlightRegion(CrmBaseModel, HasCreatedAt, kw_only=True):
 
     # Relationships
     version: Mapped["SpecSheetHighlightVersion"] = relationship(
-        "SpecSheetHighlightVersion",
-        back_populates="regions",
-        init=False
+        "SpecSheetHighlightVersion", back_populates="regions", init=False
     )
 
     def __repr__(self) -> str:

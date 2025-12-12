@@ -8,7 +8,7 @@ router = APIRouter()
 
 
 @router.get("/pdf-proxy")
-async def pdf_proxy(url: str = Query(..., description="URL of the PDF to proxy")):
+async def pdf_proxy(url: str = Query(..., description="URL of the PDF to proxy")):  # pyright: ignore[reportCallInDefaultInitializer]
     """
     Proxy endpoint to fetch external PDFs and serve them locally.
     This avoids CORS issues when trying to load PDFs from external domains.
@@ -23,7 +23,7 @@ async def pdf_proxy(url: str = Query(..., description="URL of the PDF to proxy")
     try:
         async with httpx.AsyncClient(timeout=30.0, follow_redirects=True) as client:
             response = await client.get(url)
-            response.raise_for_status()
+            _ = response.raise_for_status()
 
             # Get content type from response, default to PDF
             content_type = response.headers.get("content-type", "application/pdf")

@@ -33,7 +33,9 @@ class FactoriesQueries:
             List of FactoryResponse objects matching the search criteria
         """
         if use_custom_order:
-            factories = await service.search_factories_ordered(search_term, published, limit)
+            factories = await service.search_factories_ordered(
+                search_term, published, limit
+            )
         else:
             factories = await service.search_factories(search_term, published, limit)
         return FactoryResponse.from_orm_model_list(factories)

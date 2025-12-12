@@ -4,9 +4,9 @@ from collections.abc import Iterable
 from typing import Any
 
 import aioinject
+from commons.s3.service import S3Service
 
 from app.core.config.s3_settings import S3Settings
-from commons.s3.service import S3Service
 
 
 def create_s3_service(settings: S3Settings) -> S3Service:

@@ -67,7 +67,7 @@ class FactoriesRepository(BaseRepository[Factory]):
             Number of manufacturers updated
         """
         # Delete all existing orders
-        await self.session.execute(delete(ManufacturerOrder))
+        _ = await self.session.execute(delete(ManufacturerOrder))
 
         # Insert new orders
         for index, factory_id in enumerate(factory_ids):

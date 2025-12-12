@@ -11,8 +11,8 @@ from app.graphql.spec_sheets.services.spec_sheet_highlights_service import (
 )
 from app.graphql.spec_sheets.strawberry.spec_sheet_highlight_input import (
     CreateHighlightVersionInput,
-    UpdateHighlightVersionInput,
     UpdateHighlightRegionsInput,
+    UpdateHighlightVersionInput,
 )
 from app.graphql.spec_sheets.strawberry.spec_sheet_highlight_response import (
     HighlightVersionResponse,

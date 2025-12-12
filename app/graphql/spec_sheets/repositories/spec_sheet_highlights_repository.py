@@ -2,15 +2,15 @@
 
 from uuid import UUID
 
-from sqlalchemy import select, func
+from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
 from app.core.context_wrapper import ContextWrapper
 from app.graphql.base_repository import BaseRepository
 from app.graphql.spec_sheets.models.spec_sheet_highlight_model import (
-    SpecSheetHighlightVersion,
     SpecSheetHighlightRegion,
+    SpecSheetHighlightVersion,
 )
 
 
@@ -128,7 +128,7 @@ class SpecSheetHighlightsRepository(BaseRepository[SpecSheetHighlightVersion]):
             is_active=True,
         )
         # Set created_by_id after creation (init=False in mixin)
-        version.created_by_id = self.context.auth_info.user_id
+        version.created_by_id = UUID(self.context.auth_info.user_id)
 
         self.session.add(version)
         await self.session.flush()  # Get the version ID
@@ -150,8 +150,10 @@ class SpecSheetHighlightsRepository(BaseRepository[SpecSheetHighlightVersion]):
 
         await self.session.flush()
 
-        # Reload with regions
-        return await self.get_version_with_regions(version.id)
+        # Reload with regions - version was just created so it must exist
+        result = await self.get_version_with_regions(version.id)
+        assert result is not None
+        return result
 
     async def update_version_regions(
         self, version_id: UUID, regions_data: list[dict]

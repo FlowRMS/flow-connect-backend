@@ -1,9 +1,8 @@
 """Repository for SpecSheets entity with specific database operations."""
 
-from typing import Any
 from uuid import UUID
 
-from sqlalchemy import Select, func, or_, select
+from sqlalchemy import or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.context_wrapper import ContextWrapper
@@ -150,7 +149,7 @@ class SpecSheetsRepository(BaseRepository[SpecSheet]):
             if spec_sheet.folder_path == old_path:
                 # Exact match - set to new path
                 spec_sheet.folder_path = new_path if new_path else None
-            else:
+            elif spec_sheet.folder_path:
                 # Nested path - replace prefix
                 suffix = spec_sheet.folder_path[len(old_path) + 1 :]  # +1 for the /
                 spec_sheet.folder_path = f"{new_path}/{suffix}" if new_path else suffix

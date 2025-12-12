@@ -13,15 +13,15 @@ from app.graphql.spec_sheets.repositories.spec_sheets_repository import (
 )
 from app.graphql.spec_sheets.strawberry.spec_sheet_highlight_input import (
     CreateHighlightVersionInput,
-    UpdateHighlightVersionInput,
     UpdateHighlightRegionsInput,
+    UpdateHighlightVersionInput,
 )
 
 
 class SpecSheetHighlightsService:
     """Service for SpecSheet Highlights business logic."""
 
-    def __init__(
+    def __init__(  # pyright: ignore[reportMissingSuperCall]
         self,
         repository: SpecSheetHighlightsRepository,
         spec_sheets_repository: SpecSheetsRepository,
@@ -133,8 +133,10 @@ class SpecSheetHighlightsService:
         if input_data.is_active is not None:
             version.is_active = input_data.is_active
 
-        await self.repository.update(version)
-        return await self.repository.get_version_with_regions(version_id)
+        _ = await self.repository.update(version)
+        result = await self.repository.get_version_with_regions(version_id)
+        assert result is not None  # Version was just updated
+        return result
 
     async def update_version_regions(
         self, input_data: UpdateHighlightRegionsInput
@@ -171,7 +173,9 @@ class SpecSheetHighlightsService:
         )
 
         if not version:
-            raise ValueError(f"Highlight version with id {input_data.version_id} not found")
+            raise ValueError(
+                f"Highlight version with id {input_data.version_id} not found"
+            )
 
         # Update highlight count on spec sheet
         await self._update_highlight_count(version.spec_sheet_id)
@@ -213,4 +217,4 @@ class SpecSheetHighlightsService:
         spec_sheet = await self.spec_sheets_repository.get_by_id(spec_sheet_id)
         if spec_sheet:
             spec_sheet.highlight_count = count
-            await self.spec_sheets_repository.update(spec_sheet)
+            _ = await self.spec_sheets_repository.update(spec_sheet)

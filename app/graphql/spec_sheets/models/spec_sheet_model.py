@@ -1,10 +1,8 @@
 """SQLAlchemy ORM model for SpecSheet entity."""
 
 import uuid
-from datetime import datetime
-from uuid import UUID
 
-from commons.db.models import Factory, User
+from commons.db.models import User
 from sqlalchemy import ARRAY, BigInteger, Boolean, Integer, String, Text
 from sqlalchemy.dialects.postgresql import UUID as PG_UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
@@ -41,7 +39,9 @@ class SpecSheet(CrmBaseModel, HasCreatedAt, HasCreatedBy, kw_only=True):
     # Categorization
     categories: Mapped[list[str]] = mapped_column(ARRAY(String), nullable=False)
     tags: Mapped[list[str] | None] = mapped_column(ARRAY(String), nullable=True)
-    folder_path: Mapped[str | None] = mapped_column(String(500), nullable=True, index=True)
+    folder_path: Mapped[str | None] = mapped_column(
+        String(500), nullable=True, index=True
+    )
 
     # Fields with defaults must come after fields without defaults
     page_count: Mapped[int] = mapped_column(Integer, nullable=False, default=1)

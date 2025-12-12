@@ -49,7 +49,9 @@ class FactoryService:
         Returns:
             List of Factory objects sorted by custom order, then by title
         """
-        return await self.repository.search_by_title_ordered(search_term, published, limit)
+        return await self.repository.search_by_title_ordered(
+            search_term, published, limit
+        )
 
     async def find_by_entity(
         self, entity_type: EntityType, entity_id: UUID

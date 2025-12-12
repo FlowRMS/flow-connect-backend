@@ -4,9 +4,8 @@ import io
 import os
 from uuid import UUID, uuid4
 
-from loguru import logger
-
 from commons.s3.service import S3Service
+from loguru import logger
 
 from app.graphql.spec_sheets.models.spec_sheet_model import SpecSheet
 from app.graphql.spec_sheets.repositories.spec_sheets_repository import (
@@ -24,7 +23,7 @@ SPEC_SHEETS_S3_PREFIX = "spec-sheets"
 class SpecSheetsService:
     """Service for SpecSheets business logic."""
 
-    def __init__(
+    def __init__(  # pyright: ignore[reportMissingSuperCall]
         self,
         repository: SpecSheetsRepository,
         s3_service: S3Service,
@@ -53,9 +52,9 @@ class SpecSheetsService:
         file_url: str | None = None
         file_size: int = 0
 
-        if input_data.file and input_data.upload_source == 'file':
+        if input_data.file and input_data.upload_source == "file":
             # Generate unique filename
-            file_extension = os.path.splitext(input_data.file_name)[1] or '.pdf'
+            file_extension = os.path.splitext(input_data.file_name)[1] or ".pdf"
             unique_filename = f"{uuid4()}{file_extension}"
             s3_key = f"{SPEC_SHEETS_S3_PREFIX}/{unique_filename}"
 
@@ -63,24 +62,28 @@ class SpecSheetsService:
             content = await input_data.file.read()
             file_size = len(content)
 
-            logger.info(f"Uploading to S3: bucket={self.s3_service.bucket_name}, key={s3_key}")
+            bucket_name = self.s3_service.bucket_name
+            if not bucket_name:
+                raise ValueError("S3 bucket name is not configured")
+
+            logger.info(f"Uploading to S3: bucket={bucket_name}, key={s3_key}")
 
             # Upload to S3
             await self.s3_service.upload(
-                bucket=self.s3_service.bucket_name,
+                bucket=bucket_name,
                 key=s3_key,
                 file_obj=io.BytesIO(content),
-                ContentType='application/pdf',
+                ContentType="application/pdf",
             )
 
             # Generate presigned URL for access
             file_url = await self.s3_service.generate_presigned_url(
-                bucket=self.s3_service.bucket_name,
+                bucket=bucket_name,
                 key=s3_key,
             )
 
             logger.info(f"Upload successful, presigned URL generated")
-        elif input_data.upload_source == 'url' and input_data.source_url:
+        elif input_data.upload_source == "url" and input_data.source_url:
             # For URL uploads, use source_url as file_url
             file_url = input_data.source_url
 
@@ -191,9 +194,7 @@ class SpecSheetsService:
         Returns:
             List of SpecSheet models
         """
-        return await self.repository.find_by_factory(
-            factory_id, published_only
-        )
+        return await self.repository.find_by_factory(factory_id, published_only)
 
     async def search_spec_sheets(
         self,
