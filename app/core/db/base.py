@@ -27,7 +27,7 @@ class HasCreatedAt(MappedAsDataclass):
 class HasCreatedBy(MappedAsDataclass):
     created_by_id: Mapped[uuid.UUID] = mapped_column(
         PG_UUID(as_uuid=True),
-        ForeignKey("user.users.id"),  # Explicitly reference user schema
+        ForeignKey(User.id),
         init=False,
         nullable=False,
     )
