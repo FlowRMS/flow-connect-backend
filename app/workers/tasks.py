@@ -17,14 +17,10 @@ from app.graphql.campaigns.models.campaign_send_log_model import CampaignSendLog
 from app.graphql.campaigns.models.campaign_status import CampaignStatus
 from app.graphql.campaigns.models.email_status import EmailStatus
 from app.graphql.campaigns.models.send_pace import SendPace
-from app.graphql.contacts.models.contact_model import Contact
 from app.integrations.gmail.config import GmailSettings
 from app.integrations.microsoft_o365.config import O365Settings
 from app.workers.broker import broker
 from app.workers.services.worker_email_service import WorkerEmailService
-
-# Register Contact model with SQLAlchemy mapper (needed before CampaignRecipient)
-_ = Contact
 
 # Emails per hour for each pace
 PACE_LIMITS: dict[SendPace, int] = {

@@ -117,3 +117,10 @@ jobs:
             --from-literal=GMAIL_REDIRECT_URI=${{ secrets.GMAIL_REDIRECT_URI }} \
             --from-literal=REDIS_URL=${{ secrets.REDIS_URL }} \
             -o yaml --dry-run=client | kubectl apply -f -
+
+      - name: Deploy K8S worker
+        shell: bash
+        run: |
+          echo "Deploying application using image ${{ env.IMAGE_TAG }}"
+          envsubst < .k8s/deployment.worker.yaml > deployment.worker.prod.yaml
+          kubectl apply -f deployment.worker.prod.yaml
