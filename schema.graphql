@@ -42,6 +42,94 @@ enum CRMEntityType {
   PRODUCT
 }
 
+input CampaignCriteriaInput {
+  groups: [CriteriaGroupInput!]!
+  groupOperator: LogicalOperator! = AND
+}
+
+input CampaignInput {
+  name: String!
+  recipientListType: RecipientListType!
+  description: String
+  emailSubject: String
+  emailBody: String
+  aiPersonalizationEnabled: Boolean! = false
+  sendPace: SendPace! = MEDIUM
+  maxEmailsPerDay: Int
+  scheduledAt: datetime
+  sendImmediately: Boolean! = false
+  staticContactIds: [UUID!]
+  criteria: CampaignCriteriaInput
+}
+
+type CampaignLandingPage implements LandingPageInterfaceBase {
+  id: UUID!
+  createdAt: datetime!
+  createdBy: String!
+  name: String!
+  status: CampaignStatus!
+  recipientListType: RecipientListType!
+  recipientsCount: Int!
+  sentCount: Int!
+  progress: String!
+}
+
+type CampaignRecipientResponse {
+  id: UUID!
+  campaignId: UUID!
+  contactId: UUID!
+  emailStatus: EmailStatus!
+  sentAt: datetime
+  personalizedContent: String
+  contact: ContactResponse!
+}
+
+type CampaignResponse {
+  id: UUID!
+  createdAt: datetime!
+  name: String!
+  status: CampaignStatus!
+  recipientListType: RecipientListType!
+  description: String
+  emailSubject: String
+  emailBody: String
+  aiPersonalizationEnabled: Boolean!
+  sendPace: SendPace!
+  maxEmailsPerDay: Int
+  scheduledAt: datetime
+  sendImmediately: Boolean!
+  recipientsCount: Int!
+  sentCount: Int!
+  criteriaJson: JSON
+}
+
+type CampaignSendingStatusResponse {
+  campaignId: UUID!
+  status: CampaignStatus!
+  totalRecipients: Int!
+  sentCount: Int!
+  pendingCount: Int!
+  failedCount: Int!
+  bouncedCount: Int!
+  todaySentCount: Int!
+  maxEmailsPerDay: Int!
+  remainingToday: Int!
+  sendPace: SendPace
+  emailsPerHour: Int!
+  progressPercentage: Float!
+  isCompleted: Boolean!
+  canSendMoreToday: Boolean!
+  progressDisplay: String!
+}
+
+enum CampaignStatus {
+  DRAFT
+  SCHEDULED
+  SENDING
+  COMPLETED
+  PAUSED
+}
+
 type CheckResponse {
   id: UUID!
   entryDate: datetime!
@@ -136,6 +224,33 @@ type ContactResponse {
   notes: String
 }
 
+input CriteriaConditionInput {
+  entityType: CRMEntityType!
+  field: String!
+  operator: CriteriaOperator!
+  value: JSON = null
+}
+
+input CriteriaGroupInput {
+  logicalOperator: LogicalOperator!
+  conditions: [CriteriaConditionInput!]!
+}
+
+enum CriteriaOperator {
+  EQUALS
+  NOT_EQUALS
+  CONTAINS
+  NOT_CONTAINS
+  GREATER_THAN
+  LESS_THAN
+  GREATER_THAN_OR_EQUALS
+  LESS_THAN_OR_EQUALS
+  IS_NULL
+  IS_NOT_NULL
+  IN
+  NOT_IN
+}
+
 type CustomerResponse {
   id: UUID!
   companyName: String!
@@ -153,6 +268,18 @@ input DeleteLinkByEntitiesInput {
   sourceEntityId: UUID!
   targetEntityType: CRMEntityType!
   targetEntityId: UUID!
+}
+
+enum EmailStatus {
+  PENDING
+  SENT
+  FAILED
+  BOUNCED
+}
+
+type EstimateRecipientsResponse {
+  count: Int!
+  sampleContacts: [ContactResponse!]!
 }
 
 type FactoryResponse {
@@ -234,6 +361,9 @@ type InvoiceResponse {
   balanceId: UUID!
 }
 
+"""The `JSON` scalar type represents JSON values as specified by ECMA-404"""
+scalar JSON
+
 input JobInput {
   jobName: String!
   statusId: UUID!
@@ -305,7 +435,7 @@ interface LandingPageInterfaceBase {
   createdBy: String!
 }
 
-union LandingRecord = JobLandingPage | CompanyLandingPage | ContactLandingPage | PreOpportunityLandingPage | NoteLandingPage | TaskLandingPage
+union LandingRecord = JobLandingPage | CompanyLandingPage | ContactLandingPage | PreOpportunityLandingPage | NoteLandingPage | TaskLandingPage | CampaignLandingPage
 
 enum LandingSourceType {
   JOBS
@@ -314,6 +444,7 @@ enum LandingSourceType {
   TASKS
   NOTES
   PRE_OPPORTUNITIES
+  CAMPAIGNS
 }
 
 input LinkRelationInput {
@@ -338,9 +469,22 @@ type LinkedEntity {
   entityType: CRMEntityType!
 }
 
+enum LogicalOperator {
+  AND
+  OR
+}
+
 type Mutation {
   createAddress(input: AddressInput!): AddressResponse!
   deleteAddress(id: UUID!): Boolean!
+  createCampaign(input: CampaignInput!): CampaignResponse!
+  updateCampaign(id: UUID!, input: CampaignInput!): CampaignResponse!
+  deleteCampaign(id: UUID!): Boolean!
+  pauseCampaign(id: UUID!): CampaignResponse!
+  resumeCampaign(id: UUID!): CampaignResponse!
+  refreshDynamicRecipients(campaignId: UUID!): CampaignResponse!
+  sendTestEmail(campaignId: UUID!, testEmail: String!): SendTestEmailResponse!
+  startCampaignSending(campaignId: UUID!): CampaignResponse!
   createCompany(input: CompanyInput!): CompanyResponse!
   deleteCompany(id: UUID!): Boolean!
   updateCompany(id: UUID!, input: CompanyInput!): CompanyResponse!
@@ -658,6 +802,10 @@ type Query {
   address(id: UUID!): AddressResponse!
   addresses(limit: Int! = 100, offset: Int! = 0): [AddressResponse!]!
   addressesByCompany(companyId: UUID!): [AddressResponse!]!
+  campaign(id: UUID!): CampaignResponse!
+  campaignRecipients(campaignId: UUID!, limit: Int! = 100, offset: Int! = 0): [CampaignRecipientResponse!]!
+  estimateRecipients(criteria: CampaignCriteriaInput!, sampleLimit: Int! = 10): EstimateRecipientsResponse!
+  campaignSendingStatus(campaignId: UUID!): CampaignSendingStatusResponse!
   checkSearch(searchTerm: String!, limit: Int! = 20): [CheckResponse!]!
   findLandingPages(sourceType: LandingSourceType!, filters: [Filter!] = null, orderBy: [OrderBy!] = null, limit: Int = 10, offset: Int = 0): GenericLandingPage!
   company(id: UUID!): CompanyResponse!
@@ -719,6 +867,23 @@ type QuoteResponse {
   jobName: String
   expDate: Date
   blanket: Boolean!
+}
+
+enum RecipientListType {
+  STATIC
+  CRITERIA_BASED
+  DYNAMIC
+}
+
+enum SendPace {
+  SLOW
+  MEDIUM
+  FAST
+}
+
+type SendTestEmailResponse {
+  success: Boolean!
+  error: String
 }
 
 input TaskConversationInput {
