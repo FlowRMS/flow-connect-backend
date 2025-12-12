@@ -22,9 +22,9 @@ from app.graphql.campaigns.services.email_provider_service import EmailProviderS
 
 # Emails per hour for each pace
 PACE_LIMITS: dict[SendPace, int] = {
-    SendPace.SLOW: 50,
-    SendPace.MEDIUM: 200,
-    SendPace.FAST: 500,
+    SendPace.SLOW: 25,
+    SendPace.MEDIUM: 50,
+    SendPace.FAST: 100,
 }
 
 # Default max emails per day if not specified
@@ -68,7 +68,7 @@ class CampaignEmailSenderService:
     Service for sending campaign emails with pacing and daily limits.
 
     Handles:
-    - Send pace limits (SLOW: 50/hr, MEDIUM: 200/hr, FAST: 500/hr)
+    - Send pace limits (SLOW: 25/hr, MEDIUM: 50/hr, FAST: 100/hr)
     - Max emails per day limits
     - Status tracking and updates
     - Automatic campaign completion

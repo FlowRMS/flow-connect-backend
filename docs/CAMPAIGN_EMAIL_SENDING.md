@@ -112,12 +112,12 @@ Each run processes a batch of emails based on pace:
 ```python
 PACE_LIMITS = {
     SendPace.SLOW: 50,      # 50 emails/hour
-    SendPace.MEDIUM: 200,   # 200 emails/hour
-    SendPace.FAST: 500,     # 500 emails/hour
+    SendPace.MEDIUM: 75,    # 75 emails/hour
+    SendPace.FAST: 100,     # 100 emails/hour
 }
 
 # Batch size = emails_per_hour / 30 (roughly 2 minutes worth)
-# For MEDIUM: 200 / 30 ≈ 6-7 emails per minute
+# For MEDIUM: 75 / 30 ≈ 2-3 emails per minute
 batch_size = max(1, emails_per_hour // 30)
 ```
 
@@ -191,8 +191,8 @@ batch_size = max(1, emails_per_hour // 12)
 | Pace | Emails/Hour | Batch Size (per minute) | Use Case |
 |------|-------------|------------------------|----------|
 | SLOW | 50 | ~1-2 | Careful sending, new domains |
-| MEDIUM | 200 | ~6-7 | Standard campaigns |
-| FAST | 500 | ~16-17 | Time-sensitive campaigns |
+| MEDIUM | 75 | ~2-3 | Standard campaigns |
+| FAST | 100 | ~3-4 | Time-sensitive campaigns |
 
 ## Daily Limit Enforcement
 
