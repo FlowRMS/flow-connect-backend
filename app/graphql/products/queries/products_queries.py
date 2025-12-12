@@ -21,8 +21,8 @@ class ProductsQueries:
         self,
         service: Injected[ProductService],
         search_term: str,
+        product_category_ids: list[uuid.UUID],
         factory_id: strawberry.Maybe[uuid.UUID] = None,
-        product_category_id: strawberry.Maybe[uuid.UUID] = None,
         limit: int = 20,
     ) -> list[ProductResponse]:
         """
@@ -38,12 +38,9 @@ class ProductsQueries:
             List of ProductResponse objects matching the search criteria
         """
         factory_id_value = factory_id.value if factory_id else None
-        product_category_id_value = (
-            product_category_id.value if product_category_id else None
-        )
         return ProductResponse.from_orm_model_list(
             await service.search_products(
-                search_term, factory_id_value, product_category_id_value, limit
+                search_term, factory_id_value, product_category_ids, limit
             )
         )
 

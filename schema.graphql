@@ -695,7 +695,7 @@ type Query {
   orderSearch(searchTerm: String!, limit: Int! = 20): [OrderResponse!]!
   preOpportunity(id: UUID!): PreOpportunityResponse!
   preOpportunitySearch(searchTerm: String!, limit: Int! = 20): [PreOpportunityLiteResponse!]!
-  productSearch(searchTerm: String!, factoryId: UUID, productCategoryId: UUID, limit: Int! = 20): [ProductResponse!]!
+  productSearch(searchTerm: String!, productCategoryIds: [UUID!]!, factoryId: UUID, limit: Int! = 20): [ProductResponse!]!
   productCategorySearch(searchTerm: String!, factoryId: UUID, limit: Int! = 20): [ProductCategoryResponse!]!
   quoteSearch(searchTerm: String!, limit: Int! = 20): [QuoteResponse!]!
   task(id: UUID!): TaskType!

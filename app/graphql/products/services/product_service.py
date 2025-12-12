@@ -23,7 +23,7 @@ class ProductService:
         self,
         search_term: str,
         factory_id: UUID | None,
-        product_category_id: UUID | None,
+        product_category_ids: list[UUID],
         limit: int = 20,
     ) -> list[Product]:
         """
@@ -32,14 +32,14 @@ class ProductService:
         Args:
             search_term: The search term to match against factory part number
             factory_id: The UUID of the factory to filter products by (optional)
-            product_category_id: The UUID of the product category to filter by (optional)
+            product_category_ids: The UUIDs of the product categories to filter by (optional)
             limit: Maximum number of products to return (default: 20)
 
         Returns:
             List of Product objects matching the search criteria
         """
         return await self.repository.search_by_fpn(
-            search_term, factory_id, product_category_id, limit
+            search_term, factory_id, product_category_ids, limit
         )
 
     async def search_product_categories(

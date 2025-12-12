@@ -23,7 +23,7 @@ class ProductsRepository(BaseRepository[Product]):
         self,
         search_term: str,
         factory_id: UUID | None,
-        product_category_id: UUID | None,
+        product_category_ids: list[UUID],
         limit: int = 20,
     ) -> list[Product]:
         """
@@ -47,8 +47,8 @@ class ProductsRepository(BaseRepository[Product]):
         if factory_id is not None:
             stmt = stmt.where(Product.factory_id == factory_id)
 
-        if product_category_id is not None:
-            stmt = stmt.where(Product.product_category_id == product_category_id)
+        if product_category_ids:
+            stmt = stmt.where(Product.product_category_id.in_(product_category_ids))
 
         result = await self.session.execute(stmt)
         return list(result.scalars().all())
