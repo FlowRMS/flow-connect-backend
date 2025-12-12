@@ -1,47 +1,15 @@
-"""GraphQL input types for SpecSheet."""
+"""GraphQL input types for SpecSheet - re-exports for backwards compatibility."""
 
-from uuid import UUID
+from app.graphql.spec_sheets.strawberry.create_spec_sheet_input import (
+    CreateSpecSheetInput,
+)
+from app.graphql.spec_sheets.strawberry.update_spec_sheet_input import (
+    UpdateSpecSheetInput,
+)
+from app.graphql.spec_sheets.strawberry.move_folder_input import MoveFolderInput
 
-import strawberry
-from strawberry.file_uploads import Upload
-
-
-@strawberry.input
-class CreateSpecSheetInput:
-    """Input for creating a new spec sheet."""
-
-    manufacturer_id: UUID
-    file_name: str
-    display_name: str | None = None
-    upload_source: str  # 'url' or 'file'
-    source_url: str | None = None
-    file_url: str | None = None  # Made optional since it will be generated for file uploads
-    file_size: int | None = None  # Made optional since it will be calculated for file uploads
-    page_count: int = 1
-    categories: list[str]
-    tags: list[str] | None = None
-    folder_path: str | None = None
-    needs_review: bool = False
-    published: bool = True
-    file: Upload | None = None  # Added file upload field
-
-
-@strawberry.input
-class UpdateSpecSheetInput:
-    """Input for updating an existing spec sheet."""
-
-    display_name: str | None = None
-    categories: list[str] | None = None
-    tags: list[str] | None = None
-    folder_path: str | None = None
-    needs_review: bool | None = None
-    published: bool | None = None
-
-
-@strawberry.input
-class MoveFolderInput:
-    """Input for moving a folder to a new location."""
-
-    manufacturer_id: UUID
-    old_folder_path: str  # Current path like "Folder1/Folder2"
-    new_folder_path: str  # New path like "Folder3" or empty string for root
+__all__ = [
+    "CreateSpecSheetInput",
+    "UpdateSpecSheetInput",
+    "MoveFolderInput",
+]
