@@ -8,6 +8,7 @@ import strawberry
 
 from app.core.db.adapters.dto import DTOMixin
 from app.graphql.spec_sheets.models.spec_sheet_model import SpecSheet
+from app.graphql.users.strawberry.user_response import UserResponse
 
 
 @strawberry.type
@@ -31,18 +32,15 @@ class SpecSheetResponse(DTOMixin[SpecSheet]):
     usage_count: int
     highlight_count: int
     created_at: datetime
-    created_by: str
+    created_by: UserResponse | None
 
     @classmethod
     def from_orm_model(cls, model: SpecSheet) -> Self:
         """Convert ORM model to GraphQL response."""
         # Handle created_by User object
-        created_by_str = ""
+        created_by_user = None
         if hasattr(model, "created_by") and model.created_by:
-            if hasattr(model.created_by, "full_name"):
-                created_by_str = model.created_by.full_name or ""
-            elif hasattr(model.created_by, "email"):
-                created_by_str = model.created_by.email or ""
+            created_by_user = UserResponse.from_orm_model(model.created_by)
 
         return cls(
             id=model.id,
@@ -62,5 +60,5 @@ class SpecSheetResponse(DTOMixin[SpecSheet]):
             usage_count=model.usage_count,
             highlight_count=model.highlight_count,
             created_at=model.created_at,
-            created_by=created_by_str,
+            created_by=created_by_user,
         )
