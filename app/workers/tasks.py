@@ -37,8 +37,8 @@ PACE_LIMITS: dict[SendPace, int] = {
 
 DEFAULT_MAX_EMAILS_PER_DAY = 1000
 
-# Cron schedule: run every minute
-CAMPAIGN_PROCESSING_CRON = "* * * * *"
+# Cron schedule: run every 5 minutes
+CAMPAIGN_PROCESSING_CRON = "*/5 * * * *"
 
 
 async def get_multitenant_controller(settings: Settings) -> MultiTenantController:
@@ -206,7 +206,7 @@ async def check_and_process_campaigns_task() -> dict[str, object]:
     """
     TaskIQ task: Check for campaigns that need processing and process them.
 
-    This task runs on a cron schedule (every minute) and iterates through
+    This task runs on a cron schedule (every 5 minutes) and iterates through
     all tenant databases to find and process active campaigns.
 
     Uses DI container to resolve settings and services.
