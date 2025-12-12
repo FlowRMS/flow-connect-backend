@@ -131,7 +131,7 @@ jobs:
         shell: bash
         run: |
           export WORKER_TYPE='scheduler'
-          export WORKER_COMMAND='taskiq scheduler app.workers.broker:scheduler --skip-first-run'
+          export WORKER_COMMAND="taskiq scheduler app.workers.broker:scheduler --fs-discover --tasks-pattern 'app/workers/tasks.py' --tasks-pattern 'app/**/tasks/**/*.py' --skip-first-run"    
           echo "Deploying application using image ${{ env.IMAGE_TAG }}" 
           envsubst < .k8s/deployment.worker.yaml > deployment.beat.prod.yaml
           kubectl apply -f deployment.beat.prod.yaml
