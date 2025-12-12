@@ -1,5 +1,4 @@
 import contextlib
-import logging
 import time
 from typing import Any
 
@@ -7,6 +6,7 @@ from aioinject.ext.fastapi import AioInjectMiddleware
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
+from loguru import logger
 from sqlalchemy.orm import configure_mappers
 from taskiq_fastapi import init
 
@@ -16,8 +16,6 @@ from app.api.o365_router import router as o365_router
 from app.core.container import create_container
 from app.graphql.app import create_graphql_app
 from app.workers.broker import broker
-
-logger = logging.getLogger(__name__)
 
 
 def create_app() -> FastAPI:

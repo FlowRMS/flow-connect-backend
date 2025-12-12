@@ -35,8 +35,8 @@ PACE_LIMITS: dict[SendPace, int] = {
 
 DEFAULT_MAX_EMAILS_PER_DAY = 1000
 
-# Cron schedule: run every 5 minutes
-CAMPAIGN_PROCESSING_CRON = "*/5 * * * *"
+# Cron schedule: run every 10 minutes
+CAMPAIGN_PROCESSING_CRON = "*/10 * * * *"
 
 
 async def get_multitenant_controller(settings: Settings) -> MultiTenantController:

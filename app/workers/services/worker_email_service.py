@@ -1,9 +1,9 @@
 """Worker email service for sending campaign emails without AuthInfo context."""
 
-import logging
 from datetime import datetime, timezone
 from uuid import UUID
 
+from loguru import logger
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.graphql.campaigns.models.campaign_model import Campaign
@@ -17,8 +17,6 @@ from .strategies import (
     GmailEmailStrategy,
     O365EmailStrategy,
 )
-
-logger = logging.getLogger(__name__)
 
 
 class WorkerEmailService:
