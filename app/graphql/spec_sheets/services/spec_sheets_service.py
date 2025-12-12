@@ -1,10 +1,12 @@
 """Service layer for SpecSheets business logic."""
 
+import io
 import os
-from pathlib import Path
 from uuid import UUID, uuid4
 
-import aiofiles
+from loguru import logger
+
+from commons.s3.service import S3Service
 
 from app.graphql.spec_sheets.models.spec_sheet_model import SpecSheet
 from app.graphql.spec_sheets.repositories.spec_sheets_repository import (
@@ -15,22 +17,27 @@ from app.graphql.spec_sheets.strawberry.spec_sheet_input import (
     UpdateSpecSheetInput,
 )
 
-# Define uploads directory
-UPLOADS_DIR = Path(__file__).parent.parent.parent.parent.parent / "uploads"
-UPLOADS_DIR.mkdir(exist_ok=True)
+# S3 key prefix for spec sheet uploads
+SPEC_SHEETS_S3_PREFIX = "spec-sheets"
 
 
 class SpecSheetsService:
     """Service for SpecSheets business logic."""
 
-    def __init__(self, repository: SpecSheetsRepository) -> None:
+    def __init__(
+        self,
+        repository: SpecSheetsRepository,
+        s3_service: S3Service,
+    ) -> None:
         """
         Initialize the SpecSheets service.
 
         Args:
             repository: SpecSheets repository instance
+            s3_service: S3 service for file uploads
         """
         self.repository = repository
+        self.s3_service = s3_service
 
     async def create_spec_sheet(self, input_data: CreateSpecSheetInput) -> SpecSheet:
         """
@@ -50,16 +57,29 @@ class SpecSheetsService:
             # Generate unique filename
             file_extension = os.path.splitext(input_data.file_name)[1] or '.pdf'
             unique_filename = f"{uuid4()}{file_extension}"
-            file_path = UPLOADS_DIR / unique_filename
+            s3_key = f"{SPEC_SHEETS_S3_PREFIX}/{unique_filename}"
 
-            # Save file to disk
-            async with aiofiles.open(file_path, 'wb') as f:
-                content = await input_data.file.read()
-                await f.write(content)
-
-            # Update file_url and file_size
-            file_url = f"/uploads/{unique_filename}"
+            # Read file content
+            content = await input_data.file.read()
             file_size = len(content)
+
+            logger.info(f"Uploading to S3: bucket={self.s3_service.bucket_name}, key={s3_key}")
+
+            # Upload to S3
+            await self.s3_service.upload(
+                bucket=self.s3_service.bucket_name,
+                key=s3_key,
+                file_obj=io.BytesIO(content),
+                ContentType='application/pdf',
+            )
+
+            # Generate presigned URL for access
+            file_url = await self.s3_service.generate_presigned_url(
+                bucket=self.s3_service.bucket_name,
+                key=s3_key,
+            )
+
+            logger.info(f"Upload successful, presigned URL generated")
 
         # Use display_name if provided, otherwise use file_name
         display_name = input_data.display_name or input_data.file_name

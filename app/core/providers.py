@@ -8,9 +8,11 @@ from pydantic_settings import BaseSettings
 from app.auth import auth_provider
 from app.core.config.auth_settings import AuthSettings
 from app.core.config.base_settings import get_settings
+from app.core.config.s3_settings import S3Settings
 from app.core.config.settings import Settings
 from app.core.context_wrapper import create_context_wrapper
 from app.core.db import db_provider
+from app.core import s3_provider
 from app.graphql.repositories import repository_providers
 from app.graphql.service_providers import service_providers
 from app.integrations.gmail.config import GmailSettings
@@ -19,6 +21,7 @@ from app.integrations.microsoft_o365.config import O365Settings
 modules: Iterable[Iterable[aioinject.Provider[Any]]] = [
     auth_provider.providers,
     db_provider.providers,
+    s3_provider.providers,
 ]
 
 settings_classes: Iterable[type[BaseSettings]] = [
@@ -26,6 +29,7 @@ settings_classes: Iterable[type[BaseSettings]] = [
     AuthSettings,
     O365Settings,
     GmailSettings,
+    S3Settings,
 ]
 
 
