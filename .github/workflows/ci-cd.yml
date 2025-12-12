@@ -122,7 +122,7 @@ jobs:
         shell: bash
         run: |
           export WORKER_TYPE='worker'
-          export WORKER_COMMAND='taskiq worker app.workers.broker:broker --fs-discover --tasks-pattern 'app/workers/tasks.py' --tasks-pattern 'app/**/tasks/**/*.py'
+          export WORKER_COMMAND="taskiq worker app.workers.broker:broker --fs-discover --tasks-pattern 'app/workers/tasks.py' --tasks-pattern 'app/**/tasks/**/*.py'"
           echo "Deploying application using image ${{ env.IMAGE_TAG }}"
           envsubst < .k8s/deployment.worker.yaml > deployment.worker.prod.yaml
           kubectl apply -f deployment.worker.prod.yaml
