@@ -38,7 +38,7 @@ tasks:
     desc: Export GraphQL Schema
     cmds:
       - >
-        {{.RUNNER}} strawberry export-schema
+        export PYTHONPATH=. && {{.RUNNER}} strawberry export-schema
         --app-dir app
         --output schema.graphql
         app.graphql.schemas.schema
