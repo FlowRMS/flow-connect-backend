@@ -4,6 +4,7 @@ import io
 import os
 from uuid import UUID, uuid4
 
+import httpx
 from commons.s3.service import S3Service
 from loguru import logger
 
@@ -82,10 +83,45 @@ class SpecSheetsService:
                 key=s3_key,
             )
 
-            logger.info(f"Upload successful, presigned URL generated")
+            logger.info("Upload successful, presigned URL generated")
         elif input_data.upload_source == "url" and input_data.source_url:
-            # For URL uploads, use source_url as file_url
-            file_url = input_data.source_url
+            # Download PDF from URL and upload to S3
+            logger.info(f"Downloading PDF from URL: {input_data.source_url}")
+
+            async with httpx.AsyncClient(timeout=60.0, follow_redirects=True) as client:
+                response = await client.get(input_data.source_url)
+                _ = response.raise_for_status()
+                content = response.content
+                file_size = len(content)
+
+            # Generate unique filename
+            file_extension = os.path.splitext(input_data.file_name)[1] or ".pdf"
+            unique_filename = f"{uuid4()}{file_extension}"
+            s3_key = f"{SPEC_SHEETS_S3_PREFIX}/{unique_filename}"
+
+            bucket_name = self.s3_service.bucket_name
+            if not bucket_name:
+                raise ValueError("S3 bucket name is not configured")
+
+            logger.info(
+                f"Uploading downloaded PDF to S3: bucket={bucket_name}, key={s3_key}"
+            )
+
+            # Upload to S3
+            await self.s3_service.upload(
+                bucket=bucket_name,
+                key=s3_key,
+                file_obj=io.BytesIO(content),
+                ContentType="application/pdf",
+            )
+
+            # Generate presigned URL for access
+            file_url = await self.s3_service.generate_presigned_url(
+                bucket=bucket_name,
+                key=s3_key,
+            )
+
+            logger.info("URL upload successful, PDF stored in S3")
 
         # Use display_name if provided, otherwise use file_name
         display_name = input_data.display_name or input_data.file_name
