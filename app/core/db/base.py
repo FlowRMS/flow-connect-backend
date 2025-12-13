@@ -11,6 +11,10 @@ from sqlalchemy.dialects.postgresql import UUID as PG_UUID
 from sqlalchemy.orm import Mapped, MappedAsDataclass, mapped_column
 
 
+class LocalBaseModel(BaseModel):
+    __abstract__ = True
+
+
 class CrmBaseModel(BaseModel):
     __abstract__ = True
     __table_args__ = {"schema": "pycrm"}

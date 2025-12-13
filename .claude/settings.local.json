@@ -13,7 +13,12 @@
       "Bash(ls:*)",
       "Bash(uv pip install:*)",
       "Bash(task gql:*)",
-      "Bash(git rm:*)"
+      "Bash(git rm:*)",
+      "mcp__flowrms__list_tenants",
+      "mcp__flowrms__get_table_schema",
+      "mcp__flowrms__query_tenant",
+      "Bash(task test)",
+      "Bash(timeout 5 uv run:*)"
     ]
   },
   "enableAllProjectMcpServers": true,

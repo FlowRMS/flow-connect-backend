@@ -145,6 +145,11 @@ type CheckResponse {
   creationType: Int!
 }
 
+enum CommissionPolicyEnum {
+  STANDARD
+  CUSTOM
+}
+
 input CompanyInput {
   name: String!
   companySourceType: CompanyType!
@@ -273,11 +278,33 @@ enum CriteriaOperator {
   NOT_IN
 }
 
+input CustomerInput {
+  companyName: String!
+  published: Boolean! = false
+  isParent: Boolean! = false
+  parentId: UUID = null
+  contactEmail: String = null
+  contactNumber: String = null
+  customerBranchId: UUID = null
+  customerTerritoryId: UUID = null
+  logoUrl: String = null
+  insideRepId: UUID = null
+  type: String = null
+}
+
 type CustomerResponse {
   id: UUID!
   companyName: String!
+  published: Boolean!
+  isParent: Boolean!
   parentId: UUID
+  contactEmail: String
+  contactNumber: String
+  customerBranchId: UUID
+  customerTerritoryId: UUID
+  logoUrl: String
   insideRepId: UUID
+  type: String
 }
 
 """Date (isoformat)"""
@@ -304,9 +331,49 @@ type EstimateRecipientsResponse {
   sampleContacts: [ContactResponse!]!
 }
 
+input FactoryInput {
+  title: String!
+  published: Boolean! = false
+  accountNumber: String = null
+  email: String = null
+  phone: String = null
+  externalTerms: String = null
+  additionalInformation: String = null
+  freightTerms: String = null
+  freightDiscountType: FreightDiscountTypeEnum! = NONE
+  leadTime: String = null
+  paymentTerms: String = null
+  commissionRate: Decimal = null
+  commissionDiscountRate: Decimal = null
+  overallDiscountRate: Decimal = null
+  logoUrl: String = null
+  insideRepId: UUID = null
+  externalPaymentTerms: String = null
+  commissionPolicy: CommissionPolicyEnum! = STANDARD
+  directCommissionAllowed: Boolean! = true
+}
+
 type FactoryResponse {
   id: UUID!
   title: String!
+  published: Boolean!
+  accountNumber: String
+  email: String
+  phone: String
+  externalTerms: String
+  additionalInformation: String
+  freightTerms: String
+  freightDiscountType: Int!
+  leadTime: String
+  paymentTerms: String
+  commissionRate: Decimal
+  commissionDiscountRate: Decimal
+  overallDiscountRate: Decimal
+  logoUrl: String
+  insideRepId: UUID
+  externalPaymentTerms: String
+  commissionPolicy: Int!
+  directCommissionAllowed: Boolean!
 }
 
 input Filter {
@@ -331,6 +398,11 @@ enum FilterOperator {
   NOT_IN
   IS_NULL
   IS_NOT_NULL
+}
+
+enum FreightDiscountTypeEnum {
+  NONE
+  PERCENTAGE
 }
 
 type GenericLandingPage {
@@ -557,6 +629,12 @@ type Mutation {
   createContact(input: ContactInput!): ContactResponse!
   deleteContact(id: UUID!): Boolean!
   updateContact(id: UUID!, input: ContactInput!): ContactResponse!
+  createCustomer(input: CustomerInput!): CustomerResponse!
+  updateCustomer(id: UUID!, input: CustomerInput!): CustomerResponse!
+  deleteCustomer(id: UUID!): Boolean!
+  createFactory(input: FactoryInput!): FactoryResponse!
+  updateFactory(id: UUID!, input: FactoryInput!): FactoryResponse!
+  deleteFactory(id: UUID!): Boolean!
   updateManufacturerOrder(factoryIds: [UUID!]!): Int!
   gmailConnect(code: String!): GmailConnectionResultType!
   gmailDisconnect: Boolean!
@@ -580,6 +658,9 @@ type Mutation {
   createPreOpportunity(input: PreOpportunityInput!): PreOpportunityResponse!
   updatePreOpportunity(input: PreOpportunityInput!): PreOpportunityResponse!
   deletePreOpportunity(id: UUID!): Boolean!
+  createProduct(input: ProductInput!): ProductResponse!
+  updateProduct(id: UUID!, input: ProductInput!): ProductResponse!
+  deleteProduct(id: UUID!): Boolean!
   createHighlightVersion(input: CreateHighlightVersionInput!): HighlightVersionResponse!
   updateHighlightVersion(id: UUID!, input: UpdateHighlightVersionInput!): HighlightVersionResponse!
   updateHighlightRegions(input: UpdateHighlightRegionsInput!): HighlightVersionResponse!
@@ -770,7 +851,7 @@ type PreOpportunityDetailResponse {
   productCpnId: UUID
   endUserId: UUID!
   leadTime: String
-  product: ProductResponse!
+  product: ProductLiteResponse!
 }
 
 input PreOpportunityInput {
@@ -867,10 +948,63 @@ type ProductCategoryResponse {
   commissionRate: Decimal!
 }
 
+input ProductInput {
+  factoryPartNumber: String!
+  factoryId: UUID!
+  unitPrice: Decimal!
+  defaultCommissionRate: Decimal!
+  productCategoryId: UUID = null
+  productUomId: UUID = null
+  published: Boolean! = false
+  approvalNeeded: Boolean = null
+  description: String = null
+  leadTime: String = null
+  minOrderQty: Int = null
+  commissionDiscountRate: Decimal = null
+  overallDiscountRate: Decimal = null
+  cost: Decimal = null
+  individualUpc: String = null
+  approvalComments: String = null
+  logoUrl: String = null
+  salesModel: String = null
+  payoutType: String = null
+}
+
+type ProductLiteResponse {
+  id: UUID!
+  factoryPartNumber: String!
+  factoryId: UUID!
+}
+
 type ProductResponse {
   id: UUID!
-  factoryId: UUID!
   factoryPartNumber: String!
+  unitPrice: Decimal!
+  defaultCommissionRate: Decimal!
+  published: Boolean!
+  approvalNeeded: Boolean
+  description: String
+  leadTime: String
+  minOrderQty: Int
+  commissionDiscountRate: Decimal
+  overallDiscountRate: Decimal
+  cost: Decimal
+  individualUpc: String
+  approvalComments: String
+  logoUrl: String
+  salesModel: String
+  payoutType: String
+  factory: FactoryResponse!
+  category: ProductCategoryResponse
+  uom: ProductUomResponse
+}
+
+type ProductUomResponse {
+  id: UUID!
+  title: String!
+  description: String
+  multiply: Boolean!
+  multiplyBy: Int!
 }
 
 type Query {

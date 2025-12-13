@@ -9,10 +9,12 @@ from app.graphql.companies.services.companies_service import CompaniesService
 from app.graphql.companies.strawberry.company_response import CompanyResponse
 from app.graphql.contacts.services.contacts_service import ContactsService
 from app.graphql.contacts.strawberry.contact_response import ContactResponse
-from app.graphql.customers.services.customer_service import CustomerService
-from app.graphql.customers.strawberry.customer_response import CustomerResponse
-from app.graphql.factories.services.factory_service import FactoryService
-from app.graphql.factories.strawberry.factory_response import FactoryResponse
+from app.graphql.core.customers.services.customer_service import CustomerService
+from app.graphql.core.customers.strawberry.customer_response import CustomerResponse
+from app.graphql.core.factories.services.factory_service import FactoryService
+from app.graphql.core.factories.strawberry.factory_response import FactoryResponse
+from app.graphql.core.products.services.product_service import ProductService
+from app.graphql.core.products.strawberry.product_response import ProductResponse
 from app.graphql.inject import inject
 from app.graphql.invoices.services.invoice_service import InvoiceService
 from app.graphql.invoices.strawberry.invoice_response import InvoiceResponse
@@ -29,8 +31,6 @@ from app.graphql.pre_opportunities.services.pre_opportunities_service import (
 from app.graphql.pre_opportunities.strawberry.pre_opportunity_lite_response import (
     PreOpportunityLiteResponse,
 )
-from app.graphql.products.services.product_service import ProductService
-from app.graphql.products.strawberry.product_response import ProductResponse
 from app.graphql.quotes.services.quote_service import QuoteService
 from app.graphql.quotes.strawberry.quote_response import QuoteResponse
 from app.graphql.tasks.services.tasks_service import TasksService

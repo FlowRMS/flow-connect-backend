@@ -7,10 +7,10 @@ from uuid import UUID
 import strawberry
 
 from app.core.db.adapters.dto import DTOMixin
+from app.graphql.core.products.strawberry.product_response import ProductLiteResponse
 from app.graphql.pre_opportunities.models.pre_opportunity_detail_model import (
     PreOpportunityDetail,
 )
-from app.graphql.products.strawberry.product_response import ProductResponse
 
 
 @strawberry.type
@@ -50,5 +50,5 @@ class PreOpportunityDetailResponse(DTOMixin[PreOpportunityDetail]):
         )
 
     @strawberry.field
-    def product(self) -> ProductResponse:
-        return ProductResponse.from_orm_model(self._instance.product)
+    def product(self) -> ProductLiteResponse:
+        return ProductLiteResponse.from_orm_model(self._instance.product)
