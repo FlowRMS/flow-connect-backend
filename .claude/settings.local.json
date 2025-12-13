@@ -4,7 +4,19 @@
       "Bash(python -m app.workers.run_worker:*)",
       "Bash(dir:*)",
       "Bash(.venv/Scripts/python.exe:*)",
-      "Bash(findstr:*)"
+      "Bash(findstr:*)",
+      "Bash(cat:*)",
+      "Bash(uv sync:*)",
+      "Bash(uv run:*)",
+      "Bash(task all)",
+      "Bash(node:*)",
+      "Bash(ls:*)",
+      "Bash(uv pip install:*)",
+      "Bash(task gql:*)"
     ]
-  }
+  },
+  "enableAllProjectMcpServers": true,
+  "enabledMcpjsonServers": [
+    "flowrms"
+  ]
 }

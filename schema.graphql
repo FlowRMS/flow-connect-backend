@@ -224,6 +224,28 @@ type ContactResponse {
   notes: String
 }
 
+input CreateHighlightVersionInput {
+  specSheetId: UUID!
+  name: String!
+  description: String = null
+  regions: [HighlightRegionInput!]!
+}
+
+input CreateSpecSheetInput {
+  factoryId: UUID!
+  fileName: String!
+  displayName: String = null
+  uploadSource: String!
+  sourceUrl: String = null
+  pageCount: Int! = 1
+  categories: [String!]!
+  tags: [String!] = null
+  folderPath: String = null
+  needsReview: Boolean! = false
+  published: Boolean! = true
+  file: Upload = null
+}
+
 input CriteriaConditionInput {
   entityType: CRMEntityType!
   field: String!
@@ -342,6 +364,44 @@ type GmailSendEmailResultType {
   success: Boolean!
   messageId: String
   error: String
+}
+
+input HighlightRegionInput {
+  pageNumber: Int!
+  x: Float!
+  y: Float!
+  width: Float!
+  height: Float!
+  shapeType: String!
+  color: String!
+  annotation: String = null
+}
+
+type HighlightRegionResponse {
+  id: UUID!
+  versionId: UUID!
+  pageNumber: Int!
+  x: Float!
+  y: Float!
+  width: Float!
+  height: Float!
+  shapeType: String!
+  color: String!
+  annotation: String
+  createdAt: datetime!
+}
+
+type HighlightVersionResponse {
+  id: UUID!
+  specSheetId: UUID!
+  name: String!
+  description: String
+  versionNumber: Int!
+  isActive: Boolean!
+  regions: [HighlightRegionResponse!]!
+  regionCount: Int!
+  createdAt: datetime!
+  createdBy: UserResponse!
 }
 
 type InvoiceResponse {
@@ -474,6 +534,12 @@ enum LogicalOperator {
   OR
 }
 
+input MoveFolderInput {
+  factoryId: UUID!
+  oldFolderPath: String!
+  newFolderPath: String!
+}
+
 type Mutation {
   createAddress(input: AddressInput!): AddressResponse!
   deleteAddress(id: UUID!): Boolean!
@@ -491,6 +557,7 @@ type Mutation {
   createContact(input: ContactInput!): ContactResponse!
   deleteContact(id: UUID!): Boolean!
   updateContact(id: UUID!, input: ContactInput!): ContactResponse!
+  updateManufacturerOrder(factoryIds: [UUID!]!): Int!
   gmailConnect(code: String!): GmailConnectionResultType!
   gmailDisconnect: Boolean!
   gmailSendEmail(input: GmailSendEmailInput!): GmailSendEmailResultType!
@@ -513,6 +580,15 @@ type Mutation {
   createPreOpportunity(input: PreOpportunityInput!): PreOpportunityResponse!
   updatePreOpportunity(input: PreOpportunityInput!): PreOpportunityResponse!
   deletePreOpportunity(id: UUID!): Boolean!
+  createHighlightVersion(input: CreateHighlightVersionInput!): HighlightVersionResponse!
+  updateHighlightVersion(id: UUID!, input: UpdateHighlightVersionInput!): HighlightVersionResponse!
+  updateHighlightRegions(input: UpdateHighlightRegionsInput!): HighlightVersionResponse!
+  deleteHighlightVersion(id: UUID!): Boolean!
+  createSpecSheet(input: CreateSpecSheetInput!): SpecSheetResponse!
+  updateSpecSheet(id: UUID!, input: UpdateSpecSheetInput!): SpecSheetResponse!
+  deleteSpecSheet(id: UUID!): Boolean!
+  incrementSpecSheetUsage(id: UUID!): Boolean!
+  moveFolder(input: MoveFolderInput!): Int!
   createTask(input: TaskInput!): TaskType!
   updateTask(id: UUID!, input: TaskInput!): TaskType!
   deleteTask(id: UUID!): Boolean!
@@ -815,7 +891,7 @@ type Query {
   contactSearch(searchTerm: String!, limit: Int! = 20): [ContactResponse!]!
   contactRelatedEntities(contactId: UUID!): ContactRelatedEntitiesResponse!
   customerSearch(searchTerm: String!, published: Boolean! = true, limit: Int! = 20): [CustomerResponse!]!
-  factorySearch(searchTerm: String!, published: Boolean! = true, limit: Int! = 20): [FactoryResponse!]!
+  factorySearch(searchTerm: String!, published: Boolean! = true, limit: Int! = 20, useCustomOrder: Boolean! = false): [FactoryResponse!]!
   gmailAuthUrl(state: String = null): String!
   gmailConnectionStatus: GmailConnectionStatusType!
   o365AuthUrl(state: String = null): String!
@@ -846,6 +922,11 @@ type Query {
   productSearch(searchTerm: String!, productCategoryIds: [UUID!]!, factoryId: UUID, limit: Int! = 20): [ProductResponse!]!
   productCategorySearch(searchTerm: String!, factoryId: UUID, limit: Int! = 20): [ProductCategoryResponse!]!
   quoteSearch(searchTerm: String!, limit: Int! = 20): [QuoteResponse!]!
+  highlightVersion(id: UUID!): HighlightVersionResponse
+  highlightVersionsBySpecSheet(specSheetId: UUID!, activeOnly: Boolean! = false): [HighlightVersionResponse!]!
+  specSheet(id: UUID!): SpecSheetResponse
+  specSheetsByFactory(factoryId: UUID!, publishedOnly: Boolean! = true): [SpecSheetResponse!]!
+  specSheetSearch(searchTerm: String! = "", factoryId: UUID = null, categories: [String!] = null, publishedOnly: Boolean! = true, limit: Int! = 50): [SpecSheetResponse!]!
   task(id: UUID!): TaskType!
   taskConversations(taskId: UUID!): [TaskConversationType!]!
   taskSearch(searchTerm: String!, limit: Int! = 20): [TaskType!]!
@@ -884,6 +965,27 @@ enum SendPace {
 type SendTestEmailResponse {
   success: Boolean!
   error: String
+}
+
+type SpecSheetResponse {
+  id: UUID!
+  factoryId: UUID!
+  fileName: String!
+  displayName: String!
+  uploadSource: String!
+  sourceUrl: String
+  fileUrl: String!
+  fileSize: Int!
+  pageCount: Int!
+  categories: [String!]!
+  tags: [String!]
+  folderPath: String
+  needsReview: Boolean!
+  published: Boolean!
+  usageCount: Int!
+  highlightCount: Int!
+  createdAt: datetime!
+  createdBy: UserResponse!
 }
 
 input TaskConversationInput {
@@ -968,6 +1070,28 @@ type TaskType {
 }
 
 scalar UUID
+
+input UpdateHighlightRegionsInput {
+  versionId: UUID!
+  regions: [HighlightRegionInput!]!
+}
+
+input UpdateHighlightVersionInput {
+  name: String = null
+  description: String = null
+  isActive: Boolean = null
+}
+
+input UpdateSpecSheetInput {
+  displayName: String
+  categories: [String!]
+  tags: [String!]
+  folderPath: String
+  needsReview: Boolean
+  published: Boolean
+}
+
+scalar Upload
 
 type UserResponse {
   id: UUID!

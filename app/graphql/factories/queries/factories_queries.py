@@ -18,6 +18,7 @@ class FactoriesQueries:
         search_term: str,
         published: bool = True,
         limit: int = 20,
+        use_custom_order: bool = False,
     ) -> list[FactoryResponse]:
         """
         Search factories by title.
@@ -26,10 +27,15 @@ class FactoriesQueries:
             search_term: The search term to match against title
             published: Filter by published status (default: True)
             limit: Maximum number of factories to return (default: 20)
+            use_custom_order: If True, apply saved custom sort order (default: False)
 
         Returns:
             List of FactoryResponse objects matching the search criteria
         """
-        return FactoryResponse.from_orm_model_list(
-            await service.search_factories(search_term, published, limit)
-        )
+        if use_custom_order:
+            factories = await service.search_factories_ordered(
+                search_term, published, limit
+            )
+        else:
+            factories = await service.search_factories(search_term, published, limit)
+        return FactoryResponse.from_orm_model_list(factories)
