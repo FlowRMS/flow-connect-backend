@@ -12,7 +12,8 @@
       "Bash(node:*)",
       "Bash(ls:*)",
       "Bash(uv pip install:*)",
-      "Bash(task gql:*)"
+      "Bash(task gql:*)",
+      "Bash(git rm:*)"
     ]
   },
   "enableAllProjectMcpServers": true,
