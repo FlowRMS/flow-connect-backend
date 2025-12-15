@@ -7,10 +7,10 @@ from uuid import UUID
 import strawberry
 
 from app.core.db.adapters.dto import DTOMixin
-from app.graphql.core.products.strawberry.product_response import ProductLiteResponse
 from app.graphql.pre_opportunities.models.pre_opportunity_detail_model import (
     PreOpportunityDetail,
 )
+from app.graphql.v2.core.products.strawberry.product_response import ProductLiteResponse
 
 
 @strawberry.type

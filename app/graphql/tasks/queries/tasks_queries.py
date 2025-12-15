@@ -9,12 +9,6 @@ from app.graphql.companies.services.companies_service import CompaniesService
 from app.graphql.companies.strawberry.company_response import CompanyResponse
 from app.graphql.contacts.services.contacts_service import ContactsService
 from app.graphql.contacts.strawberry.contact_response import ContactResponse
-from app.graphql.core.customers.services.customer_service import CustomerService
-from app.graphql.core.customers.strawberry.customer_response import CustomerResponse
-from app.graphql.core.factories.services.factory_service import FactoryService
-from app.graphql.core.factories.strawberry.factory_response import FactoryResponse
-from app.graphql.core.products.services.product_service import ProductService
-from app.graphql.core.products.strawberry.product_response import ProductResponse
 from app.graphql.inject import inject
 from app.graphql.invoices.services.invoice_service import InvoiceService
 from app.graphql.invoices.strawberry.invoice_response import InvoiceResponse
@@ -41,6 +35,12 @@ from app.graphql.tasks.strawberry.task_related_entities_response import (
     TaskRelatedEntitiesResponse,
 )
 from app.graphql.tasks.strawberry.task_response import TaskType
+from app.graphql.v2.core.customers.services.customer_service import CustomerService
+from app.graphql.v2.core.customers.strawberry.customer_response import CustomerResponse
+from app.graphql.v2.core.factories.services.factory_service import FactoryService
+from app.graphql.v2.core.factories.strawberry.factory_response import FactoryResponse
+from app.graphql.v2.core.products.services.product_service import ProductService
+from app.graphql.v2.core.products.strawberry.product_response import ProductResponse
 
 
 @strawberry.type
