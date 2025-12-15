@@ -4,14 +4,14 @@ from decimal import Decimal
 from sqlalchemy import ForeignKey
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
-from app.core.db.base import HasCreatedAt, HasCreatedBy, LocalBaseModel
+from app.core.db.base import HasCreatedAt, HasCreatedByV2, LocalBaseModel
 from app.graphql.core.factories.models.factory import FactoryV2
 
 from .product_category import ProductCategoryV2
 from .product_uom import ProductUomV2
 
 
-class ProductV2(LocalBaseModel, HasCreatedBy, HasCreatedAt):
+class ProductV2(LocalBaseModel, HasCreatedByV2, HasCreatedAt):
     __tablename__ = "products"
 
     factory_part_number: Mapped[str]

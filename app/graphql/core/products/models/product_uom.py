@@ -2,13 +2,13 @@ from typing import TYPE_CHECKING
 
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
-from app.core.db.base import HasCreatedAt, HasCreatedBy, LocalBaseModel
+from app.core.db.base import HasCreatedAt, HasCreatedByV2, LocalBaseModel
 
 if TYPE_CHECKING:
     from .product import ProductV2
 
 
-class ProductUomV2(LocalBaseModel, HasCreatedBy, HasCreatedAt):
+class ProductUomV2(LocalBaseModel, HasCreatedByV2, HasCreatedAt):
     __tablename__ = "product_uoms"
 
     title: Mapped[str]

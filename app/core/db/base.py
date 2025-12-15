@@ -1,5 +1,3 @@
-"""SQLAlchemy declarative base for all ORM models."""
-
 import datetime
 import uuid
 
@@ -24,7 +22,7 @@ class HasCreatedAt(MappedAsDataclass):
     created_at: Mapped[datetime.datetime] = mapped_column(
         TIMESTAMP(timezone=True),
         init=False,
-        server_default=func.now(),  # Corrected line
+        server_default=func.now(),
     )
 
 
@@ -32,6 +30,15 @@ class HasCreatedBy(MappedAsDataclass):
     created_by_id: Mapped[uuid.UUID] = mapped_column(
         PG_UUID(as_uuid=True),
         ForeignKey(User.id),
+        init=False,
+        nullable=False,
+    )
+
+
+class HasCreatedByV2(MappedAsDataclass):
+    created_by_id: Mapped[uuid.UUID] = mapped_column(
+        PG_UUID(as_uuid=True),
+        ForeignKey("users.id"),
         init=False,
         nullable=False,
     )

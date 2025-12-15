@@ -1,13 +1,13 @@
 import uuid
 
-from commons.db.models import User
 from sqlalchemy import ForeignKey
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
-from app.core.db.base import HasCreatedAt, HasCreatedBy, LocalBaseModel
+from app.core.db.base import HasCreatedAt, HasCreatedByV2, LocalBaseModel
+from app.graphql.core.users.models.user import UserV2
 
 
-class CustomerV2(LocalBaseModel, HasCreatedBy, HasCreatedAt):
+class CustomerV2(LocalBaseModel, HasCreatedByV2, HasCreatedAt):
     __tablename__ = "customers"
 
     company_name: Mapped[str]
@@ -22,14 +22,14 @@ class CustomerV2(LocalBaseModel, HasCreatedBy, HasCreatedAt):
     customer_territory_id: Mapped[uuid.UUID | None] = mapped_column(default=None)
     logo_url: Mapped[str | None] = mapped_column(default=None)
     inside_rep_id: Mapped[uuid.UUID | None] = mapped_column(
-        ForeignKey(User.id), nullable=True, default=None
+        ForeignKey(UserV2.id), nullable=True, default=None
     )
 
     type: Mapped[str | None] = mapped_column(default=None)
 
-    created_by: Mapped["User"] = relationship(
+    created_by: Mapped[UserV2] = relationship(
         lazy="joined", init=False, foreign_keys="CustomerV2.created_by_id"
     )
-    inside_rep: Mapped["User | None"] = relationship(
+    inside_rep: Mapped[UserV2 | None] = relationship(
         lazy="joined", init=False, foreign_keys=[inside_rep_id]
     )
