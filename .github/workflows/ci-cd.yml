@@ -116,6 +116,8 @@ jobs:
             --from-literal=GMAIL_CLIENT_SECRET=${{ secrets.GMAIL_CLIENT_SECRET }} \
             --from-literal=GMAIL_REDIRECT_URI=${{ secrets.GMAIL_REDIRECT_URI }} \
             --from-literal=REDIS_URL=${{ secrets.REDIS_URL }} \
+            --from-literal=AWS_ACCESS_KEY_ID=${{ secrets.AWS_ACCESS_KEY_ID }} \
+            --from-literal=AWS_SECRET_ACCESS_KEY=${{ secrets.AWS_SECRET_ACCESS_KEY }} \
             -o yaml --dry-run=client | kubectl apply -f -
 
       - name: Deploy K8S worker

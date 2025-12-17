@@ -128,7 +128,7 @@ class SpecSheetHighlightsRepository(BaseRepository[SpecSheetHighlightVersion]):
             is_active=True,
         )
         # Set created_by_id after creation (init=False in mixin)
-        version.created_by_id = UUID(self.context.auth_info.user_id)
+        version.created_by_id = self.context.auth_info.flow_user_id
 
         self.session.add(version)
         await self.session.flush()  # Get the version ID

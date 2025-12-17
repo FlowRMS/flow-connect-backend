@@ -150,7 +150,7 @@ class GmailAuthService:
 
         # Save token
         return await self.repository.upsert_token(
-            user_id=uuid.UUID(self.auth_info.user_id),
+            user_id=self.auth_info.flow_user_id,
             google_user_id=user_info["id"],
             google_email=user_info.get("email", ""),
             access_token=token_data["access_token"],
@@ -336,12 +336,12 @@ class GmailAuthService:
             SendEmailResult with success status and optional message_id or error
         """
         try:
-            access_token = await self.get_valid_token(uuid.UUID(self.auth_info.user_id))
+            access_token = await self.get_valid_token(self.auth_info.flow_user_id)
         except (NotFoundError, GmailAuthError) as e:
             return SendEmailResult(success=False, error=str(e))
 
         # Get sender email from stored token
-        token = await self.repository.get_by_user_id(uuid.UUID(self.auth_info.user_id))
+        token = await self.repository.get_by_user_id(self.auth_info.flow_user_id)
         if not token:
             return SendEmailResult(success=False, error="No Gmail token found")
 
@@ -388,7 +388,7 @@ class GmailAuthService:
         Returns:
             True if token was deactivated, False if no token found
         """
-        return await self.repository.deactivate_token(uuid.UUID(self.auth_info.user_id))
+        return await self.repository.deactivate_token(self.auth_info.flow_user_id)
 
     async def get_connection_status(self) -> GmailConnectionStatus:
         """
@@ -397,7 +397,7 @@ class GmailAuthService:
         Returns:
             GmailConnectionStatus with connection details
         """
-        token = await self.repository.get_by_user_id(uuid.UUID(self.auth_info.user_id))
+        token = await self.repository.get_by_user_id(self.auth_info.flow_user_id)
 
         if not token or not token.is_active:
             return GmailConnectionStatus(is_connected=False)
