@@ -17,6 +17,10 @@ class CrmBaseModel(BaseModel):
     __abstract__ = True
     __table_args__ = {"schema": "pycrm"}
 
+class UserBaseModel(BaseModel):
+    __abstract__ = True
+    __table_args__ = {"schema": "pyuser"}
+
 
 class HasCreatedAt(MappedAsDataclass):
     created_at: Mapped[datetime.datetime] = mapped_column(
