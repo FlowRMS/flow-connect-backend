@@ -8,7 +8,7 @@ from app.core.db.models import configure_mappers
 
 configure_mappers()
 
-REDIS_URL = os.environ.get("REDIS_URL", "redis://localhost:6379")
+REDIS_URL = os.environ.get("REDIS_URL", "redis://angry_roentgen.orb.local:6379")
 
 broker = RedisStreamBroker(url=REDIS_URL)
 

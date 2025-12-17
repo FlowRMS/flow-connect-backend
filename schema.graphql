@@ -309,6 +309,16 @@ type FactoryResponse {
   title: String!
 }
 
+type FileLinkedEntitiesResponse {
+  quotes: [QuoteResponse!]!
+  orders: [OrderResponse!]!
+  invoices: [InvoiceResponse!]!
+  checks: [CheckResponse!]!
+  customers: [CustomerResponse!]!
+  factories: [FactoryResponse!]!
+  products: [ProductResponse!]!
+}
+
 input Filter {
   columnName: String!
   operator: FilterOperator!
@@ -871,6 +881,10 @@ type ProductResponse {
   id: UUID!
   factoryId: UUID!
   factoryPartNumber: String!
+  unitPrice: Decimal!
+  defaultCommissionRate: Decimal!
+  description: String
+  published: Boolean!
 }
 
 type Query {
@@ -892,6 +906,7 @@ type Query {
   contactRelatedEntities(contactId: UUID!): ContactRelatedEntitiesResponse!
   customerSearch(searchTerm: String!, published: Boolean! = true, limit: Int! = 20): [CustomerResponse!]!
   factorySearch(searchTerm: String!, published: Boolean! = true, limit: Int! = 20, useCustomOrder: Boolean! = false): [FactoryResponse!]!
+  fileLinkedEntities(fileId: UUID!): FileLinkedEntitiesResponse!
   gmailAuthUrl(state: String = null): String!
   gmailConnectionStatus: GmailConnectionStatusType!
   o365AuthUrl(state: String = null): String!
