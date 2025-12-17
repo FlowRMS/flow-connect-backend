@@ -20,3 +20,7 @@ class FactoryResponse(DTOMixin[Factory]):
             id=model.id,
             title=model.title,
         )
+
+    @strawberry.field
+    def url(self) -> str:
+        return f"/core/factories/list/{self.id}"

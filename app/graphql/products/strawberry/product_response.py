@@ -31,3 +31,7 @@ class ProductResponse(DTOMixin[Product]):
             description=model.description,
             published=model.published,
         )
+
+    @strawberry.field
+    def url(self) -> str:
+        return f"/core/products/list/{self.id}"

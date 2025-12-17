@@ -143,6 +143,7 @@ type CheckResponse {
   status: Int!
   createdBy: UUID!
   creationType: Int!
+  url: String!
 }
 
 input CompanyInput {
@@ -278,6 +279,7 @@ type CustomerResponse {
   companyName: String!
   parentId: UUID
   insideRepId: UUID
+  url: String!
 }
 
 """Date (isoformat)"""
@@ -307,6 +309,7 @@ type EstimateRecipientsResponse {
 type FactoryResponse {
   id: UUID!
   title: String!
+  url: String!
 }
 
 type FileLinkedEntitiesResponse {
@@ -429,6 +432,7 @@ type InvoiceResponse {
   createdBy: UUID!
   creationType: Int!
   balanceId: UUID!
+  url: String!
 }
 
 """The `JSON` scalar type represents JSON values as specified by ECMA-404"""
@@ -743,6 +747,7 @@ type OrderResponse {
   factSoNumber: String
   userOwnerIds: [UUID!]!
   quoteId: UUID
+  url: String!
 }
 
 type PreOpportunityBalanceResponse {
@@ -885,6 +890,7 @@ type ProductResponse {
   defaultCommissionRate: Decimal!
   description: String
   published: Boolean!
+  url: String!
 }
 
 type Query {
@@ -963,6 +969,7 @@ type QuoteResponse {
   jobName: String
   expDate: Date
   blanket: Boolean!
+  url: String!
 }
 
 enum RecipientListType {

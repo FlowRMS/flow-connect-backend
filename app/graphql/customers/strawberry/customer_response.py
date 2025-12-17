@@ -24,3 +24,7 @@ class CustomerResponse(DTOMixin[Customer]):
             parent_id=model.parent_id,
             inside_rep_id=model.inside_rep_id,
         )
+
+    @strawberry.field
+    def url(self) -> str:
+        return f"/core/customers/list/{self.id}"
