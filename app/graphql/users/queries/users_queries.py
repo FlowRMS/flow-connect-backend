@@ -31,6 +31,8 @@ class UsersQueries:
         service: Injected[UsersService],
         search_term: str,
         limit: int = 20,
+        is_inside: bool | None = None,
+        is_outside: bool | None = None,
     ) -> list[UserResponse]:
         """
         Search users by name or email.
@@ -43,5 +45,5 @@ class UsersQueries:
             List of UserResponse objects matching the search criteria
         """
         return UserResponse.from_orm_model_list(
-            await service.search_users(search_term, limit)
+            await service.search_users(search_term, limit, is_inside, is_outside)
         )

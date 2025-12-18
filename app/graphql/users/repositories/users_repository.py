@@ -28,7 +28,13 @@ class UsersRepository(BaseRepository[User]):
         """
         return await self.get_by_id(user_id)
 
-    async def search_by_name(self, search_term: str, limit: int = 20) -> list[User]:
+    async def search_by_name(
+        self,
+        search_term: str,
+        limit: int = 20,
+        is_inside: bool | None = None,
+        is_outside: bool | None = None,
+    ) -> list[User]:
         """
         Search users by first name, last name, or email using case-insensitive pattern matching.
 
@@ -50,5 +56,9 @@ class UsersRepository(BaseRepository[User]):
             )
             .limit(limit)
         )
+        if is_inside is not None:
+            stmt = stmt.where(User.inside == is_inside)
+        if is_outside is not None:
+            stmt = stmt.where(User.outside == is_outside)
         result = await self.session.execute(stmt)
         return list(result.scalars().all())

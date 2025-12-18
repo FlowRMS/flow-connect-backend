@@ -750,18 +750,6 @@ type OrderResponse {
   url: String!
 }
 
-type PendingDocumentLandingPage {
-  pendingDocumentId: UUID!
-  documentId: UUID!
-  documentType: String!
-  entityType: String
-  aiStatus: String!
-  fileStatus: String
-  clusterId: UUID
-  clusterName: String
-  createdAt: datetime!
-}
-
 type PreOpportunityBalanceResponse {
   id: UUID!
   subtotal: Decimal!
@@ -910,7 +898,6 @@ type Query {
   address(id: UUID!): AddressResponse!
   addresses(limit: Int! = 100, offset: Int! = 0): [AddressResponse!]!
   addressesByCompany(companyId: UUID!): [AddressResponse!]!
-  pendingDocumentsLanding(limit: Int! = 10, offset: Int! = 0): [PendingDocumentLandingPage!]!
   campaign(id: UUID!): CampaignResponse!
   campaignRecipients(campaignId: UUID!, limit: Int! = 100, offset: Int! = 0): [CampaignRecipientResponse!]!
   estimateRecipients(criteria: CampaignCriteriaInput!, sampleLimit: Int! = 10): EstimateRecipientsResponse!
@@ -967,7 +954,7 @@ type Query {
   taskRelatedEntities(taskId: UUID!): TaskRelatedEntitiesResponse!
   tasksByEntity(entityType: CRMEntityType!, entityId: UUID!): [TaskType!]!
   user(id: UUID!): UserResponse!
-  userSearch(searchTerm: String!, limit: Int! = 20): [UserResponse!]!
+  userSearch(searchTerm: String!, limit: Int! = 20, isInside: Boolean = null, isOutside: Boolean = null): [UserResponse!]!
 }
 
 type QuoteResponse {
