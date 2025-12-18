@@ -5,19 +5,19 @@ from app.graphql.v2.rbac.models.enums.rbac_privilege_type_enum import RbacPrivil
 from app.graphql.v2.rbac.models.enums.rbac_resource_enum import RbacResourceEnum
 
 
-@strawberry.type
-class RbacPrivilegeResponse:
+@strawberry.input
+class RbacGridRolePrivilegeInput:
     privilege: RbacPrivilegeTypeEnum
     option: RbacPrivilegeOptionEnum
 
 
-@strawberry.type
-class RbacRolePermissionResponse:
+@strawberry.input
+class RbacGridRoleInput:
     role_name: str
-    privileges: list[RbacPrivilegeResponse]
+    privileges: list[RbacGridRolePrivilegeInput]
 
 
-@strawberry.type
-class RbacGridResponse:
+@strawberry.input
+class RbacGridInput:
     resource: RbacResourceEnum
-    roles: list[RbacRolePermissionResponse]
+    roles: list[RbacGridRoleInput]

@@ -2,12 +2,10 @@ from collections import defaultdict
 
 from commons.auth import AuthInfo
 
-from app.graphql.v2.rbac.models.enums import (
-    RbacPrivilegeOptionEnum,
-    RbacPrivilegeTypeEnum,
-    RbacResourceEnum,
-    RbacRoleEnum,
-)
+from app.graphql.v2.rbac.models.enums.rbac_privilege_option_enum import RbacPrivilegeOptionEnum
+from app.graphql.v2.rbac.models.enums.rbac_privilege_type_enum import RbacPrivilegeTypeEnum
+from app.graphql.v2.rbac.models.enums.rbac_resource_enum import RbacResourceEnum
+from app.graphql.v2.rbac.models.enums.rbac_role_enum import RbacRoleEnum
 from app.graphql.v2.rbac.repositories.rbac_repository import RbacRepository
 from app.graphql.v2.rbac.strawberry.rbac_grid_response import (
     RbacGridResponse,
@@ -61,3 +59,37 @@ class RbacService:
             )
 
         return result
+
+    async def update_rbac_grid(
+        self, grid_inputs: list
+    ) -> list[RbacGridResponse]:
+        from app.graphql.v2.rbac.models.entities.rbac_permission import RbacPermission
+
+        permissions_to_create = []
+        for grid_input in grid_inputs:
+            resource = grid_input.resource
+            if resource.immutable:
+                continue
+
+            for role_input in grid_input.roles:
+                role_enum = RbacRoleEnum.from_label(role_input.role_name)
+
+                if not role_enum or role_enum.immutable:
+                    continue
+
+                # Delete existing permissions for this role and resource
+                await self.repository.delete_by_role_and_resource(role_enum, resource)
+
+                for privilege_input in role_input.privileges:
+                    permission = RbacPermission(
+                        resource=resource,
+                        role=role_enum.num,
+                        privilege=privilege_input.privilege,
+                        option=privilege_input.option,
+                    )
+                    permissions_to_create.append(permission)
+
+        if permissions_to_create:
+            await self.repository.create_permissions(permissions_to_create)
+
+        return await self.get_rbac_grid()
