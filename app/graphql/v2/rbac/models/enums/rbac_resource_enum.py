@@ -21,7 +21,3 @@ class RbacResourceEnum(IntEnum):
         obj._value_ = value
         obj.immutable = immutable
         return obj
-
-    def __init__(self, num, immutable = False):
-        self.num = num
-        self.immutable = immutable

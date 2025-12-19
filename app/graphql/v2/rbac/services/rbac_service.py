@@ -2,6 +2,7 @@ from collections import defaultdict
 
 from commons.auth import AuthInfo
 
+from app.graphql.v2.rbac.models.entities.rbac_permission import RbacPermission
 from app.graphql.v2.rbac.models.enums.rbac_privilege_option_enum import RbacPrivilegeOptionEnum
 from app.graphql.v2.rbac.models.enums.rbac_privilege_type_enum import RbacPrivilegeTypeEnum
 from app.graphql.v2.rbac.models.enums.rbac_resource_enum import RbacResourceEnum
@@ -20,6 +21,7 @@ class RbacService:
         repository: RbacRepository,
         auth_info: AuthInfo,
     ) -> None:
+        super().__init__()
         self.repository = repository
         self.auth_info = auth_info
 
@@ -63,8 +65,6 @@ class RbacService:
     async def update_rbac_grid(
         self, grid_inputs: list
     ) -> list[RbacGridResponse]:
-        from app.graphql.v2.rbac.models.entities.rbac_permission import RbacPermission
-
         permissions_to_create = []
         for grid_input in grid_inputs:
             resource = grid_input.resource
@@ -90,6 +90,6 @@ class RbacService:
                     permissions_to_create.append(permission)
 
         if permissions_to_create:
-            await self.repository.create_permissions(permissions_to_create)
+            _ = await self.repository.create_permissions(permissions_to_create)
 
         return await self.get_rbac_grid()

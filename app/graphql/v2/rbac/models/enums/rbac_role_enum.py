@@ -17,11 +17,6 @@ class RbacRoleEnum(IntEnum):
         obj.immutable = immutable
         return obj
 
-    def __init__(self, num, label, immutable = False):
-        self.num = num
-        self.label = label
-        self.immutable = immutable
-
     def __str__(self):
         return self.label
 

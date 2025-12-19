@@ -24,7 +24,7 @@ class RbacRepository(BaseRepository[RbacPermission]):
             RbacPermission.role == role,
             RbacPermission.resource == resource
         )
-        await self.session.execute(stmt)
+        _ = await self.session.execute(stmt)
         await self.session.flush()
 
     async def create_permissions(
