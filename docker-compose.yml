@@ -6,7 +6,7 @@ services:
       context: .
       dockerfile: Dockerfile
       args:
-        UV_INDEX_URL: https://flowbot-user:88qbA6RXJGHt@pypi.flowrms.com/simple/
+        GITHUB_TOKEN: ${GITHUB_TOKEN}
     environment:
       - PORT=8000
     ports:

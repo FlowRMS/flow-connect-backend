@@ -65,7 +65,7 @@ jobs:
           push: true
           tags: ${{ steps.set_tags.outputs.image_tag }}
           build-args: |
-            UV_INDEX_URL=${{ secrets.UV_INDEX_URL }}
+            GITHUB_TOKEN=${{ secrets.WORKFLOW_TOKEN }}
 
       - name: Verify the image was pushed
         run: |

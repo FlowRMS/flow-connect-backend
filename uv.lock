@@ -694,6 +694,43 @@ wheels = [
 ]
 
 [[package]]
+name = "flow-py-commons"
+version = "0.104.3"
+source = { git = "ssh://git@github.com/FlowRMS/flowbot-commons.git?tag=0.104.3#0972fb41f74a495ecabba0bdc6d4fcb33a4f7f98" }
+dependencies = [
+    { name = "aiobotocore" },
+    { name = "aiohttp" },
+    { name = "alembic" },
+    { name = "babel" },
+    { name = "datadog-api-client" },
+    { name = "fastapi" },
+    { name = "fastexcel" },
+    { name = "graphql-query" },
+    { name = "loguru" },
+    { name = "openpyxl" },
+    { name = "pandas" },
+    { name = "pendulum" },
+    { name = "polars" },
+    { name = "pydantic-settings" },
+    { name = "pyjwt", extra = ["crypto"] },
+    { name = "python-calamine" },
+    { name = "qdrant-client" },
+    { name = "result" },
+    { name = "s3fs" },
+    { name = "sqlalchemy" },
+    { name = "starlette" },
+    { name = "taskiq" },
+    { name = "tenacity" },
+    { name = "thefuzz" },
+    { name = "valkey", extra = ["libvalkey"] },
+    { name = "voyageai" },
+    { name = "websockets" },
+    { name = "workos" },
+    { name = "xlrd" },
+    { name = "xlsx2csv" },
+]
+
+[[package]]
 name = "flow-py-crm"
 version = "0.1.0"
 source = { virtual = "." }
@@ -703,7 +740,7 @@ dependencies = [
     { name = "asyncpg" },
     { name = "cryptography" },
     { name = "fastapi", extra = ["standard"] },
-    { name = "flowbot-commons" },
+    { name = "flow-py-commons" },
     { name = "greenlet" },
     { name = "httpx" },
     { name = "loguru" },
@@ -747,7 +784,7 @@ requires-dist = [
     { name = "asyncpg", specifier = ">=0.30.0" },
     { name = "cryptography", specifier = ">=46.0.2" },
     { name = "fastapi", extras = ["standard"], specifier = ">=0.110.0" },
-    { name = "flowbot-commons", specifier = "==0.104", index = "https://pypi.flowrms.com/simple/" },
+    { name = "flow-py-commons", git = "ssh://git@github.com/FlowRMS/flowbot-commons.git?tag=0.104.3" },
     { name = "greenlet", specifier = ">=3.2.4" },
     { name = "httpx", specifier = ">=0.27.0" },
     { name = "loguru", specifier = ">=0.7.2,<0.8" },
@@ -782,47 +819,6 @@ dev = [
     { name = "pytest-asyncio", specifier = ">=0.23.7,<0.24" },
     { name = "ruff", specifier = ">=0.4.4,<0.5" },
     { name = "testcontainers", specifier = ">=4.13.1" },
-]
-
-[[package]]
-name = "flowbot-commons"
-version = "0.104.0"
-source = { registry = "https://pypi.flowrms.com/simple/" }
-dependencies = [
-    { name = "aiobotocore" },
-    { name = "aiohttp" },
-    { name = "alembic" },
-    { name = "babel" },
-    { name = "datadog-api-client" },
-    { name = "fastapi" },
-    { name = "fastexcel" },
-    { name = "graphql-query" },
-    { name = "loguru" },
-    { name = "openpyxl" },
-    { name = "pandas" },
-    { name = "pendulum" },
-    { name = "polars" },
-    { name = "pydantic-settings" },
-    { name = "pyjwt", extra = ["crypto"] },
-    { name = "python-calamine" },
-    { name = "qdrant-client" },
-    { name = "result" },
-    { name = "s3fs" },
-    { name = "sqlalchemy" },
-    { name = "starlette" },
-    { name = "taskiq" },
-    { name = "tenacity" },
-    { name = "thefuzz" },
-    { name = "valkey", extra = ["libvalkey"] },
-    { name = "voyageai" },
-    { name = "websockets" },
-    { name = "workos" },
-    { name = "xlrd" },
-    { name = "xlsx2csv" },
-]
-sdist = { url = "https://pypi.flowrms.com/packages/flowbot_commons-0.104.0.tar.gz", hash = "sha256:e48718e7f39bfb1e22774c31d45e04936a48f069cd4da765df9f9d72605468b4" }
-wheels = [
-    { url = "https://pypi.flowrms.com/packages/flowbot_commons-0.104.0-py3-none-any.whl", hash = "sha256:705ae29a1b8c4cbe5e60a1f335cc6a1b58019e017cbdb67686703eb3c14d7bd9" },
 ]
 
 [[package]]
