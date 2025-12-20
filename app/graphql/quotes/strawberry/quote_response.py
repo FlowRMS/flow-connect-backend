@@ -39,3 +39,7 @@ class QuoteResponse(DTOMixin[Quote]):
             exp_date=model.exp_date,
             blanket=model.blanket,
         )
+
+    @strawberry.field
+    def url(self) -> str:
+        return f"/crm/quotes/list/{self.id}"

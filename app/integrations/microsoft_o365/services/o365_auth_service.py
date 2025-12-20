@@ -148,7 +148,7 @@ class O365AuthService:
 
         # Save token
         return await self.repository.upsert_token(
-            user_id=uuid.UUID(self.auth_info.user_id),
+            user_id=self.auth_info.flow_user_id,
             microsoft_user_id=user_info["id"],
             microsoft_email=user_info.get("mail")
             or user_info.get("userPrincipalName", ""),
@@ -294,7 +294,7 @@ class O365AuthService:
             SendEmailResult with success status and optional message_id or error
         """
         try:
-            access_token = await self.get_valid_token(uuid.UUID(self.auth_info.user_id))
+            access_token = await self.get_valid_token(self.auth_info.flow_user_id)
         except (NotFoundError, O365AuthError) as e:
             return SendEmailResult(success=False, error=str(e))
 
@@ -347,7 +347,7 @@ class O365AuthService:
         Returns:
             True if token was deactivated, False if no token found
         """
-        return await self.repository.deactivate_token(uuid.UUID(self.auth_info.user_id))
+        return await self.repository.deactivate_token(self.auth_info.flow_user_id)
 
     async def get_connection_status(self) -> O365ConnectionStatus:
         """
@@ -356,7 +356,7 @@ class O365AuthService:
         Returns:
             O365ConnectionStatus with connection details
         """
-        token = await self.repository.get_by_user_id(uuid.UUID(self.auth_info.user_id))
+        token = await self.repository.get_by_user_id(self.auth_info.flow_user_id)
 
         if not token or not token.is_active:
             return O365ConnectionStatus(is_connected=False)

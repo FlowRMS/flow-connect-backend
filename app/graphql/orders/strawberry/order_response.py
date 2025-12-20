@@ -47,3 +47,7 @@ class OrderResponse(DTOMixin[Order]):
             user_owner_ids=model.user_owner_ids,
             quote_id=model.quote_id,
         )
+
+    @strawberry.field
+    def url(self) -> str:
+        return f"/cm/orders/list/{self.id}"

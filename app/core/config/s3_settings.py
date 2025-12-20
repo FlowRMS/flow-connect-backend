@@ -8,8 +8,8 @@ class S3Settings(BaseSettings):
 
     aws_access_key_id: str
     aws_secret_access_key: str
-    aws_endpoint_url: str  # e.g., "https://nyc3.digitaloceanspaces.com"
-    aws_bucket_name: str  # e.g., "flowrms-uploads"
+    aws_endpoint_url: str = "https://nyc3.digitaloceanspaces.com"
+    aws_bucket_name: str = "flowrms-uploads"
     aws_default_region: str = "nyc3"
 
     model_config = SettingsConfigDict(

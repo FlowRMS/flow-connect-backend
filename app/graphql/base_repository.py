@@ -114,7 +114,7 @@ class BaseRepository(Generic[T]):
         """
 
         if hasattr(entity, "created_by_id"):
-            setattr(entity, "created_by_id", self.context.auth_info.user_id)
+            setattr(entity, "created_by_id", self.context.auth_info.flow_user_id)
 
         if hasattr(entity, "created_at"):
             setattr(entity, "created_at", pendulum.now())

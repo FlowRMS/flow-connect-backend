@@ -18,6 +18,8 @@ class UserResponse(DTOMixin[User]):
     last_name: str
     email: str
     full_name: str
+    is_inside: bool | None
+    is_outside: bool | None
 
     @classmethod
     def from_orm_model(cls, model: User) -> Self:
@@ -28,4 +30,6 @@ class UserResponse(DTOMixin[User]):
             last_name=model.last_name,
             email=model.email,
             full_name=model.full_name,
+            is_inside=model.inside,
+            is_outside=model.outside,
         )

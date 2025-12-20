@@ -1,13 +1,14 @@
 FROM ghcr.io/astral-sh/uv:python3.13-bookworm-slim AS builder
 
-ARG UV_INDEX_URL
+ARG GITHUB_TOKEN
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
-    libpq-dev cmake build-essential locales curl ca-certificates \
+    libpq-dev cmake build-essential locales curl ca-certificates git \
     libde265-dev libx265-dev libaom-dev libdav1d-dev pkg-config \
     && rm -rf /var/lib/apt/lists/*
 
-ENV UV_INDEX_URL=${UV_INDEX_URL}
+RUN git config --global url."https://${GITHUB_TOKEN}@github.com/".insteadOf "ssh://git@github.com/"
+
 
 # Configure uv
 ENV UV_COMPILE_BYTECODE=1 UV_LINK_MODE=copy

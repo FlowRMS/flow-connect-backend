@@ -39,7 +39,13 @@ class UsersService:
             raise NotFoundError(str(user_id))
         return user
 
-    async def search_users(self, search_term: str, limit: int = 20) -> list[User]:
+    async def search_users(
+        self,
+        search_term: str,
+        limit: int = 20,
+        is_inside: bool | None = None,
+        is_outside: bool | None = None,
+    ) -> list[User]:
         """
         Search users by name or email.
 
@@ -50,4 +56,6 @@ class UsersService:
         Returns:
             List of User objects matching the search criteria
         """
-        return await self.repository.search_by_name(search_term, limit)
+        return await self.repository.search_by_name(
+            search_term, limit, is_inside, is_outside
+        )
