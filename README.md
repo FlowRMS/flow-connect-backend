@@ -303,7 +303,7 @@ docker-compose down
 ```bash
 # Build with private package index
 docker build \
-  --build-arg UV_INDEX_URL=https://user:password@pypi.flowrms.com/simple/ \
+  --build-arg GITHUB_TOKEN=GITHUB_TOKEN \
   -t flow-py-crm:latest .
 
 # Run container

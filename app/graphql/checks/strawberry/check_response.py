@@ -42,3 +42,7 @@ class CheckResponse(DTOMixin[Check]):
             created_by=model.created_by,
             creation_type=model.creation_type,
         )
+
+    @strawberry.field
+    def url(self) -> str:
+        return f"/cm/commissions/list{self.id}"

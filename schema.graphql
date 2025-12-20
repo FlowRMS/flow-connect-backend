@@ -143,6 +143,7 @@ type CheckResponse {
   status: Int!
   createdBy: UUID!
   creationType: Int!
+  url: String!
 }
 
 enum CommissionPolicyEnum {
@@ -304,7 +305,7 @@ type CustomerResponse {
   customerTerritoryId: UUID
   logoUrl: String
   insideRepId: UUID
-  type: String
+  url: String!
 }
 
 """Date (isoformat)"""
@@ -356,24 +357,17 @@ input FactoryInput {
 type FactoryResponse {
   id: UUID!
   title: String!
-  published: Boolean!
-  accountNumber: String
-  email: String
-  phone: String
-  externalTerms: String
-  additionalInformation: String
-  freightTerms: String
-  freightDiscountType: Int!
-  leadTime: String
-  paymentTerms: String
-  commissionRate: Decimal
-  commissionDiscountRate: Decimal
-  overallDiscountRate: Decimal
-  logoUrl: String
-  insideRepId: UUID
-  externalPaymentTerms: String
-  commissionPolicy: Int!
-  directCommissionAllowed: Boolean!
+  url: String!
+}
+
+type FileLinkedEntitiesResponse {
+  quotes: [QuoteResponse!]!
+  orders: [OrderResponse!]!
+  invoices: [InvoiceResponse!]!
+  checks: [CheckResponse!]!
+  customers: [CustomerResponse!]!
+  factories: [FactoryResponse!]!
+  products: [ProductResponse!]!
 }
 
 input Filter {
@@ -491,6 +485,7 @@ type InvoiceResponse {
   createdBy: UUID!
   creationType: Int!
   balanceId: UUID!
+  url: String!
 }
 
 """The `JSON` scalar type represents JSON values as specified by ECMA-404"""
@@ -814,6 +809,7 @@ type OrderResponse {
   factSoNumber: String
   userOwnerIds: [UUID!]!
   quoteId: UUID
+  url: String!
 }
 
 type PreOpportunityBalanceResponse {
@@ -981,30 +977,9 @@ type ProductResponse {
   factoryPartNumber: String!
   unitPrice: Decimal!
   defaultCommissionRate: Decimal!
+  description: String
   published: Boolean!
-  approvalNeeded: Boolean
-  description: String
-  leadTime: String
-  minOrderQty: Int
-  commissionDiscountRate: Decimal
-  overallDiscountRate: Decimal
-  cost: Decimal
-  individualUpc: String
-  approvalComments: String
-  logoUrl: String
-  salesModel: String
-  payoutType: String
-  factory: FactoryResponse!
-  category: ProductCategoryResponse
-  uom: ProductUomResponse
-}
-
-type ProductUomResponse {
-  id: UUID!
-  title: String!
-  description: String
-  multiply: Boolean!
-  multiplyBy: Int!
+  url: String!
 }
 
 type Query {
@@ -1026,6 +1001,7 @@ type Query {
   contactRelatedEntities(contactId: UUID!): ContactRelatedEntitiesResponse!
   customerSearch(searchTerm: String!, published: Boolean! = true, limit: Int! = 20): [CustomerResponse!]!
   factorySearch(searchTerm: String!, published: Boolean! = true, limit: Int! = 20, useCustomOrder: Boolean! = false): [FactoryResponse!]!
+  fileLinkedEntities(fileId: UUID!): FileLinkedEntitiesResponse!
   gmailAuthUrl(state: String = null): String!
   gmailConnectionStatus: GmailConnectionStatusType!
   o365AuthUrl(state: String = null): String!
@@ -1067,7 +1043,7 @@ type Query {
   taskRelatedEntities(taskId: UUID!): TaskRelatedEntitiesResponse!
   tasksByEntity(entityType: CRMEntityType!, entityId: UUID!): [TaskType!]!
   user(id: UUID!): UserResponse!
-  userSearch(searchTerm: String!, limit: Int! = 20): [UserResponse!]!
+  userSearch(searchTerm: String!, limit: Int! = 20, isInside: Boolean = null, isOutside: Boolean = null): [UserResponse!]!
 }
 
 type QuoteResponse {
@@ -1082,6 +1058,7 @@ type QuoteResponse {
   jobName: String
   expDate: Date
   blanket: Boolean!
+  url: String!
 }
 
 enum RecipientListType {

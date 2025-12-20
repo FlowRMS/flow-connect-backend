@@ -45,3 +45,7 @@ class InvoiceResponse(DTOMixin[Invoice]):
             creation_type=model.creation_type,
             balance_id=model.balance_id,
         )
+
+    @strawberry.field
+    def url(self) -> str:
+        return f"/cm/invoices/list/{self.id}"

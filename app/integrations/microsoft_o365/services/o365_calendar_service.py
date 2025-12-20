@@ -1,6 +1,5 @@
 """Service for Microsoft O365 calendar operations."""
 
-import uuid
 from dataclasses import dataclass
 from datetime import datetime
 
@@ -70,9 +69,7 @@ class O365CalendarService:
 
     async def _get_valid_token(self) -> str:
         """Get valid access token for current user."""
-        return await self.auth_service.get_valid_token(
-            uuid.UUID(self.auth_info.user_id)
-        )
+        return await self.auth_service.get_valid_token(self.auth_info.flow_user_id)
 
     def _parse_event(self, event_data: dict) -> CalendarEvent:
         """Parse Microsoft Graph API event response into CalendarEvent."""
