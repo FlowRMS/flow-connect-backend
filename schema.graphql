@@ -304,8 +304,9 @@ type CustomerResponse {
   customerBranchId: UUID
   customerTerritoryId: UUID
   logoUrl: String
-  insideRepId: UUID
-  url: String!
+  type: String
+  createdBy: UserResponse!
+  insideRep: UserResponse
 }
 
 """Date (isoformat)"""
@@ -357,7 +358,25 @@ input FactoryInput {
 type FactoryResponse {
   id: UUID!
   title: String!
-  url: String!
+  published: Boolean!
+  accountNumber: String
+  email: String
+  phone: String
+  externalTerms: String
+  additionalInformation: String
+  freightTerms: String
+  freightDiscountType: Int!
+  leadTime: String
+  paymentTerms: String
+  commissionRate: Decimal
+  commissionDiscountRate: Decimal
+  overallDiscountRate: Decimal
+  logoUrl: String
+  insideRepId: UUID
+  externalPaymentTerms: String
+  commissionPolicy: Int!
+  directCommissionAllowed: Boolean!
+  createdBy: UserResponse!
 }
 
 type FileLinkedEntitiesResponse {
@@ -624,13 +643,6 @@ type Mutation {
   createContact(input: ContactInput!): ContactResponse!
   deleteContact(id: UUID!): Boolean!
   updateContact(id: UUID!, input: ContactInput!): ContactResponse!
-  createCustomer(input: CustomerInput!): CustomerResponse!
-  updateCustomer(id: UUID!, input: CustomerInput!): CustomerResponse!
-  deleteCustomer(id: UUID!): Boolean!
-  createFactory(input: FactoryInput!): FactoryResponse!
-  updateFactory(id: UUID!, input: FactoryInput!): FactoryResponse!
-  deleteFactory(id: UUID!): Boolean!
-  updateManufacturerOrder(factoryIds: [UUID!]!): Int!
   gmailConnect(code: String!): GmailConnectionResultType!
   gmailDisconnect: Boolean!
   gmailSendEmail(input: GmailSendEmailInput!): GmailSendEmailResultType!
@@ -653,9 +665,6 @@ type Mutation {
   createPreOpportunity(input: PreOpportunityInput!): PreOpportunityResponse!
   updatePreOpportunity(input: PreOpportunityInput!): PreOpportunityResponse!
   deletePreOpportunity(id: UUID!): Boolean!
-  createProduct(input: ProductInput!): ProductResponse!
-  updateProduct(id: UUID!, input: ProductInput!): ProductResponse!
-  deleteProduct(id: UUID!): Boolean!
   createHighlightVersion(input: CreateHighlightVersionInput!): HighlightVersionResponse!
   updateHighlightVersion(id: UUID!, input: UpdateHighlightVersionInput!): HighlightVersionResponse!
   updateHighlightRegions(input: UpdateHighlightRegionsInput!): HighlightVersionResponse!
@@ -671,6 +680,20 @@ type Mutation {
   addTaskConversation(input: TaskConversationInput!): TaskConversationType!
   updateTaskConversation(id: UUID!, input: TaskConversationInput!): TaskConversationType!
   deleteTaskConversation(id: UUID!): Boolean!
+  createCustomer(input: CustomerInput!): CustomerResponse!
+  updateCustomer(id: UUID!, input: CustomerInput!): CustomerResponse!
+  deleteCustomer(id: UUID!): Boolean!
+  createFactory(input: FactoryInput!): FactoryResponse!
+  updateFactory(id: UUID!, input: FactoryInput!): FactoryResponse!
+  deleteFactory(id: UUID!): Boolean!
+  updateManufacturerOrder(factoryIds: [UUID!]!): Int!
+  createProduct(input: ProductInput!): ProductResponse!
+  updateProduct(id: UUID!, input: ProductInput!): ProductResponse!
+  deleteProduct(id: UUID!): Boolean!
+  createUser(input: UserInput!): UserV2Response!
+  updateUser(id: UUID!, input: UserInput!): UserV2Response!
+  deleteUser(id: UUID!): Boolean!
+  updateRbacGrid(rbacGrid: [RbacGridInput!]!): [RbacGridResponse!]!
 }
 
 input NoteConversationInput {
@@ -977,9 +1000,30 @@ type ProductResponse {
   factoryPartNumber: String!
   unitPrice: Decimal!
   defaultCommissionRate: Decimal!
-  description: String
   published: Boolean!
-  url: String!
+  approvalNeeded: Boolean
+  description: String
+  leadTime: String
+  minOrderQty: Int
+  commissionDiscountRate: Decimal
+  overallDiscountRate: Decimal
+  cost: Decimal
+  individualUpc: String
+  approvalComments: String
+  logoUrl: String
+  salesModel: String
+  payoutType: String
+  factory: FactoryResponse!
+  category: ProductCategoryResponse
+  uom: ProductUomResponse
+}
+
+type ProductUomResponse {
+  id: UUID!
+  title: String!
+  description: String
+  multiply: Boolean!
+  multiplyBy: Int!
 }
 
 type Query {
@@ -999,8 +1043,6 @@ type Query {
   contactsByCompany(companyId: UUID!): [ContactResponse!]!
   contactSearch(searchTerm: String!, limit: Int! = 20): [ContactResponse!]!
   contactRelatedEntities(contactId: UUID!): ContactRelatedEntitiesResponse!
-  customerSearch(searchTerm: String!, published: Boolean! = true, limit: Int! = 20): [CustomerResponse!]!
-  factorySearch(searchTerm: String!, published: Boolean! = true, limit: Int! = 20, useCustomOrder: Boolean! = false): [FactoryResponse!]!
   fileLinkedEntities(fileId: UUID!): FileLinkedEntitiesResponse!
   gmailAuthUrl(state: String = null): String!
   gmailConnectionStatus: GmailConnectionStatusType!
@@ -1029,8 +1071,6 @@ type Query {
   orderSearch(searchTerm: String!, limit: Int! = 20): [OrderResponse!]!
   preOpportunity(id: UUID!): PreOpportunityResponse!
   preOpportunitySearch(searchTerm: String!, limit: Int! = 20): [PreOpportunityLiteResponse!]!
-  productSearch(searchTerm: String!, productCategoryIds: [UUID!]!, factoryId: UUID, limit: Int! = 20): [ProductResponse!]!
-  productCategorySearch(searchTerm: String!, factoryId: UUID, limit: Int! = 20): [ProductCategoryResponse!]!
   quoteSearch(searchTerm: String!, limit: Int! = 20): [QuoteResponse!]!
   highlightVersion(id: UUID!): HighlightVersionResponse
   highlightVersionsBySpecSheet(specSheetId: UUID!, activeOnly: Boolean! = false): [HighlightVersionResponse!]!
@@ -1044,6 +1084,12 @@ type Query {
   tasksByEntity(entityType: CRMEntityType!, entityId: UUID!): [TaskType!]!
   user(id: UUID!): UserResponse!
   userSearch(searchTerm: String!, limit: Int! = 20, isInside: Boolean = null, isOutside: Boolean = null): [UserResponse!]!
+  customerSearch(searchTerm: String!, published: Boolean! = true, limit: Int! = 20): [CustomerResponse!]!
+  factorySearch(searchTerm: String!, published: Boolean! = true, limit: Int! = 20, useCustomOrder: Boolean! = false): [FactoryResponse!]!
+  productSearch(searchTerm: String!, productCategoryIds: [UUID!]!, factoryId: UUID, limit: Int! = 20): [ProductResponse!]!
+  productCategorySearch(searchTerm: String!, factoryId: UUID, limit: Int! = 20): [ProductCategoryResponse!]!
+  users(limit: Int = null, offset: Int! = 0): [UserV2Response!]!
+  getRbacGrid: [RbacGridResponse!]!
 }
 
 type QuoteResponse {
@@ -1059,6 +1105,73 @@ type QuoteResponse {
   expDate: Date
   blanket: Boolean!
   url: String!
+}
+
+input RbacGridInput {
+  resource: RbacResourceEnum!
+  roles: [RbacGridRoleInput!]!
+}
+
+type RbacGridResponse {
+  resource: RbacResourceEnum!
+  roles: [RbacRolePermissionResponse!]!
+}
+
+input RbacGridRoleInput {
+  role: RbacRoleEnum!
+  privileges: [RbacGridRolePrivilegeInput!]!
+}
+
+input RbacGridRolePrivilegeInput {
+  privilege: RbacPrivilegeTypeEnum!
+  option: RbacPrivilegeOptionEnum!
+}
+
+enum RbacPrivilegeOptionEnum {
+  OWN
+  ALL
+}
+
+type RbacPrivilegeResponse {
+  privilege: RbacPrivilegeTypeEnum!
+  option: RbacPrivilegeOptionEnum!
+}
+
+enum RbacPrivilegeTypeEnum {
+  VIEW
+  WRITE
+  DELETE
+}
+
+enum RbacResourceEnum {
+  ADMIN
+  FACTORY
+  CUSTOMER
+  PRODUCT
+  QUOTE
+  ORDER
+  INVOICE
+  CHECK
+  CREDIT
+  EXPENSE
+  JOB
+  PRE_OPPORTUNITY
+  TASK
+}
+
+enum RbacRoleEnum {
+  OWNER
+  ADMINISTRATOR
+  INSIDE_REP
+  OUTSIDE_REP
+  WAREHOUSE_MANAGER
+  WAREHOUSE_EMPLOYEE
+  DRIVER
+}
+
+type RbacRolePermissionResponse {
+  roleName: RbacRoleEnum!
+  privileges: [RbacPrivilegeResponse!]!
 }
 
 enum RecipientListType {
@@ -1204,12 +1317,58 @@ input UpdateSpecSheetInput {
 
 scalar Upload
 
+input UserInput {
+  username: String!
+  firstName: String!
+  lastName: String!
+  email: String!
+  roleId: UUID!
+  authProviderId: String!
+  enabled: Boolean! = true
+  inside: Boolean = null
+  outside: Boolean = null
+  supervisorId: UUID = null
+}
+
+type UserLiteV2Response {
+  id: UUID!
+  username: String!
+  firstName: String!
+  lastName: String!
+  email: String!
+  fullName: String!
+  enabled: Boolean!
+  roleId: UUID!
+  authProviderId: String!
+  inside: Boolean
+  outside: Boolean
+  supervisorId: UUID
+}
+
 type UserResponse {
   id: UUID!
   firstName: String!
   lastName: String!
   email: String!
   fullName: String!
+  isInside: Boolean
+  isOutside: Boolean
+}
+
+type UserV2Response {
+  id: UUID!
+  username: String!
+  firstName: String!
+  lastName: String!
+  email: String!
+  fullName: String!
+  enabled: Boolean!
+  roleId: UUID!
+  authProviderId: String!
+  inside: Boolean
+  outside: Boolean
+  supervisorId: UUID
+  supervisor: UserLiteV2Response
 }
 
 scalar _Any

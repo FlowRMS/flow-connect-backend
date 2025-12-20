@@ -17,6 +17,7 @@ class CrmBaseModel(BaseModel):
     __abstract__ = True
     __table_args__ = {"schema": "pycrm"}
 
+
 class UserBaseModel(BaseModel):
     __abstract__ = True
     __table_args__ = {"schema": "pyuser"}

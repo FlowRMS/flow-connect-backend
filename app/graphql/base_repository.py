@@ -1,11 +1,10 @@
-"""Base repository with common CRUD operations for all entities."""
-
 import uuid
 from typing import ClassVar, Generic, TypeVar
 from uuid import UUID
 
 import pendulum
-from sqlalchemy import func, or_, select
+from commons.db.v6 import RbacPrivilegeTypeEnum, RbacResourceEnum
+from sqlalchemy import Result, Select, func, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.sql.base import ExecutableOption
 
@@ -14,8 +13,11 @@ from app.core.db.base import BaseModel
 from app.errors.common_errors import NotFoundError
 from app.graphql.links.models.entity_type import EntityType
 from app.graphql.links.models.link_relation_model import LinkRelation
+from app.graphql.v2.rbac.services.rbac_filter_service import RbacFilterService
+from app.graphql.v2.rbac.strategies.base import RbacFilterStrategy
 
 T = TypeVar("T", bound=BaseModel)
+GenQuery = TypeVar("GenQuery")
 
 
 class BaseRepository(Generic[T]):
@@ -23,27 +25,59 @@ class BaseRepository(Generic[T]):
     Base repository providing common CRUD operations.
 
     Type parameter T should be the SQLAlchemy model class.
+    Subclasses can enable RBAC filtering by:
+    1. Setting rbac_resource class attribute
+    2. Overriding get_rbac_filter_strategy() to return a filter strategy
+    3. Passing rbac_filter_service in __init__
     """
 
     entity_type: ClassVar[EntityType | None] = None
+    rbac_resource: ClassVar[RbacResourceEnum | None] = None
 
     def __init__(
         self,
         session: AsyncSession,
         context_wrapper: ContextWrapper,
         model_class: type[T],
+        rbac_filter_service: RbacFilterService | None = None,
     ) -> None:
-        """
-        Initialize the repository.
-
-        Args:
-            session: SQLAlchemy async session
-            model_class: The SQLAlchemy model class this repository manages
-        """
         super().__init__()
         self.context = context_wrapper.get()
         self.session = session
         self.model_class = model_class
+        self._rbac_filter_service = rbac_filter_service
+
+    def get_rbac_filter_strategy(self) -> RbacFilterStrategy | None:
+        """
+        Override in subclasses to provide a custom RBAC filter strategy.
+
+        Returns None if no RBAC filtering should be applied.
+        """
+        return None
+
+    async def execute(
+        self,
+        stmt: Select[GenQuery],  # pyright: ignore[reportInvalidTypeArguments]
+        privilege: RbacPrivilegeTypeEnum = RbacPrivilegeTypeEnum.VIEW,
+    ) -> Result[GenQuery]:  # pyright: ignore[reportInvalidTypeArguments]
+        """
+        Apply RBAC filtering to a select statement.
+
+        Uses the repository's filter strategy if defined.
+        Returns the original statement if no strategy is configured.
+        """
+        strategy = self.get_rbac_filter_strategy()
+        print(f"Strategy: {strategy}")
+
+        if strategy and self._rbac_filter_service:
+            stmt = await self._rbac_filter_service.apply_filter(
+                stmt,
+                strategy,
+                self.context.auth_info.flow_user_id,
+                self.context.auth_info.roles,
+                privilege,
+            )
+        return await self.session.execute(stmt)
 
     async def get_edit(
         self,

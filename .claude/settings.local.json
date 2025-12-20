@@ -18,7 +18,10 @@
       "mcp__flowrms__get_table_schema",
       "mcp__flowrms__query_tenant",
       "Bash(task test)",
-      "Bash(timeout 5 uv run:*)"
+      "Bash(timeout 5 uv run:*)",
+      "Bash(pip show:*)",
+      "Bash(mkdir:*)",
+      "Bash(python:*)"
     ]
   },
   "enableAllProjectMcpServers": true,

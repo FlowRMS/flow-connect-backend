@@ -1,13 +1,10 @@
 from collections import defaultdict
 
 from commons.auth import AuthInfo
+from commons.db.v6 import RbacPermission, RbacResourceEnum, RbacRoleEnum
 
-from app.graphql.v2.rbac.models.entities.rbac_permission import RbacPermission
-from app.graphql.v2.rbac.models.enums.rbac_privilege_option_enum import RbacPrivilegeOptionEnum
-from app.graphql.v2.rbac.models.enums.rbac_privilege_type_enum import RbacPrivilegeTypeEnum
-from app.graphql.v2.rbac.models.enums.rbac_resource_enum import RbacResourceEnum
-from app.graphql.v2.rbac.models.enums.rbac_role_enum import RbacRoleEnum
 from app.graphql.v2.rbac.repositories.rbac_repository import RbacRepository
+from app.graphql.v2.rbac.strawberry.rbac_grid_input import RbacGridInput
 from app.graphql.v2.rbac.strawberry.rbac_grid_response import (
     RbacGridResponse,
     RbacPrivilegeResponse,
@@ -28,27 +25,26 @@ class RbacService:
     async def get_rbac_grid(self) -> list[RbacGridResponse]:
         permissions = await self.repository.get_all_permissions()
 
-        resource_map: dict[int, dict[int, list[RbacPrivilegeResponse]]] = defaultdict(
-            lambda: defaultdict(list)
-        )
+        resource_map: dict[
+            RbacResourceEnum, dict[RbacRoleEnum, list[RbacPrivilegeResponse]]
+        ] = defaultdict(lambda: defaultdict(list))
 
         for permission in permissions:
             if permission.resource and permission.role and permission.privilege:
-                resource_map[int(permission.resource)][int(permission.role)].append(
+                resource_map[permission.resource][permission.role].append(
                     RbacPrivilegeResponse(
-                        privilege=RbacPrivilegeTypeEnum(int(permission.privilege)),
-                        option=RbacPrivilegeOptionEnum(int(permission.option)),
+                        privilege=permission.privilege,
+                        option=permission.option,
                     )
                 )
 
         result = []
         for resource_int, roles_dict in sorted(resource_map.items()):
             roles = []
-            for role_int, privileges in sorted(roles_dict.items()):
-                role_enum = RbacRoleEnum.from_int(role_int)
+            for role_enum, privileges in sorted(roles_dict.items()):
                 roles.append(
                     RbacRolePermissionResponse(
-                        role_name=role_enum.label if role_enum else f"Role {role_int}",
+                        role_name=role_enum,
                         privileges=privileges,
                     )
                 )
@@ -63,27 +59,23 @@ class RbacService:
         return result
 
     async def update_rbac_grid(
-        self, grid_inputs: list
+        self, grid_inputs: list[RbacGridInput]
     ) -> list[RbacGridResponse]:
         permissions_to_create = []
         for grid_input in grid_inputs:
             resource = grid_input.resource
-            if resource.immutable:
+            if resource.is_immutable():
                 continue
 
             for role_input in grid_input.roles:
-                role_enum = RbacRoleEnum.from_label(role_input.role_name)
-
-                if not role_enum or role_enum.immutable:
-                    continue
-
-                # Delete existing permissions for this role and resource
-                await self.repository.delete_by_role_and_resource(role_enum, resource)
+                await self.repository.delete_by_role_and_resource(
+                    role_input.role, resource
+                )
 
                 for privilege_input in role_input.privileges:
                     permission = RbacPermission(
                         resource=resource,
-                        role=role_enum.num,
+                        role=role_input.role,
                         privilege=privilege_input.privilege,
                         option=privilege_input.option,
                     )

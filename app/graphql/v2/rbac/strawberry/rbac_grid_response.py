@@ -1,8 +1,10 @@
 import strawberry
-
-from app.graphql.v2.rbac.models.enums.rbac_privilege_option_enum import RbacPrivilegeOptionEnum
-from app.graphql.v2.rbac.models.enums.rbac_privilege_type_enum import RbacPrivilegeTypeEnum
-from app.graphql.v2.rbac.models.enums.rbac_resource_enum import RbacResourceEnum
+from commons.db.v6 import (
+    RbacPrivilegeOptionEnum,
+    RbacPrivilegeTypeEnum,
+    RbacResourceEnum,
+    RbacRoleEnum,
+)
 
 
 @strawberry.type
@@ -13,7 +15,7 @@ class RbacPrivilegeResponse:
 
 @strawberry.type
 class RbacRolePermissionResponse:
-    role_name: str
+    role_name: RbacRoleEnum
     privileges: list[RbacPrivilegeResponse]
 
 
