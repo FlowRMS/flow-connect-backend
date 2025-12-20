@@ -5,6 +5,7 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.context_wrapper import ContextWrapper
+from app.core.processors.executor import ProcessorExecutor
 from app.graphql.base_repository import BaseRepository
 from app.graphql.links.models.entity_type import EntityType
 from app.graphql.v2.core.customers.models import CustomerV2
@@ -23,8 +24,15 @@ class CustomersRepository(BaseRepository[CustomerV2]):
         context_wrapper: ContextWrapper,
         session: AsyncSession,
         rbac_filter_service: RbacFilterService,
+        processor_executor: ProcessorExecutor,
     ) -> None:
-        super().__init__(session, context_wrapper, CustomerV2, rbac_filter_service)
+        super().__init__(
+            session,
+            context_wrapper,
+            CustomerV2,
+            rbac_filter_service,
+            processor_executor,
+        )
 
     @override
     def get_rbac_filter_strategy(self) -> RbacFilterStrategy | None:

@@ -21,7 +21,8 @@
       "Bash(timeout 5 uv run:*)",
       "Bash(pip show:*)",
       "Bash(mkdir:*)",
-      "Bash(python:*)"
+      "Bash(python:*)",
+      "Bash(find:*)"
     ]
   },
   "enableAllProjectMcpServers": true,

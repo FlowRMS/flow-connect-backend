@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import uuid
 from typing import ClassVar, Generic, TypeVar
 from uuid import UUID
@@ -10,6 +12,9 @@ from sqlalchemy.sql.base import ExecutableOption
 
 from app.core.context_wrapper import ContextWrapper
 from app.core.db.base import BaseModel
+from app.core.processors.context import EntityContext
+from app.core.processors.events import RepositoryEvent
+from app.core.processors.executor import ProcessorExecutor
 from app.errors.common_errors import NotFoundError
 from app.graphql.links.models.entity_type import EntityType
 from app.graphql.links.models.link_relation_model import LinkRelation
@@ -40,12 +45,30 @@ class BaseRepository(Generic[T]):
         context_wrapper: ContextWrapper,
         model_class: type[T],
         rbac_filter_service: RbacFilterService | None = None,
+        processor_executor: ProcessorExecutor | None = None,
     ) -> None:
         super().__init__()
         self.context = context_wrapper.get()
         self.session = session
         self.model_class = model_class
         self._rbac_filter_service = rbac_filter_service
+        self._processor_executor = processor_executor
+
+    async def _run_processors(
+        self,
+        event: RepositoryEvent,
+        entity: T,
+        original_entity: T | None = None,
+    ) -> None:
+        if not self._processor_executor:
+            return
+        context = EntityContext(
+            entity=entity,
+            entity_id=entity.id,
+            event=event,
+            original_entity=original_entity,
+        )
+        await self._processor_executor.execute(self.model_class, event, context)
 
     def get_rbac_filter_strategy(self) -> RbacFilterStrategy | None:
         """
@@ -137,42 +160,23 @@ class BaseRepository(Generic[T]):
         return list(result.scalars().all())
 
     async def create(self, entity: T) -> T:
-        """
-        Create a new entity.
-
-        Args:
-            entity: The entity to create
-
-        Returns:
-            The created entity
-        """
-
         if hasattr(entity, "created_by_id"):
             setattr(entity, "created_by_id", self.context.auth_info.flow_user_id)
 
         if hasattr(entity, "created_at"):
             setattr(entity, "created_at", pendulum.now())
 
+        await self._run_processors(RepositoryEvent.PRE_CREATE, entity)
+
         self.session.add(entity)
         await self.session.flush()
         await self.session.refresh(entity)
+
+        await self._run_processors(RepositoryEvent.POST_CREATE, entity)
+
         return entity
 
-    async def update(
-        self,
-        incoming_entity: T,
-        # original_entity: T,
-    ) -> T:
-        """
-        Update an existing entity.
-
-        Args:
-            entity: The entity to update
-
-        Returns:
-            The updated entity
-        """
-
+    async def update(self, incoming_entity: T) -> T:
         original_entity = await self.get_edit(pk=incoming_entity.id)
 
         init_fields = original_entity.get_init_fields()
@@ -183,27 +187,30 @@ class BaseRepository(Generic[T]):
                     incoming_entity, column.name, getattr(original_entity, column.name)
                 )
 
+        await self._run_processors(
+            RepositoryEvent.PRE_UPDATE, incoming_entity, original_entity
+        )
+
         merged = await self.session.merge(incoming_entity)
         await self.session.flush()
         await self.session.refresh(merged)
+
+        await self._run_processors(RepositoryEvent.POST_UPDATE, merged, original_entity)
+
         return merged
 
     async def delete(self, entity_id: UUID | str) -> bool:
-        """
-        Delete an entity by its ID.
-
-        Args:
-            entity_id: The entity ID
-
-        Returns:
-            True if deleted, False if not found
-        """
         entity = await self.get_by_id(entity_id)
         if not entity:
             return False
 
+        await self._run_processors(RepositoryEvent.PRE_DELETE, entity)
+
         await self.session.delete(entity)
         await self.session.flush()
+
+        await self._run_processors(RepositoryEvent.POST_DELETE, entity)
+
         return True
 
     async def exists(self, entity_id: UUID | str) -> bool:

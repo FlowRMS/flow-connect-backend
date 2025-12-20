@@ -13,6 +13,8 @@ from app.core.config.s3_settings import S3Settings
 from app.core.config.settings import Settings
 from app.core.context_wrapper import create_context_wrapper
 from app.core.db import db_provider
+from app.core.processors.executor import ProcessorExecutor
+from app.graphql.processor_providers import processor_providers
 from app.graphql.repositories import repository_providers
 from app.graphql.service_providers import service_providers
 from app.integrations.gmail.config import GmailSettings
@@ -44,6 +46,11 @@ def providers() -> Iterable[aioinject.Provider[Any]]:
 
     for provider in service_providers:
         providers.append(provider)
+
+    for provider in processor_providers:
+        providers.append(provider)
+
+    providers.append(aioinject.Scoped(ProcessorExecutor))
 
     for settings_class in settings_classes:
         providers.append(aioinject.Object(get_settings(settings_class)))
