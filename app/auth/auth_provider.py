@@ -10,14 +10,19 @@ from commons.auth import (
     AuthService,
     KeycloakService,
     KeycloakStrategy,
+    WorkOSService,
+    WorkOSStrategy,
 )
 
+from app.auth.workos_auth_service import WorkOSAuthService
 from app.core.config.auth_settings import AuthSettings
+from app.core.config.workos_settings import WorkOSSettings
 from app.core.context_wrapper import ContextWrapper
 
 
 def create_auth_service_singleton(
     auth_settings: AuthSettings,
+    workos_settings: WorkOSSettings,
 ) -> AuthService:
     keycloak_strategy = KeycloakStrategy(
         KeycloakService(
@@ -26,11 +31,22 @@ def create_auth_service_singleton(
             auth_settings.client_secret,
         )
     )
+    workos_strategy = WorkOSStrategy(
+        WorkOSService(
+            api_key=workos_settings.workos_api_key,
+            client_id=workos_settings.workos_client_id,
+        )
+    )
     return AuthService(
         strategies={
             AuthProviderEnum.KEYCLOAK: keycloak_strategy,
+            AuthProviderEnum.WORKOS: workos_strategy,
         }
     )
+
+
+def create_workos_auth_service(workos_settings: WorkOSSettings) -> WorkOSAuthService:
+    return WorkOSAuthService(workos_settings)
 
 
 def create_auth_info_service(
@@ -51,6 +67,7 @@ async def create_auth_info(
 
 providers: Iterable[aioinject.Provider[Any]] = [
     aioinject.Singleton(create_auth_service_singleton),
+    aioinject.Singleton(create_workos_auth_service),
     aioinject.Scoped(create_auth_info_service),
     aioinject.Scoped(create_auth_info),
 ]

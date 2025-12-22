@@ -11,6 +11,7 @@ from app.core.config.auth_settings import AuthSettings
 from app.core.config.base_settings import get_settings
 from app.core.config.s3_settings import S3Settings
 from app.core.config.settings import Settings
+from app.core.config.workos_settings import WorkOSSettings
 from app.core.context_wrapper import create_context_wrapper
 from app.core.db import db_provider
 from app.core.processors.executor import ProcessorExecutor
@@ -32,6 +33,7 @@ settings_classes: Iterable[type[BaseSettings]] = [
     O365Settings,
     GmailSettings,
     S3Settings,
+    WorkOSSettings,
 ]
 
 

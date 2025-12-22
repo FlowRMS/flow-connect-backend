@@ -2125,7 +2125,7 @@ class Context:
         auth_info = auth_result.unwrap()
 
         # Create tenant session
-        async with controller.scoped_session(auth_info.tenant) as session:
+        async with controller.scoped_session(auth_info.tenant_name) as session:
             yield ContextModel(auth_info=auth_info, session=session)
 ```
 
