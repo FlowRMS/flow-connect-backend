@@ -1,47 +1,3 @@
-input AddressInput {
-  companyId: UUID!
-  addressType: AddressType!
-  addressLine1: String = null
-  addressLine2: String = null
-  city: String = null
-  state: String = null
-  zipCode: String = null
-}
-
-type AddressResponse {
-  id: UUID!
-  createdAt: datetime!
-  companyId: UUID!
-  addressType: AddressType!
-  addressLine1: String
-  addressLine2: String
-  city: String
-  state: String
-  zipCode: String
-}
-
-enum AddressType {
-  BILLING
-  SHIPPING
-  OTHER
-}
-
-enum CRMEntityType {
-  JOB
-  TASK
-  CONTACT
-  COMPANY
-  NOTE
-  PRE_OPPORTUNITY
-  QUOTE
-  ORDER
-  INVOICE
-  CHECK
-  FACTORY
-  CUSTOMER
-  PRODUCT
-}
-
 input CampaignCriteriaInput {
   groups: [CriteriaGroupInput!]!
   groupOperator: LogicalOperator! = AND
@@ -146,11 +102,6 @@ type CheckResponse {
   url: String!
 }
 
-enum CommissionPolicyEnum {
-  STANDARD
-  CUSTOM
-}
-
 input CompanyInput {
   name: String!
   companySourceType: CompanyType!
@@ -253,7 +204,7 @@ input CreateSpecSheetInput {
 }
 
 input CriteriaConditionInput {
-  entityType: CRMEntityType!
+  entityType: EntityType!
   field: String!
   operator: CriteriaOperator!
   value: JSON = null
@@ -301,10 +252,6 @@ type CustomerResponse {
   parentId: UUID
   contactEmail: String
   contactNumber: String
-  customerBranchId: UUID
-  customerTerritoryId: UUID
-  logoUrl: String
-  type: String
   createdBy: UserResponse!
   insideRep: UserResponse
 }
@@ -315,9 +262,9 @@ scalar Date
 scalar Decimal
 
 input DeleteLinkByEntitiesInput {
-  sourceEntityType: CRMEntityType!
+  sourceEntityType: EntityType!
   sourceEntityId: UUID!
-  targetEntityType: CRMEntityType!
+  targetEntityType: EntityType!
   targetEntityId: UUID!
 }
 
@@ -328,6 +275,22 @@ enum EmailStatus {
   BOUNCED
 }
 
+enum EntityType {
+  JOB
+  TASK
+  CONTACT
+  COMPANY
+  NOTE
+  PRE_OPPORTUNITY
+  QUOTE
+  ORDER
+  INVOICE
+  CHECK
+  FACTORY
+  CUSTOMER
+  PRODUCT
+}
+
 type EstimateRecipientsResponse {
   count: Int!
   sampleContacts: [ContactResponse!]!
@@ -336,46 +299,13 @@ type EstimateRecipientsResponse {
 input FactoryInput {
   title: String!
   published: Boolean! = false
-  accountNumber: String = null
-  email: String = null
-  phone: String = null
-  externalTerms: String = null
-  additionalInformation: String = null
-  freightTerms: String = null
-  freightDiscountType: FreightDiscountTypeEnum! = NONE
-  leadTime: String = null
-  paymentTerms: String = null
-  commissionRate: Decimal = null
-  commissionDiscountRate: Decimal = null
-  overallDiscountRate: Decimal = null
-  logoUrl: String = null
-  insideRepId: UUID = null
-  externalPaymentTerms: String = null
-  commissionPolicy: CommissionPolicyEnum! = STANDARD
-  directCommissionAllowed: Boolean! = true
 }
 
 type FactoryResponse {
   id: UUID!
   title: String!
   published: Boolean!
-  accountNumber: String
-  email: String
-  phone: String
-  externalTerms: String
-  additionalInformation: String
-  freightTerms: String
   freightDiscountType: Int!
-  leadTime: String
-  paymentTerms: String
-  commissionRate: Decimal
-  commissionDiscountRate: Decimal
-  overallDiscountRate: Decimal
-  logoUrl: String
-  insideRepId: UUID
-  externalPaymentTerms: String
-  commissionPolicy: Int!
-  directCommissionAllowed: Boolean!
   createdBy: UserResponse!
 }
 
@@ -411,11 +341,6 @@ enum FilterOperator {
   NOT_IN
   IS_NULL
   IS_NOT_NULL
-}
-
-enum FreightDiscountTypeEnum {
-  NONE
-  PERCENTAGE
 }
 
 type GenericLandingPage {
@@ -594,17 +519,17 @@ enum LandingSourceType {
 }
 
 input LinkRelationInput {
-  sourceEntityType: CRMEntityType!
+  sourceEntityType: EntityType!
   sourceEntityId: UUID!
-  targetEntityType: CRMEntityType!
+  targetEntityType: EntityType!
   targetEntityId: UUID!
 }
 
 type LinkRelationType {
   id: UUID!
-  sourceEntityType: CRMEntityType!
+  sourceEntityType: EntityType!
   sourceEntityId: UUID!
-  targetEntityType: CRMEntityType!
+  targetEntityType: EntityType!
   targetEntityId: UUID!
   createdAt: datetime!
 }
@@ -612,7 +537,7 @@ type LinkRelationType {
 type LinkedEntity {
   id: UUID!
   title: String!
-  entityType: CRMEntityType!
+  entityType: EntityType!
 }
 
 enum LogicalOperator {
@@ -627,8 +552,6 @@ input MoveFolderInput {
 }
 
 type Mutation {
-  createAddress(input: AddressInput!): AddressResponse!
-  deleteAddress(id: UUID!): Boolean!
   createCampaign(input: CampaignInput!): CampaignResponse!
   updateCampaign(id: UUID!, input: CampaignInput!): CampaignResponse!
   deleteCampaign(id: UUID!): Boolean!
@@ -690,8 +613,8 @@ type Mutation {
   createProduct(input: ProductInput!): ProductResponse!
   updateProduct(id: UUID!, input: ProductInput!): ProductResponse!
   deleteProduct(id: UUID!): Boolean!
-  createUser(input: UserInput!): UserV2Response!
-  updateUser(id: UUID!, input: UserInput!): UserV2Response!
+  createUser(input: UserInput!): UserResponse!
+  updateUser(id: UUID!, input: UserInput!): UserResponse!
   deleteUser(id: UUID!): Boolean!
   updateRbacGrid(rbacGrid: [RbacGridInput!]!): [RbacGridResponse!]!
 }
@@ -972,10 +895,10 @@ input ProductInput {
   factoryId: UUID!
   unitPrice: Decimal!
   defaultCommissionRate: Decimal!
-  productCategoryId: UUID = null
-  productUomId: UUID = null
+  productCategoryId: UUID!
+  productUomId: UUID!
+  approvalNeeded: Boolean!
   published: Boolean! = false
-  approvalNeeded: Boolean = null
   description: String = null
   leadTime: String = null
   minOrderQty: Int = null
@@ -1003,16 +926,6 @@ type ProductResponse {
   published: Boolean!
   approvalNeeded: Boolean
   description: String
-  leadTime: String
-  minOrderQty: Int
-  commissionDiscountRate: Decimal
-  overallDiscountRate: Decimal
-  cost: Decimal
-  individualUpc: String
-  approvalComments: String
-  logoUrl: String
-  salesModel: String
-  payoutType: String
   factory: FactoryResponse!
   category: ProductCategoryResponse
   uom: ProductUomResponse
@@ -1028,9 +941,6 @@ type ProductUomResponse {
 
 type Query {
   _service: _Service!
-  address(id: UUID!): AddressResponse!
-  addresses(limit: Int! = 100, offset: Int! = 0): [AddressResponse!]!
-  addressesByCompany(companyId: UUID!): [AddressResponse!]!
   campaign(id: UUID!): CampaignResponse!
   campaignRecipients(campaignId: UUID!, limit: Int! = 100, offset: Int! = 0): [CampaignRecipientResponse!]!
   estimateRecipients(criteria: CampaignCriteriaInput!, sampleLimit: Int! = 10): EstimateRecipientsResponse!
@@ -1059,12 +969,12 @@ type Query {
   jobsByContact(contactId: UUID!): [JobType!]!
   jobsByCompany(companyId: UUID!): [JobType!]!
   link(id: UUID!): LinkRelationType!
-  linksByEntity(entityType: CRMEntityType!, entityId: UUID!): [LinkRelationType!]!
-  linksFromSource(sourceType: CRMEntityType!, sourceId: UUID!): [LinkRelationType!]!
-  linksToTarget(targetType: CRMEntityType!, targetId: UUID!): [LinkRelationType!]!
+  linksByEntity(entityType: EntityType!, entityId: UUID!): [LinkRelationType!]!
+  linksFromSource(sourceType: EntityType!, sourceId: UUID!): [LinkRelationType!]!
+  linksToTarget(targetType: EntityType!, targetId: UUID!): [LinkRelationType!]!
   note(id: UUID!): NoteType!
   notes(limit: Int! = 20, offset: Int! = 0): [NoteType!]!
-  notesByEntity(entityType: CRMEntityType!, entityId: UUID!): [NoteType!]!
+  notesByEntity(entityType: EntityType!, entityId: UUID!): [NoteType!]!
   noteConversations(noteId: UUID!): [NoteConversationType!]!
   noteSearch(searchTerm: String!, limit: Int! = 20): [NoteType!]!
   noteRelatedEntities(noteId: UUID!): NoteRelatedEntitiesResponse!
@@ -1081,14 +991,14 @@ type Query {
   taskConversations(taskId: UUID!): [TaskConversationType!]!
   taskSearch(searchTerm: String!, limit: Int! = 20): [TaskType!]!
   taskRelatedEntities(taskId: UUID!): TaskRelatedEntitiesResponse!
-  tasksByEntity(entityType: CRMEntityType!, entityId: UUID!): [TaskType!]!
-  user(id: UUID!): UserResponse!
-  userSearch(searchTerm: String!, limit: Int! = 20, isInside: Boolean = null, isOutside: Boolean = null): [UserResponse!]!
+  tasksByEntity(entityType: EntityType!, entityId: UUID!): [TaskType!]!
   customerSearch(searchTerm: String!, published: Boolean! = true, limit: Int! = 20): [CustomerResponse!]!
   factorySearch(searchTerm: String!, published: Boolean! = true, limit: Int! = 20, useCustomOrder: Boolean! = false): [FactoryResponse!]!
   productSearch(searchTerm: String!, productCategoryIds: [UUID!]!, factoryId: UUID, limit: Int! = 20): [ProductResponse!]!
   productCategorySearch(searchTerm: String!, factoryId: UUID, limit: Int! = 20): [ProductCategoryResponse!]!
-  users(limit: Int = null, offset: Int! = 0): [UserV2Response!]!
+  user(id: UUID!): UserResponse!
+  userSearch(searchTerm: String!, enabled: Boolean = true, limit: Int! = 20): [UserResponse!]!
+  users(limit: Int = null, offset: Int! = 0): [UserResponse!]!
   getRbacGrid: [RbacGridResponse!]!
 }
 
@@ -1322,15 +1232,13 @@ input UserInput {
   firstName: String!
   lastName: String!
   email: String!
-  roleId: UUID!
-  authProviderId: String!
+  role: RbacRoleEnum!
   enabled: Boolean! = true
   inside: Boolean = null
   outside: Boolean = null
-  supervisorId: UUID = null
 }
 
-type UserLiteV2Response {
+type UserLiteResponse {
   id: UUID!
   username: String!
   firstName: String!
@@ -1338,37 +1246,25 @@ type UserLiteV2Response {
   email: String!
   fullName: String!
   enabled: Boolean!
-  roleId: UUID!
+  role: RbacRoleEnum!
   authProviderId: String!
   inside: Boolean
   outside: Boolean
-  supervisorId: UUID
 }
 
 type UserResponse {
   id: UUID!
-  firstName: String!
-  lastName: String!
-  email: String!
-  fullName: String!
-  isInside: Boolean
-  isOutside: Boolean
-}
-
-type UserV2Response {
-  id: UUID!
   username: String!
   firstName: String!
   lastName: String!
   email: String!
   fullName: String!
   enabled: Boolean!
-  roleId: UUID!
+  role: RbacRoleEnum!
   authProviderId: String!
   inside: Boolean
   outside: Boolean
-  supervisorId: UUID
-  supervisor: UserLiteV2Response
+  supervisor: UserLiteResponse
 }
 
 scalar _Any

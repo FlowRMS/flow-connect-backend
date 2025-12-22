@@ -7,7 +7,7 @@ from commons.db.v6.crm.tasks.task_priority import TaskPriority
 from commons.db.v6.crm.tasks.task_status import TaskStatus
 
 from app.core.db.adapters.dto import DTOMixin
-from app.graphql.users.strawberry.user_response import UserResponse
+from app.graphql.v2.core.users.strawberry.user_response import UserResponse
 
 
 @strawberry.type

@@ -9,7 +9,7 @@ from commons.db.v6.crm.jobs.jobs_model import Job
 
 from app.core.db.adapters.dto import DTOMixin
 from app.graphql.jobs.strawberry.status_response import JobStatusType
-from app.graphql.users.strawberry.user_response import UserResponse
+from app.graphql.v2.core.users.strawberry.user_response import UserResponse
 
 
 @strawberry.type

@@ -1,5 +1,5 @@
-from uuid import UUID
 import uuid
+from uuid import UUID
 
 from commons.auth import AuthInfo
 from commons.db.v6.user import User
@@ -40,7 +40,6 @@ class UserService:
         return await self.repository.get_by_keycloak_id(auth_provider_id)
 
     async def create(self, user_input: UserInput) -> User:
-        
         user_model = user_input.to_orm_model()
         user_model.id = uuid.uuid4()
         auth_user = await self._create_workos_user(user_input, user_model.id)
@@ -50,7 +49,9 @@ class UserService:
         user_model.auth_provider_id = auth_user.id
         return await self.repository.create(user_model)
 
-    async def _create_workos_user(self, user_input: UserInput, external_id: uuid.UUID) -> AuthUser | None:
+    async def _create_workos_user(
+        self, user_input: UserInput, external_id: uuid.UUID
+    ) -> AuthUser | None:
         auth_input = AuthUserInput(
             email=user_input.email,
             external_id=external_id,

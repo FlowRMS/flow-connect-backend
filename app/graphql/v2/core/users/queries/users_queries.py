@@ -5,7 +5,7 @@ from aioinject import Injected
 
 from app.graphql.inject import inject
 from app.graphql.v2.core.users.services.user_service import UserService
-from app.graphql.v2.core.users.strawberry.user_response import UserV2Response
+from app.graphql.v2.core.users.strawberry.user_response import UserResponse
 
 
 @strawberry.type
@@ -16,9 +16,9 @@ class UsersQueries:
         self,
         service: Injected[UserService],
         id: UUID,
-    ) -> UserV2Response:
+    ) -> UserResponse:
         user = await service.get_by_id(id)
-        return UserV2Response.from_orm_model(user)
+        return UserResponse.from_orm_model(user)
 
     @strawberry.field
     @inject
@@ -28,8 +28,8 @@ class UsersQueries:
         search_term: str,
         enabled: bool | None = True,
         limit: int = 20,
-    ) -> list[UserV2Response]:
-        return UserV2Response.from_orm_model_list(
+    ) -> list[UserResponse]:
+        return UserResponse.from_orm_model_list(
             await service.search_users(search_term, enabled, limit)
         )
 
@@ -40,5 +40,5 @@ class UsersQueries:
         service: Injected[UserService],
         limit: int | None = None,
         offset: int = 0,
-    ) -> list[UserV2Response]:
-        return UserV2Response.from_orm_model_list(await service.list_all(limit, offset))
+    ) -> list[UserResponse]:
+        return UserResponse.from_orm_model_list(await service.list_all(limit, offset))
