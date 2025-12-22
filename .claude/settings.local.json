@@ -22,7 +22,13 @@
       "Bash(pip show:*)",
       "Bash(mkdir:*)",
       "Bash(python:*)",
-      "Bash(find:*)"
+      "Bash(find:*)",
+      "Bash(grep:*)",
+      "Bash(git -C /Users/jsaied/projects/flowrms/flow-py-backend show --name-only HEAD)",
+      "Bash(git -C /Users/jsaied/projects/flowrms/flow-py-backend log --oneline -10)",
+      "Bash(git -C /Users/jsaied/projects/flowrms/flow-py-backend log --name-status -1)",
+      "Bash(git -C /Users/jsaied/projects/flowrms/flow-py-backend log --pretty=format: --name-only -20)",
+      "Bash(git -C /Users/jsaied/projects/flowrms/flow-py-backend status --porcelain)"
     ]
   },
   "enableAllProjectMcpServers": true,

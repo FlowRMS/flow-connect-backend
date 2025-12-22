@@ -4,6 +4,7 @@ from uuid import UUID
 
 import strawberry
 from aioinject import Injected
+from commons.db.v6.crm.links.entity_type import EntityType
 
 from app.graphql.checks.services.check_service import CheckService
 from app.graphql.checks.strawberry.check_response import CheckResponse
@@ -16,7 +17,6 @@ from app.graphql.invoices.services.invoice_service import InvoiceService
 from app.graphql.invoices.strawberry.invoice_response import InvoiceResponse
 from app.graphql.jobs.services.jobs_service import JobsService
 from app.graphql.jobs.strawberry.job_response import JobType
-from app.graphql.links.models.entity_type import EntityType
 from app.graphql.notes.services.notes_service import NotesService
 from app.graphql.notes.strawberry.note_related_entities_response import (
     NoteRelatedEntitiesResponse,

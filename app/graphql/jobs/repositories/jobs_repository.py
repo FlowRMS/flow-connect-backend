@@ -3,15 +3,15 @@
 from typing import Any
 from uuid import UUID
 
-from commons.db.models import User
+from commons.db.v6 import User
+from commons.db.v6.crm.jobs.job_status_model import JobStatus
+from commons.db.v6.crm.jobs.jobs_model import Job
 from sqlalchemy import Select, func, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import aliased, lazyload
 
 from app.core.context_wrapper import ContextWrapper
 from app.graphql.base_repository import BaseRepository
-from app.graphql.jobs.models.jobs_model import Job
-from app.graphql.jobs.models.status_model import JobStatus
 from app.graphql.jobs.strawberry.job_landing_page_response import (
     JobLandingPageResponse,
 )
@@ -108,8 +108,8 @@ class JobsRepository(BaseRepository[Job]):
         Returns:
             List of Job objects linked to the given contact ID
         """
-        from app.graphql.links.models.entity_type import EntityType
-        from app.graphql.links.models.link_relation_model import LinkRelation
+        from commons.db.v6.crm.links.entity_type import EntityType
+        from commons.db.v6.crm.links.link_relation_model import LinkRelation
 
         stmt = select(Job).join(
             LinkRelation,
@@ -143,8 +143,8 @@ class JobsRepository(BaseRepository[Job]):
         Returns:
             List of Job objects linked to the given company ID
         """
-        from app.graphql.links.models.entity_type import EntityType
-        from app.graphql.links.models.link_relation_model import LinkRelation
+        from commons.db.v6.crm.links.entity_type import EntityType
+        from commons.db.v6.crm.links.link_relation_model import LinkRelation
 
         stmt = select(Job).join(
             LinkRelation,
@@ -178,8 +178,8 @@ class JobsRepository(BaseRepository[Job]):
         Returns:
             List of Job objects linked to the given task ID
         """
-        from app.graphql.links.models.entity_type import EntityType
-        from app.graphql.links.models.link_relation_model import LinkRelation
+        from commons.db.v6.crm.links.entity_type import EntityType
+        from commons.db.v6.crm.links.link_relation_model import LinkRelation
 
         stmt = select(Job).join(
             LinkRelation,
@@ -213,8 +213,8 @@ class JobsRepository(BaseRepository[Job]):
         Returns:
             List of Job objects linked to the given note ID
         """
-        from app.graphql.links.models.entity_type import EntityType
-        from app.graphql.links.models.link_relation_model import LinkRelation
+        from commons.db.v6.crm.links.entity_type import EntityType
+        from commons.db.v6.crm.links.link_relation_model import LinkRelation
 
         stmt = select(Job).join(
             LinkRelation,

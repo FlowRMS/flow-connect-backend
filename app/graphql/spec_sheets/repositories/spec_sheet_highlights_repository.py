@@ -2,16 +2,16 @@
 
 from uuid import UUID
 
+from commons.db.v6.crm.spec_sheets.spec_sheet_highlight_model import (
+    SpecSheetHighlightRegion,
+    SpecSheetHighlightVersion,
+)
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
 from app.core.context_wrapper import ContextWrapper
 from app.graphql.base_repository import BaseRepository
-from app.graphql.spec_sheets.models.spec_sheet_highlight_model import (
-    SpecSheetHighlightRegion,
-    SpecSheetHighlightVersion,
-)
 
 
 class SpecSheetHighlightsRepository(BaseRepository[SpecSheetHighlightVersion]):

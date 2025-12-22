@@ -4,9 +4,9 @@ from uuid import UUID
 
 import strawberry
 from aioinject import Injected
+from commons.db.v6.crm.links.entity_type import EntityType
 
 from app.graphql.inject import inject
-from app.graphql.links.models.entity_type import EntityType
 from app.graphql.links.services.links_service import LinksService
 from app.graphql.links.strawberry.link_response import LinkRelationType
 

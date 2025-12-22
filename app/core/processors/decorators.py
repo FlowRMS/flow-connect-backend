@@ -1,7 +1,8 @@
 from collections.abc import Callable
 from typing import Any, TypeVar
 
-from app.core.db.base import BaseModel
+from commons.db.v6 import BaseModel
+
 from app.core.processors.registry import processor_registry
 
 T = TypeVar("T", bound=BaseModel)

@@ -1,6 +1,5 @@
 """Notes module for CRM system."""
 
-from app.graphql.notes.models import Note, NoteConversation
 from app.graphql.notes.mutations import NotesMutations
 from app.graphql.notes.queries import NotesQueries
 from app.graphql.notes.repositories import (
@@ -16,8 +15,6 @@ from app.graphql.notes.strawberry import (
 )
 
 __all__ = [
-    "Note",
-    "NoteConversation",
     "NotesRepository",
     "NoteConversationsRepository",
     "NotesService",

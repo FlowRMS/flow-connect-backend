@@ -3,20 +3,20 @@ from typing import Self
 from uuid import UUID
 
 import strawberry
+from commons.db.v6.core.products.product import ProductCategory
 
 from app.core.db.adapters.dto import DTOMixin
-from app.graphql.v2.core.products.models import ProductCategoryV2
 
 
 @strawberry.type
-class ProductCategoryResponse(DTOMixin[ProductCategoryV2]):
+class ProductCategoryResponse(DTOMixin[ProductCategory]):
     id: UUID
     title: str
     factory_id: UUID
     commission_rate: Decimal
 
     @classmethod
-    def from_orm_model(cls, model: ProductCategoryV2) -> Self:
+    def from_orm_model(cls, model: ProductCategory) -> Self:
         return cls(
             id=model.id,
             title=model.title,

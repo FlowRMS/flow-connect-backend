@@ -5,9 +5,9 @@ from typing import Self
 from uuid import UUID
 
 import strawberry
+from commons.db.v6.crm.jobs.jobs_model import Job
 
 from app.core.db.adapters.dto import DTOMixin
-from app.graphql.jobs.models.jobs_model import Job
 from app.graphql.jobs.strawberry.status_response import JobStatusType
 from app.graphql.users.strawberry.user_response import UserResponse
 

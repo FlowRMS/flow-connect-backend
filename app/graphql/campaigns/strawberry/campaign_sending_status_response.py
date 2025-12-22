@@ -3,9 +3,9 @@
 from uuid import UUID
 
 import strawberry
+from commons.db.v6.crm.campaigns.campaign_status import CampaignStatus
+from commons.db.v6.crm.campaigns.send_pace import SendPace
 
-from app.graphql.campaigns.models.campaign_status import CampaignStatus
-from app.graphql.campaigns.models.send_pace import SendPace
 from app.graphql.campaigns.services.campaign_email_sender_service import (
     CampaignSendingStatus,
 )

@@ -1,10 +1,10 @@
 from uuid import UUID
 
 from commons.auth import AuthInfo
-from commons.db.models import Check
+from commons.db.v6.commission import Check
+from commons.db.v6.crm.links.entity_type import EntityType
 
 from app.graphql.checks.repositories.checks_repository import ChecksRepository
-from app.graphql.links.models.entity_type import EntityType
 
 
 class CheckService:

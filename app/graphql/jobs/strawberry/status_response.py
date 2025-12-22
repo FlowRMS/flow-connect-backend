@@ -4,9 +4,9 @@ import uuid
 from typing import Self
 
 import strawberry
+from commons.db.v6.crm.jobs.job_status_model import JobStatus
 
 from app.core.db.adapters.dto import DTOMixin
-from app.graphql.jobs.models.status_model import JobStatus
 
 
 @strawberry.type

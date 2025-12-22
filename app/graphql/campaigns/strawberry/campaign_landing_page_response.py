@@ -3,10 +3,10 @@
 from datetime import datetime
 
 import strawberry
+from commons.db.v6.crm.campaigns.campaign_status import CampaignStatus
+from commons.db.v6.crm.campaigns.recipient_list_type import RecipientListType
 
 from app.core.db.adapters.dto import LandingPageInterfaceBase
-from app.graphql.campaigns.models.campaign_status import CampaignStatus
-from app.graphql.campaigns.models.recipient_list_type import RecipientListType
 
 
 @strawberry.type(name="CampaignLandingPage")

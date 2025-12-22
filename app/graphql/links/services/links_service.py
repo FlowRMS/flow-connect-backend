@@ -3,10 +3,10 @@
 from uuid import UUID
 
 from commons.auth import AuthInfo
+from commons.db.v6.crm.links.entity_type import EntityType
+from commons.db.v6.crm.links.link_relation_model import LinkRelation
 
 from app.errors.common_errors import ConflictError, NotFoundError
-from app.graphql.links.models.entity_type import EntityType
-from app.graphql.links.models.link_relation_model import LinkRelation
 from app.graphql.links.repositories.link_relations_repository import (
     LinkRelationsRepository,
 )

@@ -1,13 +1,14 @@
 from uuid import UUID
 
-from commons.db.models import Check, Invoice, Order, Quote
+from commons.db.v6 import Customer
+from commons.db.v6.commission import Check, Invoice, Order
+from commons.db.v6.core.factories.factory import Factory
+from commons.db.v6.core.products.product import Product
+from commons.db.v6.crm import Quote
 from sqlalchemy import select, text
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.context_wrapper import ContextWrapper
-from app.graphql.v2.core.customers.models.customer import CustomerV2
-from app.graphql.v2.core.factories.models.factory import FactoryV2
-from app.graphql.v2.core.products.models.product import ProductV2
 
 
 class FilesRepository:
@@ -80,11 +81,11 @@ class FilesRepository:
         result = await self.session.execute(stmt)
         return list(result.scalars().all())
 
-    async def get_linked_customers(self, file_id: UUID) -> list[CustomerV2]:
+    async def get_linked_customers(self, file_id: UUID) -> list[Customer]:
         stmt = (
-            select(CustomerV2)
+            select(Customer)
             .where(
-                CustomerV2.id.in_(
+                Customer.id.in_(
                     select(text("entity_id"))
                     .select_from(text("files.file_entity_details"))
                     .where(text("file_id = :file_id"))
@@ -96,11 +97,11 @@ class FilesRepository:
         result = await self.session.execute(stmt)
         return list(result.scalars().all())
 
-    async def get_linked_factories(self, file_id: UUID) -> list[FactoryV2]:
+    async def get_linked_factories(self, file_id: UUID) -> list[Factory]:
         stmt = (
-            select(FactoryV2)
+            select(Factory)
             .where(
-                FactoryV2.id.in_(
+                Factory.id.in_(
                     select(text("entity_id"))
                     .select_from(text("files.file_entity_details"))
                     .where(text("file_id = :file_id"))
@@ -112,11 +113,11 @@ class FilesRepository:
         result = await self.session.execute(stmt)
         return list(result.scalars().all())
 
-    async def get_linked_products(self, file_id: UUID) -> list[ProductV2]:
+    async def get_linked_products(self, file_id: UUID) -> list[Product]:
         stmt = (
-            select(ProductV2)
+            select(Product)
             .where(
-                ProductV2.id.in_(
+                Product.id.in_(
                     select(text("entity_id"))
                     .select_from(text("files.file_entity_details"))
                     .where(text("file_id = :file_id"))

@@ -1,1 +1,0 @@
-"""Addresses GraphQL module."""

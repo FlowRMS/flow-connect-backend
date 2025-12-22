@@ -4,7 +4,7 @@
 import strawberry
 
 # from app.graphql.inject import inject
-# from app.graphql.jobs.models.jobs_model import Job
+# from commons.db.v6.crm.jobs.jobs_model import Job
 from app.graphql.jobs.strawberry.job_response import JobType
 from app.graphql.pre_opportunities.strawberry.pre_opportunity_balance_response import (
     PreOpportunityBalanceResponse,

@@ -5,6 +5,12 @@ from typing import Any
 from uuid import UUID
 
 from commons.db.int_enum import IntEnum as IntEnumColumn
+from commons.db.v6.crm.companies.company_model import Company
+from commons.db.v6.crm.contact_model import Contact
+from commons.db.v6.crm.jobs.jobs_model import Job
+from commons.db.v6.crm.links.entity_type import EntityType
+from commons.db.v6.crm.links.link_relation_model import LinkRelation
+from commons.db.v6.crm.tasks.task_model import Task
 from sqlalchemy import ARRAY, Date, String, Text, and_, func, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.sql import Select
@@ -16,12 +22,6 @@ from app.graphql.campaigns.strawberry.criteria_input import (
     CriteriaOperator,
     LogicalOperator,
 )
-from app.graphql.companies.models.company_model import Company
-from app.graphql.contacts.models.contact_model import Contact
-from app.graphql.jobs.models.jobs_model import Job
-from app.graphql.links.models.entity_type import EntityType
-from app.graphql.links.models.link_relation_model import LinkRelation
-from app.graphql.tasks.models.task_model import Task
 
 
 class CriteriaEvaluatorService:

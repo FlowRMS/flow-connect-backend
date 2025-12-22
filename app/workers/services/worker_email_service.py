@@ -3,12 +3,12 @@
 from datetime import datetime, timezone
 from uuid import UUID
 
+from commons.db.v6.crm.campaigns.campaign_model import Campaign
+from commons.db.v6.crm.campaigns.campaign_recipient_model import CampaignRecipient
+from commons.db.v6.crm.campaigns.email_status import EmailStatus
 from loguru import logger
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.graphql.campaigns.models.campaign_model import Campaign
-from app.graphql.campaigns.models.campaign_recipient_model import CampaignRecipient
-from app.graphql.campaigns.models.email_status import EmailStatus
 from app.integrations.gmail.config import GmailSettings
 from app.integrations.microsoft_o365.config import O365Settings
 

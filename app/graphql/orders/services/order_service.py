@@ -1,9 +1,9 @@
 from uuid import UUID
 
 from commons.auth import AuthInfo
-from commons.db.models import Order
+from commons.db.v6.commission.orders.order import Order
+from commons.db.v6.crm.links.entity_type import EntityType
 
-from app.graphql.links.models.entity_type import EntityType
 from app.graphql.orders.repositories.orders_repository import OrdersRepository
 
 

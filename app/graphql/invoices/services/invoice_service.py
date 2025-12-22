@@ -1,10 +1,10 @@
 from uuid import UUID
 
 from commons.auth import AuthInfo
-from commons.db.models import Invoice
+from commons.db.v6.commission import Invoice
+from commons.db.v6.crm.links.entity_type import EntityType
 
 from app.graphql.invoices.repositories.invoices_repository import InvoicesRepository
-from app.graphql.links.models.entity_type import EntityType
 
 
 class InvoiceService:

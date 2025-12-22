@@ -6,39 +6,34 @@ for workers and other standalone processes that don't go through
 the FastAPI lifespan.
 """
 
-from sqlalchemy.orm import configure_mappers
-
-# Other models that may have relationships
-from app.graphql.addresses.models.address_model import CompanyAddress
-
 # Import all models to register them with SQLAlchemy's mapper
 # Campaign models
-from app.graphql.campaigns.models.campaign_criteria_model import CampaignCriteria
-from app.graphql.campaigns.models.campaign_model import Campaign
-from app.graphql.campaigns.models.campaign_recipient_model import CampaignRecipient
-from app.graphql.campaigns.models.campaign_send_log_model import CampaignSendLog
+from commons.db.v6.crm.campaigns.campaign_criteria_model import CampaignCriteria
+from commons.db.v6.crm.campaigns.campaign_model import Campaign
+from commons.db.v6.crm.campaigns.campaign_recipient_model import CampaignRecipient
+from commons.db.v6.crm.campaigns.campaign_send_log_model import CampaignSendLog
 
 # Company model
-from app.graphql.companies.models.company_model import Company
+from commons.db.v6.crm.companies.company_model import Company
 
 # Contact model (required for CampaignRecipient.contact relationship)
-from app.graphql.contacts.models.contact_model import Contact
-from app.graphql.jobs.models.jobs_model import Job
-from app.graphql.links.models.link_relation_model import LinkRelation
-from app.graphql.notes.models.note_conversation_model import NoteConversation
-from app.graphql.notes.models.note_model import Note
-from app.graphql.pre_opportunities.models.pre_opportunity_balance_model import (
+from commons.db.v6.crm.contact_model import Contact
+from commons.db.v6.crm.jobs.jobs_model import Job
+from commons.db.v6.crm.links.link_relation_model import LinkRelation
+from commons.db.v6.crm.notes.note_conversation_model import NoteConversation
+from commons.db.v6.crm.notes.note_model import Note
+from commons.db.v6.crm.pre_opportunities.pre_opportunity_balance_model import (
     PreOpportunityBalance,
 )
-from app.graphql.pre_opportunities.models.pre_opportunity_detail_model import (
+from commons.db.v6.crm.pre_opportunities.pre_opportunity_detail_model import (
     PreOpportunityDetail,
 )
-from app.graphql.pre_opportunities.models.pre_opportunity_model import PreOpportunity
-from app.graphql.tasks.models.task_conversation_model import TaskConversation
-from app.graphql.tasks.models.task_model import Task
+from commons.db.v6.crm.pre_opportunities.pre_opportunity_model import PreOpportunity
+from commons.db.v6.crm.tasks.task_conversation_model import TaskConversation
+from commons.db.v6.crm.tasks.task_model import Task
+from sqlalchemy.orm import configure_mappers
 
 __all__ = [
-    "CompanyAddress",
     "Campaign",
     "CampaignCriteria",
     "CampaignRecipient",

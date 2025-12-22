@@ -1,10 +1,10 @@
 from uuid import UUID
 
 import strawberry
+from commons.db.v6.crm import CompanyType
+from commons.db.v6.crm.companies.company_model import Company
 
 from app.core.strawberry.inputs import BaseInputGQL
-from app.graphql.companies.models.company_model import Company
-from app.graphql.companies.models.company_type import CompanyType
 
 
 @strawberry.input

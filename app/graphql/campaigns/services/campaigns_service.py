@@ -5,14 +5,16 @@ from uuid import UUID
 
 import strawberry
 from commons.auth import AuthInfo
+from commons.db.v6.crm.campaigns.campaign_criteria_model import CampaignCriteria
+from commons.db.v6.crm.campaigns.campaign_model import Campaign
+from commons.db.v6.crm.campaigns.campaign_recipient_model import CampaignRecipient
+from commons.db.v6.crm.campaigns.campaign_status import CampaignStatus
+from commons.db.v6.crm.campaigns.email_status import EmailStatus
+from commons.db.v6.crm.campaigns.recipient_list_type import RecipientListType
+from commons.db.v6.crm.contact_model import Contact
+from commons.db.v6.crm.links.entity_type import EntityType
 
 from app.errors.common_errors import NotFoundError
-from app.graphql.campaigns.models.campaign_criteria_model import CampaignCriteria
-from app.graphql.campaigns.models.campaign_model import Campaign
-from app.graphql.campaigns.models.campaign_recipient_model import CampaignRecipient
-from app.graphql.campaigns.models.campaign_status import CampaignStatus
-from app.graphql.campaigns.models.email_status import EmailStatus
-from app.graphql.campaigns.models.recipient_list_type import RecipientListType
 from app.graphql.campaigns.repositories.campaign_recipients_repository import (
     CampaignRecipientsRepository,
 )
@@ -29,8 +31,6 @@ from app.graphql.campaigns.strawberry.criteria_input import (
     CriteriaOperator,
     LogicalOperator,
 )
-from app.graphql.contacts.models.contact_model import Contact
-from app.graphql.links.models.entity_type import EntityType
 
 
 class NoEmailProviderError(Exception):

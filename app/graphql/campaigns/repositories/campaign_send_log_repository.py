@@ -3,12 +3,12 @@
 from datetime import date, datetime, timezone
 from uuid import UUID
 
+from commons.db.v6.crm.campaigns.campaign_send_log_model import CampaignSendLog
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.context_wrapper import ContextWrapper
 from app.graphql.base_repository import BaseRepository
-from app.graphql.campaigns.models.campaign_send_log_model import CampaignSendLog
 
 
 class CampaignSendLogRepository(BaseRepository[CampaignSendLog]):

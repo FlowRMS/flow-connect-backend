@@ -5,10 +5,10 @@ from typing import Self
 from uuid import UUID
 
 import strawberry
+from commons.db.v6.crm.campaigns.campaign_recipient_model import CampaignRecipient
+from commons.db.v6.crm.campaigns.email_status import EmailStatus
 
 from app.core.db.adapters.dto import DTOMixin
-from app.graphql.campaigns.models.campaign_recipient_model import CampaignRecipient
-from app.graphql.campaigns.models.email_status import EmailStatus
 from app.graphql.contacts.strawberry.contact_response import ContactResponse
 
 

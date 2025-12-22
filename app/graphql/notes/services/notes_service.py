@@ -3,11 +3,11 @@
 from uuid import UUID
 
 from commons.auth import AuthInfo
+from commons.db.v6.crm.links.entity_type import EntityType
+from commons.db.v6.crm.notes.note_conversation_model import NoteConversation
+from commons.db.v6.crm.notes.note_model import Note
 
 from app.errors.common_errors import NotFoundError
-from app.graphql.links.models.entity_type import EntityType
-from app.graphql.notes.models.note_conversation_model import NoteConversation
-from app.graphql.notes.models.note_model import Note
 from app.graphql.notes.repositories.note_conversations_repository import (
     NoteConversationsRepository,
 )

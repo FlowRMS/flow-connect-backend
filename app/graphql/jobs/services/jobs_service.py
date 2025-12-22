@@ -3,6 +3,8 @@
 from uuid import UUID
 
 from commons.auth import AuthInfo
+from commons.db.v6.crm.jobs.jobs_model import Job
+from commons.db.v6.crm.links.entity_type import EntityType
 
 from app.errors.common_errors import NameAlreadyExistsError, NotFoundError
 from app.graphql.checks.services.check_service import CheckService
@@ -13,13 +15,11 @@ from app.graphql.contacts.services.contacts_service import ContactsService
 from app.graphql.contacts.strawberry.contact_response import ContactResponse
 from app.graphql.invoices.services.invoice_service import InvoiceService
 from app.graphql.invoices.strawberry.invoice_response import InvoiceResponse
-from app.graphql.jobs.models.jobs_model import Job
 from app.graphql.jobs.repositories.jobs_repository import JobsRepository
 from app.graphql.jobs.strawberry.job_input import JobInput
 from app.graphql.jobs.strawberry.job_related_entities_response import (
     JobRelatedEntitiesResponse,
 )
-from app.graphql.links.models.entity_type import EntityType
 from app.graphql.orders.services.order_service import OrderService
 from app.graphql.orders.strawberry.order_response import OrderResponse
 from app.graphql.pre_opportunities.services.pre_opportunities_service import (

@@ -5,11 +5,11 @@ from typing import Self
 from uuid import UUID
 
 import strawberry
-
-from app.core.db.adapters.dto import DTOMixin
-from app.graphql.pre_opportunities.models.pre_opportunity_balance_model import (
+from commons.db.v6.crm.pre_opportunities.pre_opportunity_balance_model import (
     PreOpportunityBalance,
 )
+
+from app.core.db.adapters.dto import DTOMixin
 
 
 @strawberry.type

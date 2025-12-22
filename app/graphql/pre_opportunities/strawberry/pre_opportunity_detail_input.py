@@ -4,11 +4,11 @@ from decimal import Decimal
 from uuid import UUID
 
 import strawberry
-
-from app.core.strawberry.inputs import BaseInputGQL
-from app.graphql.pre_opportunities.models.pre_opportunity_detail_model import (
+from commons.db.v6.crm.pre_opportunities.pre_opportunity_detail_model import (
     PreOpportunityDetail,
 )
+
+from app.core.strawberry.inputs import BaseInputGQL
 
 
 @strawberry.input

@@ -3,11 +3,10 @@ from typing import Self
 from uuid import UUID
 
 import strawberry
-from commons.db.models.core.product import Product as CoreProduct
+from commons.db.v6.core.products.product import Product
 
 from app.core.db.adapters.dto import DTOMixin
 from app.graphql.v2.core.factories.strawberry.factory_response import FactoryResponse
-from app.graphql.v2.core.products.models import ProductV2
 from app.graphql.v2.core.products.strawberry.product_category_response import (
     ProductCategoryResponse,
 )
@@ -17,13 +16,13 @@ from app.graphql.v2.core.products.strawberry.product_uom_response import (
 
 
 @strawberry.type
-class ProductLiteResponse(DTOMixin[CoreProduct]):
+class ProductLiteResponse(DTOMixin[Product]):
     id: UUID
     factory_part_number: str
     factory_id: UUID
 
     @classmethod
-    def from_orm_model(cls, model: CoreProduct) -> Self:
+    def from_orm_model(cls, model: Product) -> Self:
         return cls(
             id=model.id,
             factory_part_number=model.factory_part_number,
@@ -32,8 +31,8 @@ class ProductLiteResponse(DTOMixin[CoreProduct]):
 
 
 @strawberry.type
-class ProductResponse(DTOMixin[ProductV2]):
-    _instance: strawberry.Private[ProductV2]
+class ProductResponse(DTOMixin[Product]):
+    _instance: strawberry.Private[Product]
     id: UUID
     factory_part_number: str
     unit_price: Decimal
@@ -41,19 +40,9 @@ class ProductResponse(DTOMixin[ProductV2]):
     published: bool
     approval_needed: bool | None
     description: str | None
-    lead_time: str | None
-    min_order_qty: int | None
-    commission_discount_rate: Decimal | None
-    overall_discount_rate: Decimal | None
-    cost: Decimal | None
-    individual_upc: str | None
-    approval_comments: str | None
-    logo_url: str | None
-    sales_model: str | None
-    payout_type: str | None
 
     @classmethod
-    def from_orm_model(cls, model: ProductV2) -> Self:
+    def from_orm_model(cls, model: Product) -> Self:
         return cls(
             _instance=model,
             id=model.id,
@@ -63,16 +52,6 @@ class ProductResponse(DTOMixin[ProductV2]):
             published=model.published,
             approval_needed=model.approval_needed,
             description=model.description,
-            lead_time=model.lead_time,
-            min_order_qty=model.min_order_qty,
-            commission_discount_rate=model.commission_discount_rate,
-            overall_discount_rate=model.overall_discount_rate,
-            cost=model.cost,
-            individual_upc=model.individual_upc,
-            approval_comments=model.approval_comments,
-            logo_url=model.logo_url,
-            sales_model=model.sales_model,
-            payout_type=model.payout_type,
         )
 
     @strawberry.field

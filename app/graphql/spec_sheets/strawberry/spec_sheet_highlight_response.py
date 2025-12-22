@@ -5,12 +5,12 @@ from typing import Self
 from uuid import UUID
 
 import strawberry
-
-from app.core.db.adapters.dto import DTOMixin
-from app.graphql.spec_sheets.models.spec_sheet_highlight_model import (
+from commons.db.v6.crm.spec_sheets.spec_sheet_highlight_model import (
     SpecSheetHighlightRegion,
     SpecSheetHighlightVersion,
 )
+
+from app.core.db.adapters.dto import DTOMixin
 from app.graphql.users.strawberry.user_response import UserResponse
 
 

@@ -1,12 +1,15 @@
 from uuid import UUID
 
 from commons.auth import AuthInfo
-from commons.db.models import Check, Invoice, Order, Quote
+from commons.db.v6 import Customer
+
+# from commons.db.models import Check, Invoice, Order, Quote
+from commons.db.v6.commission import Check, Invoice, Order
+from commons.db.v6.core.factories.factory import Factory
+from commons.db.v6.core.products.product import Product
+from commons.db.v6.crm import Quote
 
 from app.graphql.files.repositories.files_repository import FilesRepository
-from app.graphql.v2.core.customers.models.customer import CustomerV2
-from app.graphql.v2.core.factories.models.factory import FactoryV2
-from app.graphql.v2.core.products.models.product import ProductV2
 
 
 class FilesService:
@@ -31,11 +34,11 @@ class FilesService:
     async def get_linked_checks(self, file_id: UUID) -> list[Check]:
         return await self.repository.get_linked_checks(file_id)
 
-    async def get_linked_customers(self, file_id: UUID) -> list[CustomerV2]:
+    async def get_linked_customers(self, file_id: UUID) -> list[Customer]:
         return await self.repository.get_linked_customers(file_id)
 
-    async def get_linked_factories(self, file_id: UUID) -> list[FactoryV2]:
+    async def get_linked_factories(self, file_id: UUID) -> list[Factory]:
         return await self.repository.get_linked_factories(file_id)
 
-    async def get_linked_products(self, file_id: UUID) -> list[ProductV2]:
+    async def get_linked_products(self, file_id: UUID) -> list[Product]:
         return await self.repository.get_linked_products(file_id)

@@ -1,20 +1,19 @@
 from typing import override
 
-from commons.db.v6 import RbacResourceEnum
+from commons.db.v6 import Customer, RbacResourceEnum
+from commons.db.v6.crm.links.entity_type import EntityType
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.context_wrapper import ContextWrapper
 from app.core.processors.executor import ProcessorExecutor
 from app.graphql.base_repository import BaseRepository
-from app.graphql.links.models.entity_type import EntityType
-from app.graphql.v2.core.customers.models import CustomerV2
 from app.graphql.v2.rbac.services.rbac_filter_service import RbacFilterService
 from app.graphql.v2.rbac.strategies.base import RbacFilterStrategy
 from app.graphql.v2.rbac.strategies.created_by_filter import CreatedByFilterStrategy
 
 
-class CustomersRepository(BaseRepository[CustomerV2]):
+class CustomersRepository(BaseRepository[Customer]):
     """Repository for Customers entity."""
 
     entity_type = EntityType.CUSTOMER
@@ -29,7 +28,7 @@ class CustomersRepository(BaseRepository[CustomerV2]):
         super().__init__(
             session,
             context_wrapper,
-            CustomerV2,
+            Customer,
             rbac_filter_service,
             processor_executor,
         )
@@ -38,12 +37,12 @@ class CustomersRepository(BaseRepository[CustomerV2]):
     def get_rbac_filter_strategy(self) -> RbacFilterStrategy | None:
         return CreatedByFilterStrategy(
             RbacResourceEnum.CUSTOMER,
-            CustomerV2,
+            Customer,
         )
 
     async def search_by_company_name(
         self, search_term: str, published: bool = True, limit: int = 20
-    ) -> list[CustomerV2]:
+    ) -> list[Customer]:
         """
         Search customers by company name using case-insensitive pattern matching.
 
@@ -53,16 +52,16 @@ class CustomersRepository(BaseRepository[CustomerV2]):
             limit: Maximum number of customers to return (default: 20)
 
         Returns:
-            List of CustomerV2 objects matching the search criteria
+            List of Customer objects matching the search criteria
         """
         stmt = (
-            select(CustomerV2)
-            .where(CustomerV2.company_name.ilike(f"%{search_term}%"))
+            select(Customer)
+            .where(Customer.company_name.ilike(f"%{search_term}%"))
             .limit(limit)
         )
 
         if published is not None:
-            stmt = stmt.where(CustomerV2.published == published)
+            stmt = stmt.where(Customer.published == published)
 
         result = await self.execute(stmt)
         return list(result.scalars().all())

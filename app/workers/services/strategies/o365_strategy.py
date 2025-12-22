@@ -4,6 +4,7 @@ from datetime import datetime, timedelta, timezone
 from uuid import UUID
 
 import httpx
+from commons.db.v6.crm import O365UserToken
 from loguru import logger
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -14,7 +15,6 @@ from app.integrations.microsoft_o365.constants import (
     O365_SCOPES,
     TOKEN_ENDPOINT,
 )
-from app.integrations.microsoft_o365.models.o365_user_token import O365UserToken
 
 from .base import (
     TOKEN_REFRESH_BUFFER_SECONDS,

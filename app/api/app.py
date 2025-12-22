@@ -3,6 +3,7 @@ import time
 from typing import Any
 
 from aioinject.ext.fastapi import AioInjectMiddleware
+from commons.db.v6.models import *  # noqa: F403
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse

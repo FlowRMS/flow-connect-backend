@@ -5,7 +5,7 @@ from typing import Self
 from uuid import UUID
 
 import strawberry
-from commons.db.models import Quote
+from commons.db.v6.crm import Quote
 
 from app.core.db.adapters.dto import DTOMixin
 

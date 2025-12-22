@@ -1,6 +1,7 @@
 from typing import Any, TypeVar
 
-from app.core.db.base import BaseModel
+from commons.db.v6 import BaseModel
+
 from app.core.processors.context import EntityContext
 from app.core.processors.events import RepositoryEvent
 from app.core.processors.registry import processor_registry

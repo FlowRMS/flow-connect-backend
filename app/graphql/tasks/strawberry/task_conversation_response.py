@@ -5,9 +5,9 @@ from typing import Self
 from uuid import UUID
 
 import strawberry
+from commons.db.v6.crm.tasks.task_conversation_model import TaskConversation
 
 from app.core.db.adapters.dto import DTOMixin
-from app.graphql.tasks.models.task_conversation_model import TaskConversation
 
 
 @strawberry.type

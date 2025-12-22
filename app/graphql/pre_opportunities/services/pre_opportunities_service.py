@@ -3,10 +3,10 @@
 from uuid import UUID
 
 from commons.auth import AuthInfo
+from commons.db.v6.crm.links.entity_type import EntityType
+from commons.db.v6.crm.pre_opportunities.pre_opportunity_model import PreOpportunity
 
 from app.errors.common_errors import NameAlreadyExistsError, NotFoundError
-from app.graphql.links.models.entity_type import EntityType
-from app.graphql.pre_opportunities.models.pre_opportunity_model import PreOpportunity
 from app.graphql.pre_opportunities.repositories.pre_opportunities_repository import (
     PreOpportunitiesRepository,
 )

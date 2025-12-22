@@ -1,10 +1,10 @@
 from uuid import UUID
 
 from commons.auth import AuthInfo
+from commons.db.v6 import Customer
+from commons.db.v6.crm.links.entity_type import EntityType
 
 from app.errors.common_errors import NotFoundError
-from app.graphql.links.models.entity_type import EntityType
-from app.graphql.v2.core.customers.models import CustomerV2
 from app.graphql.v2.core.customers.repositories.customers_repository import (
     CustomersRepository,
 )
@@ -21,35 +21,35 @@ class CustomerService:
         self.repository = repository
         self.auth_info = auth_info
 
-    async def get_by_id(self, customer_id: UUID) -> CustomerV2:
+    async def get_by_id(self, customer_id: UUID) -> Customer:
         customer = await self.repository.get_by_id(customer_id)
         if not customer:
-            raise NotFoundError(f"CustomerV2 with id {customer_id} not found")
+            raise NotFoundError(f"Customer with id {customer_id} not found")
         return customer
 
-    async def create(self, customer_input: CustomerInput) -> CustomerV2:
+    async def create(self, customer_input: CustomerInput) -> Customer:
         return await self.repository.create(customer_input.to_orm_model())
 
     async def update(
         self, customer_id: UUID, customer_input: CustomerInput
-    ) -> CustomerV2:
+    ) -> Customer:
         customer = customer_input.to_orm_model()
         customer.id = customer_id
         return await self.repository.update(customer)
 
     async def delete(self, customer_id: UUID) -> bool:
         if not await self.repository.exists(customer_id):
-            raise NotFoundError(f"CustomerV2 with id {customer_id} not found")
+            raise NotFoundError(f"Customer with id {customer_id} not found")
         return await self.repository.delete(customer_id)
 
     async def search_customers(
         self, search_term: str, published: bool = True, limit: int = 20
-    ) -> list[CustomerV2]:
+    ) -> list[Customer]:
         return await self.repository.search_by_company_name(
             search_term, published, limit
         )
 
     async def find_by_entity(
         self, entity_type: EntityType, entity_id: UUID
-    ) -> list[CustomerV2]:
+    ) -> list[Customer]:
         return await self.repository.find_by_entity(entity_type, entity_id)

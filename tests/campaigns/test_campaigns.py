@@ -3,10 +3,10 @@
 import pytest
 from uuid import uuid4
 
-from app.graphql.campaigns.models.campaign_status import CampaignStatus
-from app.graphql.campaigns.models.email_status import EmailStatus
-from app.graphql.campaigns.models.recipient_list_type import RecipientListType
-from app.graphql.campaigns.models.send_pace import SendPace
+from commons.db.v6.crm.campaigns.campaign_status import CampaignStatus
+from commons.db.v6.crm.campaigns.email_status import EmailStatus
+from commons.db.v6.crm.campaigns.recipient_list_type import RecipientListType
+from commons.db.v6.crm.campaigns.send_pace import SendPace
 from app.graphql.campaigns.strawberry.criteria_input import (
     CampaignCriteriaInput,
     CriteriaConditionInput,
@@ -14,7 +14,7 @@ from app.graphql.campaigns.strawberry.criteria_input import (
     CriteriaOperator,
     LogicalOperator,
 )
-from app.graphql.links.models.entity_type import EntityType
+from commons.db.v6.crm.links.entity_type import EntityType
 
 
 class TestCampaignEnums:
@@ -115,17 +115,17 @@ class TestCampaignModels:
 
     def test_campaign_model_import(self) -> None:
         """Test Campaign model can be imported."""
-        from app.graphql.campaigns.models.campaign_model import Campaign
+        from commons.db.v6.crm.campaigns.campaign_model import Campaign
         assert Campaign is not None
 
     def test_campaign_recipient_model_import(self) -> None:
         """Test CampaignRecipient model can be imported."""
-        from app.graphql.campaigns.models.campaign_recipient_model import CampaignRecipient
+        from commons.db.v6.crm.campaigns.campaign_recipient_model import CampaignRecipient
         assert CampaignRecipient is not None
 
     def test_campaign_criteria_model_import(self) -> None:
         """Test CampaignCriteria model can be imported."""
-        from app.graphql.campaigns.models.campaign_criteria_model import CampaignCriteria
+        from commons.db.v6.crm.campaigns.campaign_criteria_model import CampaignCriteria
         assert CampaignCriteria is not None
 
 
@@ -241,8 +241,8 @@ class TestCampaignInputStatusDerivation:
     def test_derive_status_draft_when_no_schedule_or_immediate(self) -> None:
         """Test status is DRAFT when neither sendImmediately nor scheduledAt is set."""
         from app.graphql.campaigns.strawberry.campaign_input import CampaignInput
-        from app.graphql.campaigns.models.campaign_status import CampaignStatus
-        from app.graphql.campaigns.models.recipient_list_type import RecipientListType
+        from commons.db.v6.crm.campaigns.campaign_status import CampaignStatus
+        from commons.db.v6.crm.campaigns.recipient_list_type import RecipientListType
 
         campaign_input = CampaignInput(
             name="Test Campaign",
@@ -254,8 +254,8 @@ class TestCampaignInputStatusDerivation:
     def test_derive_status_sending_when_send_immediately(self) -> None:
         """Test status is SENDING when sendImmediately is True."""
         from app.graphql.campaigns.strawberry.campaign_input import CampaignInput
-        from app.graphql.campaigns.models.campaign_status import CampaignStatus
-        from app.graphql.campaigns.models.recipient_list_type import RecipientListType
+        from commons.db.v6.crm.campaigns.campaign_status import CampaignStatus
+        from commons.db.v6.crm.campaigns.recipient_list_type import RecipientListType
 
         campaign_input = CampaignInput(
             name="Test Campaign",
@@ -268,8 +268,8 @@ class TestCampaignInputStatusDerivation:
         """Test status is SCHEDULED when scheduledAt is set."""
         from datetime import datetime, timezone
         from app.graphql.campaigns.strawberry.campaign_input import CampaignInput
-        from app.graphql.campaigns.models.campaign_status import CampaignStatus
-        from app.graphql.campaigns.models.recipient_list_type import RecipientListType
+        from commons.db.v6.crm.campaigns.campaign_status import CampaignStatus
+        from commons.db.v6.crm.campaigns.recipient_list_type import RecipientListType
 
         campaign_input = CampaignInput(
             name="Test Campaign",
@@ -282,8 +282,8 @@ class TestCampaignInputStatusDerivation:
     def test_derive_status_sets_correct_status_on_orm_model(self) -> None:
         """Test _derive_status method returns correct status for send_immediately."""
         from app.graphql.campaigns.strawberry.campaign_input import CampaignInput
-        from app.graphql.campaigns.models.campaign_status import CampaignStatus
-        from app.graphql.campaigns.models.recipient_list_type import RecipientListType
+        from commons.db.v6.crm.campaigns.campaign_status import CampaignStatus
+        from commons.db.v6.crm.campaigns.recipient_list_type import RecipientListType
 
         # Test send_immediately case
         campaign_input = CampaignInput(

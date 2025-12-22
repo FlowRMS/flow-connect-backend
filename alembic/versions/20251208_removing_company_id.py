@@ -9,7 +9,7 @@ from collections.abc import Sequence
 
 from alembic import op
 import sqlalchemy as sa
-from app.graphql.links.models.entity_type import EntityType
+from commons.db.v6.crm.links.entity_type import EntityType
 
 
 # revision identifiers, used by Alembic.

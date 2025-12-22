@@ -3,14 +3,14 @@
 from datetime import datetime, timezone
 from uuid import UUID
 
+from commons.db.v6.crm.campaigns.campaign_recipient_model import CampaignRecipient
+from commons.db.v6.crm.campaigns.email_status import EmailStatus
 from sqlalchemy import delete, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
 from app.core.context_wrapper import ContextWrapper
 from app.graphql.base_repository import BaseRepository
-from app.graphql.campaigns.models.campaign_recipient_model import CampaignRecipient
-from app.graphql.campaigns.models.email_status import EmailStatus
 
 
 class CampaignRecipientsRepository(BaseRepository[CampaignRecipient]):

@@ -2,10 +2,8 @@ from abc import ABC, abstractmethod
 from typing import Any, TypeVar
 from uuid import UUID
 
-from commons.db.v6 import RbacPrivilegeOptionEnum, RbacResourceEnum
+from commons.db.v6 import BaseModel, RbacPrivilegeOptionEnum, RbacResourceEnum
 from sqlalchemy import Select
-
-from app.core.db.base import BaseModel
 
 T = TypeVar("T", bound=BaseModel)
 

@@ -2,7 +2,8 @@ from dataclasses import dataclass
 from typing import Generic, TypeVar
 from uuid import UUID
 
-from app.core.db.base import BaseModel
+from commons.db.v6 import BaseModel
+
 from app.core.processors.events import RepositoryEvent
 
 T = TypeVar("T", bound=BaseModel)

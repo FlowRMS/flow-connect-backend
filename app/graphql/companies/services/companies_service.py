@@ -1,9 +1,9 @@
 from uuid import UUID
 
 from commons.auth import AuthInfo
+from commons.db.v6.crm.companies.company_model import Company
 
 from app.errors.common_errors import NotFoundError
-from app.graphql.companies.models.company_model import Company
 from app.graphql.companies.repositories.companies_repository import CompaniesRepository
 from app.graphql.companies.strawberry.company_input import CompanyInput
 

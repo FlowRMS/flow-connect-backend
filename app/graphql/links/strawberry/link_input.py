@@ -3,10 +3,10 @@
 from uuid import UUID
 
 import strawberry
+from commons.db.v6.crm.links.entity_type import EntityType
+from commons.db.v6.crm.links.link_relation_model import LinkRelation
 
 from app.core.strawberry.inputs import BaseInputGQL
-from app.graphql.links.models.entity_type import EntityType
-from app.graphql.links.models.link_relation_model import LinkRelation
 
 
 @strawberry.input

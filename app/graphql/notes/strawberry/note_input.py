@@ -3,10 +3,10 @@
 from uuid import UUID
 
 import strawberry
+from commons.db.v6.crm.notes.note_conversation_model import NoteConversation
+from commons.db.v6.crm.notes.note_model import Note
 
 from app.core.strawberry.inputs import BaseInputGQL
-from app.graphql.notes.models.note_conversation_model import NoteConversation
-from app.graphql.notes.models.note_model import Note
 
 
 @strawberry.input

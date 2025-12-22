@@ -2,7 +2,7 @@
 
 from uuid import UUID
 
-from commons.db.models import User
+from commons.db.v6 import User
 from sqlalchemy import or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 

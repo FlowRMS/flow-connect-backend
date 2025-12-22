@@ -7,13 +7,13 @@ from email.mime.text import MIMEText
 from uuid import UUID
 
 import httpx
+from commons.db.v6.crm import GmailUserToken
 from loguru import logger
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.integrations.gmail.config import GmailSettings
 from app.integrations.gmail.constants import GMAIL_API
-from app.integrations.gmail.models.gmail_user_token import GmailUserToken
 
 from .base import (
     TOKEN_REFRESH_BUFFER_SECONDS,

@@ -5,7 +5,7 @@ from typing import Self
 from uuid import UUID
 
 import strawberry
-from commons.db.models import Order
+from commons.db.v6.commission.orders.order import Order
 
 from app.core.db.adapters.dto import DTOMixin
 

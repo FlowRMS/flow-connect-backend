@@ -3,7 +3,7 @@
 from uuid import UUID
 
 from commons.auth import AuthInfo
-from commons.db.models import User
+from commons.db.v6 import User
 
 from app.errors.common_errors import NotFoundError
 from app.graphql.users.repositories.users_repository import UsersRepository

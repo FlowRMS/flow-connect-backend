@@ -1,25 +1,26 @@
 from uuid import UUID
 
+from commons.db.v6.core.factories.factory import Factory
+from commons.db.v6.crm.links.entity_type import EntityType
+from commons.db.v6.crm.manufacturer_order_model import ManufacturerOrder
 from sqlalchemy import delete, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.context_wrapper import ContextWrapper
 from app.graphql.base_repository import BaseRepository
-from app.graphql.links.models.entity_type import EntityType
-from app.graphql.v2.core.factories.models import FactoryV2, ManufacturerOrder
 
 
-class FactoriesRepository(BaseRepository[FactoryV2]):
+class FactoriesRepository(BaseRepository[Factory]):
     """Repository for Factories entity."""
 
     entity_type = EntityType.FACTORY
 
     def __init__(self, context_wrapper: ContextWrapper, session: AsyncSession) -> None:
-        super().__init__(session, context_wrapper, FactoryV2)
+        super().__init__(session, context_wrapper, Factory)
 
     async def search_by_title(
         self, search_term: str, published: bool = True, limit: int = 20
-    ) -> list[FactoryV2]:
+    ) -> list[Factory]:
         """
         Search factories by title using case-insensitive pattern matching.
 
@@ -29,16 +30,14 @@ class FactoriesRepository(BaseRepository[FactoryV2]):
             limit: Maximum number of factories to return (default: 20)
 
         Returns:
-            List of FactoryV2 objects matching the search criteria
+            List of Factory objects matching the search criteria
         """
         stmt = (
-            select(FactoryV2)
-            .where(FactoryV2.title.ilike(f"%{search_term}%"))
-            .limit(limit)
+            select(Factory).where(Factory.title.ilike(f"%{search_term}%")).limit(limit)
         )
 
         if published is not None:
-            stmt = stmt.where(FactoryV2.published == published)
+            stmt = stmt.where(Factory.published == published)
 
         result = await self.session.execute(stmt)
         return list(result.scalars().all())
@@ -78,7 +77,7 @@ class FactoriesRepository(BaseRepository[FactoryV2]):
 
     async def search_by_title_ordered(
         self, search_term: str, published: bool = True, limit: int = 20
-    ) -> list[FactoryV2]:
+    ) -> list[Factory]:
         """
         Search factories by title with custom sort order applied.
 
@@ -88,7 +87,7 @@ class FactoriesRepository(BaseRepository[FactoryV2]):
             limit: Maximum number of factories to return (default: 20)
 
         Returns:
-            List of FactoryV2 objects sorted by custom order, then by title
+            List of Factory objects sorted by custom order, then by title
         """
         # Get factories
         factories = await self.search_by_title(search_term, published, limit)
@@ -97,7 +96,7 @@ class FactoriesRepository(BaseRepository[FactoryV2]):
         order_map = await self.get_manufacturer_order()
 
         # Sort: factories with order first (by sort_order), then unordered (by title)
-        def sort_key(factory: FactoryV2) -> tuple[int, int, str]:
+        def sort_key(factory: Factory) -> tuple[int, int, str]:
             if factory.id in order_map:
                 return (0, order_map[factory.id], factory.title)
             return (1, 0, factory.title)

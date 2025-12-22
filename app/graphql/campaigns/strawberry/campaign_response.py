@@ -5,13 +5,13 @@ from typing import Self
 from uuid import UUID
 
 import strawberry
+from commons.db.v6.crm.campaigns.campaign_model import Campaign
+from commons.db.v6.crm.campaigns.campaign_status import CampaignStatus
+from commons.db.v6.crm.campaigns.email_status import EmailStatus
+from commons.db.v6.crm.campaigns.recipient_list_type import RecipientListType
+from commons.db.v6.crm.campaigns.send_pace import SendPace
 
 from app.core.db.adapters.dto import DTOMixin
-from app.graphql.campaigns.models.campaign_model import Campaign
-from app.graphql.campaigns.models.campaign_status import CampaignStatus
-from app.graphql.campaigns.models.email_status import EmailStatus
-from app.graphql.campaigns.models.recipient_list_type import RecipientListType
-from app.graphql.campaigns.models.send_pace import SendPace
 
 
 @strawberry.type

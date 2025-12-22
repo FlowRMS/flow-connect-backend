@@ -3,18 +3,18 @@
 from typing import Any
 from uuid import UUID
 
-from commons.db.models import User
+from commons.db.v6 import User
+from commons.db.v6.crm.campaigns.campaign_model import Campaign
+from commons.db.v6.crm.campaigns.campaign_recipient_model import CampaignRecipient
+from commons.db.v6.crm.campaigns.campaign_status import CampaignStatus
+from commons.db.v6.crm.campaigns.email_status import EmailStatus
+from commons.db.v6.crm.campaigns.recipient_list_type import RecipientListType
 from sqlalchemy import Select, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import lazyload, selectinload
 
 from app.core.context_wrapper import ContextWrapper
 from app.graphql.base_repository import BaseRepository
-from app.graphql.campaigns.models.campaign_model import Campaign
-from app.graphql.campaigns.models.campaign_recipient_model import CampaignRecipient
-from app.graphql.campaigns.models.campaign_status import CampaignStatus
-from app.graphql.campaigns.models.email_status import EmailStatus
-from app.graphql.campaigns.models.recipient_list_type import RecipientListType
 from app.graphql.campaigns.strawberry.campaign_landing_page_response import (
     CampaignLandingPageResponse,
 )
@@ -94,7 +94,7 @@ class CampaignsRepository(BaseRepository[Campaign]):
 
     async def get_dynamic_campaigns(self) -> list[Campaign]:
         """Get all campaigns with dynamic recipient lists."""
-        from app.graphql.campaigns.models.campaign_criteria_model import (
+        from commons.db.v6.crm.campaigns.campaign_criteria_model import (
             CampaignCriteria,
         )
 

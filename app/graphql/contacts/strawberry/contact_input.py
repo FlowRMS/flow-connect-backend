@@ -1,9 +1,9 @@
 from uuid import UUID
 
 import strawberry
+from commons.db.v6.crm.contact_model import Contact
 
 from app.core.strawberry.inputs import BaseInputGQL
-from app.graphql.contacts.models.contact_model import Contact
 
 
 @strawberry.input

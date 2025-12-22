@@ -3,19 +3,19 @@
 from typing import Any
 from uuid import UUID
 
-from commons.db.models import User
+from commons.db.v6 import User
+from commons.db.v6.crm.links.entity_type import EntityType
+from commons.db.v6.crm.links.link_relation_model import LinkRelation
+from commons.db.v6.crm.pre_opportunities.pre_opportunity_balance_model import (
+    PreOpportunityBalance,
+)
+from commons.db.v6.crm.pre_opportunities.pre_opportunity_model import PreOpportunity
 from sqlalchemy import Select, func, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import lazyload
 
 from app.core.context_wrapper import ContextWrapper
 from app.graphql.base_repository import BaseRepository
-from app.graphql.links.models.entity_type import EntityType
-from app.graphql.links.models.link_relation_model import LinkRelation
-from app.graphql.pre_opportunities.models.pre_opportunity_balance_model import (
-    PreOpportunityBalance,
-)
-from app.graphql.pre_opportunities.models.pre_opportunity_model import PreOpportunity
 from app.graphql.pre_opportunities.repositories.pre_opportunity_balance_repository import (
     PreOpportunityBalanceRepository,
 )

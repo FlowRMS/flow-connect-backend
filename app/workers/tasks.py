@@ -4,6 +4,12 @@ from datetime import datetime, timezone
 from uuid import UUID
 
 from commons.db.controller import MultiTenantController
+from commons.db.v6.crm.campaigns.campaign_model import Campaign
+from commons.db.v6.crm.campaigns.campaign_recipient_model import CampaignRecipient
+from commons.db.v6.crm.campaigns.campaign_send_log_model import CampaignSendLog
+from commons.db.v6.crm.campaigns.campaign_status import CampaignStatus
+from commons.db.v6.crm.campaigns.email_status import EmailStatus
+from commons.db.v6.crm.campaigns.send_pace import SendPace
 from loguru import logger
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -11,12 +17,6 @@ from sqlalchemy.orm import selectinload
 
 from app.core.config.settings import Settings
 from app.core.container import create_container
-from app.graphql.campaigns.models.campaign_model import Campaign
-from app.graphql.campaigns.models.campaign_recipient_model import CampaignRecipient
-from app.graphql.campaigns.models.campaign_send_log_model import CampaignSendLog
-from app.graphql.campaigns.models.campaign_status import CampaignStatus
-from app.graphql.campaigns.models.email_status import EmailStatus
-from app.graphql.campaigns.models.send_pace import SendPace
 from app.integrations.gmail.config import GmailSettings
 from app.integrations.microsoft_o365.config import O365Settings
 from app.workers.broker import broker

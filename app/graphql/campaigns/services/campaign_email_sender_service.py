@@ -4,13 +4,13 @@ from dataclasses import dataclass
 from uuid import UUID
 
 from commons.auth import AuthInfo
+from commons.db.v6.crm.campaigns.campaign_model import Campaign
+from commons.db.v6.crm.campaigns.campaign_recipient_model import CampaignRecipient
+from commons.db.v6.crm.campaigns.campaign_status import CampaignStatus
+from commons.db.v6.crm.campaigns.email_status import EmailStatus
+from commons.db.v6.crm.campaigns.send_pace import SendPace
 
 from app.errors.common_errors import NotFoundError
-from app.graphql.campaigns.models.campaign_model import Campaign
-from app.graphql.campaigns.models.campaign_recipient_model import CampaignRecipient
-from app.graphql.campaigns.models.campaign_status import CampaignStatus
-from app.graphql.campaigns.models.email_status import EmailStatus
-from app.graphql.campaigns.models.send_pace import SendPace
 from app.graphql.campaigns.repositories.campaign_recipients_repository import (
     CampaignRecipientsRepository,
 )

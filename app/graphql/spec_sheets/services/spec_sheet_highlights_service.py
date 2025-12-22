@@ -2,9 +2,10 @@
 
 from uuid import UUID
 
-from app.graphql.spec_sheets.models.spec_sheet_highlight_model import (
+from commons.db.v6.crm.spec_sheets.spec_sheet_highlight_model import (
     SpecSheetHighlightVersion,
 )
+
 from app.graphql.spec_sheets.repositories.spec_sheet_highlights_repository import (
     SpecSheetHighlightsRepository,
 )

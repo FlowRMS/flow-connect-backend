@@ -1,9 +1,9 @@
 from uuid import UUID
 
 from commons.auth import AuthInfo
-from commons.db.models import Quote
+from commons.db.v6.crm.links.entity_type import EntityType
+from commons.db.v6.crm.quotes import Quote
 
-from app.graphql.links.models.entity_type import EntityType
 from app.graphql.quotes.repositories.quotes_repository import QuotesRepository
 
 

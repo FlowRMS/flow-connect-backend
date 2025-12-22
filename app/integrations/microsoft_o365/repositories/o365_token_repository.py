@@ -4,12 +4,12 @@ import uuid
 from datetime import datetime
 
 import pendulum
+from commons.db.v6.crm import O365UserToken
 from sqlalchemy import select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.context_wrapper import ContextWrapper
 from app.graphql.base_repository import BaseRepository
-from app.integrations.microsoft_o365.models.o365_user_token import O365UserToken
 
 
 class O365TokenRepository(BaseRepository[O365UserToken]):

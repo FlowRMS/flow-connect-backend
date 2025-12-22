@@ -2,12 +2,12 @@
 
 from uuid import UUID
 
+from commons.db.v6.crm.notes.note_conversation_model import NoteConversation
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.context_wrapper import ContextWrapper
 from app.graphql.base_repository import BaseRepository
-from app.graphql.notes.models.note_conversation_model import NoteConversation
 
 
 class NoteConversationsRepository(BaseRepository[NoteConversation]):

@@ -5,9 +5,9 @@ from datetime import date
 from uuid import UUID
 
 import strawberry
+from commons.db.v6.crm.jobs.jobs_model import Job
 
 from app.core.strawberry.inputs import BaseInputGQL
-from app.graphql.jobs.models.jobs_model import Job
 
 
 @strawberry.input

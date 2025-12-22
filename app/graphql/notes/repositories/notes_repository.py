@@ -3,14 +3,22 @@
 from typing import Any
 from uuid import UUID
 
-from commons.db.models import (
+from commons.db.v6.commission import (
     Check,
-    Customer,
-    Factory,
     Invoice,
     Order,
-    Product,
-    Quote,
+)
+from commons.db.v6.core import Customer, Factory, Product
+from commons.db.v6.crm import Quote
+from commons.db.v6.crm.companies.company_model import Company
+from commons.db.v6.crm.contact_model import Contact
+from commons.db.v6.crm.jobs.jobs_model import Job
+from commons.db.v6.crm.links.entity_type import EntityType
+from commons.db.v6.crm.links.link_relation_model import LinkRelation
+from commons.db.v6.crm.notes.note_model import Note
+from commons.db.v6.crm.pre_opportunities.pre_opportunity_model import PreOpportunity
+from commons.db.v6.crm.tasks.task_model import Task
+from commons.db.v6.user import (
     User,
 )
 from sqlalchemy import Select, case, func, literal, or_, select
@@ -20,17 +28,9 @@ from sqlalchemy.orm import lazyload
 
 from app.core.context_wrapper import ContextWrapper
 from app.graphql.base_repository import BaseRepository
-from app.graphql.companies.models.company_model import Company
-from app.graphql.contacts.models.contact_model import Contact
-from app.graphql.jobs.models.jobs_model import Job
-from app.graphql.links.models.entity_type import EntityType
-from app.graphql.links.models.link_relation_model import LinkRelation
-from app.graphql.notes.models.note_model import Note
 from app.graphql.notes.strawberry.note_landing_page_response import (
     NoteLandingPageResponse,
 )
-from app.graphql.pre_opportunities.models.pre_opportunity_model import PreOpportunity
-from app.graphql.tasks.models.task_model import Task
 
 
 class NotesRepository(BaseRepository[Note]):

@@ -2,21 +2,21 @@ from decimal import Decimal
 from uuid import UUID
 
 import strawberry
+from commons.db.v6.core.products.product import Product
 
 from app.core.strawberry.inputs import BaseInputGQL
-from app.graphql.v2.core.products.models import ProductV2
 
 
 @strawberry.input
-class ProductInput(BaseInputGQL[ProductV2]):
+class ProductInput(BaseInputGQL[Product]):
     factory_part_number: str
     factory_id: UUID
     unit_price: Decimal
     default_commission_rate: Decimal
-    product_category_id: UUID | None = None
-    product_uom_id: UUID | None = None
+    product_category_id: UUID
+    product_uom_id: UUID
+    approval_needed: bool
     published: bool = False
-    approval_needed: bool | None = None
     description: str | None = None
     lead_time: str | None = None
     min_order_qty: int | None = None
@@ -29,8 +29,8 @@ class ProductInput(BaseInputGQL[ProductV2]):
     sales_model: str | None = None
     payout_type: str | None = None
 
-    def to_orm_model(self) -> ProductV2:
-        return ProductV2(
+    def to_orm_model(self) -> Product:
+        return Product(
             factory_part_number=self.factory_part_number,
             factory_id=self.factory_id,
             product_category_id=self.product_category_id,
@@ -40,14 +40,4 @@ class ProductInput(BaseInputGQL[ProductV2]):
             published=self.published,
             approval_needed=self.approval_needed,
             description=self.description,
-            lead_time=self.lead_time,
-            min_order_qty=self.min_order_qty,
-            commission_discount_rate=self.commission_discount_rate,
-            overall_discount_rate=self.overall_discount_rate,
-            cost=self.cost,
-            individual_upc=self.individual_upc,
-            approval_comments=self.approval_comments,
-            logo_url=self.logo_url,
-            sales_model=self.sales_model,
-            payout_type=self.payout_type,
         )

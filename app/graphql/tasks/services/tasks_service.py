@@ -1,11 +1,11 @@
 from uuid import UUID
 
 from commons.auth import AuthInfo
+from commons.db.v6.crm.links.entity_type import EntityType
+from commons.db.v6.crm.tasks.task_conversation_model import TaskConversation
+from commons.db.v6.crm.tasks.task_model import Task
 
 from app.errors.common_errors import NotFoundError
-from app.graphql.links.models.entity_type import EntityType
-from app.graphql.tasks.models.task_conversation_model import TaskConversation
-from app.graphql.tasks.models.task_model import Task
 from app.graphql.tasks.repositories.task_conversations_repository import (
     TaskConversationsRepository,
 )

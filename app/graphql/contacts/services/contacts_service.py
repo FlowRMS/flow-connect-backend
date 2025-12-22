@@ -2,17 +2,17 @@ from uuid import UUID
 
 import strawberry
 from commons.auth import AuthInfo
+from commons.db.v6.crm.contact_model import Contact
+from commons.db.v6.crm.links.entity_type import EntityType
 
 from app.errors.common_errors import NotFoundError
 from app.graphql.companies.services.companies_service import CompaniesService
 from app.graphql.companies.strawberry.company_response import CompanyResponse
-from app.graphql.contacts.models.contact_model import Contact
 from app.graphql.contacts.repositories.contacts_repository import ContactsRepository
 from app.graphql.contacts.strawberry.contact_input import ContactInput
 from app.graphql.contacts.strawberry.contact_related_entities_response import (
     ContactRelatedEntitiesResponse,
 )
-from app.graphql.links.models.entity_type import EntityType
 from app.graphql.links.services.links_service import LinksService
 
 

@@ -5,19 +5,18 @@ from typing import ClassVar, Generic, TypeVar
 from uuid import UUID
 
 import pendulum
-from commons.db.v6 import RbacPrivilegeTypeEnum, RbacResourceEnum
+from commons.db.v6 import BaseModel, RbacPrivilegeTypeEnum, RbacResourceEnum
+from commons.db.v6.crm.links.entity_type import EntityType
+from commons.db.v6.crm.links.link_relation_model import LinkRelation
 from sqlalchemy import Result, Select, func, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.sql.base import ExecutableOption
 
 from app.core.context_wrapper import ContextWrapper
-from app.core.db.base import BaseModel
 from app.core.processors.context import EntityContext
 from app.core.processors.events import RepositoryEvent
 from app.core.processors.executor import ProcessorExecutor
 from app.errors.common_errors import NotFoundError
-from app.graphql.links.models.entity_type import EntityType
-from app.graphql.links.models.link_relation_model import LinkRelation
 from app.graphql.v2.rbac.services.rbac_filter_service import RbacFilterService
 from app.graphql.v2.rbac.strategies.base import RbacFilterStrategy
 

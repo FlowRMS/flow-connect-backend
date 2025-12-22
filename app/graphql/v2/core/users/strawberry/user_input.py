@@ -1,13 +1,13 @@
 from uuid import UUID
 
 import strawberry
+from commons.db.v6.user import User
 
 from app.core.strawberry.inputs import BaseInputGQL
-from app.graphql.v2.core.users.models.user import UserV2
 
 
 @strawberry.input
-class UserInput(BaseInputGQL[UserV2]):
+class UserInput(BaseInputGQL[User]):
     username: str
     first_name: str
     last_name: str
@@ -17,10 +17,9 @@ class UserInput(BaseInputGQL[UserV2]):
     enabled: bool = True
     inside: bool | None = None
     outside: bool | None = None
-    supervisor_id: UUID | None = None
 
-    def to_orm_model(self) -> UserV2:
-        return UserV2(
+    def to_orm_model(self) -> User:
+        return User(
             username=self.username,
             first_name=self.first_name,
             last_name=self.last_name,
@@ -30,5 +29,4 @@ class UserInput(BaseInputGQL[UserV2]):
             enabled=self.enabled,
             inside=self.inside,
             outside=self.outside,
-            supervisor_id=self.supervisor_id,
         )

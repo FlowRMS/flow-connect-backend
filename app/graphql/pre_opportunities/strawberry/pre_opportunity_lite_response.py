@@ -5,12 +5,12 @@ from typing import Self
 from uuid import UUID
 
 import strawberry
-
-from app.core.db.adapters.dto import DTOMixin
-from app.graphql.pre_opportunities.models.pre_opportunity_model import PreOpportunity
-from app.graphql.pre_opportunities.models.pre_opportunity_status import (
+from commons.db.v6.crm.pre_opportunities.pre_opportunity_model import PreOpportunity
+from commons.db.v6.crm.pre_opportunities.pre_opportunity_status import (
     PreOpportunityStatus,
 )
+
+from app.core.db.adapters.dto import DTOMixin
 
 
 @strawberry.type

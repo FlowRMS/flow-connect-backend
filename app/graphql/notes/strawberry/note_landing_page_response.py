@@ -4,11 +4,11 @@ from typing import Any, Self
 from uuid import UUID
 
 import strawberry
+from commons.db.v6.crm.links.entity_type import EntityType
 from sqlalchemy.engine.row import Row
 
 from app.core.db.adapters.dto import LandingPageInterfaceBase
 from app.graphql.common.linked_entity import LinkedEntity
-from app.graphql.links.models.entity_type import EntityType
 
 
 @strawberry.type(name="NoteLandingPage")

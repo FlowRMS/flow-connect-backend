@@ -4,7 +4,7 @@ from typing import Self
 from uuid import UUID
 
 import strawberry
-from commons.db.models import User
+from commons.db.v6 import User
 
 from app.core.db.adapters.dto import DTOMixin
 

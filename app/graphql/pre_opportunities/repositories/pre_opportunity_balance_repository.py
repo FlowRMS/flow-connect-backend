@@ -4,16 +4,16 @@ from collections.abc import Sequence
 from decimal import Decimal
 from uuid import UUID
 
+from commons.db.v6.crm.pre_opportunities.pre_opportunity_balance_model import (
+    PreOpportunityBalance,
+)
+from commons.db.v6.crm.pre_opportunities.pre_opportunity_detail_model import (
+    PreOpportunityDetail,
+)
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.context_wrapper import ContextWrapper
 from app.graphql.base_repository import BaseRepository
-from app.graphql.pre_opportunities.models.pre_opportunity_balance_model import (
-    PreOpportunityBalance,
-)
-from app.graphql.pre_opportunities.models.pre_opportunity_detail_model import (
-    PreOpportunityDetail,
-)
 
 
 class PreOpportunityBalanceRepository(BaseRepository[PreOpportunityBalance]):

@@ -2,6 +2,7 @@ from typing import TypeVar
 from uuid import UUID
 
 from commons.db.v6 import (
+    BaseModel,
     RbacPermission,
     RbacPrivilegeOptionEnum,
     RbacPrivilegeTypeEnum,
@@ -10,7 +11,6 @@ from commons.db.v6 import (
 )
 from sqlalchemy import Select, literal, select
 
-from app.core.db.base import BaseModel
 from app.graphql.v2.rbac.repositories.rbac_repository import RbacRepository
 from app.graphql.v2.rbac.strategies.base import RbacFilterStrategy
 

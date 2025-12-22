@@ -2,11 +2,11 @@ from datetime import date, datetime
 from uuid import UUID
 
 import strawberry
+from commons.db.v6.crm.tasks.task_model import Task
+from commons.db.v6.crm.tasks.task_priority import TaskPriority
+from commons.db.v6.crm.tasks.task_status import TaskStatus
 
 from app.core.db.adapters.dto import DTOMixin
-from app.graphql.tasks.models.task_model import Task
-from app.graphql.tasks.models.task_priority import TaskPriority
-from app.graphql.tasks.models.task_status import TaskStatus
 from app.graphql.users.strawberry.user_response import UserResponse
 
 

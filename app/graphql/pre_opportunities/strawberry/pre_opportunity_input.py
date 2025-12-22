@@ -2,12 +2,12 @@ from datetime import date
 from uuid import UUID
 
 import strawberry
-
-from app.core.strawberry.inputs import BaseInputGQL
-from app.graphql.pre_opportunities.models.pre_opportunity_model import PreOpportunity
-from app.graphql.pre_opportunities.models.pre_opportunity_status import (
+from commons.db.v6.crm.pre_opportunities.pre_opportunity_model import PreOpportunity
+from commons.db.v6.crm.pre_opportunities.pre_opportunity_status import (
     PreOpportunityStatus,
 )
+
+from app.core.strawberry.inputs import BaseInputGQL
 from app.graphql.pre_opportunities.strawberry.pre_opportunity_detail_input import (
     PreOpportunityDetailInput,
 )

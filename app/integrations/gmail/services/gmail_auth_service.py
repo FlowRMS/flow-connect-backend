@@ -11,6 +11,7 @@ from urllib.parse import urlencode
 
 import httpx
 from commons.auth import AuthInfo
+from commons.db.v6.crm import GmailUserToken
 
 from app.errors.common_errors import NotFoundError
 from app.integrations.gmail.config import GmailSettings
@@ -21,7 +22,6 @@ from app.integrations.gmail.constants import (
     GOOGLE_TOKEN_ENDPOINT,
     GOOGLE_USERINFO_ENDPOINT,
 )
-from app.integrations.gmail.models.gmail_user_token import GmailUserToken
 from app.integrations.gmail.repositories.gmail_token_repository import (
     GmailTokenRepository,
 )

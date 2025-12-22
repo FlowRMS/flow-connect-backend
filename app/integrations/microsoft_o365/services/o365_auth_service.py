@@ -8,6 +8,7 @@ from urllib.parse import urlencode
 
 import httpx
 from commons.auth import AuthInfo
+from commons.db.v6.crm import O365UserToken
 
 from app.errors.common_errors import NotFoundError
 from app.integrations.microsoft_o365.config import O365Settings
@@ -17,7 +18,6 @@ from app.integrations.microsoft_o365.constants import (
     O365_SCOPES,
     TOKEN_ENDPOINT,
 )
-from app.integrations.microsoft_o365.models.o365_user_token import O365UserToken
 from app.integrations.microsoft_o365.repositories.o365_token_repository import (
     O365TokenRepository,
 )

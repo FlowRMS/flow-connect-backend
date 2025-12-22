@@ -1,7 +1,8 @@
 from collections import defaultdict
 from typing import Any
 
-from app.core.db.base import BaseModel
+from commons.db.v6 import BaseModel
+
 from app.core.processors.events import RepositoryEvent
 
 

@@ -3,8 +3,7 @@
 from enum import Enum
 
 import strawberry
-
-from app.graphql.links.models.entity_type import EntityType
+from commons.db.v6.crm.links.entity_type import EntityType
 
 
 @strawberry.enum

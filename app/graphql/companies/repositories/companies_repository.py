@@ -1,19 +1,19 @@
 from typing import Any
 from uuid import UUID
 
-from commons.db.models import User
+from commons.db.v6 import User
+from commons.db.v6.crm.companies.company_model import Company
+from commons.db.v6.crm.links.entity_type import EntityType
+from commons.db.v6.crm.links.link_relation_model import LinkRelation
 from sqlalchemy import Select, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import lazyload
 
 from app.core.context_wrapper import ContextWrapper
 from app.graphql.base_repository import BaseRepository
-from app.graphql.companies.models.company_model import Company
 from app.graphql.companies.strawberry.company_landing_page_response import (
     CompanyLandingPageResponse,
 )
-from app.graphql.links.models.entity_type import EntityType
-from app.graphql.links.models.link_relation_model import LinkRelation
 
 
 class CompaniesRepository(BaseRepository[Company]):

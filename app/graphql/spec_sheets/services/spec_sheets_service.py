@@ -5,10 +5,10 @@ import os
 from uuid import UUID, uuid4
 
 import httpx
+from commons.db.v6.crm.spec_sheets.spec_sheet_model import SpecSheet
 from commons.s3.service import S3Service
 from loguru import logger
 
-from app.graphql.spec_sheets.models.spec_sheet_model import SpecSheet
 from app.graphql.spec_sheets.repositories.spec_sheets_repository import (
     SpecSheetsRepository,
 )

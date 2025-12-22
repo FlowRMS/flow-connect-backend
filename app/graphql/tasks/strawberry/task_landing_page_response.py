@@ -5,13 +5,13 @@ from typing import Any, Self
 from uuid import UUID
 
 import strawberry
+from commons.db.v6.crm.links.entity_type import EntityType
+from commons.db.v6.crm.tasks.task_priority import TaskPriority
+from commons.db.v6.crm.tasks.task_status import TaskStatus
 from sqlalchemy.engine.row import Row
 
 from app.core.db.adapters.dto import LandingPageInterfaceBase
 from app.graphql.common.linked_entity import LinkedEntity
-from app.graphql.links.models.entity_type import EntityType
-from app.graphql.tasks.models.task_priority import TaskPriority
-from app.graphql.tasks.models.task_status import TaskStatus
 
 
 @strawberry.type(name="TaskLandingPage")

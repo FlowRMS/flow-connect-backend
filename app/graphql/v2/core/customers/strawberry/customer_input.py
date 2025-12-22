@@ -1,13 +1,13 @@
 from uuid import UUID
 
 import strawberry
+from commons.db.v6 import Customer
 
 from app.core.strawberry.inputs import BaseInputGQL
-from app.graphql.v2.core.customers.models import CustomerV2
 
 
 @strawberry.input
-class CustomerInput(BaseInputGQL[CustomerV2]):
+class CustomerInput(BaseInputGQL[Customer]):
     company_name: str
     published: bool = False
     is_parent: bool = False
@@ -20,17 +20,12 @@ class CustomerInput(BaseInputGQL[CustomerV2]):
     inside_rep_id: UUID | None = None
     type: str | None = None
 
-    def to_orm_model(self) -> CustomerV2:
-        return CustomerV2(
+    def to_orm_model(self) -> Customer:
+        return Customer(
             company_name=self.company_name,
             published=self.published,
             is_parent=self.is_parent,
-            parent_id=self.parent_id,
+            parent_id=self.parent_id,  # pyright: ignore[reportCallIssue]
             contact_email=self.contact_email,
             contact_number=self.contact_number,
-            customer_branch_id=self.customer_branch_id,
-            customer_territory_id=self.customer_territory_id,
-            logo_url=self.logo_url,
-            inside_rep_id=self.inside_rep_id,
-            type=self.type,
         )
