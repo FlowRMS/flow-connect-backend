@@ -15,5 +15,5 @@ class S3Settings(BaseSettings):
     model_config = SettingsConfigDict(
         env_file_encoding="utf-8",
         extra="ignore",
-        env_file=(".env", ".env.staging", ".env.production"),
+        env_file=(".env", ".env.local", ".env.staging", ".env.production"),
     )

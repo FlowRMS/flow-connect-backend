@@ -1,7 +1,5 @@
-version: "3.8"
-
 services:
-  crm:
+  flow-backend:
     build:
       context: .
       dockerfile: Dockerfile
@@ -13,3 +11,17 @@ services:
       - "8000:8000"
     env_file:
       - .env.staging
+  flow-postgres:
+    image: postgres:17-alpine
+    container_name: flow_db
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_INITDB_ARGS: "--encoding=UTF8"
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_flowrms_data:/var/lib/postgresql/data
+
+volumes:
+  postgres_flowrms_data:

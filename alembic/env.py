@@ -1,11 +1,13 @@
-from logging.config import fileConfig
 import os
+from logging.config import fileConfig
 
 import sqlalchemy as sa
+
+# from models import Base
+from commons.db.v6.models import BaseModel
 from sqlalchemy import engine_from_config, pool
 
 from alembic import context
-from models import Base
 
 config = context.config
 
@@ -20,7 +22,7 @@ if db_url:
     sync_url = db_url.replace("postgresql+asyncpg://", "postgresql://")
     config.set_main_option("sqlalchemy.url", sync_url)
 
-target_metadata = Base.metadata
+target_metadata = BaseModel.metadata
 
 
 def run_migrations_offline() -> None:

@@ -9,7 +9,7 @@ from commons.db.v6 import (
     RbacResourceEnum,
     RbacRoleEnum,
 )
-from sqlalchemy import Select, literal, select
+from sqlalchemy import Select, select
 
 from app.graphql.v2.rbac.repositories.rbac_repository import RbacRepository
 from app.graphql.v2.rbac.strategies.base import RbacFilterStrategy
@@ -87,6 +87,6 @@ class RbacFilterService:
         print(f"Option: {option.name if option else 'None'}")
 
         if option is None:
-            return stmt.where(literal(False))
+            return stmt
 
         return strategy.apply_filter(stmt, user_id, option)

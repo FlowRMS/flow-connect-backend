@@ -1,7 +1,7 @@
 version: '3'
 
 vars:
-  SOURCES: app
+  SOURCES: app alembic
   RUNNER: uv run
 
 tasks:

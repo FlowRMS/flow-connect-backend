@@ -13,5 +13,5 @@ class Settings(BaseSettings):
         env_nested_delimiter="__",
         env_file_encoding="utf-8",
         extra="ignore",
-        env_file=(".env", ".env.dev", ".env.staging", ".env.prod"),
+        env_file=(".env", ".env.local", ".env.dev", ".env.staging", ".env.prod"),
     )
