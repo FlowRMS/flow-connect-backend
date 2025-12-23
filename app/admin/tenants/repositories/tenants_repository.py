@@ -2,11 +2,12 @@ import uuid
 
 from commons.db.models.tenant import Tenant
 from sqlalchemy import select
-from sqlalchemy.ext.asyncio import AsyncSession
+
+from app.core.db.base_session import TenantSession
 
 
 class TenantsRepository:
-    def __init__(self, base_session: AsyncSession) -> None:
+    def __init__(self, base_session: TenantSession) -> None:
         super().__init__()
         self.session = base_session
 
