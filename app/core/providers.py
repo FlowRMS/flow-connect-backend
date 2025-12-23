@@ -5,6 +5,8 @@ from typing import Any
 import aioinject
 from pydantic_settings import BaseSettings
 
+from app.admin.config.admin_settings import AdminSettings
+from app.admin.providers import admin_providers
 from app.auth import auth_provider
 from app.core import s3_provider
 from app.core.config.auth_settings import AuthSettings
@@ -34,6 +36,7 @@ settings_classes: Iterable[type[BaseSettings]] = [
     GmailSettings,
     S3Settings,
     WorkOSSettings,
+    AdminSettings,
 ]
 
 
@@ -50,6 +53,9 @@ def providers() -> Iterable[aioinject.Provider[Any]]:
         providers.append(provider)
 
     for provider in processor_providers:
+        providers.append(provider)
+
+    for provider in admin_providers:
         providers.append(provider)
 
     providers.append(aioinject.Scoped(ProcessorExecutor))

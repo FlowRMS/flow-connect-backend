@@ -12,6 +12,7 @@ from sqlalchemy.orm import configure_mappers
 from taskiq_fastapi import init
 
 # from starlette.middleware.trustedhost import TrustedHostMiddleware
+from app.admin.app import create_admin_graphql_app
 from app.api.auth_router import router as auth_router
 from app.api.o365_router import router as o365_router
 from app.core.container import create_container
@@ -51,6 +52,7 @@ def create_app() -> FastAPI:
 
     app.add_middleware(AioInjectMiddleware, container=container)
     app.include_router(create_graphql_app(), prefix="/graphql")
+    app.include_router(create_admin_graphql_app(), prefix="/admin/graphql")
     app.include_router(auth_router, prefix="/api")
     app.include_router(o365_router, prefix="/api")
 
