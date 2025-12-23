@@ -9,7 +9,7 @@ on:
 jobs:
   publish-graphql-schema:
     runs-on: ubuntu-latest
-    environment: ${{ github.ref_name == 'production' && 'production' || github.ref_name == 'main' && 'production' || github.ref_name == 'staging' && 'staging' || github.ref_name == 'development' && 'development' || github.ref_name == 'v6' && 'staging' || 'development' }}
+    environment: ${{ github.ref_name == 'v6-production' && 'v6-production' || 'v6-staging' }}
     steps:
       - uses: actions/checkout@v3
       - uses: actions/setup-node@v3
@@ -25,7 +25,7 @@ jobs:
 
   publish-admin-graphql-schema:
     runs-on: ubuntu-latest
-    environment: ${{ github.ref_name == 'production' && 'production' || github.ref_name == 'main' && 'production' || github.ref_name == 'staging' && 'staging' || github.ref_name == 'development' && 'development' || github.ref_name == 'v6' && 'staging' || 'development'}}
+    environment: ${{ github.ref_name == 'v6-production' && 'v6-production' || 'v6-staging' }}
     steps:
       - uses: actions/checkout@v3
       - uses: actions/setup-node@v3
