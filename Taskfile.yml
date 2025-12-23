@@ -43,6 +43,15 @@ tasks:
         --output schema.graphql
         app.graphql.schemas.schema
 
+  admin-gql:
+    desc: Export Admin GraphQL Schema
+    cmds:
+      - >
+        export PYTHONPATH=. && {{.RUNNER}} strawberry export-schema
+        --app-dir app
+        --output admin.schema.graphql
+        app.admin.schemas.schema
+
   all:
     desc: Run the standard set of checks performed in CI
     cmds:

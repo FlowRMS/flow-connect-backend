@@ -1,0 +1,37 @@
+schema {
+  query: TenantsQueries
+  mutation: TenantsMutations
+}
+
+input CreateTenantInput {
+  name: String!
+  ownerEmail: String!
+}
+
+type TenantCreationResultType {
+  tenant: TenantType!
+  ownerWorkosId: String!
+  workosOrgId: String!
+  success: Boolean!
+  message: String
+}
+
+type TenantType {
+  id: UUID!
+  name: String!
+  url: String!
+  database: String!
+  initialize: Boolean!
+  alembicVersion: String!
+}
+
+type TenantsMutations {
+  createTenant(input: CreateTenantInput!): TenantCreationResultType!
+}
+
+type TenantsQueries {
+  tenants: [TenantType!]!
+  tenant(id: UUID!): TenantType
+}
+
+scalar UUID

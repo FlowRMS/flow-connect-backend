@@ -3,15 +3,13 @@ name: Build, Push, and Deploy to K8S
 on:
   push:
     branches:
-      - production
-      - main
-      - development
-      - staging
+      - v6
+      - v6-production
 
 jobs:
   publish-graphql-schema:
     runs-on: ubuntu-latest
-    environment: ${{ github.ref_name == 'production' && 'production' || github.ref_name == 'main' && 'production' || github.ref_name == 'staging' && 'staging' || github.ref_name == 'development' && 'development' || github.ref_name == 'beta' && 'beta' || 'development'}}
+    environment: ${{ github.ref_name == 'production' && 'production' || github.ref_name == 'main' && 'production' || github.ref_name == 'staging' && 'staging' || github.ref_name == 'development' && 'development' || github.ref_name == 'v6' && 'staging' || 'development' }}
     steps:
       - uses: actions/checkout@v3
       - uses: actions/setup-node@v3
@@ -19,121 +17,24 @@ jobs:
       - run: |
           hive schema:publish \
             --registry.accessToken ${{ secrets.HIVE_PUBLISHING_TOKEN }} \
-            --service "flow-crm" \
+            --service "backend" \
             --url "${{ secrets.GRAPHQL_ENDPOINT }}" \
             --author "${{ github.actor }}" \
             --commit "${{ github.sha }}" \
-            --target "flowrms/flowrms/${{ secrets.ENVIRONMENT }}" schema.graphql
-  build-and-push:
+            --target "flowrms/flowrms-v6/${{ secrets.ENVIRONMENT }}" schema.graphql
+
+  publish-admin-graphql-schema:
     runs-on: ubuntu-latest
-    needs: publish-graphql-schema
-    if: github.event_name == 'push'
-    permissions:
-      contents: write
-      packages: write
-
-    outputs:
-      environment: ${{ env.ENVIRONMENT }}
-
+    environment: ${{ github.ref_name == 'production' && 'production' || github.ref_name == 'main' && 'production' || github.ref_name == 'staging' && 'staging' || github.ref_name == 'development' && 'development' || github.ref_name == 'v6' && 'staging' || 'development'}}
     steps:
-      - name: Check out the repo
-        uses: actions/checkout@v3
-
-      - name: Set Environment
-        uses: flowrms/flow-commons-github/.github/actions/github-set-env@main
-
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v1
-
-      - name: Log in to GitHub Container Registry
-        uses: docker/login-action@v1
-        with:
-          registry: ghcr.io
-          username: ${{ github.actor }}
-          password: ${{ secrets.WORKFLOW_TOKEN }}
-
-      - name: Set IMAGE_TAG
-        id: set_tags
-        run: |
-          echo "image_tag=${{ env.IMAGE_TAG }}" >> $GITHUB_OUTPUT
-
-      - name: Build and push
-        uses: docker/build-push-action@v2
-        with:
-          context: .
-          file: ./Dockerfile
-          push: true
-          tags: ${{ steps.set_tags.outputs.image_tag }}
-          build-args: |
-            GITHUB_TOKEN=${{ secrets.WORKFLOW_TOKEN }}
-
-      - name: Verify the image was pushed
-        run: |
-          echo "The image was pushed with tag ${{ steps.set_tag.outputs.image_tag }}"
-
-  deploy:
-    needs: [build-and-push]
-    runs-on: ubuntu-latest
-    if: github.event_name == 'push'
-    environment: ${{ github.ref_name == 'production' && 'production' || github.ref_name == 'main' && 'production' || github.ref_name == 'staging' && 'staging' || github.ref_name == 'development' && 'development' || github.ref_name == 'beta' && 'beta' || 'development'}}
-    permissions:
-      contents: read
-    steps:
-      - name: Check out the repo
-        uses: actions/checkout@v3
-
-      - name: K8S Push
-        uses: flowrms/flow-commons-github/.github/actions/k8s-push@main
-        env:
-          KUBE_CLUSTER_NAME_PRODUCTION_2: ${{ secrets.KUBE_CLUSTER_NAME_PRODUCTION_2 }}
-          KUBE_CLUSTER_NAME_PRODUCTION: ${{ secrets.KUBE_CLUSTER_NAME_PRODUCTION }}
-          KUBE_CLUSTER_NAME_STAGING: ${{ secrets.KUBE_CLUSTER_NAME_STAGING }}
-          KUBE_CLUSTER_NAME_DEVELOPMENT: ${{ secrets.KUBE_CLUSTER_NAME_DEVELOPMENT }}
-          KUBE_CLUSTER_NAME_BETA: ${{ secrets.KUBE_CLUSTER_NAME_BETA }}
-          DOCR_ACCESS_TOKEN: ${{ secrets.DOCR_ACCESS_TOKEN }}
-
-      - name: Install kubectl
-        run: |
-          curl -LO "https://storage.googleapis.com/kubernetes-release/release/$(curl -s https://storage.googleapis.com/kubernetes-release/release/stable.txt)/bin/linux/amd64/kubectl"
-          chmod +x ./kubectl
-          sudo mv ./kubectl /usr/local/bin/kubectl
-
-      - name: Create Kubernetes secret
-        run: |
-          kubectl create secret generic flow-py-crm-secret \
-            --from-literal=PG_URL=${{ secrets.PG_URL }} \
-            --from-literal=AUTH_URL=${{ secrets.AUTH_URL }} \
-            --from-literal=CLIENT_ID=${{ secrets.CLIENT_ID }} \
-            --from-literal=CLIENT_SECRET=${{ secrets.CLIENT_SECRET }} \
-            --from-literal=PORT=8000 \
-            --from-literal=ENVIRONMENT=${{ secrets.ENVIRONMENT }} \
-            --from-literal=LOG_LEVEL=${{ secrets.LOG_LEVEL }} \
-            --from-literal=MAX_NUMBER_OF_WORKERS=${{ secrets.MAX_NUMBER_OF_WORKERS }} \
-            --from-literal=O365_CLIENT_ID=${{ secrets.O365_CLIENT_ID }} \
-            --from-literal=O365_CLIENT_SECRET=${{ secrets.O365_CLIENT_SECRET }} \
-            --from-literal=O365_REDIRECT_URI=${{ secrets.O365_REDIRECT_URI }} \
-            --from-literal=GMAIL_CLIENT_ID=${{ secrets.GMAIL_CLIENT_ID }} \
-            --from-literal=GMAIL_CLIENT_SECRET=${{ secrets.GMAIL_CLIENT_SECRET }} \
-            --from-literal=GMAIL_REDIRECT_URI=${{ secrets.GMAIL_REDIRECT_URI }} \
-            --from-literal=REDIS_URL=${{ secrets.REDIS_URL }} \
-            --from-literal=AWS_ACCESS_KEY_ID=${{ secrets.AWS_ACCESS_KEY_ID }} \
-            --from-literal=AWS_SECRET_ACCESS_KEY=${{ secrets.AWS_SECRET_ACCESS_KEY }} \
-            -o yaml --dry-run=client | kubectl apply -f -
-
-      - name: Deploy K8S worker
-        shell: bash
-        run: |
-          export WORKER_TYPE='worker'
-          export WORKER_COMMAND="taskiq worker app.workers.broker:broker --fs-discover --tasks-pattern 'app/workers/tasks.py' --tasks-pattern 'app/**/tasks/**/*.py'"
-          echo "Deploying application using image ${{ env.IMAGE_TAG }}"
-          envsubst < .k8s/deployment.worker.yaml > deployment.worker.prod.yaml
-          kubectl apply -f deployment.worker.prod.yaml
-
-      - name: Deploy K8S scheduler
-        shell: bash
-        run: |
-          export WORKER_TYPE='scheduler'
-          export WORKER_COMMAND="taskiq scheduler app.workers.broker:scheduler --fs-discover --tasks-pattern 'app/workers/tasks.py' --tasks-pattern 'app/**/tasks/**/*.py' --skip-first-run"    
-          echo "Deploying application using image ${{ env.IMAGE_TAG }}" 
-          envsubst < .k8s/deployment.worker.yaml > deployment.beat.prod.yaml
-          kubectl apply -f deployment.beat.prod.yaml
+      - uses: actions/checkout@v3
+      - uses: actions/setup-node@v3
+      - run: npm install -g @graphql-hive/cli
+      - run: |
+          hive schema:publish \
+            --registry.accessToken ${{ secrets.HIVE_PUBLISHING_TOKEN }} \
+            --service "admin" \
+            --url "${{ secrets.ADMIN_GRAPHQL_ENDPOINT }}" \
+            --author "${{ github.actor }}" \
+            --commit "${{ github.sha }}" \
+            --target "flowrms/flowrms-v6/${{ secrets.ENVIRONMENT }}" admin.schema.graphql
