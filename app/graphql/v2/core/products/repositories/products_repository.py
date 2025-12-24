@@ -1,21 +1,72 @@
+from typing import Any
 from uuid import UUID
 
+from commons.db.v6 import User
 from commons.db.v6.core import Product, ProductCategory
+from commons.db.v6.core.factories.factory import Factory
+from commons.db.v6.core.products.product_uom import ProductUom
 from commons.db.v6.crm.links.entity_type import EntityType
-from sqlalchemy import select
+from sqlalchemy import Select, select
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import lazyload
 
 from app.core.context_wrapper import ContextWrapper
+from app.core.processors.executor import ProcessorExecutor
 from app.graphql.base_repository import BaseRepository
+from app.graphql.v2.core.products.processors.validate_product_category_processor import (
+    ValidateProductCategoryProcessor,
+)
+from app.graphql.v2.core.products.strawberry.product_landing_page_response import (
+    ProductLandingPageResponse,
+)
 
 
 class ProductsRepository(BaseRepository[Product]):
     """Repository for Products entity."""
 
     entity_type = EntityType.PRODUCT
+    landing_model = ProductLandingPageResponse
 
-    def __init__(self, context_wrapper: ContextWrapper, session: AsyncSession) -> None:
-        super().__init__(session, context_wrapper, Product)
+    def __init__(
+        self,
+        context_wrapper: ContextWrapper,
+        session: AsyncSession,
+        processor_executor: ProcessorExecutor,
+        validate_product_category_processor: ValidateProductCategoryProcessor,
+    ) -> None:
+        super().__init__(
+            session,
+            context_wrapper,
+            Product,
+            processor_executor=processor_executor,
+            processor_executor_classes=[validate_product_category_processor],
+        )
+
+    def paginated_stmt(self) -> Select[Any]:
+        return (
+            select(
+                Product.id,
+                Product.created_at.label("created_at"),
+                User.full_name.label("created_by"),
+                Product.factory_part_number,
+                Product.unit_price,
+                Product.default_commission_rate,
+                Product.published,
+                Product.approval_needed,
+                Product.description,
+                Factory.title.label("factory_title"),
+                ProductCategory.title.label("category_title"),
+                ProductUom.title.label("uom_title"),
+            )
+            .select_from(Product)
+            .options(lazyload("*"))
+            .join(User, User.id == Product.created_by_id)
+            .join(Factory, Factory.id == Product.factory_id)
+            .outerjoin(
+                ProductCategory, ProductCategory.id == Product.product_category_id
+            )
+            .outerjoin(ProductUom, ProductUom.id == Product.product_uom_id)
+        )
 
     async def search_by_fpn(
         self,

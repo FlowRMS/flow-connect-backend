@@ -13,21 +13,11 @@ class ProductInput(BaseInputGQL[Product]):
     factory_id: UUID
     unit_price: Decimal
     default_commission_rate: Decimal
-    product_category_id: UUID
     product_uom_id: UUID
-    approval_needed: bool
+    product_category_id: UUID | None = None
+    approval_needed: bool | None = None
     published: bool = False
     description: str | None = None
-    lead_time: str | None = None
-    min_order_qty: int | None = None
-    commission_discount_rate: Decimal | None = None
-    overall_discount_rate: Decimal | None = None
-    cost: Decimal | None = None
-    individual_upc: str | None = None
-    approval_comments: str | None = None
-    logo_url: str | None = None
-    sales_model: str | None = None
-    payout_type: str | None = None
 
     def to_orm_model(self) -> Product:
         return Product(

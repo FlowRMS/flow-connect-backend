@@ -18,7 +18,7 @@ def parse_decimal(value: str | None) -> decimal.Decimal | None:
     if value is None:
         return None
 
-    return decimal.Decimal(value)
+    return decimal.Decimal(value).quantize(decimal.Decimal("0.0001"))
 
 
 DecimalScalar = strawberry.scalar(

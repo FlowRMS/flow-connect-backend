@@ -88,14 +88,12 @@ enum CampaignStatus {
 
 type CheckResponse {
   id: UUID!
-  entryDate: datetime!
   checkNumber: String!
   entityDate: Date!
   postDate: Date
   commissionMonth: Date
   commission: Decimal!
   factoryId: UUID!
-  userOwnerIds: [UUID!]!
   status: Int!
   createdBy: UUID!
   creationType: Int!
@@ -502,13 +500,11 @@ type HighlightVersionResponse {
 
 type InvoiceResponse {
   id: UUID!
-  entryDate: datetime!
   invoiceNumber: String!
   entityDate: Date!
   dueDate: Date
   factoryId: UUID
   orderId: UUID!
-  userOwnerIds: [UUID!]!
   status: Int!
   published: Boolean!
   locked: Boolean!
@@ -592,7 +588,7 @@ interface LandingPageInterfaceBase {
   createdBy: String!
 }
 
-union LandingRecord = JobLandingPage | CompanyLandingPage | ContactLandingPage | PreOpportunityLandingPage | NoteLandingPage | TaskLandingPage | CampaignLandingPage | CustomerLandingPage | FactoryLandingPage
+union LandingRecord = JobLandingPage | CompanyLandingPage | ContactLandingPage | PreOpportunityLandingPage | NoteLandingPage | TaskLandingPage | CampaignLandingPage | CustomerLandingPage | FactoryLandingPage | ProductLandingPage
 
 enum LandingSourceType {
   JOBS
@@ -604,6 +600,7 @@ enum LandingSourceType {
   CAMPAIGNS
   CUSTOMERS
   FACTORIES
+  PRODUCTS
 }
 
 input LinkRelationInput {
@@ -698,6 +695,12 @@ type Mutation {
   updateFactory(id: UUID!, input: FactoryInput!): FactoryResponse!
   deleteFactory(id: UUID!): Boolean!
   updateManufacturerOrder(factoryIds: [UUID!]!): Int!
+  createProductCategory(input: ProductCategoryInput!): ProductCategoryResponse!
+  updateProductCategory(id: UUID!, input: ProductCategoryInput!): ProductCategoryResponse!
+  deleteProductCategory(id: UUID!): Boolean!
+  createProductUom(input: ProductUomInput!): ProductUomResponse!
+  updateProductUom(id: UUID!, input: ProductUomInput!): ProductUomResponse!
+  deleteProductUom(id: UUID!): Boolean!
   createProduct(input: ProductInput!): ProductResponse!
   updateProduct(id: UUID!, input: ProductInput!): ProductResponse!
   deleteProduct(id: UUID!): Boolean!
@@ -829,7 +832,6 @@ enum OrderByOperator {
 
 type OrderResponse {
   id: UUID!
-  entryDate: datetime!
   orderNumber: String!
   status: Int!
   balanceId: UUID
@@ -841,7 +843,6 @@ type OrderResponse {
   shipDate: Date
   dueDate: Date!
   factSoNumber: String
-  userOwnerIds: [UUID!]!
   quoteId: UUID
   url: String!
 }
@@ -971,6 +972,14 @@ enum PreOpportunityStatus {
   WON
 }
 
+input ProductCategoryInput {
+  title: String!
+  commissionRate: Decimal!
+  factoryId: UUID = null
+  parentId: UUID = null
+  grandparentId: UUID = null
+}
+
 type ProductCategoryResponse {
   id: UUID!
   title: String!
@@ -983,21 +992,26 @@ input ProductInput {
   factoryId: UUID!
   unitPrice: Decimal!
   defaultCommissionRate: Decimal!
-  productCategoryId: UUID!
   productUomId: UUID!
-  approvalNeeded: Boolean!
+  productCategoryId: UUID = null
+  approvalNeeded: Boolean = null
   published: Boolean! = false
   description: String = null
-  leadTime: String = null
-  minOrderQty: Int = null
-  commissionDiscountRate: Decimal = null
-  overallDiscountRate: Decimal = null
-  cost: Decimal = null
-  individualUpc: String = null
-  approvalComments: String = null
-  logoUrl: String = null
-  salesModel: String = null
-  payoutType: String = null
+}
+
+type ProductLandingPage implements LandingPageInterfaceBase {
+  id: UUID!
+  createdAt: datetime!
+  createdBy: String!
+  factoryPartNumber: String!
+  unitPrice: Decimal!
+  defaultCommissionRate: Decimal!
+  published: Boolean!
+  approvalNeeded: Boolean!
+  description: String
+  factoryTitle: String!
+  categoryTitle: String
+  uomTitle: String
 }
 
 type ProductLiteResponse {
@@ -1017,6 +1031,13 @@ type ProductResponse {
   factory: FactoryResponse!
   category: ProductCategoryResponse
   uom: ProductUomResponse
+}
+
+input ProductUomInput {
+  title: String!
+  multiply: Boolean!
+  multiplyBy: Int!
+  description: String = null
 }
 
 type ProductUomResponse {
@@ -1082,7 +1103,11 @@ type Query {
   tasksByEntity(entityType: EntityType!, entityId: UUID!): [TaskType!]!
   findCustomerById(id: UUID!): CustomerResponse!
   customerSearch(searchTerm: String!, published: Boolean! = true, limit: Int! = 20): [CustomerResponse!]!
+  findFactoryById(id: UUID!): FactoryResponse!
   factorySearch(searchTerm: String!, published: Boolean! = true, limit: Int! = 20, useCustomOrder: Boolean! = false): [FactoryResponse!]!
+  productCategories(factoryId: UUID, parentId: UUID, grandparentId: UUID): [ProductCategoryResponse!]!
+  productUoms: [ProductUomResponse!]!
+  findProductById(id: UUID!): ProductResponse!
   productSearch(searchTerm: String!, productCategoryIds: [UUID!]!, factoryId: UUID, limit: Int! = 20): [ProductResponse!]!
   productCategorySearch(searchTerm: String!, factoryId: UUID, limit: Int! = 20): [ProductCategoryResponse!]!
   user(id: UUID!): UserResponse!
@@ -1093,11 +1118,9 @@ type Query {
 
 type QuoteResponse {
   id: UUID!
-  entryDate: datetime!
   quoteNumber: String!
   entityDate: Date!
   createdBy: UUID!
-  userOwnerIds: [UUID!]!
   soldToCustomerId: UUID
   billToCustomerId: UUID
   jobName: String

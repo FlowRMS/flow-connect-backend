@@ -18,3 +18,4 @@ class LandingSourceType(Enum):
     CAMPAIGNS = "campaigns"
     CUSTOMERS = "customers"
     FACTORIES = "factories"
+    PRODUCTS = "products"

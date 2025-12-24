@@ -13,7 +13,15 @@ from app.graphql.v2.core.products.strawberry.product_response import ProductResp
 
 @strawberry.type
 class ProductsQueries:
-    """GraphQL queries for Products entity."""
+    @strawberry.field
+    @inject
+    async def find_product_by_id(
+        self,
+        id: uuid.UUID,
+        service: Injected[ProductService],
+    ) -> ProductResponse:
+        product = await service.get_by_id(id)
+        return ProductResponse.from_orm_model(product)
 
     @strawberry.field
     @inject
@@ -25,18 +33,6 @@ class ProductsQueries:
         factory_id: strawberry.Maybe[uuid.UUID] = None,
         limit: int = 20,
     ) -> list[ProductResponse]:
-        """
-        Search products by factory part number.
-
-        Args:
-            search_term: The search term to match against factory part number
-            factory_id: The UUID of the factory to filter products by (optional)
-            product_category_id: The UUID of the product category to filter by (optional)
-            limit: Maximum number of products to return (default: 20)
-
-        Returns:
-            List of ProductResponse objects matching the search criteria
-        """
         factory_id_value = factory_id.value if factory_id else None
         return ProductResponse.from_orm_model_list(
             await service.search_products(
@@ -53,17 +49,6 @@ class ProductsQueries:
         factory_id: strawberry.Maybe[uuid.UUID] = None,
         limit: int = 20,
     ) -> list[ProductCategoryResponse]:
-        """
-        Search product categories by title.
-
-        Args:
-            search_term: The search term to match against category title
-            factory_id: The UUID of the factory to filter categories by (optional)
-            limit: Maximum number of categories to return (default: 20)
-
-        Returns:
-            List of ProductCategoryResponse objects matching the search criteria
-        """
         factory_id_value = factory_id.value if factory_id else None
         return ProductCategoryResponse.from_orm_model_list(
             await service.search_product_categories(

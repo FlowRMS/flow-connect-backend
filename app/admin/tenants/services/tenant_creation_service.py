@@ -59,6 +59,7 @@ class TenantCreationService:
         role: RbacRoleEnum,
         first_name: str | None = None,
         last_name: str | None = None,
+        external_id: uuid.UUID | None = None,
     ) -> uuid.UUID:
         engine = create_async_engine(database_url)
         try:
@@ -73,6 +74,8 @@ class TenantCreationService:
                         enabled=True,
                     )
                     user.auth_provider_id = workos_user_id
+                    if external_id:
+                        user.id = external_id
                     session.add(user)
                     logger.info(f"Created user {email} in tenant database")
                     return user.id
@@ -121,7 +124,6 @@ class TenantCreationService:
             self.settings.pg_url.unicode_string().rsplit("/", 1)[0] + f"/{url_slug}"
         )
         owner_user_id = uuid.uuid4()
-
         owner_auth = await self.workos_service.create_user(
             AuthUserInput(
                 email=owner_email,
@@ -139,6 +141,7 @@ class TenantCreationService:
             email=owner_email,
             workos_user_id=owner_auth.id,
             role=RbacRoleEnum.OWNER,
+            external_id=owner_auth.external_id,
         )
         logger.info(f"Created owner user: {owner_email}")
 
