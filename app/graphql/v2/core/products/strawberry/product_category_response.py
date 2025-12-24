@@ -12,7 +12,7 @@ from app.core.db.adapters.dto import DTOMixin
 class ProductCategoryResponse(DTOMixin[ProductCategory]):
     id: UUID
     title: str
-    factory_id: UUID
+    factory_id: UUID | None
     commission_rate: Decimal
 
     @classmethod

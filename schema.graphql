@@ -325,7 +325,38 @@ type EstimateRecipientsResponse {
 
 input FactoryInput {
   title: String!
+  splitRates: [FactorySplitRateInput!]! = []
   published: Boolean! = false
+  accountNumber: String = null
+  email: String = null
+  phone: String = null
+  logoId: UUID = null
+  leadTime: Int = null
+  paymentTerms: Int = null
+  baseCommissionRate: Decimal! = "0.0000"
+  commissionDiscountRate: Decimal! = "0.0000"
+  overallDiscountRate: Decimal! = "0.0000"
+  additionalInformation: String = null
+  freightTerms: String = null
+  externalPaymentTerms: String = null
+}
+
+type FactoryLandingPage implements LandingPageInterfaceBase {
+  id: UUID!
+  createdAt: datetime!
+  createdBy: String!
+  title: String!
+  published: Boolean!
+  freightDiscountType: Int!
+  accountNumber: String
+  email: String
+  phone: String
+  leadTime: Int
+  paymentTerms: Int
+  baseCommissionRate: Decimal!
+  commissionDiscountRate: Decimal!
+  overallDiscountRate: Decimal!
+  splitRates: [String!]!
 }
 
 type FactoryResponse {
@@ -333,7 +364,35 @@ type FactoryResponse {
   title: String!
   published: Boolean!
   freightDiscountType: Int!
+  accountNumber: String
+  email: String
+  phone: String
+  logoId: UUID
+  leadTime: Int
+  paymentTerms: Int
+  baseCommissionRate: Decimal!
+  commissionDiscountRate: Decimal!
+  overallDiscountRate: Decimal!
+  additionalInformation: String
+  freightTerms: String
+  externalPaymentTerms: String
   createdBy: UserResponse!
+  splitRates: [FactorySplitRateResponse!]!
+}
+
+input FactorySplitRateInput {
+  userId: UUID!
+  splitRate: Decimal!
+  position: Int!
+  id: UUID = null
+}
+
+type FactorySplitRateResponse {
+  id: UUID!
+  factoryId: UUID!
+  position: Int!
+  splitRate: Decimal!
+  user: UserResponse!
 }
 
 type FileLinkedEntitiesResponse {
@@ -533,7 +592,7 @@ interface LandingPageInterfaceBase {
   createdBy: String!
 }
 
-union LandingRecord = JobLandingPage | CompanyLandingPage | ContactLandingPage | PreOpportunityLandingPage | NoteLandingPage | TaskLandingPage | CampaignLandingPage | CustomerLandingPage
+union LandingRecord = JobLandingPage | CompanyLandingPage | ContactLandingPage | PreOpportunityLandingPage | NoteLandingPage | TaskLandingPage | CampaignLandingPage | CustomerLandingPage | FactoryLandingPage
 
 enum LandingSourceType {
   JOBS
@@ -544,6 +603,7 @@ enum LandingSourceType {
   PRE_OPPORTUNITIES
   CAMPAIGNS
   CUSTOMERS
+  FACTORIES
 }
 
 input LinkRelationInput {
@@ -914,7 +974,7 @@ enum PreOpportunityStatus {
 type ProductCategoryResponse {
   id: UUID!
   title: String!
-  factoryId: UUID!
+  factoryId: UUID
   commissionRate: Decimal!
 }
 

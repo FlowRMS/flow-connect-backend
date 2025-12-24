@@ -31,6 +31,9 @@ from app.graphql.tasks.strawberry.task_landing_page_response import (
 from app.graphql.v2.core.customers.strawberry.customer_landing_page_response import (
     CustomerLandingPageResponse,
 )
+from app.graphql.v2.core.factories.strawberry.factory_landing_page_response import (
+    FactoryLandingPageResponse,
+)
 
 LandingRecord = strawberry.union(
     name="LandingRecord",
@@ -43,6 +46,7 @@ LandingRecord = strawberry.union(
         TaskLandingPageResponse,
         CampaignLandingPageResponse,
         CustomerLandingPageResponse,
+        FactoryLandingPageResponse,
     ],
 )
 

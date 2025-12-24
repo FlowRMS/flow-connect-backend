@@ -1,22 +1,87 @@
+from typing import Any
 from uuid import UUID
 
+from commons.db.v6 import User
 from commons.db.v6.core.factories.factory import Factory
+from commons.db.v6.core.factories.factory_split_rate import FactorySplitRate
 from commons.db.v6.crm.links.entity_type import EntityType
 from commons.db.v6.crm.manufacturer_order_model import ManufacturerOrder
-from sqlalchemy import delete, select
+from sqlalchemy import Select, String, delete, func, literal, select
+from sqlalchemy.dialects.postgresql import ARRAY
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import aliased, lazyload
 
 from app.core.context_wrapper import ContextWrapper
+from app.core.processors.executor import ProcessorExecutor
 from app.graphql.base_repository import BaseRepository
+from app.graphql.v2.core.factories.processors.validate_factory_split_rates_processor import (
+    ValidateFactorySplitRatesProcessor,
+)
+from app.graphql.v2.core.factories.strawberry.factory_landing_page_response import (
+    FactoryLandingPageResponse,
+)
 
 
 class FactoriesRepository(BaseRepository[Factory]):
-    """Repository for Factories entity."""
-
     entity_type = EntityType.FACTORY
+    landing_model = FactoryLandingPageResponse
 
-    def __init__(self, context_wrapper: ContextWrapper, session: AsyncSession) -> None:
-        super().__init__(session, context_wrapper, Factory)
+    def __init__(
+        self,
+        context_wrapper: ContextWrapper,
+        session: AsyncSession,
+        processor_executor: ProcessorExecutor,
+        validate_factory_split_rates_processor: ValidateFactorySplitRatesProcessor,
+    ) -> None:
+        super().__init__(
+            session,
+            context_wrapper,
+            Factory,
+            processor_executor=processor_executor,
+            processor_executor_classes=[validate_factory_split_rates_processor],
+        )
+
+    def paginated_stmt(self) -> Select[Any]:
+        split_rate_user = aliased(User)
+        empty_array = literal([]).cast(ARRAY(String))
+
+        split_rates_subq = (
+            select(
+                FactorySplitRate.factory_id,
+                func.coalesce(
+                    func.array_agg(split_rate_user.full_name), empty_array
+                ).label("split_rates"),
+            )
+            .join(split_rate_user, split_rate_user.id == FactorySplitRate.user_id)
+            .group_by(FactorySplitRate.factory_id)
+            .subquery()
+        )
+
+        return (
+            select(
+                Factory.id,
+                Factory.created_at,
+                User.full_name.label("created_by"),
+                Factory.title,
+                Factory.published,
+                Factory.freight_discount_type,
+                Factory.account_number,
+                Factory.email,
+                Factory.phone,
+                Factory.lead_time,
+                Factory.payment_terms,
+                Factory.base_commission_rate,
+                Factory.commission_discount_rate,
+                Factory.overall_discount_rate,
+                func.coalesce(split_rates_subq.c.split_rates, empty_array).label(
+                    "split_rates"
+                ),
+            )
+            .select_from(Factory)
+            .options(lazyload("*"))
+            .join(User, User.id == Factory.created_by_id)
+            .outerjoin(split_rates_subq, split_rates_subq.c.factory_id == Factory.id)
+        )
 
     async def search_by_title(
         self, search_term: str, published: bool = True, limit: int = 20

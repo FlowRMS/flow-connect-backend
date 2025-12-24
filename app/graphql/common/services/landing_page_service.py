@@ -18,6 +18,9 @@ from app.graphql.tasks.repositories.tasks_repository import TasksRepository
 from app.graphql.v2.core.customers.repositories.customers_repository import (
     CustomersRepository,
 )
+from app.graphql.v2.core.factories.repositories.factories_repository import (
+    FactoriesRepository,
+)
 
 
 class LandingPageService:
@@ -33,6 +36,7 @@ class LandingPageService:
         notes_repository: NotesRepository,
         campaigns_repository: CampaignsRepository,
         customers_repository: CustomersRepository,
+        factories_repository: FactoriesRepository,
     ) -> None:
         super().__init__()
         self._repository_map: dict[LandingSourceType, LandingRepositoryProtocol] = {
@@ -44,6 +48,7 @@ class LandingPageService:
             LandingSourceType.NOTES: notes_repository,
             LandingSourceType.CAMPAIGNS: campaigns_repository,
             LandingSourceType.CUSTOMERS: customers_repository,
+            LandingSourceType.FACTORIES: factories_repository,
         }
 
     async def find_landing_pages(
