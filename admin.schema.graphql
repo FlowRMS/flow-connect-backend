@@ -3,9 +3,48 @@ schema {
   mutation: TenantsMutations
 }
 
+type AdminUserType {
+  id: UUID!
+  username: String!
+  firstName: String!
+  lastName: String!
+  email: String!
+  fullName: String!
+  enabled: Boolean!
+  role: RbacRoleEnum!
+  authProviderId: String!
+  inside: Boolean
+  outside: Boolean
+  tenantId: UUID!
+  tenantName: String!
+  tenantUrl: String!
+}
+
+input CreateAdminUserInput {
+  tenantId: UUID!
+  email: String!
+  firstName: String!
+  lastName: String!
+  role: RbacRoleEnum!
+  username: String = null
+  enabled: Boolean! = true
+  inside: Boolean = null
+  outside: Boolean = null
+}
+
 input CreateTenantInput {
   name: String!
   ownerEmail: String!
+}
+
+enum RbacRoleEnum {
+  OWNER
+  ADMINISTRATOR
+  INSIDE_REP
+  OUTSIDE_REP
+  WAREHOUSE_MANAGER
+  WAREHOUSE_EMPLOYEE
+  DRIVER
 }
 
 type TenantCreationResultType {
@@ -27,11 +66,24 @@ type TenantType {
 
 type TenantsMutations {
   createTenant(input: CreateTenantInput!): TenantCreationResultType!
+  createAdminUser(input: CreateAdminUserInput!): AdminUserType!
+  updateAdminUser(tenantId: UUID!, userId: UUID!, input: UpdateAdminUserInput!): AdminUserType!
 }
 
 type TenantsQueries {
   tenants: [TenantType!]!
   tenant(id: UUID!): TenantType
+  adminUsers(tenantId: UUID = null, limit: Int! = 100, offset: Int! = 0): [AdminUserType!]!
+  adminUser(tenantId: UUID!, userId: UUID!): AdminUserType
 }
 
 scalar UUID
+
+input UpdateAdminUserInput {
+  firstName: String = null
+  lastName: String = null
+  role: RbacRoleEnum = null
+  enabled: Boolean = null
+  inside: Boolean = null
+  outside: Boolean = null
+}

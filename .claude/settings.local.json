@@ -30,7 +30,9 @@
       "Bash(git -C /Users/jsaied/projects/flowrms/flow-py-backend log --pretty=format: --name-only -20)",
       "Bash(git -C /Users/jsaied/projects/flowrms/flow-py-backend status --porcelain)",
       "Bash(uv pip show:*)",
-      "Bash(wc:*)"
+      "Bash(wc:*)",
+      "Bash(xargs cat:*)",
+      "Bash(task admin-gql:*)"
     ]
   },
   "enableAllProjectMcpServers": true,

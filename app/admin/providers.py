@@ -9,6 +9,7 @@ from app.admin.tenants.repositories.tenants_repository import TenantsRepository
 from app.admin.tenants.services.tenant_creation_service import TenantCreationService
 from app.admin.tenants.services.tenant_database_service import TenantDatabaseService
 from app.admin.tenants.services.tenant_migration_service import TenantMigrationService
+from app.admin.users.services.admin_user_service import AdminUserService
 from app.core.db.base_session import TenantSession
 
 
@@ -27,4 +28,5 @@ admin_providers: Iterable[aioinject.Provider[Any]] = [
     aioinject.Scoped(TenantDatabaseService),
     aioinject.Scoped(TenantMigrationService),
     aioinject.Scoped(TenantCreationService),
+    aioinject.Scoped(AdminUserService),
 ]

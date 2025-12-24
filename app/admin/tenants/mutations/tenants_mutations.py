@@ -1,3 +1,5 @@
+from uuid import UUID
+
 import strawberry
 from aioinject import Injected
 
@@ -8,6 +10,12 @@ from app.admin.tenants.strawberry.tenant_response import (
     TenantCreationResultType,
     TenantType,
 )
+from app.admin.users.services.admin_user_service import AdminUserService
+from app.admin.users.strawberry.user_inputs import (
+    CreateAdminUserInput,
+    UpdateAdminUserInput,
+)
+from app.admin.users.strawberry.user_types import AdminUserType
 
 
 @strawberry.type
@@ -30,3 +38,29 @@ class TenantsMutations:
             success=result.success,
             message=result.message,
         )
+
+    @strawberry.mutation
+    @admin_inject
+    async def create_admin_user(
+        self,
+        input: CreateAdminUserInput,
+        service: Injected[AdminUserService],
+    ) -> AdminUserType:
+        user = await service.create_user(input)
+        return AdminUserType.from_data(user)
+
+    @strawberry.mutation
+    @admin_inject
+    async def update_admin_user(
+        self,
+        tenant_id: UUID,
+        user_id: UUID,
+        input: UpdateAdminUserInput,
+        service: Injected[AdminUserService],
+    ) -> AdminUserType:
+        user = await service.update_user(
+            tenant_id=tenant_id,
+            user_id=user_id,
+            input=input,
+        )
+        return AdminUserType.from_data(user)
