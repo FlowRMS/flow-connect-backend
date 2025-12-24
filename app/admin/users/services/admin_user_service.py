@@ -224,6 +224,7 @@ class AdminUserService:
                     user.id = user_id
                     user.auth_provider_id = workos_user_id
                     session.add(user)
+                    await session.commit()
                     logger.info(f"Created user {email} in tenant database")
         finally:
             await engine.dispose()
