@@ -232,16 +232,25 @@ enum CriteriaOperator {
 
 input CustomerInput {
   companyName: String!
+  splitRates: [CustomerSplitRateInput!]! = []
   published: Boolean! = false
   isParent: Boolean! = false
   parentId: UUID = null
   contactEmail: String = null
   contactNumber: String = null
-  customerBranchId: UUID = null
-  customerTerritoryId: UUID = null
-  logoUrl: String = null
-  insideRepId: UUID = null
-  type: String = null
+}
+
+type CustomerLandingPage implements LandingPageInterfaceBase {
+  id: UUID!
+  createdAt: datetime!
+  createdBy: String!
+  companyName: String!
+  published: Boolean!
+  isParent: Boolean!
+  contactEmail: String
+  contactNumber: String
+  insideReps: [String!]!
+  outsideReps: [String!]!
 }
 
 type CustomerResponse {
@@ -253,7 +262,25 @@ type CustomerResponse {
   contactEmail: String
   contactNumber: String
   createdBy: UserResponse!
-  insideRep: UserResponse
+  outsideReps: [CustomerSplitRateResponse!]!
+  insideReps: [CustomerSplitRateResponse!]!
+}
+
+input CustomerSplitRateInput {
+  userId: UUID!
+  repType: RepTypeEnum!
+  splitRate: Decimal!
+  position: Int!
+  id: UUID = null
+}
+
+type CustomerSplitRateResponse {
+  id: UUID!
+  customerId: UUID!
+  repType: RepTypeEnum!
+  position: Int!
+  splitRate: Decimal!
+  user: UserResponse!
 }
 
 """Date (isoformat)"""
@@ -506,7 +533,7 @@ interface LandingPageInterfaceBase {
   createdBy: String!
 }
 
-union LandingRecord = JobLandingPage | CompanyLandingPage | ContactLandingPage | PreOpportunityLandingPage | NoteLandingPage | TaskLandingPage | CampaignLandingPage
+union LandingRecord = JobLandingPage | CompanyLandingPage | ContactLandingPage | PreOpportunityLandingPage | NoteLandingPage | TaskLandingPage | CampaignLandingPage | CustomerLandingPage
 
 enum LandingSourceType {
   JOBS
@@ -516,6 +543,7 @@ enum LandingSourceType {
   NOTES
   PRE_OPPORTUNITIES
   CAMPAIGNS
+  CUSTOMERS
 }
 
 input LinkRelationInput {
@@ -992,6 +1020,7 @@ type Query {
   taskSearch(searchTerm: String!, limit: Int! = 20): [TaskType!]!
   taskRelatedEntities(taskId: UUID!): TaskRelatedEntitiesResponse!
   tasksByEntity(entityType: EntityType!, entityId: UUID!): [TaskType!]!
+  findCustomerById(id: UUID!): CustomerResponse!
   customerSearch(searchTerm: String!, published: Boolean! = true, limit: Int! = 20): [CustomerResponse!]!
   factorySearch(searchTerm: String!, published: Boolean! = true, limit: Int! = 20, useCustomOrder: Boolean! = false): [FactoryResponse!]!
   productSearch(searchTerm: String!, productCategoryIds: [UUID!]!, factoryId: UUID, limit: Int! = 20): [ProductResponse!]!
@@ -1088,6 +1117,11 @@ enum RecipientListType {
   STATIC
   CRITERIA_BASED
   DYNAMIC
+}
+
+enum RepTypeEnum {
+  OUTSIDE
+  INSIDE
 }
 
 enum SendPace {
@@ -1238,20 +1272,6 @@ input UserInput {
   outside: Boolean = null
 }
 
-type UserLiteResponse {
-  id: UUID!
-  username: String!
-  firstName: String!
-  lastName: String!
-  email: String!
-  fullName: String!
-  enabled: Boolean!
-  role: RbacRoleEnum!
-  authProviderId: String!
-  inside: Boolean
-  outside: Boolean
-}
-
 type UserResponse {
   id: UUID!
   username: String!
@@ -1264,7 +1284,6 @@ type UserResponse {
   authProviderId: String!
   inside: Boolean
   outside: Boolean
-  supervisor: UserLiteResponse
 }
 
 scalar _Any

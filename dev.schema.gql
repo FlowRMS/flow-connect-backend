@@ -1,0 +1,5386 @@
+type Query {
+  getFileInfo(id: ID!): FileInfo!
+  getTotalFileSize: [FileTypeSize!]!
+  findAllFiles(page: Int!, perPage: Int = null, orderBy: [OrderByEnum] = null, folderId: ID = null): PaginatedDirectoryInfo!
+  findRecentFiles: DirectoryInfo!
+  similaritySearch(query: String!, k: Int! = 5): [SimilaritySearchResult!]!
+  convertEmail(id: ID!): Content!
+  findFileUploads(page: Int!, perPage: Int!): FileUploadProcessPaginatedResponsePaginatedFileLandingPage!
+  findFileUploadById(id: ID!): FileUploadProcess
+  findFileUploadByFileId(id: ID!): [FileUploadProcess!]
+  findFileUploadsByBatchId(batchId: UUID!): [FileUploadProcess!]!
+  findFileUploadProcessDtos(fileUploadProcessId: ID!, page: Int = 1, perPage: Int = 1, processed: Boolean = null): FileUploadProcessDTOPaginatedFileLandingPage!
+  getNumberOfFileUploadProcessDtos(fileUploadProcessId: ID!, processed: Boolean = null): Int!
+  findFileUploadProcessDtosById(fileUploadProcessDtoIds: [ID!]!): [FileUploadProcessDTO!]!
+  getQueuedOrProcessingUploads: [FileUploadProcess!]!
+  getCurrentDto(fileUploadProcessId: ID!): FileUploadProcessDTO
+  downloadFileContents(id: ID!): String!
+  getPdfContentWithPageNumbers(id: ID!): [VectorizationResponse!]!
+  findAllFilesByEntityId(id: ID!): DirectoryInfo!
+  getOcrMetadata(id: ID!): OcrMetaResponse
+  generatePresignedUrl(id: ID!, includeFlowbotUrls: Boolean, includeTabularUrl: Boolean): PresignedUrlResponse!
+  getFlowbotFileById(id: ID!): FlowbotFileResponse!
+  listFlowbotFiles: [FlowbotFileResponse!]!
+  findFolderById(id: ID!): FolderInfo!
+  findFilesByFolderId(id: ID!): DirectoryInfo!
+  findAllFolders(public: Boolean = false, private: Boolean = true): [FolderInfo!]!
+  getVectorizationStatusByFileId(fileId: ID!): [VectorizationStatusInfo!]!
+  findAllDashboardByUserId(id: String): [Dashboard]!
+  findDashboardById(id: String): Dashboard
+  findAllFollowingByUserId(id: String): [Following]!
+  findFollowingById(id: String): Following
+  getUserRbac(resource: RbacResourceEnum!): UserRbac
+  getRbacGrid: [RbacGrid]
+  findUserSettingById(id: String): UserSetting
+  findAllUserSettings: [UserSetting]!
+  findCurrentUserSettings: [UserSetting]!
+  findCurrentUserSettingByKey(key: String!): UserSetting
+  findAllCurrentUserSettings: [UserSetting]!
+  findAllTasksByUserId(id: String): [Task]!
+  findTaskById(id: String): Task
+  findUserById(id: ID!): User
+  findAllUser: [User]!
+  findQuoteById(id: ID!): Quote
+  findQuoteByQuoteNumber(quoteNumber: String!, soldToCustomerId: ID): Quote
+  existsQuoteByNumberAndCustomer(quoteNumber: String!, soldToCustomerId: ID!): Boolean
+  findQuoteLostReasonById(id: ID!): QuoteLostReason
+  findQuoteLostReasons: [QuoteLostReason]
+  findJobById(id: ID!): Job
+  findPreOpportunityById(id: ID!): PreOpportunity
+  findPreOpportunityLostReasonById(id: ID!): PreOpportunityLostReason
+  findPreOpportunityLostReasons: [PreOpportunityLostReason]
+  getDashboardReport(report: DashboardReportEnum!, filter: GenericFilterInput): GenericFilter
+  getDashboardExcelExport(report: DashboardReportEnum!, filter: GenericFilterInput): ExcelExport
+  findLandingPage(report: LandingReportEnum!, filter: GenericFilterInput): GenericFilter
+  findLandingPageExcelExport(report: LandingReportEnum!, filter: GenericFilterInput): ExcelExport
+  dashboardFilterDropDown(context: ContextEnum, factoryIds: [ID], customerIds: [ID], active: Boolean, value: String): [FilterDropDown]
+  dashboardFilterDropDownGrouped(context: ContextGroupedEnum, factoryIds: [ID], categoryIds: [ID], active: Boolean): [FilterDropDownParent]
+  getReport(report: ReportEnum!, filter: GenericFilterInput): GenericFilter
+  getReportExcelExport(report: ReportEnum!, filter: GenericFilterInput): ExcelExport
+  getPostedStatementReport(checkId: ID!): PostedStatementReport
+  getCounters(entity: EntityEnum!, id: ID!): [EntityCounter]
+  findQuoteDetails(quoteNumber: String!, partNumber: String, startDate: Date, endDate: Date, blanket: Boolean, open: Boolean): [QuoteDetailLite]
+  getAggregateReport(entity: AggregateEntityEnum!, groupBy: [AggregateGroupByEnum!]!, aggregate: aggregateInput!, filter: GenericFilterInput): [AggregateReport]
+  getPivotReport(input: PivotReportInput): PivotReport
+  getPivotReportExcelExport(input: PivotReportInput): ExcelExport
+  getAggregateReportExcelExport(entity: AggregateEntityEnum!, groupBy: [AggregateGroupByEnum!]!, aggregate: aggregateInput!, filter: GenericFilterInput): ExcelExport
+  searchTerm(input: SearchTermInput!): [SearchTermType!]
+  getSiteWideSearch(title: String): [SiteWideSearch]
+  findContactsByJobId(jobId: ID!): [ContactsByJob]
+  findEntitiesByFileId(id: ID!): [EntityByFileIdDTO!]
+  findEntityByEntityNumber(entity: EntityEnum!, entityNumber: String!, factoryId: ID, customerId: ID): [EntityByNumberDTO!]
+  findEntityIsUsed(entity: EntityIsUsedEnum!, id: ID!): Boolean
+  findEntitiesIsUsed(entities: [EntitiesIsUsedInput!]!): [EntitiesIsUsed]
+  findEntitiesByJobIdAndEntityType(jobId: ID!, entityType: JobEntityTypeEnum): [EntityByJobId]
+  powerBiAuthTest: Boolean
+  powerBiPermissionsTest: Boolean
+  getPowerBiEmbedPayload: PowerBiEmbedPayload
+  checkPowerBiWorkspaceAccess: String
+  findOrderById(id: ID!): Order
+  findOrderByOrderNumber(orderNumber: String!, customerId: ID): Order
+  existsOrderByNumberAndCustomer(orderNumber: String!, customerId: ID): Boolean
+  findOrderAcknowledgementByOrderId(orderId: ID!): [OrderAcknowledgement]
+  findOrderAcknowledgementByOrderDetailId(orderDetailId: ID!): [OrderAcknowledgement]
+  findInvoiceById(id: ID!): Invoice
+  findInvoiceByInvoiceNumber(invoiceNumber: String!, factoryId: ID): Invoice
+  existsInvoiceByNumberAndFactory(invoiceNumber: String!, factoryId: ID): Boolean
+  findNoCheckInvoicesByFactoryAndMonth(factoryId: ID!, month: Date!): [InvoiceRefined]
+  findPaidInvoicesByNumberAndFactory(invoiceNumber: String!, factoryId: ID!): [InvoiceRefined]
+  findInvoicesByOrderId(orderId: ID!): [InvoiceRefined]
+  findCreditById(id: ID!): Credit
+  findCreditsByOrderId(orderId: ID!): [Credit]
+  findCreditsByCheckId(checkId: ID!): [Credit]
+  findCreditReasons: [CreditReason]
+  findCheckById(id: ID!): Check
+  findCheckByCheckNumber(checkNumber: String!, factoryId: ID): Check
+  existsCheckByNumberAndFactory(checkNumber: String!, factoryId: ID): Boolean
+  findNoCheckEntities(entity: CheckEntityEnum!, entityNumber: String!, factoryId: ID): [CheckEntity]
+  findCheckByIdForDisplay(id: ID!): CheckToDisplay
+  findExpenseById(id: ID!): Expense
+  findExpensesByCheckId(checkId: ID!): [Expense]
+  findExpenseCategories: [ExpenseCategory]
+  findAisleById(id: ID!): Aisle
+  findAllAisles: [Aisle!]!
+  findBayById(id: ID!): Bay
+  findAllBays: [Bay!]!
+  findBaysByShelfId(shelfId: ID!): [Bay!]!
+  findBinById(id: ID!): Bin
+  findAllBins: [Bin!]!
+  findBinsByRowId(rowId: ID!): [Bin!]!
+  findFulfillment(id: ID!): Fulfillment
+  findFulfillmentByQrCode(qrCode: String!): Fulfillment
+  findFulfillmentsByOrder(orderId: ID!): [Fulfillment!]!
+  findFulfillmentsByProduct(productId: ID!): [Fulfillment!]!
+  findAllFulfillments: [Fulfillment!]!
+  findInventoryById(id: ID!): Inventory
+  findAllInventory: [Inventory!]!
+  findInventoryByProductId(productId: ID!): Inventory
+  findInventoryBelowReorderPoint: [Inventory!]!
+  findInventoryItemById(id: ID!): InventoryItem
+  findAllInventoryItems: [InventoryItem!]!
+  findInventoryItemsByInventoryId(inventoryId: ID!): [InventoryItem!]!
+  findInventoryItemsByBinId(binId: ID!): [InventoryItem!]!
+  findInventoryItemsByStatus(status: InventoryStatus!): [InventoryItem!]!
+  findInventoryItemByBarcode(barcode: String!): InventoryItem
+  findInventoryItemsByLotNumber(lotNumber: String!): [InventoryItem!]!
+  findInventoryItemsExpiringBefore(date: String!): [InventoryItem!]!
+  findInventoryItemsByWarehouseId(warehouseId: ID!): [InventoryItem!]!
+  findRowById(id: ID!): Row
+  findAllRows: [Row!]!
+  findRowsByBayId(bayId: ID!): [Row!]!
+  findSectionById(id: ID!): Section
+  findAllSections: [Section!]!
+  findSectionsByWarehouseId(warehouseId: ID!): [Section!]!
+  findShelfById(id: ID!): Shelf
+  findAllShelves: [Shelf!]!
+  findShelvesByAisleId(aisleId: ID!): [Shelf!]!
+  findWarehouseById(id: ID!): Warehouse
+  findAllWarehouses: [Warehouse!]!
+  createNonExistingResourcesFromPermissionsDefault: Boolean
+  setDefaultKeycloakFlowUserId: Boolean
+  createNonExistingDefaultRoles: Boolean
+  createNonExistingClients: Boolean
+  findAllRolesByTenant(tenant: String!): [Role!]
+  getRbacGridByTenant(tenant: String!): [RbacGrid!]
+  findSiteSettingByTenant(tenantName: String!): SiteSetting
+  findAllPlan: [Plan!]
+  findPlanMenuByTenant(tenant: String!): [PlanMenu!]
+  findPlanTypeByTenant(tenant: String!): PlanTypeEnum
+  findPowerBIMasterTemplateById(id: ID!): PowerBIMasterTemplate
+  findAllTenant: [Tenant]!
+  findTenantById(id: ID!): Tenant
+  getTenantCountStats: TenantCountStats!
+  findAllUsersByTenant(tenant: String!): [UserFromAdmin!]
+  findUserByTenantAndId(tenant: String!, id: ID!): UserFromAdmin
+  impersonateUser(tenant: String!, id: ID!): TokenResponse
+  findOwnerIdByTenant(tenant: String!): ID
+  getUserCountByStatusForAllTenants: UserCountByStatus!
+  findAddressesBySourceId(sourceId: ID!): [Address]
+  findAllCountries: [Country]
+  findSubdivisionByCountry(countryCode: String!): [Subdivision]
+  findContactById(id: ID!): Contact
+  findAllContacts: [ContactLite]
+  findContactsBySourceId(sourceId: ID!): [Contact]
+  findCustomerById(id: ID!): Customer
+  findCustomerByIds(ids: [ID!]!): [Customer]
+  findCustomersByActive: [CustomerDTO]
+  findCustomersByParent(parentId: ID!): [CustomerDTO]
+  findCustomersByNoParentAndNoChild(customerId: ID): [CustomerDTO]
+  findCustomerByCompanyName(companyName: String!, published: Boolean): Customer
+  findAllCustomersByParentName(companyName: String!): [CustomerByParentDTO]
+  findInsideRepIds(customerId: ID!, factoryId: ID!): [ID]
+  findCustomerByNameUsingAddress(companyName: String!, state: String, city: String, zipCode: String): Customer
+  findCustomerBranchById(id: ID!): CustomerBranch
+  findCustomerBranches: [CustomerBranch]
+  findCustomerTerritoryById(id: ID!): CustomerTerritory
+  findCustomerTerritories: [CustomerTerritory]
+  getNewGeneratedNumber: String
+  findFactoryById(id: ID!): Factory
+  findFactoryByIds(ids: [ID!]!): [Factory]
+  findFactoryByTitle(title: String!, published: Boolean): Factory
+  findFactoriesByPublishedTrue: [Factory]
+  findFactoryCustomerIdById(id: ID!): FactoryCustomerId
+  findNoteById(id: ID!): Note
+  findNotesBySourceId(sourceId: ID!): [Note]
+  findNoteThreads(entityType: NoteEntityTypeEnum!, sourceId: ID!): [NoteThread]
+  findParticipantsBySourceId(sourceId: ID!): [Participant]
+  findPhoneNumberBySourceId(sourceId: ID!): PhoneNumber
+  findPhoneNumberById(id: ID!): PhoneNumber
+  findPlanMenu: [PlanMenuGroup]
+  findPlanType: PlanTypeEnum
+  findProductById(id: ID!): Product
+  findProductByIds(ids: [ID!]!): [Product]
+  findProductsByFactoryAndCustomers(factoryId: ID!, customerIds: [ID!]!, partNumber: String!, published: Boolean): [ProductFpnProjection]
+  findProductByFactoryAndPartNumber(factoryId: ID!, partNumber: String!, exactMatch: Boolean): Product
+  findFactoryByPartNumber(partNumber: String!): ID
+  findCommissionRateByProduct(productId: ID!, productCpnId: ID): Float
+  findEffectiveCommissionRateAndOverageUnitPriceByProduct(productId: ID!, detailUnitPrice: Float!, factoryId: ID!, endUserId: ID!): OverageRecord
+  findProductCPNsByProduct(productId: ID!): [ProductCPN]
+  findProductCPNId(productId: ID!, customerId: ID!, endUserId: ID!): ID
+  findProductCategories: [ProductCategory]
+  findProductCategoriesByFactory(factoryId: ID!): [ProductCategory]
+  findProductCategoryById(id: ID!): ProductCategory
+  findProductUoms: [ProductUom]
+  findAllSalesRepSelections: [SalesRepSelectionLite]
+  findSalesRepsSplitsByFactoryAndCustomer(factoryId: ID, customerId: ID!): [SplitRate]
+  findSalesRepSelectionById(id: ID!): SalesRepSelection
+  findSiteOptionByKey(key: SiteOptionKeyEnum!): SiteOption
+  findValueByKey(key: SiteOptionKeyEnum!): String
+  findSiteSettingData: SiteSetting
+  templatePreviewHtml(templateId: ID!, entityId: ID!): String!
+  findAllTemplates: [Template]
+  findTemplateById(id: ID!): Template
+  healthCheck: String!
+}
+
+type Mutation {
+  deleteFile(id: ID!): Boolean!
+  generateFileSummary(id: ID!): FileSummaryInfo!
+  uploadFile(files: [Upload]!, folderId: ID = null, entityType: EntityType = null, tenantLevel: Boolean = true, public: Boolean = false, entityId: ID = null, allowLargeFiles: Boolean = true): FileResults!
+  voteFileSummary(id: ID!, vote: Boolean!): VoteSummaryResult!
+  addTag(id: ID!, tagName: String!, color: String!): FileInfo!
+  removeTag(id: ID!, tagName: String!): FileInfo!
+  singleFileUpload(file: Upload!, folderId: ID = null, entityType: EntityType = null, tenantLevel: Boolean = true, public: Boolean = false, entityId: ID = null, allowLargeFiles: Boolean = true): FileResults!
+  addFileMeta(fileId: ID!, fileContent: String!): FileMetaInfo!
+  updateFileMeta(fileMetaId: ID!, fileContent: String!): FileMetaInfo!
+  cleanData(file: Upload!, factories: [String!]!, splitBy: SplitBy = null, separateCredits: Boolean! = false): [DataCleanResult!]!
+  updateFileUploadProcess(fileUploadProcessId: ID!, fileUploadProcessInput: FileUploadProcessInput!): FileUploadProcess!
+  createFileUploadProcess(fileUploadProcessInput: FileUploadProcessInput!): FileUploadProcess!
+  triggerFileProcess(fileId: ID!, entity: EntityType = null): TriggerFileUploadResponse!
+  triggerFileProcessesBulk(triggerFileProcessInputs: [TriggerFileUploadInput!]!): [TriggerFileUploadResponse!]!
+  updateFileUploadStatuses(fileUploadProcessId: ID!, status: ProcessStatus = null, queueStatus: QueueStatus = null, message: String = null, taskId: ID = null, metaData: JSON = null, currentDtoId: ID = null, pausedAction: PausedActionsGQL = null, pendingDocumentId: UUID = null): Boolean!
+  addFileUploadProcessDtos(fileUploadProcessId: ID!, dtos: [FileUploadProcessDTOInput!]!): [FileUploadProcessDTO!]!
+  updateFileUploadProcessDtos(fileUploadProcessId: ID!, dtos: [FileUploadProcessDTOInput!]!): [FileUploadProcessDTO!]!
+  deleteFileUploadProcessDtos(dtoIds: [ID!]!): Boolean!
+  updateFileUploadProcessDetails(fileUploadDetailInputs: [FileUploadDetailInput!]!): Boolean!
+  addFileUploadProcessStats(fileUploadProcessId: ID!, stats: FileUploadProcessStatsInput!): FileUploadProcessStatsResponse!
+  uploadFlowbotWorkfile(fileUploadProcessId: ID!, file: Upload!): Boolean!
+  deleteFileUploadProcess(fileUploadProcessId: ID!): Boolean!
+  deleteFileUploadProcessByFileId(fileId: ID!): Boolean!
+  addFileEntityDetail(fileId: ID!, entityType: EntityType!, entityId: ID!, action: EntityDetailAction): FileEntityDetailResponse!
+  pocPreprocessUploadFile(factory: FileFactoryEnum!, file: Upload!, folderId: ID = null, entityType: EntityType = null, entityId: ID = null): PreProcessResult!
+  deepDeleteFile(id: ID!): Boolean!
+  renameFile(id: ID!, newName: String!): FileInfo!
+  uploadFlowbotFile(file: Upload!): FlowbotFileResponse!
+  deleteFlowbotFile(id: ID!): Boolean!
+  uploadFlowbotTabularConversion(id: ID!, file: Upload!): Boolean!
+  createFolder(name: String!, public: Boolean = false, tenantLevel: Boolean = true): FolderInfo!
+  renameFolder(id: ID!, newName: String!): FolderInfo!
+  deleteFolder(id: ID!): Boolean!
+  updateFileFolderLocation(fileIds: [ID!]!, newFolderId: ID = null): [FileInfo!]!
+  vectorizeFile(fileId: ID!): Boolean!
+  createDashboard(dashboardInput: DashboardInput): Dashboard
+  updateDashboard(dashboardInput: DashboardInput, id: ID!): Dashboard
+  deleteDashboardById(id: ID!): ID
+  shareDashboard(input: ShareDashboardInput): Boolean
+  updateDashboardOrder(input: [UpdateDashboardOrderInput]!): Boolean
+  createFollowing(followingInput: FollowingInput): Following
+  updateFollowing(id: ID!, followingInput: FollowingInput): Following
+  deleteFollowingById(id: ID!): Boolean
+  createRole(input: RoleInput!): Role
+  updateRbacGrid(rbacGrid: [RbacGridInput!]!): [RbacGrid!]
+  updateUserTransactions(oldUser: ID!, newUser: ID!, startDate: Date, endDate: Date): Boolean
+  createUserSetting(input: UserSettingInput!): UserSetting
+  updateUserSetting(id: ID!, input: UserSettingInput!): UserSetting
+  deleteUserSetting(ids: [ID!]!): Boolean
+  createTask(taskInput: TaskInput): Task
+  updateTask(taskInput: TaskInput, id: ID!): Task
+  deleteTaskById(id: ID!): Boolean
+  createUser(input: UserInput!): User
+  updateUser(id: ID!, input: UserInput!): User
+  resetPasswordByEmail(tenantName: String!, email: String!): Boolean
+  createQuote(input: QuoteInput!, skipValidation: Boolean): Quote
+  updateQuote(id: ID!, input: QuoteInput!): Quote
+  deleteQuote(ids: [ID!]!): Boolean
+  createQuoteLostReason(input: QuoteLostReasonInput!): QuoteLostReason
+  updateQuoteLostReason(id: ID!, input: QuoteLostReasonInput!): QuoteLostReason
+  updateQuoteLostReasons(input: [QuoteLostReasonsInput!]!): [QuoteLostReason]
+  deleteQuoteLostReason(ids: [ID!]!): Boolean
+  setQuoteDetailsLost(ids: [ID]!, reasonId: ID, reasonOther: String): Boolean
+  setQuoteDetailsOpen(ids: [ID]!): Boolean
+  duplicateQuote(originalQuoteId: ID!, newCustomerId: ID!, newQuoteNumber: String!, duplicateNotes: Boolean!, percentageChange: Float): Quote
+  createOrderFromQuote(quoteId: ID!, quoteDetailIds: [ID!]!, orderNumber: String): ID
+  createOrderDetailsFromQuoteDetails(orderId: ID, quoteDetailList: [ID]): [ID]
+  attachParticipantToQuote(id: ID!, role: ParticipantRoleEnum!, notes: String, contactId: ID): Boolean
+  detachParticipantToQuote(quoteId: ID!, participantId: ID!): Boolean
+  setCrmEntryData(entity: CrmEntityEnum!, id: ID!, data: CrmEntryDataInput!): Boolean
+  createJob(input: JobInput!): Job
+  deleteJob(ids: [ID!]!): Boolean
+  updateJob(id: ID!, input: JobInput!): Job
+  attachEntityToJob(entityType: JobEntityTypeEnum!, entityId: ID!, jobId: ID!): Boolean
+  detachEntityToJob(entityType: JobEntityTypeEnum!, entityId: ID!): Boolean
+  attachParticipantToJob(id: ID!, role: ParticipantRoleEnum!, notes: String, contactId: ID): Boolean
+  detachParticipantToJob(jobId: ID!, participantId: ID!): Boolean
+  createPreOpportunity(input: PreOpportunityInput!): PreOpportunity
+  updatePreOpportunity(id: ID!, input: PreOpportunityInput!): PreOpportunity
+  deletePreOpportunity(ids: [ID!]!): Boolean
+  createQuoteFromPreOpportunity(preOpportunityId: ID!): Quote
+  createPreOpportunityLostReason(input: PreOpportunityLostReasonInput!): PreOpportunityLostReason
+  updatePreOpportunityLostReason(id: ID!, input: PreOpportunityLostReasonInput!): PreOpportunityLostReason
+  updatePreOpportunityLostReasons(input: [PreOpportunityLostReasonsInput!]!): [PreOpportunityLostReason]
+  deletePreOpportunityLostReason(ids: [ID!]!): Boolean
+  attachParticipantToPreOpportunity(id: ID!, role: ParticipantRoleEnum!, notes: String, contactId: ID): Boolean
+  detachParticipantToPreOpportunity(preOpportunityId: ID!, participantId: ID!): Boolean
+  updateUserTransactionsCrm(oldUser: UserTransactionDTOInput!, newUser: UserTransactionDTOInput!, startDate: Date, endDate: Date): Boolean
+  createDataSets: Boolean
+  syncDataToBi(tables: [TableRunInput!]!): String!
+  migratePowerBiReport(cloneSemanticModel: Boolean): String!
+  createOrder(input: OrderInput!, skipValidation: Boolean): Order
+  updateOrder(id: ID!, input: OrderInput!): Order
+  deleteOrder(ids: [ID!]!): Boolean
+  duplicateOrder(originalOrderId: ID!, newCustomerId: ID!, newOrderNumber: String!, duplicateNotes: Boolean!, percentageChange: Float): Order
+  setOrderDetailsCancelled(ids: [ID]!): Boolean
+  setOrderDetailsOpen(ids: [ID]!): Boolean
+  setOrderJobId(orderId: ID!, jobId: ID): Boolean
+  updateOrderDetailFulfillmentStatus(orderDetailId: ID!, fulfillmentStatus: FulfillmentStatus!): OrderDetail
+  attachParticipantToOrder(id: ID!, role: ParticipantRoleEnum!, notes: String, contactId: ID): Boolean
+  detachParticipantToOrder(orderId: ID!, participantId: ID!): Boolean
+  createOrderAcknowledgement(input: OrderAcknowledgementInput!): OrderAcknowledgement
+  createOrderAcknowledgements(inputs: [OrderAcknowledgementInput!]!): [OrderAcknowledgement]
+  updateOrderAcknowledgement(id: ID!, input: OrderAcknowledgementInput!): OrderAcknowledgement
+  deleteOrderAcknowledgement(ids: [ID!]!): Boolean
+  createInvoice(input: InvoiceInput!, skipValidation: Boolean): Invoice
+  updateInvoice(id: ID!, input: InvoiceInput!): Invoice
+  deleteInvoice(ids: [ID!]!): Boolean
+  createInvoiceFromOrder(orderId: ID!, orderDetailIds: [ID!]!, invoiceNumber: String): ID
+  attachParticipantToInvoice(id: ID!, role: ParticipantRoleEnum!, notes: String, contactId: ID): Boolean
+  detachParticipantToInvoice(invoiceId: ID!, participantId: ID!): Boolean
+  createCredit(input: CreditInput!): Credit
+  createCredits(inputs: [CreditInput!]!): [Credit]
+  updateCredit(id: ID!, input: CreditInput!): Credit
+  deleteCredit(ids: [ID!]): Boolean
+  creditCancelRemaining(id: ID!): Boolean
+  creditInvoiceRemaining(id: ID!, invoiceNumber: String!): Boolean
+  createCreditReason(input: CreditReasonInput!): CreditReason
+  updateCreditReason(id: ID!, input: CreditReasonInput!): CreditReason
+  deleteCreditReason(ids: [ID!]!): Boolean
+  createCheck(input: CheckInput!, skipValidation: Boolean): Check
+  updateCheck(id: ID!, input: CheckInput!): Check
+  deleteCheck(ids: [ID!]!): Boolean
+  postCheck(id: ID!): Check
+  unPostCheck(id: ID!): Check
+  attachDetailToCheck(checkDetailType: CheckDetailTypeEnum, entityId: ID!, checkId: ID!): Boolean
+  detachDetailToCheck(checkDetailType: CheckDetailTypeEnum, entityId: ID!, checkId: ID!): Boolean
+  reconcileCheck(id: ID!): Check
+  attachParticipantToCheck(id: ID!, role: ParticipantRoleEnum!, notes: String, contactId: ID): Boolean
+  detachParticipantToCheck(checkId: ID!, participantId: ID!): Boolean
+  createExpense(input: ExpenseInput!): Expense
+  updateExpense(id: ID!, input: ExpenseInput!): Expense
+  deleteExpense(ids: [ID!]!): Boolean
+  createExpenseCategory(input: ExpenseCategoryInput!): ExpenseCategory
+  updateExpenseCategory(id: ID!, input: ExpenseCategoryInput!): ExpenseCategory
+  updateExpenseCategories(input: [ExpenseCategoriesInput!]!): [ExpenseCategory]
+  deleteExpenseCategory(ids: [ID!]!): Boolean
+  setCommissionEntryData(entity: CommissionEntityEnum!, id: ID!, data: CommissionEntryDataInput!): Boolean
+  updateFulfillmentStatus(orderId: ID!, orderDetailId: ID!, fulfillmentStatus: FulfillmentStatus!): Boolean
+  updateUserTransactionsCommission(oldUser: UserTransactionDTOInput!, newUser: UserTransactionDTOInput!, startDate: Date, endDate: Date): Boolean
+  createAisle(input: AisleInput!): Aisle!
+  updateAisle(input: AisleInput!): Aisle!
+  deleteAisle(id: ID!): Boolean!
+  createBay(input: BayInput!): Bay!
+  updateBay(input: BayInput!): Bay!
+  deleteBay(id: ID!): Boolean!
+  generateBayQRCode(id: ID!): Bay!
+  createBin(input: BinInput!): Bin!
+  updateBin(input: BinInput!): Bin!
+  deleteBin(id: ID!): Boolean!
+  generateBinQRCode(id: ID!): Bin!
+  createFulfillment(input: FulfillmentInput!): Fulfillment!
+  updateFulfillmentTracking(input: UpdateFulfillmentTrackingInput!): Fulfillment!
+  updateFulfillmentQuantity(id: ID!, input: UpdateFulfillmentQuantityInput!): Fulfillment!
+  cancelFulfillment(id: ID!): Fulfillment!
+  createInventory(input: InventoryInput!): Inventory!
+  updateInventory(id: ID!, input: InventoryInput!): Inventory!
+  deleteInventory(id: ID!): Boolean!
+  createInventoryItem(input: InventoryItemInput!): InventoryItem!
+  updateInventoryItem(id: ID!, input: InventoryItemUpdateInput!): InventoryItem!
+  deleteInventoryItem(id: ID!): Boolean!
+  adjustInventoryQuantity(id: ID!, quantityChange: Int!): InventoryItem!
+  moveInventoryItem(id: ID!, newBinId: ID!): InventoryItem!
+  updateInventoryStatus(id: ID!, status: InventoryStatus!): InventoryItem!
+  splitInventoryItem(id: ID!, newQuantity: Int!, newStatus: InventoryStatus, newBinId: ID): InventoryItem!
+  mergeInventoryItems(inventoryItemIds: [ID!]!): InventoryItem!
+  createRow(input: RowInput!): Row!
+  updateRow(input: RowInput!): Row!
+  deleteRow(id: ID!): Boolean!
+  generateRowQRCode(id: ID!): Row!
+  createSection(input: SectionInput!): Section!
+  updateSection(input: SectionInput!): Section!
+  deleteSection(id: ID!): Boolean!
+  createShelf(input: ShelfInput!): Shelf!
+  updateShelf(input: ShelfInput!): Shelf!
+  deleteShelf(id: ID!): Boolean!
+  createWarehouse(input: WarehouseInput!): Warehouse!
+  updateWarehouse(id: ID!, input: WarehouseInput!): Warehouse!
+  deleteWarehouse(id: ID!): Boolean!
+  updateRbacGridByTenant(tenant: String!, rbacGrid: [RbacGridInput!]!): [RbacGrid!]
+  updateSiteSettingByTenant(tenant: String!, input: SiteSettingInput!): SiteSetting
+  createPowerBIMasterTemplate(input: PowerBIMasterTemplateInput!): PowerBIMasterTemplate
+  updatePowerBIMasterTemplate(id: ID!, input: PowerBIMasterTemplateInput!): PowerBIMasterTemplate
+  deletePowerBIMasterTemplate(ids: [ID!]!): Boolean
+  createTenant(input: TenantInput!): Tenant
+  updateTenant(id: ID!, input: TenantInput!): Tenant
+  initializeTenant(id: ID!): Boolean
+  createKeycloakUser(tenant: String!, userInput: UserInput!): ID
+  createTenantUser(tenant: String!, userInput: UserInput!): UserFromAdmin
+  updateTenantUser(tenant: String!, id: ID!, userInput: UserInput!): UserFromAdmin
+  createKeycloakRole(tenant: String!, input: RoleInput!): ID
+  updateKeycloakUser(tenant: String!, keycloakUserId: ID!, userInput: UserInput!): ID
+  updateKeycloakFlowUserId(tenant: String!, keycloakUserId: ID!, flowUserId: ID!): Boolean
+  createAddress(input: AddressInput!): Address
+  updateAddress(id: ID!, input: AddressInput!): Address
+  deleteAddress(ids: [ID!]!): Boolean
+  createContact(input: ContactInput!): Contact
+  updateContact(id: ID!, input: ContactInput!): Contact
+  deleteContact(ids: [ID!]!): Boolean
+  createCustomer(input: CustomerInput!): Customer
+  updateCustomer(id: ID!, input: CustomerInput!): Customer
+  deleteCustomer(ids: [ID!]!): Boolean
+  setCustomerIsUsed(id: ID!): Boolean
+  createCustomerBranch(input: CustomerBranchInput!): CustomerBranch
+  updateCustomerBranch(id: ID!, input: CustomerBranchInput!): CustomerBranch
+  deleteCustomerBranch(ids: [ID!]!): Boolean
+  createCustomerTerritory(input: CustomerTerritoryInput!): CustomerTerritory
+  updateCustomerTerritory(id: ID!, input: CustomerTerritoryInput!): CustomerTerritory
+  deleteCustomerTerritory(ids: [ID!]!): Boolean
+  addCustomerTerritoryRegion(territoryId: ID!, regionType: TerritoryRegionTypeEnum!, regionCode: String!, regionName: String): CustomerTerritory
+  removeCustomerTerritoryRegion(regionId: ID!): ID!
+  setCustomerTerritoryBoundary(territoryId: ID!, geoJson: String!, centroidLat: Float, centroidLon: Float): CustomerTerritory
+  assignCustomerToCustomerTerritory(territoryId: ID!, customerId: ID!, assignmentType: CustomerTerritoryAssignmentTypeEnum!, reason: String, priority: Int): CustomerTerritory
+  unassignCustomerFromCustomerTerritory(assignmentId: ID!): ID!
+  setEntitiesIsUsed(entities: [EntitiesIsUsedInput!]!): Boolean
+  createFactory(input: FactoryInput!): Factory
+  updateFactory(id: ID!, input: FactoryInput!): Factory
+  deleteFactory(ids: [ID!]!): Boolean
+  setFactoryIsUsed(id: ID!): Boolean
+  createFactoryCustomerId(input: FactoryCustomerIdInput!): FactoryCustomerId
+  updateFactoryCustomerId(id: ID!, input: FactoryCustomerIdInput!): FactoryCustomerId
+  deleteFactoryCustomerId(ids: [ID!]!): Boolean
+  createNote(input: NoteInput!): Note
+  updateNote(id: ID!, input: NoteInput!): Note
+  deleteNote(ids: [ID!]!): Boolean
+  duplicateNote(entityType: NoteEntityTypeEnum!, originalSourceId: ID!, newSourceId: ID!): Int
+  startNoteThread(input: StartNoteThreadInput!): NoteThread
+  replyNote(threadId: ID!, input: ReplyNoteInput!, parentId: ID): Note
+  resolveNoteThread(threadId: ID!): NoteThread
+  reopenNoteThread(threadId: ID!): NoteThread
+  subscribeNoteThread(threadId: ID!, userId: ID!): Boolean
+  unsubscribeNoteThread(threadId: ID!, userId: ID!): Boolean
+  markNoteThreadRead(threadId: ID!, userId: ID!, upTo: DateTime): Boolean
+  attachParticipantToEntity(input: ParticipantInput!): ID
+  detachParticipantToEntity(id: ID!): Boolean
+  updateParticipant(id: ID!, input: ParticipantInput!): Boolean
+  createPhoneNumber(input: PhoneNumberInput!): PhoneNumber
+  updatePhoneNumber(id: ID!, input: PhoneNumberInput!): PhoneNumber
+  deletePhoneNumber(ids: [ID!]!): Boolean
+  createProduct(input: ProductInput!): Product
+  updateProduct(id: ID!, input: ProductInput!): Product
+  updateProductCommissionByFactory(factoryId: ID, commissionRate: Float): Boolean
+  updateProductCommissionByCategory(productCategoryId: ID, commissionRate: Float): Boolean
+  deleteProduct(ids: [ID!]!): Boolean
+  setProductIsUsed(id: ID!): Boolean
+  createProductCategory(input: ProductCategoryInput!): ProductCategory
+  updateProductCategory(id: ID!, input: ProductCategoryInput!): ProductCategory
+  updateCategoryCommissionByFactory(factoryId: ID, commissionRate: Float): Boolean
+  deleteProductCategory(ids: [ID!]!): Boolean
+  createProductUom(input: ProductUomInput!): ProductUom
+  updateProductUom(id: ID!, input: ProductUomInput!): ProductUom
+  deleteProductUom(ids: [ID!]!): Boolean
+  createSalesRepSelection(input: SalesRepSelectionInput!): SalesRepSelection
+  updateSalesRepSelection(id: ID!, input: SalesRepSelectionInput!): SalesRepSelection
+  deleteSalesRepSelection(ids: [ID!]!): Boolean
+  createSalesRepSelections(inputs: [SalesRepSelectionInput!]!): [SalesRepSelection]
+  updateSalesRepSelections(inputs: [SalesRepSelectionsInput!]!): [SalesRepSelection]
+  updateSiteOption(id: ID!, input: SiteOptionInput!): SiteOption
+  createSiteOption(input: SiteOptionInput!): SiteOption
+  updateSiteSetting(input: SiteSettingInput!): SiteSetting
+  upsertTemplate(input: TemplateInput!): Template!
+  updateUserTransactionsCore(oldUser: UserTransactionDTOInput!, newUser: UserTransactionDTOInput!): Boolean
+  continueWorkflow(fileUploadProcessId: ID!, skipPlayground: Boolean = true, payload: WorkflowPayloadInput): ContinueWorkflowStatusResponse!
+  triggerWorkflows(triggerFileProcessInputs: [TriggerWorkflowInput!]!, skipPlayground: Boolean = false): [TriggerWorkflowResponse!]!
+  reprocessWorkflow(fileUploadProcessId: ID!): ContinueWorkflowStatusResponse!
+}
+
+type Subscription {
+  monitorFileProcess(fileProcessId: ID!): MonitorWorkflowResponse!
+  id: ID!
+  plan: Plan!
+  status: SubscriptionStatus!
+  signupMethod: SignupMethod!
+  startDate: DateTime
+  endDate: DateTime
+  renewalDate: DateTime
+  autoRenew: Boolean!
+  paymentMethod: PaymentMethod!
+  createdAt: DateTime!
+  fileUploadProcessStatus(fileUploadProcessId: ID!): FileUploadProcessStatusUpdate!
+}
+
+"""Represents a postal address (internationalized)."""
+type Address {
+  id: ID!
+  entryDate: DateTime!
+  createdBy: ID!
+  creationType: CreationTypeEnum!
+  entityType: AddressEntityTypeEnum!
+  sourceId: ID!
+  addressType: AddressTypeEnum!
+  recipient: String
+  organization: String
+  addressLineOne: String!
+  addressLineTwo: String
+  addressLineThree: String
+  locality: String!
+  dependentLocality: String
+  administrativeArea: String
+  subAdministrativeArea: String
+  postalCode: String!
+  sortingCode: String
+  country: Country!
+  countryCode: String!
+  subdivision: Subdivision
+  subdivisionCode: String
+  city: String
+  state: String
+  zip: String
+}
+
+type AddressDTO implements EntityRowInterface {
+  id: ID!
+  entryDate: DateTime!
+  entityType: String!
+  addressType: String!
+  addressLineOne: String
+  addressLineTwo: String
+  city: String
+  state: String!
+  zip: String
+  factory: FactoryLandingLite
+  customer: CustomerLandingLite
+  createdByUser: CreatedByLandingLite!
+}
+
+"""The available different types of address entities."""
+enum AddressEntityTypeEnum {
+  FACTORY
+  CUSTOMER
+}
+
+"""Address input for create/update (internationalized).
+Prefer the normalized fields. Legacy fields are accepted but deprecated."""
+input AddressInput {
+  creationType: CreationTypeEnum!
+  entityType: AddressEntityTypeEnum!
+  sourceId: ID!
+  addressType: AddressTypeEnum!
+  recipient: String
+  organization: String
+  addressLineOne: String!
+  addressLineTwo: String
+  addressLineThree: String
+  locality: String!
+  dependentLocality: String
+  administrativeArea: String
+  subAdministrativeArea: String
+  postalCode: String!
+  sortingCode: String
+  countryCode: String!
+  subdivisionCode: String
+}
+
+"""Input for partial updates (all fields optional)."""
+input AddressPatchInput {
+  creationType: CreationTypeEnum
+  entityType: AddressEntityTypeEnum
+  sourceId: ID
+  addressType: AddressTypeEnum
+  recipient: String
+  organization: String
+  addressLineOne: String
+  addressLineTwo: String
+  addressLineThree: String
+  locality: String
+  dependentLocality: String
+  administrativeArea: String
+  subAdministrativeArea: String
+  postalCode: String
+  sortingCode: String
+  countryCode: String
+  subdivisionCode: String
+}
+
+"""The available different types of addresses."""
+enum AddressTypeEnum {
+  SHIPPING
+  BILLING
+  MAILING
+}
+
+enum AggregateByEnum {
+  TOTAL
+  BALANCE
+  COMMISSION
+  COMMISSION_RATE
+  COMMISSION_BALANCE
+  COMMISSION_PAID
+  DISCOUNT
+  DISCOUNT_RATE
+}
+
+enum AggregateEntityEnum {
+  QUOTE
+  ORDER
+  INVOICE
+  CHECK
+}
+
+enum AggregateGroupByEnum {
+  FACTORY
+  CUSTOMER
+  ENTRY_DATE
+  ENTITY_DATE
+  PRODUCT
+  PRODUCT_CATEGORY
+}
+
+type AggregateReport {
+  labels: [String!]!
+  value: Float
+}
+
+enum AggregateTypeEnum {
+  SUM
+  COUNT
+  AVERAGE
+}
+
+"""Aisle Type
+Represents a navigable aisle within a warehouse containing an ordered set of shelves."""
+type Aisle {
+  id: ID!
+  name: String!
+  aisleNumber: Int
+  zone: String
+  orientationDeg: Int
+  startLatitude: Float
+  startLongitude: Float
+  endLatitude: Float
+  endLongitude: Float
+  description: String
+  isActive: Boolean!
+  shelves: [Shelf!]!
+  section: Section
+}
+
+"""Input type for creating or updating an aisle"""
+input AisleInput {
+  id: ID
+  name: String!
+  aisleNumber: Int
+  zone: String
+  orientationDeg: Int
+  startLatitude: Float
+  startLongitude: Float
+  endLatitude: Float
+  endLongitude: Float
+  description: String
+  isActive: Boolean
+  sectionId: ID
+  shelfIds: [ID]
+}
+
+type AllCheckDetailDTO implements EntityRowInterface {
+  id: ID!
+  checkDetailType: CheckDetailTypeEnum!
+  additionMethod: CheckDetailAdditionMethodEnum!
+  entryDate: DateTime!
+  checkId: ID!
+  checkNumber: String!
+  entityDate: Date!
+  postDate: Date
+  factoryTitle: String!
+  customerTitle: String!
+  entityId: ID!
+  entityNumber: String!
+  entityAmount: Float!
+  orderId: ID
+  orderNumber: String
+  insideReps: [InsideRepDTO!]!
+  outsideRep: String
+  outsideRepEmail: String
+  expectedCommission: Float
+  commissionReceived: Float
+  balance: Float
+}
+
+type AllInvoiceDetailDTO implements EntityRowInterface {
+  id: ID!
+  status: String!
+  unitPrice: Float!
+  invoicedDetailTotal: Float!
+  commission: Float
+  quantityShipped: Int!
+  invoiceId: ID!
+  entryDate: DateTime!
+  entityDate: Date!
+  invoiceNumber: String!
+  factoryTitle: String!
+  orderId: ID
+  orderNumber: String
+  customerTitle: String!
+  jobName: String
+  quantityOrdered: Int!
+  factoryPartNumber: String!
+  endUser: String!
+  outsideRep: String
+  outsideRepEmail: String
+  outsideRepSplitRate: Float
+  outsideRepCommission: Float
+  outsideRepTotalPortion: Float
+}
+
+type AllOrderDetailDTO implements EntityRowInterface {
+  id: ID!
+  entryDate: DateTime!
+  factoryTitle: String!
+  factoryId: ID!
+  customerTitle: String!
+  customerId: ID!
+  orderId: ID
+  detailTotal: Float!
+  unitPrice: Float!
+  quantity: Int!
+  itemNumber: Int!
+  status: String!
+  orderNumber: String
+  orderDate: Date
+  jobName: String
+  dueDate: Date
+  endUser: String!
+  factoryPartNumber: String!
+  category: String!
+  insideReps: [InsideRepDTO!]!
+  discount: Float
+  shipDate: Date
+  factSoNumber: String
+  commission: Float
+  commissionDiscount: Float
+  quoteId: ID
+  quoteNumber: String
+  outsideRep: String
+  outsideRepEmail: String
+  outsideRepSplitRate: Float
+  outsideRepCommission: Float
+  outsideRepTotalPortion: Float
+}
+
+type AllQuoteDetailDTO implements EntityRowInterface {
+  id: ID!
+  status: String!
+  itemNumber: Int!
+  unitPrice: Float!
+  detailTotal: Float!
+  commission: Float
+  quantity: Int!
+  factoryId: ID!
+  factoryTitle: String!
+  endUser: String!
+  lostReason: String
+  factoryPartNumber: String!
+  category: String!
+  quoteId: ID
+  entryDate: DateTime!
+  quoteDate: Date!
+  expDate: Date
+  quoteNumber: String
+  blanket: Boolean
+  soldToCustomerId: ID!
+  soldToCustomerTitle: String!
+  jobName: String
+  insideReps: [InsideRepDTO!]!
+  outsideRep: String
+  outsideRepEmail: String
+  outsideRepSplitRate: Float
+  outsideRepCommission: Float
+  outsideRepTotalPortion: Float
+  orderId: ID
+  orderDate: Date
+}
+
+"""Attachment"""
+type Attachment {
+  filename: String
+  data: String
+  warning: String
+}
+
+"""Base error"""
+type BaseError {
+  message: String!
+}
+
+"""Bay Type
+Represents a vertical section of a shelf that contains rows of bins"""
+type Bay {
+  id: ID!
+  code: String!
+  bayNumber: Int!
+  description: String
+  qrContent: String
+  isActive: Boolean!
+  shelf: Shelf!
+  rows: [Row!]!
+}
+
+"""Input type for creating or updating a Bay"""
+input BayInput {
+  id: ID
+  code: String!
+  bayNumber: Int!
+  description: String
+  isActive: Boolean
+  shelfId: ID!
+}
+
+enum BillingCycleEnum {
+  MONTHLY
+  YEARLY
+}
+
+"""Dimension for billing / invoicing state.
+For commission-only, often driven by factory invoices.
+For buy/sell & consignment, driven by internal invoices."""
+enum BillingStatus {
+  NOT_APPLICABLE
+  NOT_INVOICED
+  PARTIALLY_INVOICED
+  INVOICED
+  PARTIALLY_CREDITED
+  CREDITED
+}
+
+"""Bin Type
+Represents an individual storage bin within a row, identified by letter codes"""
+type Bin {
+  id: ID!
+  letterCode: String!
+  width: Float
+  height: Float
+  depth: Float
+  maxWeight: Float
+  description: String
+  qrContent: String
+  isActive: Boolean!
+  row: Row!
+  inventoryItems: [InventoryItem!]!
+}
+
+"""Input type for creating or updating a Bin"""
+input BinInput {
+  id: ID
+  letterCode: String!
+  width: Float
+  height: Float
+  depth: Float
+  maxWeight: Float
+  description: String
+  isActive: Boolean
+  rowId: ID!
+}
+
+"""The 'Boolean' scalar type represents 'true' or 'false' ."""
+input BooleanFilterInput {
+  key: String!
+  operator: BooleanFilterOperatorEnum!
+}
+
+enum BooleanFilterOperatorEnum {
+  IS_TRUE
+  IS_FALSE
+}
+
+type Check {
+  id: ID!
+  createdBy: ID!
+  createdByUser: User!
+  creationType: CreationTypeEnum!
+  entryDate: DateTime!
+  balance: CheckBalance!
+  details: [CheckDetail!]
+  status: String!
+  factoryId: ID!
+  entityDate: Date!
+  postDate: Date
+  commissionMonth: Date
+  checkNumber: String!
+  commission: Float
+  participantIds: [ID!]
+}
+
+type CheckBalance {
+  id: ID!
+  commissionPaid: Float
+  commissionExpected: Float
+  commissionBalance: Float
+  commissionDifference: Float
+  commissionCredit: Float
+  commissionExpense: Float
+}
+
+type CheckDTO implements EntityRowInterface {
+  id: ID!
+  checkNumber: String!
+  entryDate: DateTime!
+  entityDate: Date!
+  status: String!
+  postDate: Date
+  commission: Float
+  commissionBalance: Float
+  commissionMonth: Date
+  factory: FactoryLandingLite
+  createdByUser: CreatedByLandingLite!
+}
+
+type CheckDetail {
+  id: ID!
+  checkDetailType: CheckDetailTypeEnum!
+  parent: Check!
+  invoice: Invoice
+  deduction: Credit
+  adjustment: Expense
+  credit: Float
+  debit: Float
+  total: Float
+  appliedAmount: Float
+  appliedAmountRate: Float
+  balance: Float
+  paid: Boolean
+}
+
+enum CheckDetailAdditionMethodEnum {
+  CREDIT
+  DEBIT
+}
+
+input CheckDetailInput {
+  id: ID
+  invoice: SetInvoiceId
+  deduction: SetCreditId
+  adjustment: SetExpenseId
+  appliedAmount: Float
+  paid: Boolean
+}
+
+type CheckDetailToDisplay {
+  id: ID!
+  entityType: CheckDetailTypeEnum!
+  entityId: ID!
+  entityNumber: String!
+  entityDate: Date!
+  soldToCustomer: Customer!
+  salesReps: [CheckDetailToDisplaySplitRate!]
+  appliedAmount: Float!
+  appliedAmountRate: Float!
+  expectedAmount: Float
+  expectedRate: Float
+  orderNumber: String
+  balance: Float!
+}
+
+type CheckDetailToDisplaySplitRate {
+  outsideRep: User!
+  splitRate: Float
+  commissionAmount: Float
+  salesAmount: Float
+}
+
+enum CheckDetailTypeEnum {
+  INVOICE
+  DEDUCTION
+  ADJUSTMENT
+}
+
+type CheckEntity {
+  id: ID!
+  entityNumber: String!
+}
+
+enum CheckEntityEnum {
+  INVOICE
+  CREDIT
+  EXPENSE
+}
+
+input CheckInput {
+  creationType: CreationTypeEnum!
+  details: [CheckDetailInput!]
+  factoryId: ID!
+  entityDate: Date!
+  postDate: Date
+  commissionMonth: Date
+  checkNumber: String!
+  commission: Float
+  participantIds: [ID!]
+}
+
+type CheckToDisplay {
+  id: ID!
+  createdBy: ID!
+  createdByUser: User!
+  creationType: CreationTypeEnum!
+  entryDate: DateTime!
+  balance: CheckBalance!
+  details: [CheckDetailToDisplay!]
+  status: String!
+  factoryId: ID!
+  entityDate: Date!
+  postDate: Date
+  commissionMonth: Date
+  checkNumber: String!
+  commission: Float
+}
+
+enum CommissionEntityEnum {
+  ORDER
+  INVOICE
+  EXPENSE
+  CREDIT
+  CHECK
+}
+
+input CommissionEntryDataInput {
+  createdBy: ID!
+  entryDate: DateTime!
+}
+
+type CommissionMonthlyBookedOrderDTO implements EntityRowInterface {
+  id: ID!
+  orderNumber: String
+  orderDate: Date
+  factoryTitle: String!
+  orderTotal: Float!
+  customerFor: String!
+  commission: Float
+  commissionTotal: Float
+  userName: String!
+}
+
+type CommissionOwedDTO implements EntityRowInterface {
+  id: ID!
+  invoiceNumber: String!
+  invoiceStatus: String!
+  invoiceDate: Date
+  dueDate: Date
+  factoryId: ID!
+  factoryTitle: String!
+  customerId: ID!
+  customerTitle: String!
+  orderId: ID
+  orderNumber: String
+  factSoNumber: String
+  orderDate: Date
+  shipDate: Date
+  orderAmount: Float!
+  orderBalance: Float!
+  outsideRep: String
+  expectedCommission: Float
+  commissionPaid: Float
+  balanceOwed: Float
+}
+
+enum CommissionPolicyEnum {
+  STANDARD
+  STEPPED
+}
+
+"""Dimension for the commission lifecycle."""
+enum CommissionStatus {
+  NOT_APPLICABLE
+  ACCRUING
+  ON_CHECK
+  PAID
+  ADJUSTED
+}
+
+type CommissionsPaidByStateDTO implements EntityRowInterface {
+  id: ID!
+  state: String!
+  commission: Float
+}
+
+"""Represents a contact type."""
+type Contact {
+  id: ID!
+  entryDate: DateTime!
+  createdBy: ID!
+  creationType: CreationTypeEnum!
+  userOwnerIds: [ID!]
+  entityType: ContactEntityTypeEnum!
+  sourceId: ID
+  firstname: String!
+  lastname: String!
+  title: String!
+  isPrimary: Boolean!
+  email: String
+  canEmail: Boolean!
+  phone: String
+  canPhone: Boolean!
+}
+
+type ContactByJob {
+  contactName: String
+  email: String
+  phone: String
+}
+
+type ContactDTO implements EntityRowInterface {
+  id: ID!
+  entryDate: DateTime!
+  entityType: String!
+  firstname: String!
+  lastname: String!
+  title: String!
+  isPrimary: Boolean!
+  email: String
+  createdByUser: CreatedByLandingLite!
+  factory: FactoryLandingLite
+  customer: CustomerLandingLite
+}
+
+"""The available different types of contact entities."""
+enum ContactEntityTypeEnum {
+  FACTORY
+  CUSTOMER
+  NO_ASSOCIATION
+}
+
+"""Represents a contact input."""
+input ContactInput {
+  creationType: CreationTypeEnum!
+  entityType: ContactEntityTypeEnum!
+  sourceId: ID
+  firstname: String!
+  lastname: String!
+  title: String!
+  isPrimary: Boolean!
+  email: String
+  canEmail: Boolean!
+  phone: String
+  canPhone: Boolean!
+}
+
+"""Represents a lightweight contact type with source information."""
+type ContactLite {
+  id: ID!
+  sourceId: ID
+  sourceTitle: String!
+  entityType: ContactEntityTypeEnum!
+  contactName: String!
+}
+
+type ContactsByJob {
+  contactType: ContactEntityTypeEnum
+  sourceId: ID
+  sourceName: String
+  contacts: [ContactByJob]
+}
+
+"""Content"""
+type Content {
+  to: String
+  from_: String
+  cc: String
+  subject: String
+  content: String!
+  date: DateTime
+  attachments: [Attachment!]!
+}
+
+enum ContextEnum {
+  FACTORY
+  PRODUCT
+  CPN
+  CUSTOMER
+  INSIDE_REP
+  OUTSIDE_REP
+  USER
+  END_USER
+  ORDER_STATUS
+  QUOTE_STATUS
+  INVOICE_STATUS
+  CHECK_STATUS
+  PRODUCT_CATEGORY
+  PRODUCT_UOM
+  EXPENSE_CATEGORY
+  USER_ROLE
+  PROCESS_STATUS
+  JOB
+  JOB_STATUS
+  PRE_OPPORTUNITY_STATUS
+}
+
+enum ContextGroupedEnum {
+  FACTORY_CATEGORY
+  FACTORY_CATEGORY_PRODUCT
+}
+
+enum ContinueWorkflowStatus {
+  FAILED
+  IN_PROGRESS
+  NOT_STARTED
+}
+
+type ContinueWorkflowStatusResponse {
+  status: ContinueWorkflowStatus!
+  message: String!
+}
+
+"""ISO-3166-1 country."""
+type Country {
+  code: ID!
+  alpha3: String
+  numeric: String
+  name: String!
+  officialName: String
+  region: String
+  subregion: String
+  postalCodeRegex: String
+  enabled: Boolean!
+}
+
+"""Filter countries (simple example; extend as needed)."""
+input CountryFilter {
+  enabled: Boolean
+  region: String
+  subregion: String
+  q: String
+}
+
+type CreatedByLandingLite {
+  id: ID!
+  firstName: String!
+  lastName: String!
+}
+
+type CreatedByUserRecord {
+  id: ID!
+  firstName: String!
+  lastName: String!
+}
+
+enum CreationTypeEnum {
+  AUTO_PDF
+  MANUAL
+  SPREADSHEET
+  FLOW_BOT
+}
+
+type Credit {
+  id: ID!
+  entryDate: DateTime!
+  createdBy: ID!
+  createdByUser: User!
+  creationType: CreationTypeEnum!
+  published: Boolean!
+  balance: CreditBalance!
+  details: [CreditDetail!]
+  status: String!
+  entityDate: Date!
+  creditNumber: String!
+  orderId: ID
+  creditableItems: [OrderDetail]
+}
+
+type CreditBalance {
+  id: ID!
+  parent: Credit
+  quantity: Int!
+  total: Float!
+  commission: Float
+}
+
+type CreditDetail {
+  id: ID!
+  parent: Credit!
+  status: String!
+  quantity: Int!
+  quantityLeft: Int!
+  subtotal: Float!
+  total: Float!
+  unitPrice: Float!
+  commissionRate: Float
+  commission: Float
+  creditReason: CreditReason
+  creditReasonOther: String
+  orderDetail: OrderDetail
+  splitRates: [DeductionSalesRep!]!
+}
+
+input CreditDetailInput {
+  id: ID
+  quantity: Int!
+  unitPrice: Float!
+  commissionRate: Float
+  creditReason: SetCreditReasonId
+  creditReasonOther: String
+  orderDetail: SetOrderDetailId!
+}
+
+input CreditInput {
+  creationType: CreationTypeEnum!
+  published: Boolean!
+  details: [CreditDetailInput!]
+  entityDate: Date!
+  creditNumber: String!
+  orderId: ID!
+}
+
+type CreditReason {
+  id: ID!
+  isUsed: Boolean
+  title: String!
+}
+
+input CreditReasonInput {
+  title: String!
+}
+
+enum CrmEntityEnum {
+  QUOTE
+}
+
+input CrmEntryDataInput {
+  createdBy: ID!
+  entryDate: DateTime!
+}
+
+"""Represents a customer type."""
+type Customer {
+  id: ID!
+  entryDate: DateTime!
+  createdBy: ID!
+  creationType: CreationTypeEnum!
+  published: Boolean!
+  isUsed: Boolean!
+  parent: CustomerLite
+  childCustomers: [CustomerLite]
+  companyName: String!
+  isParent: Boolean!
+  parentId: ID
+  contactEmail: String
+  contactNumber: String
+  logoUrl: String
+  insideRepId: ID
+  splitRates: [SplitRate!]
+  customerBranch: CustomerBranch
+  customerTerritory: CustomerTerritory
+  levels: [CustomerLevel!]
+}
+
+"""Represents a customer branch type."""
+type CustomerBranch {
+  id: ID!
+  entryDate: DateTime!
+  createdBy: ID!
+  creationType: CreationTypeEnum!
+  published: Boolean!
+  isUsed: Boolean!
+  title: String!
+}
+
+"""Represents a customer branch input."""
+input CustomerBranchInput {
+  creationType: CreationTypeEnum!
+  published: Boolean!
+  title: String!
+}
+
+"""Represents a Customer by parent child type."""
+type CustomerByParentChildRecord {
+  id: ID
+  companyName: String
+}
+
+"""Represents a Customer by parent DTO type.
+This structure organize the customer by their parents."""
+type CustomerByParentDTO {
+  parentId: ID!
+  parentCompanyName: String!
+  childCustomers: [CustomerByParentChildRecord]
+}
+
+"""Represents a Customer DTO used by some special queries and the landing query."""
+type CustomerDTO {
+  id: ID!
+  isUsed: Boolean!
+  companyName: String!
+  isParent: Boolean!
+  parentId: ID
+  published: Boolean!
+  logoUrl: String
+}
+
+"""Represents a Customer input."""
+input CustomerInput {
+  creationType: CreationTypeEnum!
+  published: Boolean!
+  companyName: String!
+  contactEmail: String
+  contactNumber: String
+  logoUrl: String
+  parent: SetCustomerId
+  insideRepId: ID
+  childCustomers: [SetCustomerId!]
+  splitRates: [CustomerSplitRateInput!]
+  customerBranchId: ID
+  customerTerritoryId: ID
+  levels: [CustomerLevelInput!]
+}
+
+"""Represents a Customer DTO used by the GenericFilter type."""
+type CustomerLandingDTO implements EntityRowInterface {
+  id: ID!
+  isUsed: Boolean!
+  companyName: String!
+  isParent: Boolean!
+  published: Boolean!
+  logoUrl: String
+  parentId: ID
+  parentCompanyName: String
+}
+
+type CustomerLandingLite {
+  id: ID!
+  companyName: String!
+  logoUrl: String
+}
+
+"""Represents a Customer level type."""
+type CustomerLevel {
+  id: ID!
+  factory: Factory
+  levelTitle: String!
+  description: String
+  levelRate: Float!
+}
+
+"""Represents a Customer level input."""
+input CustomerLevelInput {
+  factory: SetFactoryId
+  levelTitle: String!
+  description: String
+  levelRate: Float
+}
+
+"""Represents a lite version of the Customer entity."""
+type CustomerLite {
+  id: ID!
+  companyName: String!
+}
+
+"""Represents a Customer Projection that contains the id and company name."""
+type CustomerLiteProjection {
+  id: ID!
+  companyName: String!
+}
+
+type CustomerPartNumberDTO {
+  id: ID!
+  customerPartNumber: String!
+}
+
+"""Represents a customer split rate input."""
+input CustomerSplitRateInput {
+  id: ID
+  userId: ID!
+  splitRate: Float!
+}
+
+"""Represents a customer territory type."""
+type CustomerTerritory {
+  id: ID!
+  entryDate: DateTime!
+  createdBy: ID!
+  creationType: CreationTypeEnum!
+  published: Boolean!
+  isUsed: Boolean!
+  title: String!
+  scopeTag: String
+  territoryMode: TerritoryModeEnum
+  regions: [CustomerTerritoryRegion]
+  boundary: CustomerTerritoryBoundary
+  customerAssignments: [CustomerTerritoryCustomer]
+  color: String
+}
+
+enum CustomerTerritoryAssignmentTypeEnum {
+  AUTO_GEOGRAPHIC
+  MANUAL_OVERRIDE
+}
+
+type CustomerTerritoryBoundary {
+  id: ID!
+  geoJson: String!
+  centroidLat: Float
+  centroidLon: Float
+}
+
+type CustomerTerritoryCustomer {
+  id: ID!
+  customerId: ID!
+  assignmentType: CustomerTerritoryAssignmentTypeEnum!
+  reason: String
+  priority: Int
+}
+
+"""Represents a customer territory input."""
+input CustomerTerritoryInput {
+  creationType: CreationTypeEnum!
+  published: Boolean!
+  title: String!
+  scopeTag: String
+  territoryMode: TerritoryModeEnum
+  color: String
+}
+
+type CustomerTerritoryRegion {
+  id: ID!
+  regionType: TerritoryRegionTypeEnum!
+  regionCode: String!
+  regionName: String
+}
+
+"""Represents Dashboard type."""
+type Dashboard {
+  id: ID!
+  title: String!
+  subTitle: String!
+  version: String!
+  order: Int
+  lastUpdated: DateTime
+  lastAccessed: DateTime
+  components: String!
+  user: User!
+  filters: String
+}
+
+"""Represents Dashboard input."""
+input DashboardInput {
+  title: String!
+  subTitle: String!
+  order: Int
+  components: String!
+  user: SetUserInput!
+  filters: String!
+}
+
+enum DashboardReportEnum {
+  ALL_QUOTE_DETAIL
+  ALL_ORDER_DETAIL
+  ALL_INVOICE_DETAIL
+  ALL_CHECK_DETAIL
+  COMMISSIONS_PAID_BY_STATE
+  ORDER_DETAIL_FACTORY_REP
+  SALES_BY_REP_AND_FACTORY
+  SALES_MONTH_OVER_MONTH
+  SALESREP_YTD_SALES_COMPARISON
+  YTD_SALES_COMPARISON
+  YTD_SALES_INDICATORS
+}
+
+type DataCleanResult {
+  files: [GeneratedFile!]!
+  manufacturer: String!
+}
+
+scalar Date
+
+input DateFilterInput {
+  key: String!
+  dynamicTimeLine: DynamicTimeLineEnum
+  params: [DateParamInput!]
+}
+
+input DateParamInput {
+  operator: DateParamOperatorEnum!
+  date: Date!
+}
+
+enum DateParamOperatorEnum {
+  EQUAL
+  BEFORE
+  BEFORE_EQUAL
+  AFTER
+  AFTER_EQUAL
+  NOT_EQUAL
+}
+
+"""Date with time (isoformat)"""
+scalar DateTime
+
+type DeductionSalesRep {
+  id: ID!
+  entryDate: DateTime!
+  createdBy: ID
+  createdByUser: User
+  userId: ID!
+  outsideRep: User!
+  detail: CreditDetail!
+  splitRate: Float
+  commissionAmount: Float
+  salesAmount: Float
+}
+
+"""Directory information"""
+type DirectoryInfo {
+  files: [FileInfoLite!]!
+  path: String
+}
+
+enum DynamicTimeLineEnum {
+  YESTERDAY
+  TODAY
+  LAST_WEEK
+  THIS_WEEK
+  LAST_MONTH
+  THIS_MONTH
+  LAST_QUARTER
+  THIS_QUARTER
+  LAST_YEAR
+  THIS_YEAR
+  ALL_TIME
+}
+
+type EntitiesIsUsed {
+  id: ID!
+  isUsed: Boolean!
+  entity: EntityIsUsedEnum!
+}
+
+input EntitiesIsUsedInput {
+  entity: EntityIsUsedEnum!
+  id: ID!
+  isUsed: Boolean
+}
+
+type EntityByFileIdDTO {
+  id: ID!
+  entity: EntityEnum!
+  entityNumber: String!
+  entryDate: DateTime!
+  createdByUser: CreatedByUserRecord!
+  url: String!
+}
+
+type EntityByJobId {
+  id: ID!
+  entityType: JobEntityTypeEnum!
+  entityNumber: String!
+  entityDate: DateTime!
+  entryDate: DateTime!
+  commissionAmount: Float
+  total: Float
+  status: String!
+  customerName: String
+}
+
+type EntityByNumberDTO {
+  entity: EntityEnum!
+  id: ID!
+  entityNumber: String!
+  factoryId: ID
+  customerId: ID
+}
+
+type EntityCounter {
+  key: EntityCounterEnum!
+  value: Int!
+}
+
+enum EntityCounterEnum {
+  INVOICE
+  CREDIT
+  EXPENSE
+  QUOTE
+  ORDER
+  PRODUCT
+  FILE
+  ACKNOWLEDGEMENT
+  ADDRESS
+  CONTACT
+  NOTE
+  PRE_OPPORTUNITY
+  CHECK
+}
+
+enum EntityDetailAction {
+  SAVE
+  DELETE
+  UPDATE
+}
+
+enum EntityEnum {
+  FACTORY
+  CUSTOMER
+  PRODUCT
+  QUOTE
+  ORDER
+  CHECK
+  INVOICE
+  CREDIT
+  EXPENSE
+  JOB
+  ORDER_ACKNOWLEDGEMENT
+  PRE_OPPORTUNITY
+  CONTACT
+}
+
+enum EntityException {
+  FACTORY
+  SOLD_TO_CUSTOMER
+  BILL_TO_CUSTOMER
+  END_USER
+  PRODUCT
+  QUOTE_NUMBER
+  ORDER_NUMBER
+  ORDER_ACKNOWLEDGEMENT_NUMBER
+  INVOICE_NUMBER
+  CHECK_NUMBER
+  ENTITY_NUMBER
+}
+
+enum EntityIsUsedEnum {
+  CUSTOMER
+  PRODUCT
+  JOB
+}
+
+interface EntityRowInterface {
+  id: ID!
+}
+
+"""Entity type enum"""
+enum EntityType {
+  addresses
+  checks
+  credits
+  customer_part_numbers
+  customers
+  expenses
+  factories
+  invoices
+  jobs
+  order_acknowledgements
+  orders
+  pre_opportunities
+  pricings
+  product_categories
+  products
+  quotes
+  temp
+  uoms
+  users
+}
+
+"""Supported entity types for templating."""
+enum EntityTypeEnum {
+  ORDER
+  QUOTE
+  INVOICE
+}
+
+"""Represents Event type."""
+type Event {
+  user: User!
+  subject: String!
+  start: String!
+  end: String!
+  location: String!
+  attendees: String!
+}
+
+"""Represents Event input."""
+input EventInput {
+  user: SetUserInput!
+  subject: String!
+  start: String!
+  end: String!
+  location: String!
+  attendees: String!
+}
+
+type ExcelExport {
+  fileName: String
+  presignedUrl: String
+}
+
+type Expense {
+  id: ID!
+  entryDate: DateTime!
+  createdBy: ID!
+  createdByUser: User!
+  creationType: CreationTypeEnum!
+  userOwnerIds: [ID!]!
+  status: String!
+  soldToCustomerId: ID!
+  soldToCustomerAddressId: ID
+  entityDate: Date!
+  expenseNumber: String!
+  expenseAmount: Float
+  splitRates: [ExpenseSplitRate!]
+  expenseCategory: ExpenseCategory!
+  note: String
+}
+
+input ExpenseCategoriesInput {
+  id: ID!
+  expenseCategory: ExpenseCategoryInput!
+}
+
+type ExpenseCategory {
+  id: ID!
+  entryDate: DateTime!
+  createdBy: ID!
+  createdByUser: User!
+  creationType: CreationTypeEnum!
+  userOwnerIds: [ID!]!
+  isUsed: Boolean!
+  title: String!
+  position: Int!
+}
+
+input ExpenseCategoryInput {
+  creationType: CreationTypeEnum!
+  title: String!
+  position: Int!
+}
+
+type ExpenseCategoryLite {
+  id: ID!
+  title: String!
+}
+
+type ExpenseDTO implements EntityRowInterface {
+  id: ID!
+  expenseNumber: String!
+  entryDate: DateTime!
+  entityDate: Date!
+  status: String!
+  expenseAmount: Float!
+  note: String
+  customer: CustomerLandingLite
+  expenseCategory: ExpenseCategoryLite
+  createdByUser: CreatedByLandingLite!
+  outsideReps: [OutsideRepDTO!]
+}
+
+input ExpenseInput {
+  creationType: CreationTypeEnum!
+  soldToCustomerId: ID!
+  soldToCustomerAddressId: ID
+  entityDate: Date!
+  expenseNumber: String!
+  expenseAmount: Float!
+  splitRates: [ExpenseSplitRateInput!]!
+  expenseCategory: SetExpenseCategoryId!
+  note: String
+}
+
+type ExpenseSplitRate {
+  id: ID!
+  userId: ID!
+  outsideRep: User!
+  parent: Expense!
+  splitRate: Float
+}
+
+input ExpenseSplitRateInput {
+  id: ID
+  userId: ID!
+  splitRate: Float
+}
+
+"""Represents a factory type."""
+type Factory {
+  id: ID!
+  entryDate: DateTime!
+  createdBy: ID!
+  creationType: CreationTypeEnum!
+  published: Boolean!
+  isUsed: Boolean!
+  title: String!
+  accountNumber: String
+  email: String
+  phone: String
+  logoUrl: String
+  externalTerms: String
+  externalPaymentTerms: String
+  additionalInformation: String
+  freightTerms: String
+  freightDiscountType: FreightDiscountTypeEnum
+  leadTime: String
+  paymentTerms: Int
+  commissionRate: Float
+  commissionDiscountRate: Float
+  overallDiscountRate: Float
+  insideRepId: ID
+  overageAllowed: Boolean!
+  overageAllowedType: OverageTypeEnum
+  repOverageShare: Float
+  commissionPolicy: CommissionPolicyEnum
+  steppedCommission: [SteppedCommissionTier!]
+  levels: [FactoryLevel!]
+  directCommissionAllowed: Boolean!
+  warehouseCommissionAllowed: Boolean!
+  buySellAllowed: Boolean!
+  inventorySourceFactoryAllowed: Boolean!
+  inventorySourceRepAllowed: Boolean!
+  invoicePartyFactoryAllowed: Boolean!
+  invoicePartyRepAllowed: Boolean!
+  commissionBands: [FactoryCommissionBand!]
+}
+
+type FactoryCommissionBand {
+  id: ID!
+  lower: Float
+  upper: Float
+  rate: Float
+}
+
+input FactoryCommissionBandInput {
+  lower: Float
+  upper: Float
+  rate: Float
+}
+
+type FactoryCustomerId {
+  id: ID!
+  factoryId: ID!
+  customerId: ID!
+  factoryCustomerId: String!
+}
+
+input FactoryCustomerIdInput {
+  factoryId: ID!
+  customerId: ID!
+  factoryCustomerId: ID!
+}
+
+"""Represents a Factory DTO used by the GenericFilter type."""
+type FactoryDTO implements EntityRowInterface {
+  id: ID!
+  published: Boolean!
+  isUsed: Boolean!
+  title: String!
+  freightTerms: String
+  paymentTerms: Int
+  commissionRate: Float
+  logoUrl: String
+  directCommissionAllowed: Boolean
+  warehouseCommissionAllowed: Boolean
+  buySellAllowed: Boolean
+}
+
+"""Represents a Factory input."""
+input FactoryInput {
+  creationType: CreationTypeEnum!
+  published: Boolean!
+  title: String!
+  accountNumber: String
+  email: String
+  phone: String
+  logoUrl: String
+  externalTerms: String
+  externalPaymentTerms: String
+  additionalInformation: String
+  freightTerms: String
+  freightDiscountType: FreightDiscountTypeEnum
+  leadTime: String
+  paymentTerms: Int
+  commissionRate: Float
+  commissionDiscountRate: Float
+  overallDiscountRate: Float
+  insideRepId: ID
+  overageAllowed: Boolean
+  overageAllowedType: OverageTypeEnum
+  repOverageShare: Float
+  commissionPolicy: CommissionPolicyEnum
+  steppedCommission: [SteppedCommissionTierInput!]
+  levels: [FactoryLevelInput!]
+  directCommissionAllowed: Boolean!
+  warehouseCommissionAllowed: Boolean!
+  buySellAllowed: Boolean!
+  inventorySourceFactoryAllowed: Boolean!
+  inventorySourceRepAllowed: Boolean!
+  invoicePartyFactoryAllowed: Boolean!
+  invoicePartyRepAllowed: Boolean!
+  commissionBands: [FactoryCommissionBandInput!]
+}
+
+type FactoryLandingLite {
+  id: ID!
+  title: String!
+  logoUrl: String
+}
+
+type FactoryLevel {
+  id: ID!
+  levelTitle: String!
+  description: String
+  rate: Float
+}
+
+input FactoryLevelInput {
+  levelTitle: String!
+  description: String
+  rate: Float
+}
+
+type FactoryLite {
+  id: ID!
+  title: String!
+}
+
+"""FiducialMarker Type
+Represents a physical fiducial marker placed on a shelf for identification and robotics navigation."""
+type FiducialMarker {
+  id: ID!
+  identifier: String!
+  markerNumber: Int
+  xOffset: Float
+  yOffset: Float
+  zOffset: Float
+  orientationDeg: Int
+  isActive: Boolean!
+  description: String
+}
+
+"""FiducialMarkerInput Type
+Input type for creating or updating a fiducial marker"""
+input FiducialMarkerInput {
+  id: ID
+  identifier: String!
+  markerNumber: Int
+  xOffset: Float
+  yOffset: Float
+  zOffset: Float
+  orientationDeg: Int
+  isActive: Boolean
+  description: String
+}
+
+type FileDTO implements EntityRowInterface {
+  id: ID!
+  fileName: String!
+  fileSize: Int!
+  folderName: String
+  folderId: String
+  fileType: String!
+  tags: String
+  fileDetails: [FileEntityDetailDTO!]!
+}
+
+type FileEntityDetailDTO {
+  entityId: String
+  entityType: String
+}
+
+"""File entity detail response"""
+type FileEntityDetailResponse {
+  entityId: ID
+  entityType: EntityType
+  action: EntityDetailAction
+}
+
+"""available factories to preprocess"""
+enum FileFactoryEnum {
+  INDUSTRIAL_RIVET_AND_FASTENER
+  OCM
+}
+
+"""File information"""
+type FileInfo {
+  id: ID!
+  createdAt: DateTime!
+  fileName: String!
+  filePath: String!
+  fileSize: Int!
+  fileType: String!
+  vectorized: Boolean!
+  createdBy: User!
+  folderId: ID
+  thumbnail: String
+  fileSummary: FileSummaryInfo
+  tags: [FileTag!]!
+  fileMeta: [FileMetaInfo!]!
+  fileEntityDetails: [FileEntityDetailResponse!]!
+  fileIcon: String
+}
+
+"""File information"""
+type FileInfoLite {
+  id: ID!
+  createdAt: DateTime!
+  fileName: String!
+  filePath: String!
+  fileSize: Int!
+  fileType: String!
+  vectorized: Boolean!
+}
+
+"""File metadata"""
+type FileMetaInfo {
+  id: ID!
+  fileContent: String!
+}
+
+"""File Upload Result, for single file"""
+type FileResult {
+  fileName: String!
+  filePath: String!
+  folderId: ID
+  id: ID
+  thumbnail: String
+  status: Status!
+}
+
+"""List of file upload results"""
+type FileResults {
+  results: [FileResult!]!
+}
+
+"""File summary information"""
+type FileSummaryInfo {
+  createdAt: DateTime!
+  requestedBy: User!
+  summary: String!
+  votes: [VotesInfo!]!
+}
+
+"""File tag"""
+type FileTag {
+  createdAt: DateTime!
+  createdBy: User!
+  color: String!
+  tagName: String!
+}
+
+"""File type size detail"""
+type FileTypeSize {
+  size: Int!
+  fileType: String!
+}
+
+"""File upload detail"""
+type FileUploadDetail {
+  id: ID!
+  fileUploadProcessDtoId: ID
+  message: String!
+  data: JSON
+}
+
+input FileUploadDetailInput {
+  message: String!
+  fileUploadProcessDtoId: ID
+  data: JSON
+  id: ID
+}
+
+"""File upload process"""
+type FileUploadProcess {
+  id: ID!
+  batchId: UUID
+  message: String
+  createDate: DateTime!
+  status: ProcessStatus!
+  queueStatus: QueueStatus!
+  metaData: JSON!
+  tabularMetaData: JSON
+  subProcessEntities: JSON
+  fields: [JSON!]!
+  taskId: ID
+  entityType: EntityType
+  similarFileUploadProcessIds: [ID!]!
+  retryAttempts: Int
+  pausedAction: PausedActionsGQL
+  pendingDocumentId: UUID
+  fileInfo: FileInfoLite!
+  details: [FileUploadDetail!]!
+  stats: [FileUploadProcessStatsResponse!]!
+  currentDto: FileUploadProcessDTO
+}
+
+type FileUploadProcessDTO {
+  id: ID!
+  fileUploadProcessId: ID!
+  dto: JSON!
+  processed: Boolean!
+}
+
+input FileUploadProcessDTOInput {
+  id: ID
+  dto: JSON!
+  processed: Boolean
+}
+
+type FileUploadProcessDTOPaginatedFileLandingPage {
+  page: Int!
+  perPage: Int!
+  rows: [FileUploadProcessDTO!]!
+  totalRows: Int!
+}
+
+type FileUploadProcessExc {
+  id: String
+  fileUploadProcessDtoId: String
+  message: String!
+  data: JSON!
+}
+
+input FileUploadProcessInput {
+  fileId: ID!
+  status: ProcessStatus!
+  queueStatus: QueueStatus!
+  metaData: JSON!
+  fields: [JSON!]!
+  batchId: UUID
+  message: String
+  tabularMetaData: JSON
+  subProcessEntities: JSON
+  details: [FileUploadDetailInput!]!
+  entityType: EntityType
+  similarFileUploadProcessIds: [ID!]!
+  retryAttempts: Int
+  currentDtoId: ID
+  pausedAction: PausedActionsGQL
+  pendingDocumentId: UUID
+}
+
+type FileUploadProcessLandingDTO implements EntityRowInterface {
+  id: ID!
+  fileName: String!
+  status: String!
+  entityType: String!
+  entityDate: Date!
+  createdBy: CreatedByLandingLite!
+}
+
+type FileUploadProcessPaginatedResponse {
+  id: ID!
+  fileName: String!
+  createDate: DateTime!
+  status: ProcessStatus!
+  metaData: JSON!
+  fields: JSON!
+  entityType: EntityType
+  similarFileUploadProcessIds: [ID!]!
+}
+
+type FileUploadProcessPaginatedResponsePaginatedFileLandingPage {
+  page: Int!
+  perPage: Int!
+  rows: [FileUploadProcessPaginatedResponse!]!
+  totalRows: Int!
+}
+
+input FileUploadProcessStatsInput {
+  taskId: ID!
+  executionTime: Float!
+  processStatus: ProcessStatus!
+  metaData: JSON!
+}
+
+"""file upload process stats"""
+type FileUploadProcessStatsResponse {
+  id: ID!
+  taskId: ID!
+  executionTime: Float!
+  processStatus: ProcessStatus!
+  createdAt: DateTime!
+  metaData: JSON!
+}
+
+type FileUploadProcessStatusUpdate {
+  status: String!
+  queueStatus: SubscriptionQueueStatus!
+  pausedEntities: [PausedEntity!]!
+  detailedExceptions: [FileUploadProcessExc!]
+}
+
+type FilterDropDown {
+  key: String
+  value: String
+}
+
+type FilterDropDownParent {
+  parentKey: String
+  parentValue: String
+  children: [FilterDropDown]
+}
+
+input FiltersInput {
+  dates: [DateFilterInput!]
+  ids: [IdFilterInput!]
+  strings: [StringFilterInput!]
+  booleans: [BooleanFilterInput!]
+  numerics: [NumericFilterInput!]
+}
+
+"""The 'Float' scalar type represents signed double-precision fractional values as specified by [IEEE 754](http://en.wikipedia.org/wiki/IEEE_floating_point)."""
+"""Flowbot file response"""
+type FlowbotFileResponse {
+  id: ID!
+  fileName: String!
+  filePath: String!
+  fileSize: Int!
+  createdBy: ID!
+  createdAt: DateTime!
+  presignedUrl: String!
+}
+
+"""Flowbot presigned url response"""
+type FlowbotPresignedUrlResponse {
+  fileUploadProcessId: ID!
+  downloadFilePresignedUrl: String!
+}
+
+"""Folder information"""
+type FolderInfo {
+  id: ID!
+  name: String!
+  createdBy: User!
+  createdAt: DateTime!
+  updatedBy: User
+  updatedAt: DateTime
+  countOfFiles: Int!
+  isPublic: Boolean!
+  size: String
+}
+
+"""Represents a Following relationship (user following an entity such as a task)."""
+type Following {
+  id: ID!
+  user: User!
+  entityType: String!
+  entityId: ID!
+  followDate: DateTime!
+  sourceDueDate: DateTime
+  sourceReminderDate: DateTime
+  taskId: ID
+  task: Task
+}
+
+"""Input used to create or update a Following."""
+input FollowingInput {
+  user: SetUserInput!
+  entityType: String!
+  entityId: ID!
+  sourceDueDate: DateTime
+  sourceReminderDate: DateTime
+  taskId: ID
+}
+
+"""The available different types of freight discounts used by the Factory entity."""
+enum FreightDiscountTypeEnum {
+  ADD
+  ALLOWED
+}
+
+"""Fulfillment Type
+Represents a warehouse fulfillment order that extends an order from the order microservice"""
+type Fulfillment {
+  id: ID!
+  order: Order!
+  product: Product
+  inventory: Inventory
+  wave: Wave
+  qrCode: String!
+  quantity: Int!
+  pickedQuantity: Int!
+  packedQuantity: Int!
+  shippedQuantity: Int!
+  trackingNumber: String
+  carrier: String
+  notes: String
+  pickedAt: String
+  packedAt: String
+  shippedAt: String
+  deliveredAt: String
+  cancelledAt: String
+  createdAt: String!
+  updatedAt: String!
+  createdBy: String
+  updatedBy: String
+  deliveryType: FulfillmentDeliveryType!
+  warehouse: Warehouse
+}
+
+"""Fulfillment Delivery Type"""
+enum FulfillmentDeliveryType {
+  CUSTOMER_PICKUP
+  LOCAL_TRUCK_DELIVERY
+  CARRIER_DELIVERY
+  BULK_CARRIER_DELIVERY
+}
+
+"""Input type for creating a new fulfillment"""
+input FulfillmentInput {
+  orderId: ID!
+  orderDetailId: ID!
+  productId: ID!
+  quantity: Int!
+  notes: String
+  deliveryType: FulfillmentDeliveryType
+  warehouseId: ID!
+}
+
+"""Dimension for physical fulfillment state.
+For commission-only tenants, this mirrors factory shipments.
+For warehouse tenants, it's driven by your warehouse service."""
+enum FulfillmentStatus {
+  NOT_APPLICABLE
+  NOT_STARTED
+  ALLOCATED
+  PICKING
+  PARTIALLY_SHIPPED
+  SHIPPED
+  DELIVERED
+  RETURNED
+  RELEASED_TO_WAREHOUSE
+}
+
+type GeneratedFile {
+  presignedUrl: String!
+  filename: String!
+}
+
+type GenericFilter {
+  page: Int!
+  perPage: Int!
+  totalRows: Int!
+  rows: [EntityRowInterface!]
+}
+
+input GenericFilterInput {
+  page: Int
+  perPage: Int
+  filterList: FiltersInput
+  sortBy: SortByInput
+}
+
+"""The 'ID' scalar type represents a unique identifier, often used to refetch an object or as key for a cache. The ID type appears in a JSON response as a String; however, it is not intended to be human-readable. When expected as an input type, any string (such as '4') or integer (such as 4) input value will be accepted as an ID."""
+input IdFilterInput {
+  key: String!
+  operator: IdFilterOperatorEnum!
+  value: [ID!]!
+}
+
+enum IdFilterOperatorEnum {
+  IN
+  NOT_IN
+}
+
+type InsideRepDTO {
+  id: ID!
+  userFullName: String!
+  email: String
+}
+
+"""The 'Int' scalar type represents non-fractional signed whole numeric values. Int can represent values between -(2^31) and 2^31 - 1."""
+"""Inventory Type
+Master record tracking aggregate quantities for a product across the warehouse"""
+type Inventory {
+  id: ID!
+  totalQuantity: Int!
+  availableQuantity: Int!
+  reservedQuantity: Int!
+  pickingQuantity: Int!
+  pickedQuantity: Int!
+  quarantineQuantity: Int!
+  damagedQuantity: Int!
+  expiredQuantity: Int!
+  inTransitQuantity: Int!
+  onHoldQuantity: Int!
+  returnedQuantity: Int!
+  reorderPoint: Int
+  maxQuantity: Int
+  createdAt: String!
+  updatedAt: String!
+  product: Product
+  inventoryItems: [InventoryItem!]!
+}
+
+"""Input type for creating or updating an Inventory master record"""
+input InventoryInput {
+  reorderPoint: Int
+  maxQuantity: Int
+  productId: ID!
+}
+
+"""InventoryItem Type
+Represents a physical lot/batch of product in a specific bin with a specific status"""
+type InventoryItem {
+  id: ID!
+  quantity: Int!
+  barcode: String
+  lotNumber: String
+  serialNumber: String
+  expirationDate: String
+  receivedDate: String
+  status: InventoryStatus!
+  notes: String
+  createdAt: String!
+  updatedAt: String!
+  bin: Bin!
+  product: Product
+}
+
+"""Input type for creating or updating an InventoryItem"""
+input InventoryItemInput {
+  id: ID
+  inventoryId: ID!
+  quantity: Int!
+  weightPerUnit: Float
+  barcode: String
+  lotNumber: String
+  serialNumber: String
+  expirationDate: String
+  receivedDate: String
+  status: InventoryStatus
+  notes: String
+  binId: ID!
+}
+
+"""Input type for updating an existing InventoryItem
+Use this for updates to avoid ambiguity: excludes inventoryId and uses availableQuantity to represent the item's quantity"""
+input InventoryItemUpdateInput {
+  availableQuantity: Int
+  weightPerUnit: Float
+  barcode: String
+  lotNumber: String
+  serialNumber: String
+  expirationDate: String
+  receivedDate: String
+  status: InventoryStatus
+  notes: String
+  binId: ID
+}
+
+enum InventorySourceEnum {
+  FACTORY
+  REP
+}
+
+"""Inventory Status Enumeration
+Represents the current status of an inventory item"""
+enum InventoryStatus {
+  AVAILABLE
+  RESERVED
+  PICKING
+  PICKED
+  QUARANTINE
+  DAMAGED
+  EXPIRED
+  IN_TRANSIT
+  ON_HOLD
+  RETURNED
+}
+
+type Invoice {
+  id: ID!
+  createdBy: ID!
+  createdByUser: User!
+  creationType: CreationTypeEnum!
+  entryDate: DateTime!
+  published: Boolean!
+  factoryId: ID!
+  details: [InvoiceDetail!]
+  balance: InvoiceBalance!
+  status: String!
+  entityDate: Date!
+  dueDate: Date
+  invoiceNumber: String
+  orderId: ID
+  locked: Boolean!
+  checkId: ID
+  participantIds: [ID!]
+}
+
+"""Summarization of all the item totals for the invoice."""
+type InvoiceBalance {
+  id: ID!
+  parent: Order!
+  quantity: Int!
+  total: Float!
+  commissionRate: Float
+  commission: Float
+  commissionDiscountRate: Float
+  commissionDiscount: Float
+}
+
+"""Lite version of the Invoice object used in the landing page lists."""
+type InvoiceDTO implements EntityRowInterface {
+  id: ID!
+  invoiceNumber: String!
+  entryDate: DateTime!
+  entityDate: Date!
+  dueDate: Date
+  status: String!
+  published: Boolean!
+  paid: Boolean!
+  invoiceAmount: Float!
+  commissionAmount: Float
+  orderId: ID
+  orderNumber: String
+  factory: FactoryLandingLite
+  customer: CustomerLandingLite
+  createdByUser: CreatedByLandingLite!
+  outsideReps: [OutsideRepDTO!]
+  insideReps: [InsideRepDTO!]!
+  partNumbers: [ProductPartNumberDTO!]!
+  endUsers: [CustomerLandingDTO!]
+}
+
+type InvoiceDetail {
+  id: ID!
+  parent: Order!
+  status: String!
+  quantity: Int!
+  quantityLeft: Int!
+  unitPrice: Float!
+  subtotal: Float!
+  total: Float!
+  itemNumber: Int!
+  commissionRate: Float
+  commission: Float
+  commissionDiscountRate: Float
+  commissionDiscount: Float
+  discountRate: Float!
+  discount: Float!
+  orderDetailId: ID!
+  orderDetail: OrderDetailLite
+  uomMultiply: Boolean
+  uomMultiplyBy: Int
+  splitRates: [InvoiceSplitRate!]!
+}
+
+input InvoiceDetailInput {
+  id: ID
+  quantity: Int!
+  unitPrice: Float!
+  itemNumber: Int!
+  commissionRate: Float
+  commissionDiscountRate: Float
+  discountRate: Float!
+  orderDetail: SetOrderDetailId!
+  uomMultiply: Boolean
+  uomMultiplyBy: Int
+}
+
+input InvoiceInput {
+  creationType: CreationTypeEnum!
+  published: Boolean!
+  factoryId: ID!
+  details: [InvoiceDetailInput!]
+  invoiceNumber: String!
+  entityDate: Date!
+  dueDate: Date!
+  orderId: ID!
+  participantIds: [ID!]
+}
+
+enum InvoicePartyEnum {
+  FACTORY
+  REP
+}
+
+type InvoiceRefined {
+  id: ID!
+  entryDate: DateTime!
+  entityDate: Date!
+  invoiceNumber: String!
+  status: String!
+  dueDate: Date
+  locked: Boolean!
+  invoiceAmount: Float!
+  commissionAmount: Float
+  commissionRate: Float
+  itemNumbers: [String!]
+  orderId: ID!
+  orderNumber: String!
+}
+
+type InvoiceSplitRate {
+  id: ID!
+  entryDate: DateTime!
+  createdBy: ID
+  createdByUser: User
+  userId: ID!
+  outsideRep: User!
+  detail: InvoiceDetail!
+  splitRate: Float
+  commissionAmount: Float
+  salesAmount: Float
+}
+
+"""The `JSON` scalar type represents JSON values as specified by [ECMA-404](https://ecma-international.org/wp-content/uploads/ECMA-404_2nd_edition_december_2017.pdf)."""
+scalar JSON
+
+type Job {
+  id: ID!
+  createdBy: ID!
+  createdByUser: User!
+  creationType: CreationTypeEnum!
+  entryDate: DateTime!
+  status: JobStatusEnum!
+  isUsed: Boolean!
+  jobName: String!
+  startDate: Date!
+  endDate: Date!
+  description: String
+  requesterId: ID
+  jobOwnerId: ID!
+}
+
+type JobDTO implements EntityRowInterface {
+  id: ID!
+  jobName: String
+  entryDate: DateTime!
+  startDate: Date!
+  endDate: Date!
+  status: String!
+  requesterName: String
+  jobOwnerName: String!
+  createdByUser: CreatedByLandingLite!
+}
+
+enum JobEntityTypeEnum {
+  QUOTE
+  ORDER
+  PRE_OPPORTUNITY
+  INVOICE
+  CHECK
+  CUSTOMER
+  FACTORY
+  JOB
+}
+
+input JobInput {
+  creationType: CreationTypeEnum!
+  status: JobStatusEnum!
+  jobName: String!
+  startDate: Date!
+  endDate: Date!
+  description: String
+  requesterId: ID
+  jobOwnerId: ID!
+}
+
+enum JobStatusEnum {
+  BID
+  BUY
+  COMPLETED
+}
+
+"""The different landing page reports."""
+enum LandingReportEnum {
+  FACTORY
+  PRODUCT
+  PRODUCT_CATEGORY
+  PRODUCT_UOM
+  CUSTOMER
+  QUOTE
+  ORDER
+  INVOICE
+  CHECK
+  EXPENSE
+  ADDRESS
+  CONTACT
+  FILE
+  FILE_UPLOAD_PROCESS
+  JOB
+  PRE_OPPORTUNITY
+  NOTE
+}
+
+enum LengthUnitEnum {
+  MM
+  CM
+  M
+  IN
+  FT
+}
+
+"""Transaction type per order line.
+This is the "truth" for how that line behaves."""
+enum LineTransactionType {
+  COMMISSION_FACTORY_DIRECT
+  BUY_SELL
+  CONSIGNMENT
+}
+
+"""Represents Message type."""
+type Message {
+  id: ID!
+  user: User!
+  messageText: String!
+  createdAt: DateTime
+  sender: User!
+  read: Boolean
+  readAt: DateTime
+}
+
+"""Represents Message input."""
+input MessageInput {
+  user: SetUserInput!
+  messageText: String!
+  sender: SetUserInput!
+  read: Boolean
+  readAt: DateTime
+}
+
+type MonitorWorkflowResponse {
+  currentDto: FileUploadProcessDTO
+  entityType: EntityType
+  tabularMetadata: JSON
+  fileId: ID!
+  pausedAction: PausedActionsGQL
+  status: ProcessStatus
+  queueStatus: QueueStatus
+}
+
+"""Represents a note type."""
+type Note {
+  id: ID!
+  entryDate: DateTime!
+  createdBy: ID!
+  creationType: CreationTypeEnum!
+  entityType: NoteEntityTypeEnum!
+  sourceId: ID!
+  title: String
+  content: String!
+  createName: String
+  privateNote: Boolean!
+  parent: Note
+  childNotes: [Note]
+  tags: [NoteTag]
+}
+
+type NoteDTO implements EntityRowInterface {
+  id: ID!
+  entryDate: DateTime!
+  noteEntityType: NoteEntityTypeEnum!
+  sourceId: ID!
+  noteTitle: String
+  content: String!
+  createdBy: ID!
+  createdByUser: CreatedByLandingLite!
+  sourceUrl: String
+}
+
+"""The available different types of note entities."""
+enum NoteEntityTypeEnum {
+  QUOTE
+  ORDER
+  FACTORY
+  CUSTOMER
+  PRODUCT
+  CHECK
+  INVOICE
+  JOB
+  PRE_OPPORTUNITY
+  CONTACT
+}
+
+"""Represents a note input."""
+input NoteInput {
+  creationType: CreationTypeEnum!
+  entityType: NoteEntityTypeEnum!
+  sourceId: ID!
+  title: String
+  content: String!
+  createName: String
+  privateNote: Boolean!
+  parent: SetNoteId
+  tags: [NoteTagInput]
+}
+
+"""Represents a note tag type."""
+type NoteTag {
+  id: ID!
+  tag: String!
+  entityType: String
+  entityId: String
+}
+
+"""Represents a note tag input."""
+input NoteTagInput {
+  tag: String!
+  entityType: String
+  entityId: String
+}
+
+"""Represents a note thread."""
+type NoteThread {
+  id: ID!
+  entryDate: DateTime!
+  createdBy: ID!
+  creationType: CreationTypeEnum!
+  entityType: NoteEntityTypeEnum!
+  sourceId: ID!
+  status: NoteThreadStatus!
+  resolvedBy: ID
+  resolvedAt: DateTime
+  lastActivityAt: DateTime!
+  rootNoteId: ID
+  notes: [Note]
+  subscriptions: [NoteThreadSubscription]
+}
+
+"""Represents a thread status."""
+enum NoteThreadStatus {
+  OPEN
+  RESOLVED
+}
+
+"""Represents a note thread subscription."""
+type NoteThreadSubscription {
+  id: ID!
+  userId: ID!
+  active: Boolean!
+  lastReadAt: DateTime
+}
+
+input NumericFilterInput {
+  key: String!
+  operator: NumericFilterOperatorEnum!
+  value: Float!
+}
+
+enum NumericFilterOperatorEnum {
+  EQUAL
+  GREATER_THAN
+  LESS_THAN
+}
+
+type OcrMetaResponse {
+  parsedText: String!
+  pages: [OcrPageResponse!]!
+}
+
+type OcrPageResponse {
+  page: Int!
+  tables: [JSON!]!
+  forms: [JSON!]!
+  text: String!
+}
+
+"""External Order Type - resolved by the order microservice via federation
+This allows the warehouse service to extend order data with fulfillment information"""
+type Order {
+  id: ID!
+  createdBy: ID!
+  createdByUser: User!
+  creationType: CreationTypeEnum!
+  entryDate: DateTime!
+  published: Boolean!
+  factoryId: ID!
+  details: [OrderDetail!]
+  balance: OrderBalance!
+  status: String!
+  soldToCustomerId: ID!
+  soldToCustomerAddressId: ID
+  billToCustomerId: ID
+  billToCustomerAddressId: ID
+  orderNumber: String!
+  jobName: String
+  jobId: ID
+  shippingTerms: String
+  freightTerms: String
+  markNumber: String
+  orderType: OrderTypeEnum!
+  entityDate: Date!
+  shipDate: Date
+  dueDate: Date!
+  factSoNumber: String
+  quoteId: ID
+  insideReps: [OrderInsideRep!]!
+  duplicatedFrom: ID
+  orderHeaderStatus: OrderHeaderStatus
+  orderTransactionType: OrderTransactionType
+  orderConfirmationStatus: OrderConfirmationStatus
+  fulfillmentStatus: FulfillmentStatus
+  participantIds: [ID!]
+}
+
+type OrderAcknowledgement {
+  id: ID!
+  entryDate: DateTime!
+  createdByUser: User!
+  creationType: CreationTypeEnum!
+  orderDetailId: ID!
+  itemNumber: Int!
+  orderAcknowledgementNumber: String!
+  entityDate: Date!
+}
+
+input OrderAcknowledgementInput {
+  creationType: CreationTypeEnum!
+  orderDetailId: ID!
+  orderAcknowledgementNumber: String!
+  entityDate: Date!
+}
+
+"""Summarization of all the item totals for the order."""
+type OrderBalance {
+  id: ID!
+  parent: Order!
+  quantity: Int!
+  total: Float!
+  commissionRate: Float
+  commission: Float
+  commissionDiscountRate: Float
+  commissionDiscount: Float
+  shippingBalance: Float!
+  freightCharge: Float!
+  invoiceAmount: Float!
+  invoiceCommissionAmount: Float
+  invoiceQuantity: Int!
+  creditAmount: Float!
+  creditCommissionAmount: Float
+  creditQuantity: Int!
+  orderBalance: Float!
+  commissionBalance: Float
+  discountRate: Float!
+  discount: Float!
+}
+
+"""possible fields to order by"""
+enum OrderByEnum {
+  CREATED_AT
+  CREATED_BY
+  FILE_NAME
+  FILE_PATH
+  FILE_TYPE
+  FILE_SUBTYPE
+}
+
+"""Dimension for order acknowledgement (O/A) state.
+Driven by OrderAcknowledgement documents."""
+enum OrderConfirmationStatus {
+  NONE
+  PENDING
+  PARTIAL
+  CONFIRMED
+}
+
+"""Lite version of the Order object used in the landing page lists."""
+type OrderDTO implements EntityRowInterface {
+  id: ID!
+  orderNumber: String
+  entryDate: DateTime!
+  entityDate: Date!
+  shipDate: Date
+  dueDate: Date
+  status: String!
+  published: Boolean!
+  jobName: String
+  factSoNumber: String
+  orderAmount: Float!
+  commissionAmount: Float
+  commissionRate: Float
+  factory: FactoryLandingLite
+  customer: CustomerLandingLite
+  createdByUser: CreatedByLandingLite!
+  outsideReps: [OutsideRepDTO!]
+  insideReps: [InsideRepDTO!]!
+  partNumbers: [ProductPartNumberDTO!]!
+  customerPartNumbers: [CustomerPartNumberDTO!]
+  endUsers: [CustomerLandingDTO!]
+}
+
+type OrderDetail {
+  id: ID!
+  status: String!
+  quantity: Int!
+  unitPrice: Float!
+  uomMultiply: Boolean!
+  uomMultiplyBy: Int!
+  subtotal: Float!
+  total: Float!
+  itemNumber: Int!
+  productId: ID!
+  product: ProductLiteProjection!
+  commissionRate: Float
+  commission: Float
+  commissionDiscountRate: Float
+  commissionDiscount: Float
+  discountRate: Float!
+  discount: Float!
+  endUserId: ID!
+  lockedSplitRates: Boolean!
+  splitRates: [OrderSplitRate!]!
+  leadTime: String
+  shippingBalance: Int!
+  productCPN: ProductCPN
+  freightCharge: Float!
+  invoiceAmount: Float!
+  invoiceCommissionAmount: Float
+  invoiceQuantity: Int!
+  creditAmount: Float!
+  creditCommissionAmount: Float
+  creditQuantity: Int!
+  orderDetailBalance: Float!
+  commissionDetailBalance: Float
+  quoteDetailId: ID
+  billingStatus: BillingStatus
+  commissionStatus: CommissionStatus
+  lineFulfillmentStatus: FulfillmentStatus
+  lineTransactionType: LineTransactionType
+}
+
+type OrderDetailFactoryRepDTO implements EntityRowInterface {
+  id: ID!
+  factoryTitle: String!
+  monthYear: String
+  actualDate: String
+  outsideRep: String
+  outsideRepCommission: Float
+  outsideRepTotalPortion: Float
+}
+
+input OrderDetailInput {
+  id: ID
+  quantity: Int!
+  unitPrice: Float!
+  uomMultiply: Boolean
+  uomMultiplyBy: Int
+  itemNumber: Int!
+  productId: ID!
+  commissionRate: Float
+  commissionDiscountRate: Float
+  discountRate: Float!
+  endUserId: ID!
+  splitRates: [OrderSplitRateInput!]
+  leadTime: String
+  quoteDetailId: ID
+  freightCharge: Float
+  lineTransactionType: LineTransactionType
+  deliveryType: String
+  warehouseId: ID
+}
+
+type OrderDetailLite {
+  endUserId: ID!
+  productId: ID!
+  uomMultiply: Boolean!
+  uomMultiplyBy: Int!
+}
+
+enum OrderDirectionEnum {
+  ASC
+  DESC
+}
+
+"""High-level lifecycle of the order header itself."""
+enum OrderHeaderStatus {
+  DRAFT
+  OPEN
+  CLOSED
+  CANCELLED
+}
+
+input OrderInput {
+  creationType: CreationTypeEnum!
+  published: Boolean!
+  factoryId: ID!
+  details: [OrderDetailInput!]
+  soldToCustomerId: ID!
+  soldToCustomerAddressId: ID
+  billToCustomerId: ID
+  billToCustomerAddressId: ID
+  orderNumber: String!
+  jobName: String
+  jobId: ID
+  shippingTerms: String
+  freightTerms: String
+  markNumber: String
+  orderType: OrderTypeEnum!
+  entityDate: Date!
+  shipDate: Date
+  dueDate: Date!
+  factSoNumber: String
+  quoteId: ID
+  participantIds: [ID!]
+}
+
+type OrderInsideRep {
+  id: ID!
+  insideRep: User!
+}
+
+type OrderSplitRate {
+  id: ID!
+  entryDate: DateTime!
+  createdBy: ID!
+  createdByUser: User!
+  userId: ID!
+  outsideRep: User!
+  detail: OrderDetail!
+  splitRate: Float
+  commissionAmount: Float
+  salesAmount: Float
+}
+
+input OrderSplitRateInput {
+  id: ID
+  userId: ID!
+  splitRate: Float
+}
+
+"""High-level status of the order."""
+enum OrderStatusEnum {
+  OPEN
+  PARTIAL_SHIPPED
+  SHIPPED_COMPLETE
+  CANCELLED
+  OVER_SHIPPED
+}
+
+"""Summary view of an order's overall transaction pattern.
+Typically derived from line-level transaction types."""
+enum OrderTransactionType {
+  COMMISSION_ONLY
+  BUY_SELL_ONLY
+  CONSIGNMENT_ONLY
+  MIXED
+}
+
+"""The available different types of orders used by the Order entity."""
+enum OrderTypeEnum {
+  NORMAL
+  TAG
+  BLANKET
+  STORM
+}
+
+type OutsideRepDTO {
+  id: ID!
+  userFullName: String!
+  splitAmount: Float
+  splitRate: Float
+}
+
+type OverageRecord {
+  effectiveCommissionRate: Float
+  overageUnitPrice: Float
+  baseUnitPrice: Float
+  repShare: Float
+  levelRate: Float
+  levelUnitPrice: Float
+}
+
+enum OverageTypeEnum {
+  BY_LINE
+  BY_TOTAL
+}
+
+"""Page information"""
+type PaginatedDirectoryInfo {
+  page: Int!
+  perPage: Int!
+  totalRows: Int!
+  files: [FileInfoLite!]!
+  path: String!
+}
+
+type Participant {
+  id: ID!
+  entryDate: DateTime!
+  createdBy: ID!
+  entityType: JobEntityTypeEnum!
+  role: ParticipantRoleEnum!
+  note: Note
+  contactId: ID
+  sourceId: ID!
+}
+
+input ParticipantInput {
+  entityType: JobEntityTypeEnum!
+  sourceId: ID!
+  contactId: ID
+  role: ParticipantRoleEnum!
+  notes: String
+  createdBy: ID!
+}
+
+enum ParticipantRoleEnum {
+  GC
+  EC
+  ENGINEER
+  ARCHITECT
+  OWNER
+  DEVELOPER
+  OTHER
+}
+
+enum PausedActionsGQL {
+  SAMPLE_DATA_CONFIRMATION
+  COLUMN_MAPPING_CONFIRMATION
+  FACTORY_CONFIRMATION
+  CUSTOMER_CONFIRMATION
+  END_USER_CONFIRMATION
+  PRODUCT_CONFIRMATION
+  QUOTE_NUMBER_CONFIRMATION
+  ORDER_NUMBER_CONFIRMATION
+  ORDER_ACKNOWLEDGEMENT_CONFIRMATION
+  INVOICE_NUMBER_CONFIRMATION
+  CHECK_NUMBER_CONFIRMATION
+  SOLD_TO_CUSTOMER_CONFIRMATION
+  BILL_TO_CUSTOMER_CONFIRMATION
+  MISSING_REQUIRED_FIELDS
+}
+
+type PausedEntity {
+  entityType: String!
+  originalSearchTerm: String
+  dtoId: String
+  extra: JSON
+  suggestions: [Suggestion!]
+}
+
+enum PaymentMethod {
+  CREDIT_CARD
+  PAYPAL
+}
+
+enum PaymentStatus {
+  SUCCESS
+  FAILED
+  PENDING
+}
+
+enum PayoutTypeEnum {
+  COMMISSION
+  MARGIN
+}
+
+enum PermissionTypeEnum {
+  NO_PERMISSION
+  CUSTOMIZED
+  ALL_PERMISSIONS
+}
+
+"""Phone number types and operations."""
+enum PhoneEntityTypeEnum {
+  CUSTOMER
+  CONTACT
+  FACTORY
+  USER
+  ORDER
+  QUOTE
+  OTHER
+}
+
+type PhoneNumber {
+  id: ID!
+  entryDate: DateTime!
+  createdBy: ID!
+  createdByUser: User
+  creationType: CreationTypeEnum!
+  userOwnerIds: [ID!]
+  entityType: PhoneEntityTypeEnum!
+  sourceId: ID!
+  phoneType: PhoneTypeEnum!
+  numberType: PhoneNumberTypeEnum
+  regionCode: String
+  e164: String
+  nationalNumber: String
+  extension: String
+  rawInput: String
+  primary: Boolean!
+  verified: Boolean!
+  verificationMethod: PhoneVerificationMethodEnum
+}
+
+input PhoneNumberInput {
+  creationType: CreationTypeEnum!
+  entityType: PhoneEntityTypeEnum!
+  sourceId: ID!
+  phoneType: PhoneTypeEnum!
+  numberType: PhoneNumberTypeEnum
+  regionCode: String
+  e164: String
+  nationalNumber: String
+  extension: String
+  rawInput: String
+  primary: Boolean!
+  verified: Boolean!
+  verificationMethod: PhoneVerificationMethodEnum
+}
+
+enum PhoneNumberTypeEnum {
+  FIXED_LINE
+  MOBILE
+  FIXED_LINE_OR_MOBILE
+  TOLL_FREE
+  PREMIUM_RATE
+  VOIP
+  PERSONAL_NUMBER
+  PAGER
+  UAN
+  VOICEMAIL
+  SHARED_COST
+  EMERGENCY
+  SHORT_CODE
+  UNKNOWN
+}
+
+enum PhoneTypeEnum {
+  PRIMARY
+  WORK
+  HOME
+  MOBILE
+  BILLING
+  SHIPPING
+  SUPPORT
+  OTHER
+}
+
+enum PhoneVerificationMethodEnum {
+  NONE
+  SMS
+  CALL
+  MANUAL
+}
+
+type PivotReport {
+  key: String
+  columns: [PivotReportColumn]
+}
+
+type PivotReportColumn {
+  currentValue: String
+  nested: [PivotReport]
+}
+
+enum PivotReportColumnFieldEnum {
+  ENTRY_DATE
+  ENTITY_DATE
+}
+
+input PivotReportColumnFieldsInput {
+  fieldName: PivotReportColumnFieldEnum
+  groupBy: PivotReportColumnGroupByEnum
+  sortOrder: OrderDirectionEnum
+}
+
+enum PivotReportColumnGroupByEnum {
+  YEAR
+  MONTH
+  WEEK
+  DAY
+}
+
+enum PivotReportDataSetEnum {
+  QUOTE
+  ORDER
+  INVOICE
+  CHECK
+}
+
+input PivotReportInput {
+  dataSet: PivotReportDataSetEnum
+  rowFields: [PivotReportRowFieldsInput]
+  columnFields: PivotReportColumnFieldsInput
+  valueFields: [PivotReportValueFieldsInput]
+  filter: GenericFilterInput
+}
+
+enum PivotReportRowFieldEnum {
+  FACTORY
+  CUSTOMER
+  SALES_REP
+}
+
+input PivotReportRowFieldsInput {
+  fieldName: PivotReportRowFieldEnum
+  sortOrder: OrderDirectionEnum
+}
+
+enum PivotReportValueFieldEnum {
+  TOTAL
+  COMMISSION
+}
+
+input PivotReportValueFieldsInput {
+  fieldName: PivotReportValueFieldEnum
+  aggregation: AggregateTypeEnum
+}
+
+type Plan {
+  id: ID!
+  price: Float!
+  billingCycle: BillingCycleEnum!
+  description: String
+  planType: PlanTypeEnum!
+  entryDate: DateTime!
+}
+
+type PlanMenu {
+  id: ID!
+  planMenuOption: PlanMenuOption!
+  groupNumber: Int
+  parentId: ID
+  itemNumber: Int
+}
+
+type PlanMenuChildren {
+  id: String!
+  title: String!
+  type: PlanMenuOptionTypeEnum!
+  subtitle: String
+  icon: String
+  link: String
+  hotkey: String
+  children: [PlanMenuChildren!]
+}
+
+type PlanMenuGroup {
+  type: PlanMenuOptionTypeEnum!
+  children: [PlanMenuChildren!]!
+}
+
+type PlanMenuOption {
+  id: ID!
+  idMenu: String!
+  title: String!
+  subtitle: String
+  type: PlanMenuOptionTypeEnum!
+  icon: String
+  link: String
+  rbacResource: RbacResourceEnum
+  hotkey: String
+}
+
+enum PlanMenuOptionTypeEnum {
+  BASIC
+  COLLAPSABLE
+  ASIDE
+  DIVIDER
+  GROUP
+  SPACER
+}
+
+enum PlanTypeEnum {
+  PREMIUM
+  STANDARD
+  BASIC
+}
+
+type PostedStatementReport implements EntityRowInterface {
+  id: ID!
+  checkNumber: String!
+  checkDate: Date!
+  postDate: Date
+  commissionMonth: Date
+  checkAmount: Float
+  factoryId: ID!
+  factoryTitle: String!
+  commissionPaid: Float
+  commissionExpected: Float
+  commissionCredit: Float
+  commissionExpense: Float
+  commissionBalance: Float
+  commissionDifference: Float
+  details: [PostedStatementReportDetail!]
+  saleReps: [PostedStatementReportSaleRep!]
+}
+
+type PostedStatementReportDetail {
+  id: ID!
+  checkDetailType: CheckDetailTypeEnum!
+  entityNumber: String!
+  entityAmount: Float!
+  orderId: ID
+  orderNumber: String
+  outsideRep: String!
+  outsideRepEmail: String!
+  expectedCommission: Float
+  commissionReceived: Float
+}
+
+type PostedStatementReportSaleRep {
+  outsideRep: String!
+  outsideRepEmail: String!
+  expectedCommission: Float
+  commissionReceived: Float
+}
+
+type PowerBIMasterTemplate {
+  id: ID!
+  displayTemplateId: String!
+  datasetTemplate: String!
+  versionNumber: Int!
+}
+
+input PowerBIMasterTemplateInput {
+  displayTemplateId: String!
+  datasetTemplate: String!
+  versionNumber: Int!
+}
+
+type PowerBiEmbedPayload {
+  embedToken: String!
+  embedUrl: String!
+  reportId: ID!
+  workspaceId: ID!
+  expiresOn: DateTime!
+}
+
+type PreOpportunity {
+  id: ID!
+  createdBy: ID!
+  createdByUser: User!
+  creationType: CreationTypeEnum!
+  entryDate: DateTime!
+  published: Boolean!
+  details: [PreOpportunityDetail!]
+  balance: PreOpportunityBalance!
+  status: PreOpportunityStatusEnum!
+  soldToCustomerId: ID!
+  soldToCustomerAddressId: ID
+  billToCustomerId: ID
+  billToCustomerAddressId: ID
+  entityNumber: String!
+  jobId: ID
+  paymentTerms: String
+  customerRef: String
+  freightTerms: String
+  entityDate: Date!
+  expDate: Date
+  reviseDate: Date
+  acceptDate: Date
+  insideReps: [PreOpportunityInsideRep!]!
+  participantIds: [ID!]
+}
+
+type PreOpportunityBalance {
+  id: ID!
+  parent: PreOpportunity!
+  quantity: Int!
+  total: Float!
+  commissionRate: Float
+  commission: Float
+  commissionDiscountRate: Float
+  commissionDiscount: Float
+  discount: Float
+  discountRate: Float
+}
+
+type PreOpportunityDTO implements EntityRowInterface {
+  id: ID!
+  entityNumber: String!
+  entryDate: DateTime!
+  entityDate: Date!
+  expDate: Date
+  status: String!
+  published: Boolean!
+  preOpportunityAmount: Float!
+  commissionAmount: Float
+  commissionRate: Float
+  customer: CustomerLandingLite
+  createdByUser: CreatedByLandingLite!
+  outsideReps: [OutsideRepDTO!]
+  insideReps: [InsideRepDTO!]!
+  partNumbers: [ProductPartNumberDTO!]!
+  endUsers: [CustomerLandingDTO!]
+}
+
+type PreOpportunityDetail {
+  id: ID!
+  parent: PreOpportunity!
+  status: PreOpportunityStatusEnum!
+  productCPN: ProductCPN
+  factoryId: ID!
+  quantity: Int!
+  unitPrice: Float!
+  uomMultiply: Boolean!
+  uomMultiplyBy: Int!
+  subtotal: Float!
+  total: Float!
+  itemNumber: Int!
+  product: ProductLiteProjection!
+  commissionRate: Float
+  commission: Float
+  commissionDiscountRate: Float
+  commissionDiscount: Float
+  discountRate: Float
+  discount: Float
+  endUserId: ID!
+  splitRates: [PreOpportunitySplitRate!]!
+  lostReason: PreOpportunityLostReason
+  lostReasonOther: String
+  leadTime: String
+}
+
+input PreOpportunityDetailInput {
+  id: ID
+  quantity: Int!
+  unitPrice: Float!
+  uomMultiply: Boolean
+  uomMultiplyBy: Int
+  itemNumber: Int!
+  productId: ID!
+  factoryId: ID!
+  status: PreOpportunityStatusEnum!
+  commissionRate: Float
+  commissionDiscountRate: Float
+  discountRate: Float!
+  endUserId: ID!
+  splitRates: [PreOpportunitySplitRateInput!]
+  leadTime: String
+}
+
+input PreOpportunityInput {
+  creationType: CreationTypeEnum!
+  published: Boolean!
+  details: [PreOpportunityDetailInput!]
+  status: PreOpportunityStatusEnum!
+  soldToCustomerId: ID!
+  soldToCustomerAddressId: ID
+  billToCustomerId: ID
+  billToCustomerAddressId: ID
+  entityNumber: String!
+  jobId: ID
+  paymentTerms: String
+  customerRef: String
+  freightTerms: String
+  entityDate: Date!
+  expDate: Date
+  reviseDate: Date
+  acceptDate: Date
+  insideReps: [PreOpportunityInsideRepInput!]
+  participantIds: [ID!]
+}
+
+type PreOpportunityInsideRep {
+  id: ID!
+  insideRep: User!
+}
+
+input PreOpportunityInsideRepInput {
+  id: ID
+  userId: ID!
+}
+
+type PreOpportunityLostReason {
+  id: ID!
+  isUsed: Boolean!
+  title: String!
+  position: Int!
+}
+
+input PreOpportunityLostReasonInput {
+  title: String!
+  position: Int!
+}
+
+input PreOpportunityLostReasonsInput {
+  id: ID!
+  preOpportunityLostReason: PreOpportunityLostReasonInput!
+}
+
+type PreOpportunitySplitRate {
+  id: ID!
+  outsideRep: User!
+  splitRate: Float
+  commissionAmount: Float
+  salesAmount: Float
+}
+
+input PreOpportunitySplitRateInput {
+  id: ID
+  userId: ID!
+  splitRate: Float!
+}
+
+enum PreOpportunityStatusEnum {
+  QUALIFIED
+  NEGOTIATION
+  FOLLOW_UP
+  WAITING_ON_FACTORY
+  LOST
+  WON
+}
+
+"""preprocess result"""
+type PreProcessResult {
+  originalFileId: ID!
+  preprocessedFileId: ID!
+  fileUploadId: ID!
+  status: String!
+}
+
+"""Presigned url response for normal files will return the same url for both fields
+but for files who have been converted to pdf will return two different urls, one for the original file
+and one for the pdf file, for render in the frontend we use the pdf url
+and for download we use the original file url"""
+type PresignedUrlResponse {
+  downloadFilePresignedUrl: String!
+  renderFilePresignedUrl: String!
+  flowbotUrls: [FlowbotPresignedUrlResponse!]!
+  tabularPresignedUrl: String
+}
+
+type Privilege {
+  privilege: PrivilegeTypeEnum!
+  option: PrivilegeOptionEnum!
+}
+
+enum PrivilegeOptionEnum {
+  ALL
+  OWN
+}
+
+enum PrivilegeTypeEnum {
+  VIEW
+  WRITE
+  DELETE
+}
+
+enum ProcessStatus {
+  NEW
+  PAUSED
+  COMPLETED
+  EXCEPTION
+  IN_PROGRESS
+  FAILED
+  UNKNOWN
+  PLAYGROUND
+}
+
+"""External Product Type - resolved by another microservice via federation"""
+type Product {
+  id: ID!
+  entryDate: DateTime!
+  createdBy: ID!
+  creationType: CreationTypeEnum!
+  published: Boolean!
+  isUsed: Boolean!
+  factoryPartNumber: String!
+  factoryId: ID!
+  productCategoryId: ID!
+  productUom: ProductUom!
+  leadTime: String
+  description: String
+  unitPrice: Float!
+  minOrderQty: Int
+  productCPNs: [ProductCPN]
+  productQuantityPricing: [ProductQuantityPricing]
+  defaultCommissionRate: Float
+  commissionDiscountRate: Float
+  overallDiscountRate: Float
+  cost: Float
+  individualUPC: String
+  approvalNeeded: Boolean!
+  approvalDate: Date
+  approvalComments: String
+  logoUrl: String
+  salesModel: SalesModelEnum
+  inventorySource: InventorySourceEnum
+  invoiceParty: InvoicePartyEnum
+  warehouseIds: [ID!]
+  payoutType: PayoutTypeEnum
+  overageAllowed: Boolean!
+  overageAllowedType: OverageTypeEnum
+  overageUnitPrice: Float
+  commissionBands: [ProductCommissionBand!]
+  productMeasurements: ProductMeasurements
+  sku: String
+}
+
+type ProductCPN {
+  id: ID!
+  customer: CustomerLite!
+  customerId: ID!
+  customerPartNumber: String!
+  unitPrice: Float!
+  commissionRate: Float
+}
+
+input ProductCPNInput {
+  id: ID
+  customerId: ID!
+  customerPartNumber: String!
+  unitPrice: Float!
+  commissionRate: Float!
+}
+
+"""Product category schema: defines ProductCategory type, input and related queries/mutations."""
+type ProductCategory {
+  id: ID!
+  factoryId: ID!
+  isUsed: Boolean!
+  title: String!
+  commissionRate: Float
+}
+
+type ProductCategoryDTO implements EntityRowInterface {
+  id: ID!
+  title: String!
+  commissionRate: Float
+  isUsed: Boolean!
+  factory: FactoryDTO
+}
+
+"""Input for creating/updating a product category."""
+input ProductCategoryInput {
+  factoryId: ID!
+  title: String!
+  commissionRate: Float!
+}
+
+type ProductCommissionBand {
+  id: ID!
+  lower: Float
+  upper: Float
+  rate: Float
+}
+
+"""Represents a Product DTO used by the findProductLandingPage query."""
+type ProductDTO implements EntityRowInterface {
+  id: ID!
+  published: Boolean!
+  isUsed: Boolean!
+  factoryProduct: FactoryDTO!
+  factoryPartNumber: String!
+  productUom: ProductUomDTO!
+  productCategory: ProductCategoryDTO!
+  description: String
+  defaultCommissionRate: Float
+  logoUrl: String
+  salesModel: SalesModelEnum
+}
+
+type ProductFpnProjection {
+  id: ID!
+  factoryPartNumber: String!
+  leadTime: String
+  unitPrice: Float
+  defaultCommissionRate: Float
+  commissionDiscountRate: Float
+  overallDiscountRate: Float
+  uomMultiply: Boolean!
+  uomMultiplyBy: Int!
+  minOrderQty: Int
+  description: String
+  cost: Float
+  overageAllowed: Boolean
+  salesModel: SalesModelEnum
+}
+
+input ProductInput {
+  creationType: CreationTypeEnum!
+  published: Boolean!
+  factoryPartNumber: String!
+  factoryId: ID!
+  productCategoryId: ID!
+  productUom: SetProductUomId!
+  leadTime: String
+  description: String
+  unitPrice: Float!
+  minOrderQty: Int
+  productCPNs: [ProductCPNInput]
+  productQuantityPricing: [ProductQuantityPricingInput]
+  defaultCommissionRate: Float!
+  commissionDiscountRate: Float
+  overallDiscountRate: Float
+  cost: Float
+  individualUPC: String
+  approvalNeeded: Boolean!
+  approvalDate: Date
+  approvalComments: String
+  logoUrl: String
+  salesModel: SalesModelEnum
+  inventorySource: InventorySourceEnum
+  invoiceParty: InvoicePartyEnum
+  warehouseIds: [ID!]
+  payoutType: PayoutTypeEnum
+  overageAllowed: Boolean
+  overageAllowedType: OverageTypeEnum
+  overageUnitPrice: Float
+  productMeasurements: ProductMeasurementsInput
+  sku: String
+}
+
+type ProductLiteProjection {
+  id: ID!
+  factoryId: ID
+  factoryPartNumber: String
+  description: String
+  salesModel: SalesModelEnum
+  unitPrice: Float
+  defaultCommissionRate: Float
+  leadTime: String
+  overallDiscountRate: Float
+  commissionDiscountRate: Float
+  productUomTitle: String
+  uomMultiply: Boolean
+  uomMultiplyBy: Int
+  minOrderQty: Int
+  published: Boolean
+  cost: Float
+  overageAllowed: Boolean
+}
+
+type ProductMeasurements {
+  id: ID!
+  netWeight: Float
+  grossWeight: Float
+  weightUom: WeightUnitEnum
+  length: Float
+  width: Float
+  height: Float
+  lengthUom: LengthUnitEnum
+  volume: Float
+  volumeUom: VolumeUnitEnum
+  unitsPerCase: Int
+  tareWeight: Float
+}
+
+input ProductMeasurementsInput {
+  netWeight: Float
+  grossWeight: Float
+  weightUom: WeightUnitEnum
+  length: Float
+  width: Float
+  height: Float
+  lengthUom: LengthUnitEnum
+  volume: Float
+  volumeUom: VolumeUnitEnum
+  unitsPerCase: Int
+  tareWeight: Float
+}
+
+type ProductPartNumberDTO {
+  id: ID!
+  factoryPartNumber: String!
+}
+
+"""Product-related types, inputs, queries, and mutations."""
+type ProductQuantityPricing {
+  id: ID!
+  quantityLow: Int!
+  quantityHigh: Int!
+  unitPrice: Float!
+}
+
+input ProductQuantityPricingInput {
+  id: ID
+  quantityLow: Int!
+  quantityHigh: Int!
+  unitPrice: Float!
+}
+
+"""Product unit of measure types and operations."""
+type ProductUom {
+  id: ID!
+  isUsed: Boolean!
+  title: String!
+  description: String
+  multiply: Boolean!
+  multiplyBy: Int!
+}
+
+type ProductUomDTO implements EntityRowInterface {
+  id: ID!
+  title: String!
+  description: String
+  isUsed: Boolean!
+  multiply: Boolean!
+  multiplyBy: Int!
+}
+
+input ProductUomInput {
+  title: String!
+  description: String
+  multiply: Boolean!
+  multiplyBy: Int!
+}
+
+enum QueueStatus {
+  PENDING
+  QUEUED
+  PROCESSING
+  DONE
+}
+
+type Quote {
+  id: ID!
+  createdBy: ID!
+  createdByUser: User!
+  creationType: CreationTypeEnum!
+  entryDate: DateTime!
+  published: Boolean!
+  details: [QuoteDetail!]
+  balance: QuoteBalance!
+  status: String!
+  soldToCustomerId: ID!
+  soldToCustomerAddressId: ID
+  billToCustomerId: ID
+  billToCustomerAddressId: ID
+  quoteNumber: String!
+  jobName: String
+  jobId: ID
+  paymentTerms: String
+  customerRef: String
+  freightTerms: String
+  entityDate: Date!
+  expDate: Date
+  reviseDate: Date
+  acceptDate: Date
+  blanket: Boolean!
+  insideReps: [QuoteInsideRep!]!
+  duplicatedFrom: ID
+  participantIds: [ID!]
+}
+
+"""Summarization of all the item totals for the quote."""
+type QuoteBalance {
+  id: ID!
+  parent: Quote!
+  quantity: Int!
+  total: Float!
+  commissionRate: Float
+  commission: Float
+  commissionDiscountRate: Float
+  commissionDiscount: Float
+  discount: Float
+  discountRate: Float
+}
+
+"""Lite version of the Quote object used in the landing page lists."""
+type QuoteDTO implements EntityRowInterface {
+  id: ID!
+  quoteNumber: String
+  entryDate: DateTime!
+  entityDate: Date!
+  expDate: Date
+  status: String!
+  published: Boolean!
+  quoteAmount: Float!
+  commissionAmount: Float
+  commissionRate: Float
+  jobName: String
+  customer: CustomerLandingLite
+  createdByUser: CreatedByLandingLite!
+  insideReps: [InsideRepDTO!]!
+  outsideReps: [OutsideRepDTO!]
+  factories: [FactoryLandingLite!]
+  partNumbers: [ProductPartNumberDTO!]!
+  endUsers: [CustomerLandingLite!]
+}
+
+type QuoteDetail {
+  id: ID!
+  parent: Quote!
+  status: String!
+  quantity: Int!
+  unitPrice: Float!
+  uomMultiply: Boolean!
+  uomMultiplyBy: Int!
+  subtotal: Float!
+  total: Float!
+  itemNumber: Int!
+  product: ProductLiteProjection!
+  commissionRate: Float
+  commission: Float
+  commissionDiscountRate: Float
+  commissionDiscount: Float
+  discountRate: Float
+  discount: Float
+  endUserId: ID!
+  splitRates: [QuoteSplitRate!]!
+  leadTime: String
+  lostReason: QuoteLostReason
+  lostReasonOther: String
+  productCPN: ProductCPN
+  factoryId: ID!
+  baseUnitPrice: Float
+  repShare: Float
+  levelRate: Float
+  levelUnitPrice: Float
+  overageCommissionRate: Float
+  baseCommissionRate: Float
+  baseCommission: Float
+  overageCommission: Float
+  note: String
+}
+
+input QuoteDetailInput {
+  id: ID
+  quantity: Int!
+  unitPrice: Float!
+  uomMultiply: Boolean
+  uomMultiplyBy: Int
+  itemNumber: Int!
+  productId: ID!
+  factoryId: ID!
+  commissionRate: Float
+  commissionDiscountRate: Float
+  discountRate: Float!
+  endUserId: ID!
+  splitRates: [QuoteSplitRateInput!]
+  leadTime: String
+  baseCommissionRate: Float
+  baseUnitPrice: Float
+}
+
+type QuoteDetailLite {
+  quoteNumber: String!
+  partNumber: String!
+  itemNumber: Int!
+  quantity: Int!
+  unitPrice: Float!
+  quoteDetailId: ID!
+}
+
+input QuoteInput {
+  creationType: CreationTypeEnum!
+  published: Boolean!
+  details: [QuoteDetailInput!]
+  soldToCustomerId: ID!
+  soldToCustomerAddressId: ID
+  billToCustomerId: ID
+  billToCustomerAddressId: ID
+  quoteNumber: String!
+  jobName: String
+  jobId: ID
+  paymentTerms: String
+  customerRef: String
+  freightTerms: String
+  entityDate: Date!
+  expDate: Date
+  reviseDate: Date
+  acceptDate: Date
+  blanket: Boolean!
+  insideReps: [QuoteInsideRepInput!]
+  participantIds: [ID!]
+}
+
+type QuoteInsideRep {
+  id: ID!
+  insideRep: User!
+}
+
+input QuoteInsideRepInput {
+  id: ID
+  userId: ID!
+}
+
+type QuoteLostReason {
+  id: ID!
+  isUsed: Boolean!
+  title: String!
+  position: Int!
+}
+
+input QuoteLostReasonInput {
+  title: String!
+  position: Int!
+}
+
+input QuoteLostReasonsInput {
+  id: ID!
+  quoteLostReason: QuoteLostReasonInput!
+}
+
+type QuoteSplitRate {
+  id: ID!
+  outsideRep: User!
+  splitRate: Float
+  commissionAmount: Float
+  salesAmount: Float
+}
+
+input QuoteSplitRateInput {
+  id: ID
+  userId: ID!
+  splitRate: Float!
+}
+
+type RbacGrid {
+  resource: RbacResourceEnum!
+  roles: [RbacGridRole!]!
+}
+
+input RbacGridInput {
+  resource: RbacResourceEnum!
+  roles: [RbacGridRoleInput!]!
+}
+
+type RbacGridRole {
+  roleName: String!
+  permissionType: PermissionTypeEnum!
+  privileges: [RbacGridRolePrivilege!]!
+}
+
+input RbacGridRoleInput {
+  roleName: String!
+  permissionType: PermissionTypeEnum
+  privileges: [RbacGridRolePrivilegeInput!]!
+}
+
+type RbacGridRolePrivilege {
+  privilege: PrivilegeTypeEnum!
+  option: PrivilegeOptionEnum!
+}
+
+input RbacGridRolePrivilegeInput {
+  privilege: PrivilegeTypeEnum!
+  option: PrivilegeOptionEnum!
+}
+
+enum RbacResourceEnum {
+  ADMIN
+  FACTORY
+  PRODUCT
+  CUSTOMER
+  QUOTE
+  ORDER
+  INVOICE
+  CHECK
+  CREDIT
+  EXPENSE
+  JOB
+  PRE_OPPORTUNITY
+  TASK
+}
+
+"""Input to reply in a thread."""
+input ReplyNoteInput {
+  creationType: CreationTypeEnum!
+  title: String
+  content: String!
+  createName: String
+  privateNote: Boolean!
+  parentId: ID
+  tags: [NoteTagInput]
+}
+
+enum ReportEnum {
+  COMMISSION_OWED
+  COMMISSION_MONTHLY_BOOKED_ORDER
+}
+
+input ReprocessRowInput {
+  row: JSON!
+  fileUploadDetailId: ID!
+}
+
+"""RMA Type
+Represents a return merchandise authorization"""
+type Rma {
+  id: ID!
+  rmaNumber: String!
+  fulfillment: Fulfillment!
+  orderId: ID!
+  productId: ID!
+  status: RmaStatus!
+  quantity: Int!
+  receivedQuantity: Int!
+  reasonCode: String
+  reason: String
+  refundAmount: Float
+  restockingFee: Float
+  returnTrackingNumber: String
+  inspectionNotes: String
+  canRestock: Boolean
+  qrCode: String
+  approvedAt: String
+  receivedAt: String
+  completedAt: String
+  createdAt: String!
+  updatedAt: String!
+}
+
+"""RMA Status Enumeration
+Represents the status of a return merchandise authorization"""
+enum RmaStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  IN_TRANSIT
+  RECEIVED
+  INSPECTING
+  COMPLETED
+  CANCELLED
+}
+
+type Role {
+  id: ID!
+  name: String!
+}
+
+input RoleInput {
+  name: String!
+}
+
+"""Row Type
+Represents a horizontal row within a bay, numbered from top to bottom"""
+type Row {
+  id: ID!
+  rowNumber: Int!
+  description: String
+  qrContent: String
+  isActive: Boolean!
+  bay: Bay!
+  bins: [Bin!]!
+}
+
+"""Input type for creating or updating a Row"""
+input RowInput {
+  id: ID
+  rowNumber: Int!
+  description: String
+  isActive: Boolean
+  bayId: ID!
+}
+
+type SalesByRepAndFactoryDTO implements EntityRowInterface {
+  id: ID!
+  outsideRep: String
+  factoryTitle: String!
+  salesThisPeriod: Float!
+  salesPriorYearPeriod: Float!
+  variancePercentage: Float!
+  varianceAmount: Float!
+}
+
+enum SalesModelEnum {
+  DIRECT_COMMISSION
+  WAREHOUSE_COMMISSION
+  BUY_SELL
+}
+
+type SalesMonthOverMonthDTO implements EntityRowInterface {
+  id: ID!
+  month: String!
+  total: Float!
+}
+
+type SalesRepSelection {
+  id: ID!
+  entryDate: DateTime!
+  creationType: CreationTypeEnum!
+  createdByUser: User!
+  customer: CustomerLite!
+  factory: FactoryLite!
+  splitRates: [SplitRate!]!
+}
+
+input SalesRepSelectionInput {
+  creationType: CreationTypeEnum!
+  customerId: ID!
+  factoryId: ID!
+  splitRates: [SalesRepSelectionSplitRateInput!]!
+}
+
+type SalesRepSelectionLite {
+  id: ID!
+  factory: String!
+  customer: String!
+  reps: Int!
+}
+
+input SalesRepSelectionSplitRateInput {
+  id: ID
+  userId: ID!
+  splitRate: Float!
+}
+
+input SalesRepSelectionsInput {
+  id: ID!
+  salesRepSelection: SalesRepSelectionInput!
+}
+
+type SalesRepYTDSalesComparisonDTO implements EntityRowInterface {
+  id: ID!
+  outsideRep: String
+  salesThisPeriod: Float!
+  salesPriorYearPeriod: Float!
+  variancePercentage: Float!
+  varianceAmount: Float!
+}
+
+enum SearchTermComparisonEnum {
+  FACTORY
+  CUSTOMER
+  PRODUCT
+  ORDER
+  INVOICE
+}
+
+input SearchTermInput {
+  comparisonType: SearchTermComparisonEnum!
+  searchTerm: String!
+  factoryId: ID
+  customerId: ID
+  published: Boolean
+}
+
+type SearchTermType {
+  id: ID!
+  title: String!
+  confidenceScore: Float!
+  rank: Int!
+}
+
+"""Section Type
+Represents a rectangular area within a warehouse used to group aisles and shelves for layout and routing."""
+type Section {
+  id: ID!
+  name: String!
+  description: String
+  width: Float!
+  length: Float!
+  height: Float
+  xOffset: Float!
+  yOffset: Float!
+  orientationDeg: Int
+  isActive: Boolean!
+  warehouse: Warehouse!
+  aisles: [Aisle!]!
+  shelves: [Shelf!]!
+}
+
+"""Input type for creating or updating a Section"""
+input SectionInput {
+  id: ID
+  name: String!
+  description: String
+  width: Float!
+  length: Float!
+  height: Float
+  xOffset: Float!
+  yOffset: Float!
+  orientationDeg: Int
+  isActive: Boolean
+  warehouseId: ID!
+  aisleIds: [ID!]
+  shelfIds: [ID!]
+}
+
+input SetCheckId {
+  id: ID
+}
+
+input SetCreditId {
+  id: ID
+}
+
+input SetCreditReasonId {
+  id: ID
+}
+
+"""Represents a Customer id input."""
+input SetCustomerId {
+  id: ID!
+}
+
+input SetExpenseCategoryId {
+  id: ID
+}
+
+input SetExpenseId {
+  id: ID
+}
+
+input SetFactoryId {
+  id: ID!
+}
+
+input SetInvoiceId {
+  id: ID!
+}
+
+"""Represents a note id input."""
+input SetNoteId {
+  id: ID!
+}
+
+input SetOrderDetailId {
+  id: ID
+}
+
+input SetOrderId {
+  id: ID
+}
+
+input SetProductCategoryId {
+  id: ID!
+}
+
+input SetProductId {
+  id: ID!
+}
+
+input SetProductUomId {
+  id: ID!
+}
+
+"""Set user"""
+input SetUserInput {
+  id: ID!
+}
+
+"""Supported data types for SettingKey values."""
+enum SettingDataType {
+  STRING
+  NUMBER
+  BOOLEAN
+  JSON
+}
+
+"""Represents a Setting key definition (metadata for a user-configurable setting)."""
+type SettingKey {
+  id: ID!
+  key: String!
+  displayName: String
+  group: String
+  description: String
+  dataType: SettingDataType!
+  defaultValue: String
+  mutable: Boolean!
+  entryDate: DateTime!
+}
+
+input ShareDashboardInput {
+  dashboardId: String!
+  dashboardOwnerUserId: String!
+  dashboardTargetUserId: String!
+}
+
+"""Shelf Type
+Represents a storage shelf within a warehouse, including dimensions, geolocation and associated fiducial markers."""
+type Shelf {
+  id: ID!
+  name: String!
+  height: Float
+  width: Float
+  length: Float
+  latitude: Float
+  longitude: Float
+  description: String
+  isActive: Boolean!
+  fiducialMarkers: [FiducialMarker!]!
+  aisle: Aisle
+}
+
+"""ShelfInput Type
+Input type for creating or updating a shelf"""
+input ShelfInput {
+  id: ID
+  name: String!
+  height: Float
+  width: Float
+  length: Float
+  latitude: Float
+  longitude: Float
+  description: String
+  isActive: Boolean
+  fiducialMarkers: [FiducialMarkerInput!]
+  aisleId: ID
+  sectionId: ID
+  warehouseId: ID!
+}
+
+"""Shipment Type
+Represents a physical shipment (multiple per fulfillment supported)"""
+type Shipment {
+  id: ID!
+  trackingNumber: String!
+  carrier: String!
+  serviceLevel: String
+  status: String!
+  weight: Float
+  weightUnit: String
+  cost: Float
+  labelUrl: String
+  fulfillmentId: ID
+  deliveryAddress: String
+  shippedAt: String
+  expectedDeliveryAt: String
+  deliveredAt: String
+  notes: String
+  createdAt: String!
+}
+
+enum SignupMethod {
+  ONLINE
+  MANUAL
+}
+
+"""Similarity search result"""
+type SimilaritySearchResult {
+  id: ID!
+  fileName: String!
+  filePath: String!
+  pageContent: String!
+  pageNumber: Int!
+}
+
+type SiteOption {
+  id: ID!
+  key: SiteOptionKeyEnum!
+  value: String!
+}
+
+input SiteOptionInput {
+  value: String!
+}
+
+"""Site option types and operations."""
+enum SiteOptionKeyEnum {
+  CPN_SELECTION
+  INSIDE_REP_ASSIGNMENT
+  OUTSIDE_REP_COMMISSION
+  INSIDE_REP_COMMISSION
+  MANAGER_COMMISSION
+  AUTOGENERATED_NUMBER_PREFIX
+  AUTOGENERATED_NUMBER_STARTS
+  POWER_BI_TENANT_ID
+  POWER_BI_SECRET_VALUE
+  POWER_BI_WORKSPACE_ID
+  POWER_BI_CLIENT_ID
+  POWER_BI_DATASET_ID
+  FLOWBOT_CAN_CREATE_PRODUCTS
+  FLOWBOT_CAN_CREATE_FACTORIES
+  FLOWBOT_CAN_CREATE_CUSTOMERS
+  FLOWBOT_CAN_CREATE_QUOTES
+  FLOWBOT_CAN_CREATE_ORDERS
+  FLOWBOT_CAN_CREATE_INVOICES
+  FLOWBOT_TRAINING_BOOSTER_ON
+  FLOWBOT_TRAINING_BASELINE
+  FLOWBOT_ENTITY_UPDATE_ON
+  FLOWBOT_AUTO_MATCH_END_USER
+  FLOWBOT_EXTRACTION_BOOSTER_ON
+  FLOWBOT_EXTRACTION_BASELINE
+  FLOWBOT_INCLUDE_FREIGHT_LINES
+  FLOWBOT_CUSTOMER_GROUP_BY_TYPE
+  FLOWBOT_UPDATE_INVOICE_COMMISSION_0
+  FLOWBOT_UPDATE_ORDER_LINE_ITEMS
+  FLOWBOT_ADD_ORDER_LINE_ITEMS
+  ALLOW_OVERAGE
+  POWER_BI_REPORT_ID
+  OVERAGE_ALLOWED
+  BUY_SELL_ALLOWED
+  CONSIGNMENT_ALLOWED
+  BUY_SELL_PAYMENT_TERMS
+}
+
+"""Represents the site-wide settings for a company.
+Stores general company details, branding, and contact information."""
+type SiteSetting {
+  companyName: String
+  email: String
+  phone: String
+  logo: String
+  logoHeight: Int
+  logoWidth: Int
+  streetAddress: String
+  addressTwo: String
+  city: String
+  state: String
+  zip: String
+}
+
+"""Input type for updating or creating site settings.
+Used in mutations to modify or create site settings."""
+input SiteSettingInput {
+  companyName: String!
+  email: String!
+  phone: String
+  logo: String
+  logoHeight: Int
+  logoWidth: Int
+  streetAddress: String
+  addressTwo: String
+  city: String
+  state: String
+  zip: String
+}
+
+type SiteWideSearch {
+  id: ID
+  title: String
+  type: String
+  link: String
+  linkId: String
+  customer: String
+  factory: String
+}
+
+input SortByInput {
+  key: String!
+  order: OrderDirectionEnum!
+}
+
+enum SplitBy {
+  MONTH
+  YEAR
+}
+
+"""Represents a split rate type.
+Each one of this entities represent an outside sales rep associated with the customer
+and the corresponding split rate percentage."""
+type SplitRate {
+  id: ID!
+  outsideRep: User!
+  splitRate: Float
+}
+
+"""Input to start a thread with the first note."""
+input StartNoteThreadInput {
+  creationType: CreationTypeEnum!
+  entityType: NoteEntityTypeEnum!
+  sourceId: ID!
+  title: String
+  content: String!
+  createName: String
+  privateNote: Boolean!
+  tags: [NoteTagInput]
+}
+
+"""Status of the file upload/deletion"""
+type Status {
+  code: Int!
+  keyword: String!
+  message: String!
+}
+
+type SteppedCommissionTier {
+  id: ID!
+  salesMin: Float
+  salesMax: Float
+  commissionRate: Float
+}
+
+input SteppedCommissionTierInput {
+  salesMin: Float
+  salesMax: Float
+  commissionRate: Float
+}
+
+"""The 'String' scalar type represents textual data, represented as UTF-8 character sequences. The String type is most often used by GraphQL to represent free-form human-readable text."""
+input StringFilterInput {
+  key: String!
+  operator: StringFilterOperatorEnum!
+  value: String
+}
+
+enum StringFilterOperatorEnum {
+  EQUAL
+  NOT_EQUAL
+  LIKE
+  IN
+  IS_NULL
+}
+
+"""ISO-3166-2 subdivision (state/province/region)."""
+type Subdivision {
+  isoCode: ID!
+  country: Country!
+  countryCode: String!
+  code: String!
+  name: String!
+  type: String
+}
+
+"""Filter subdivisions (simple example; extend as needed)."""
+input SubdivisionFilter {
+  countryCode: String
+  type: String
+  q: String
+}
+
+input SubscriptionInput {
+  planId: ID!
+  status: SubscriptionStatus!
+  signupMethod: SignupMethod!
+  paymentMethod: PaymentMethod!
+  autoRenew: Boolean!
+}
+
+enum SubscriptionQueueStatus {
+  PENDING
+  QUEUED
+  PROCESSING
+  DONE
+}
+
+enum SubscriptionStatus {
+  TRIAL
+  ACTIVE
+  CANCELLED
+  DISABLED
+}
+
+type Suggestion {
+  id: ID!
+  title: String!
+  confidenceScore: Float!
+}
+
+input TableRunInput {
+  name: String!
+  clearFirst: Boolean
+}
+
+"""Represents Task type (Microsoft To Do style)."""
+type Task {
+  id: ID!
+  title: String!
+  body: String
+  importance: TaskImportance!
+  status: TaskStatus!
+  isReminderOn: Boolean
+  reminderDateTime: DateTime
+  dueDateTime: DateTime
+  completedDateTime: DateTime
+  order: Int
+  private: Boolean
+  steps: String
+  categories: String
+  user: User!
+}
+
+enum TaskImportance {
+  LOW
+  NORMAL
+  HIGH
+}
+
+"""Represents Task input."""
+input TaskInput {
+  title: String!
+  body: String
+  importance: TaskImportance
+  status: TaskStatus
+  isReminderOn: Boolean
+  reminderDateTime: DateTime
+  dueDateTime: DateTime
+  completedDateTime: DateTime
+  order: Int
+  private: Boolean
+  steps: String
+  categories: String
+  user: SetUserInput!
+}
+
+enum TaskStatus {
+  NOT_STARTED
+  IN_PROGRESS
+  COMPLETED
+  WAITING_ON_OTHERS
+  DEFERRED
+}
+
+"""Represents a reusable document/email template."""
+type Template {
+  id: ID!
+  entityType: EntityTypeEnum!
+  name: String!
+  description: String
+  subjectTemplate: String
+  format: TemplateFormat!
+  bodyTemplate: String!
+  defaultTemplate: Boolean!
+  primaryColor: String
+  secondaryColor: String
+  action: String
+}
+
+"""Template format enum."""
+enum TemplateFormat {
+  HTML
+}
+
+"""Input for creating/updating a template."""
+input TemplateInput {
+  id: ID
+  entityType: EntityTypeEnum!
+  name: String!
+  description: String
+  subjectTemplate: String
+  format: TemplateFormat!
+  bodyTemplate: String!
+  defaultTemplate: Boolean!
+  primaryColor: String
+  secondaryColor: String
+  action: String
+}
+
+type Tenant {
+  id: ID!
+  name: String!
+  url: String
+  initialize: Boolean!
+  ownerId: ID
+  subscription: Subscription
+  siteSetting: SiteSetting
+}
+
+type TenantCountStats {
+  totalCount: Int!
+  lastMonthOrPriorCount: Int!
+  difference: Int!
+}
+
+input TenantInput {
+  name: String!
+  url: String!
+  subscription: SubscriptionInput!
+}
+
+enum TerritoryModeEnum {
+  MANUAL
+  REGIONAL
+  POLYGON
+  MIXED
+}
+
+enum TerritoryRegionTypeEnum {
+  STATE
+  COUNTY
+  ZIP
+}
+
+type TokenResponse {
+  accessToken: String
+  expiresIn: Int
+  refreshExpiresIn: Int
+  tokenType: String
+  notBeforePolicy: Int
+  scope: String
+  refreshToken: String
+}
+
+input TriggerFileUploadInput {
+  fileId: ID!
+  entity: EntityType
+  subProcessEntities: JSON
+}
+
+type TriggerFileUploadResponse {
+  fileId: ID!
+  fileUploadId: ID
+  status: String!
+}
+
+input TriggerWorkflowInput {
+  fileId: ID!
+  subProcessEntities: Boolean!
+  entity: String
+}
+
+type TriggerWorkflowResponse {
+  fileId: ID!
+  fileUploadId: ID
+  status: String!
+}
+
+scalar UUID
+
+input UpdateDashboardOrderInput {
+  dashboardId: String!
+  newOrder: Int!
+}
+
+"""Input type for updating fulfillment quantities"""
+input UpdateFulfillmentQuantityInput {
+  id: ID!
+  pickedQuantity: Int
+  packedQuantity: Int
+  shippedQuantity: Int
+  warehouseId: ID!
+}
+
+"""Input type for updating fulfillment quantities and tracking"""
+input UpdateFulfillmentTrackingInput {
+  id: ID!
+  trackingNumber: String
+  carrier: String
+  notes: String
+  deliveryType: FulfillmentDeliveryType
+  warehouseId: ID!
+}
+
+scalar Upload
+
+"""User information"""
+type User implements UserInterface {
+  id: ID!
+  username: String!
+  firstName: String!
+  lastName: String!
+  email: String!
+  enabled: Boolean!
+  role: Role!
+  isOutside: Boolean
+  isInside: Boolean
+  lastLogin: DateTime
+  profileImage: String
+  supervisorId: ID
+}
+
+type UserCountByStatus {
+  enabledCount: Int!
+  disabledCount: Int!
+  totalCount: Int!
+}
+
+type UserFromAdmin implements UserInterface {
+  id: ID!
+  username: String!
+  firstName: String!
+  lastName: String!
+  email: String!
+  enabled: Boolean!
+  role: Role!
+  isOutside: Boolean
+  isInside: Boolean
+  lastLogin: DateTime
+  profileImage: String
+  supervisorId: ID
+  entryDate: DateTime
+  createdBy: String
+}
+
+input UserInput {
+  username: String!
+  firstName: String!
+  lastName: String!
+  email: String!
+  enabled: Boolean!
+  roleName: String
+  isOutside: Boolean
+  isInside: Boolean
+  supervisorId: ID
+}
+
+interface UserInterface {
+  id: ID!
+  username: String!
+  firstName: String!
+  lastName: String!
+  email: String!
+  enabled: Boolean!
+  role: Role!
+  isOutside: Boolean
+  isInside: Boolean
+  lastLogin: DateTime
+  profileImage: String
+  supervisorId: ID
+}
+
+type UserRbac {
+  privileges: [Privilege!]!
+  commission: Boolean!
+}
+
+"""Represents a specific User's value for a SettingKey."""
+type UserSetting {
+  id: ID!
+  userId: ID!
+  settingKey: SettingKey!
+  value: String
+  entryDate: DateTime!
+}
+
+"""Input used to create/update a UserSetting."""
+input UserSettingInput {
+  userId: ID!
+  settingKeyId: ID!
+  value: String
+}
+
+input UserTransactionDTOInput {
+  id: ID!
+  isOutside: Boolean
+  isInside: Boolean
+}
+
+type VectorizationResponse {
+  pageContent: String!
+  pageNumber: Int!
+  embedding: [Float!]!
+}
+
+"""Vectorization status information"""
+type VectorizationStatusInfo {
+  id: ID!
+  fileId: ID!
+  vectorizationStatus: ProcessStatus!
+  message: String
+  createdAt: DateTime!
+  updatedAt: DateTime
+}
+
+enum VolumeUnitEnum {
+  CUBIC_CM
+  CUBIC_IN
+  CUBIC_FT
+  ML
+  L
+}
+
+"""Vote summary result"""
+type VoteSummaryResult {
+  result: BaseError
+  summary: FileSummaryInfo
+}
+
+"""Vote information"""
+type VotesInfo {
+  positive: Boolean!
+  votedAt: DateTime!
+  votedBy: User!
+}
+
+"""A warehouse location containing address and geolocation details."""
+type Warehouse {
+  id: ID!
+  name: String!
+  addressLine1: String
+  addressLine2: String
+  city: String
+  state: String
+  postalCode: String
+  country: String
+  latitude: Float
+  longitude: Float
+  description: String
+  isActive: Boolean!
+}
+
+"""Input type for creating or updating a warehouse location.
+All fields are optional except name for creation; servers may enforce additional validation."""
+input WarehouseInput {
+  name: String!
+  addressLine1: String
+  addressLine2: String
+  city: String
+  state: String
+  postalCode: String
+  country: String
+  latitude: Float
+  longitude: Float
+  description: String
+  isActive: Boolean
+}
+
+"""Wave Type
+Represents a batch picking wave for optimized fulfillment"""
+type Wave {
+  id: ID!
+  waveNumber: String!
+  status: WaveStatus!
+  priority: Int!
+  fulfillmentCount: Int!
+  totalItems: Int!
+  pickedItems: Int!
+  completionPercentage: Float!
+  pickerId: String
+  fulfillments: [Fulfillment!]!
+  releasedAt: String
+  startedAt: String
+  completedAt: String
+  notes: String
+  createdAt: String!
+  updatedAt: String!
+}
+
+"""Wave Status Enumeration
+Represents the status of a picking wave"""
+enum WaveStatus {
+  PENDING
+  RELEASED
+  IN_PROGRESS
+  COMPLETED
+  CANCELLED
+}
+
+enum WeightUnitEnum {
+  G
+  KG
+  OZ
+  LB
+}
+
+input WorkflowPausedAliasInput {
+  id: Int!
+  entityType: EntityException!
+  alias: String!
+}
+
+input WorkflowPausedColumnInput {
+  columnName: String!
+  columnDefaultValue: String!
+}
+
+input WorkflowPausedInput {
+  responseEntitiesAlias: [WorkflowPausedAliasInput!]
+  responseEntities: [WorkflowPausedResponseInput!]
+}
+
+input WorkflowPausedResponseInput {
+  originalTitle: String!
+  entityType: EntityException!
+  dtoId: ID!
+  id: ID
+  correctedTitle: String
+  address: JSON
+}
+
+input WorkflowPayloadInput {
+  pausedInput: WorkflowPausedInput
+  tabularInput: WorkflowTabularInput
+  reprocessInput: WorkflowReprocessInput
+}
+
+input WorkflowReprocessInput {
+  records: [ReprocessRowInput!]!
+}
+
+input WorkflowTabularInput {
+  mappedColumns: JSON
+  defaultColumns: [WorkflowPausedColumnInput!]
+}
+
+type YTDSalesComparisonDTO implements EntityRowInterface {
+  id: ID!
+  year: String!
+  salesJanuary: Float!
+  salesFebruary: Float!
+  salesMarch: Float!
+  salesApril: Float!
+  salesMay: Float!
+  salesJune: Float!
+  salesJuly: Float!
+  salesAugust: Float!
+  salesSeptember: Float!
+  salesOctober: Float!
+  salesNovember: Float!
+  salesDecember: Float!
+  commissionJanuary: Float!
+  commissionFebruary: Float!
+  commissionMarch: Float!
+  commissionApril: Float!
+  commissionMay: Float!
+  commissionJune: Float!
+  commissionJuly: Float!
+  commissionAugust: Float!
+  commissionSeptember: Float!
+  commissionOctober: Float!
+  commissionNovember: Float!
+  commissionDecember: Float!
+}
+
+type YTDSalesIndicatorsDTO implements EntityRowInterface {
+  id: ID!
+  salesThisPeriod: Float!
+  salesPriorYearPeriod: Float!
+  salesVariancePercentage: Float!
+  salesVarianceAmount: Float!
+  commissionThisPeriod: Float!
+  commissionPriorYearPeriod: Float!
+  commissionVariancePercentage: Float!
+  commissionVarianceAmount: Float!
+}
+
+input aggregateInput {
+  by: AggregateByEnum!
+  type: AggregateTypeEnum!
+}

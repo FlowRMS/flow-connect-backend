@@ -5,6 +5,9 @@ import strawberry
 from commons.db.v6 import Customer
 
 from app.core.db.adapters.dto import DTOMixin
+from app.graphql.v2.core.customers.strawberry.customer_split_rate_response import (
+    CustomerSplitRateResponse,
+)
 from app.graphql.v2.core.users.strawberry.user_response import UserResponse
 
 
@@ -39,7 +42,11 @@ class CustomerResponse(DTOMixin[Customer]):
         )
 
     @strawberry.field
-    async def inside_rep(self) -> UserResponse | None:
-        return UserResponse.from_orm_model_optional(
-            await self._instance.awaitable_attrs.inside_rep
+    async def outside_reps(self) -> list[CustomerSplitRateResponse]:
+        return CustomerSplitRateResponse.from_orm_model_list(
+            self._instance.outside_reps
         )
+
+    @strawberry.field
+    async def inside_reps(self) -> list[CustomerSplitRateResponse]:
+        return CustomerSplitRateResponse.from_orm_model_list(self._instance.inside_reps)

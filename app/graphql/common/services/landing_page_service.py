@@ -15,6 +15,9 @@ from app.graphql.pre_opportunities.repositories.pre_opportunities_repository imp
     PreOpportunitiesRepository,
 )
 from app.graphql.tasks.repositories.tasks_repository import TasksRepository
+from app.graphql.v2.core.customers.repositories.customers_repository import (
+    CustomersRepository,
+)
 
 
 class LandingPageService:
@@ -29,19 +32,8 @@ class LandingPageService:
         tasks_repository: TasksRepository,
         notes_repository: NotesRepository,
         campaigns_repository: CampaignsRepository,
+        customers_repository: CustomersRepository,
     ) -> None:
-        """
-        Initialize the generic landing page service.
-
-        Args:
-            jobs_repository: Jobs repository instance
-            companies_repository: Companies repository instance
-            contacts_repository: Contacts repository instance
-            pre_opportunities_repository: Pre-opportunities repository instance
-            tasks_repository: Tasks repository instance
-            notes_repository: Notes repository instance
-            campaigns_repository: Campaigns repository instance
-        """
         super().__init__()
         self._repository_map: dict[LandingSourceType, LandingRepositoryProtocol] = {
             LandingSourceType.JOBS: jobs_repository,
@@ -51,6 +43,7 @@ class LandingPageService:
             LandingSourceType.TASKS: tasks_repository,
             LandingSourceType.NOTES: notes_repository,
             LandingSourceType.CAMPAIGNS: campaigns_repository,
+            LandingSourceType.CUSTOMERS: customers_repository,
         }
 
     async def find_landing_pages(

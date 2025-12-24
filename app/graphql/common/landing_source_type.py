@@ -16,3 +16,4 @@ class LandingSourceType(Enum):
     NOTES = "notes"
     PRE_OPPORTUNITIES = "pre_opportunities"
     CAMPAIGNS = "campaigns"
+    CUSTOMERS = "customers"

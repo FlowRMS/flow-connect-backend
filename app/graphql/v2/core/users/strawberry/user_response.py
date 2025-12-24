@@ -9,7 +9,7 @@ from app.core.db.adapters.dto import DTOMixin
 
 
 @strawberry.type
-class UserLiteResponse(DTOMixin[User]):
+class UserResponse(DTOMixin[User]):
     _instance: strawberry.Private[User]
     id: UUID
     username: str
@@ -41,9 +41,6 @@ class UserLiteResponse(DTOMixin[User]):
         )
 
 
-@strawberry.type
-class UserResponse(UserLiteResponse):
-    @strawberry.field
-    async def supervisor(self) -> UserLiteResponse | None:
-        supervisor = await self._instance.awaitable_attrs.supervisor
-        return UserLiteResponse.from_orm_model_optional(supervisor)
+# @strawberry.type
+# class UserResponse(UserLiteResponse):
+#     ...

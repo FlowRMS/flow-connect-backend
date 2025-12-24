@@ -16,3 +16,8 @@ class NotFoundError(BaseException):
 class ConflictError(BaseException):
     def __init__(self, message: str) -> None:
         super().__init__(message)
+
+
+class ValidationError(BaseException):
+    def __init__(self, message: str) -> None:
+        super().__init__(message)

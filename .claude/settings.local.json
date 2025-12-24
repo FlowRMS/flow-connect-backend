@@ -32,7 +32,11 @@
       "Bash(uv pip show:*)",
       "Bash(wc:*)",
       "Bash(xargs cat:*)",
-      "Bash(task admin-gql:*)"
+      "Bash(task admin-gql:*)",
+      "WebFetch(domain:development.api.flowrms.com)",
+      "mcp__plugin_playwright_playwright__browser_navigate",
+      "mcp__plugin_playwright_playwright__browser_click",
+      "Bash(python3:*)"
     ]
   },
   "enableAllProjectMcpServers": true,

@@ -11,6 +11,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.sql.base import ExecutableOption
 
 from app.core.context_wrapper import ContextWrapper
+from app.core.processors.base import BaseProcessor
 from app.core.processors.context import EntityContext
 from app.core.processors.events import RepositoryEvent
 from app.core.processors.executor import ProcessorExecutor
@@ -43,6 +44,7 @@ class BaseRepository(Generic[T]):
         model_class: type[T],
         rbac_filter_service: RbacFilterService | None = None,
         processor_executor: ProcessorExecutor | None = None,
+        processor_executor_classes: list[BaseProcessor] | None = None,
     ) -> None:
         super().__init__()
         self.context = context_wrapper.get()
@@ -50,6 +52,7 @@ class BaseRepository(Generic[T]):
         self.model_class = model_class
         self._rbac_filter_service = rbac_filter_service
         self._processor_executor = processor_executor
+        self._processor_executor_classes = processor_executor_classes or []
 
     async def _run_processors(
         self,
@@ -65,7 +68,9 @@ class BaseRepository(Generic[T]):
             event=event,
             original_entity=original_entity,
         )
-        await self._processor_executor.execute(self.model_class, event, context)
+        await self._processor_executor.execute(
+            context, self._processor_executor_classes
+        )
 
     def get_rbac_filter_strategy(self) -> RbacFilterStrategy | None:
         """

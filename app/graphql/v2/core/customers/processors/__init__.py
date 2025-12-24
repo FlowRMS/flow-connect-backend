@@ -1,5 +1,5 @@
-from app.graphql.v2.core.customers.processors.validate_inside_rep_processor import (
-    ValidateInsideRepProcessor,
+from app.graphql.v2.core.customers.processors.validate_split_rates_processor import (
+    ValidateSplitRatesProcessor,
 )
 
-__all__ = ["ValidateInsideRepProcessor"]
+__all__ = ["ValidateSplitRatesProcessor"]
