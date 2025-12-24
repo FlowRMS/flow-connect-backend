@@ -1056,6 +1056,7 @@ type Query {
   campaignSendingStatus(campaignId: UUID!): CampaignSendingStatusResponse!
   checkSearch(searchTerm: String!, limit: Int! = 20): [CheckResponse!]!
   findLandingPages(sourceType: LandingSourceType!, filters: [Filter!] = null, orderBy: [OrderBy!] = null, limit: Int = 10, offset: Int = 0): GenericLandingPage!
+  universalSearch(searchTerm: String!, limit: Int! = 20): [SearchResult!]!
   company(id: UUID!): CompanyResponse!
   companySearch(searchTerm: String!, limit: Int! = 20): [CompanyResponse!]!
   contact(id: UUID!): ContactResponse!
@@ -1207,6 +1208,13 @@ enum RepTypeEnum {
   INSIDE
 }
 
+type SearchResult {
+  id: UUID!
+  title: String!
+  alias: String
+  resultType: SourceType!
+}
+
 enum SendPace {
   SLOW
   MEDIUM
@@ -1216,6 +1224,21 @@ enum SendPace {
 type SendTestEmailResponse {
   success: Boolean!
   error: String
+}
+
+enum SourceType {
+  CONTACT
+  COMPANY
+  JOB
+  TASK
+  NOTE
+  CAMPAIGN
+  QUOTE
+  PRE_OPPORTUNITY
+  SPEC_SHEET
+  CUSTOMER
+  FACTORY
+  PRODUCT
 }
 
 type SpecSheetResponse {

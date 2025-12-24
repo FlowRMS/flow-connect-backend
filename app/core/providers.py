@@ -17,6 +17,9 @@ from app.core.config.workos_settings import WorkOSSettings
 from app.core.context_wrapper import create_context_wrapper
 from app.core.db import db_provider
 from app.core.processors.executor import ProcessorExecutor
+from app.graphql.common.services.search_registry_factory import (
+    create_search_strategy_registry,
+)
 from app.graphql.processor_providers import processor_providers
 from app.graphql.repositories import repository_providers
 from app.graphql.service_providers import service_providers
@@ -59,6 +62,7 @@ def providers() -> Iterable[aioinject.Provider[Any]]:
         providers.append(provider)
 
     providers.append(aioinject.Scoped(ProcessorExecutor))
+    providers.append(aioinject.Singleton(create_search_strategy_registry))
 
     for settings_class in settings_classes:
         providers.append(aioinject.Object(get_settings(settings_class)))
