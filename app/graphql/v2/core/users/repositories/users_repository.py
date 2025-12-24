@@ -26,7 +26,12 @@ class UsersRepository(BaseRepository[User]):
         return result.scalar_one_or_none()
 
     async def search_by_name(
-        self, search_term: str, enabled: bool | None = True, limit: int = 20
+        self,
+        search_term: str,
+        enabled: bool | None = True,
+        is_inside: bool | None = None,
+        is_outside: bool | None = None,
+        limit: int = 20,
     ) -> list[User]:
         stmt = (
             select(User)
@@ -40,6 +45,12 @@ class UsersRepository(BaseRepository[User]):
 
         if enabled is not None:
             stmt = stmt.where(User.enabled == enabled)
+
+        if is_inside is not None:
+            stmt = stmt.where(User.inside == is_inside)
+
+        if is_outside is not None:
+            stmt = stmt.where(User.outside == is_outside)
 
         result = await self.session.execute(stmt)
         return list(result.scalars().all())

@@ -1111,7 +1111,7 @@ type Query {
   productSearch(searchTerm: String!, productCategoryIds: [UUID!]!, factoryId: UUID, limit: Int! = 20): [ProductResponse!]!
   productCategorySearch(searchTerm: String!, factoryId: UUID, limit: Int! = 20): [ProductCategoryResponse!]!
   user(id: UUID!): UserResponse!
-  userSearch(searchTerm: String!, enabled: Boolean = true, limit: Int! = 20): [UserResponse!]!
+  userSearch(searchTerm: String!, isInside: Boolean = null, isOutside: Boolean = null, enabled: Boolean = true, limit: Int! = 20): [UserResponse!]!
   users(limit: Int = null, offset: Int! = 0): [UserResponse!]!
   getRbacGrid: [RbacGridResponse!]!
 }

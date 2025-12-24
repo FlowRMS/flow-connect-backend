@@ -100,9 +100,16 @@ class UserService:
         return await self.repository.delete(user_id)
 
     async def search_users(
-        self, search_term: str, enabled: bool | None = True, limit: int = 20
+        self,
+        search_term: str,
+        enabled: bool | None = True,
+        is_inside: bool | None = None,
+        is_outside: bool | None = None,
+        limit: int = 20,
     ) -> list[User]:
-        return await self.repository.search_by_name(search_term, enabled, limit)
+        return await self.repository.search_by_name(
+            search_term, enabled, is_inside, is_outside, limit
+        )
 
     async def list_all(self, limit: int | None = None, offset: int = 0) -> list[User]:
         return await self.repository.list_all(limit, offset)
