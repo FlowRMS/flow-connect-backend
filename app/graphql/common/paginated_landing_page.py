@@ -1,8 +1,8 @@
-"""Paginated landing page response types for GraphQL queries."""
-
 from typing import Any, Self
+from uuid import UUID
 
 import strawberry
+from commons.db.v6.rbac.rbac_privilege_option_enum import RbacPrivilegeOptionEnum
 from commons.graphql.filter_types import Filter
 from commons.graphql.order_by_types import OrderBy
 from commons.graphql.pagination import get_pagination_window as _get_pagination_window
@@ -77,23 +77,9 @@ class PaginatedLandingPageInterface:
         order_by: OrderBy | list[OrderBy] | None = None,
         limit: int | None = 10,
         offset: int | None = 0,
+        rbac_option: RbacPrivilegeOptionEnum | None = None,
+        user_id: UUID | None = None,
     ) -> Self:
-        """
-        Generate a paginated landing page response.
-
-        Args:
-            session: SQLAlchemy async session
-            stmt: Base SQLAlchemy select statement
-            record_type: The ORM model type (e.g., Job, Task)
-            record_type_gql: The GraphQL/DTO type with from_orm_model_list method
-            filters: Optional list of Filter objects to apply to the query
-            order_by: Optional OrderBy or list of OrderBy objects for sorting
-            limit: Maximum number of records to return (default: 10)
-            offset: Number of records to skip (default: 0)
-
-        Returns:
-            PaginatedLandingPageInterface with records and total count
-        """
         records, total = await _get_pagination_window(
             session=session,
             query=stmt,
@@ -103,6 +89,8 @@ class PaginatedLandingPageInterface:
             order_by=order_by,
             limit=limit,
             offset=offset,
+            rbac_option=rbac_option,
+            user_id=user_id,
         )
 
         return cls(records=records, total=total)

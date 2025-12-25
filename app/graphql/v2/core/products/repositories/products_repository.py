@@ -1,12 +1,13 @@
 from typing import Any
 from uuid import UUID
 
-from commons.db.v6 import User
+from commons.db.v6 import RbacResourceEnum, User
 from commons.db.v6.core import Product, ProductCategory
 from commons.db.v6.core.factories.factory import Factory
 from commons.db.v6.core.products.product_uom import ProductUom
 from commons.db.v6.crm.links.entity_type import EntityType
 from sqlalchemy import Select, select
+from sqlalchemy.dialects.postgresql import array
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import lazyload
 
@@ -22,10 +23,9 @@ from app.graphql.v2.core.products.strawberry.product_landing_page_response impor
 
 
 class ProductsRepository(BaseRepository[Product]):
-    """Repository for Products entity."""
-
     entity_type = EntityType.PRODUCT
     landing_model = ProductLandingPageResponse
+    rbac_resource: RbacResourceEnum | None = RbacResourceEnum.PRODUCT
 
     def __init__(
         self,
@@ -57,6 +57,7 @@ class ProductsRepository(BaseRepository[Product]):
                 Factory.title.label("factory_title"),
                 ProductCategory.title.label("category_title"),
                 ProductUom.title.label("uom_title"),
+                array([Product.created_by_id]).label("user_ids"),
             )
             .select_from(Product)
             .options(lazyload("*"))

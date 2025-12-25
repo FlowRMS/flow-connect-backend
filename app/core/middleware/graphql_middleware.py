@@ -41,6 +41,5 @@ class GraphQLMiddleware(SchemaExtension):
                 context.initialize(context_model)
                 context_wrapper = await conn_ctx.resolve(ContextWrapper)
                 wrapper_token = context_wrapper.set(context)
-                print(context.auth_info)
                 yield
                 context_wrapper.reset(wrapper_token)

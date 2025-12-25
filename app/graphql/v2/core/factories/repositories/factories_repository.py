@@ -1,13 +1,13 @@
 from typing import Any
 from uuid import UUID
 
-from commons.db.v6 import User
+from commons.db.v6 import RbacResourceEnum, User
 from commons.db.v6.core.factories.factory import Factory
 from commons.db.v6.core.factories.factory_split_rate import FactorySplitRate
 from commons.db.v6.crm.links.entity_type import EntityType
 from commons.db.v6.crm.manufacturer_order_model import ManufacturerOrder
 from sqlalchemy import Select, String, delete, func, literal, select
-from sqlalchemy.dialects.postgresql import ARRAY
+from sqlalchemy.dialects.postgresql import ARRAY, array
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import aliased, lazyload
 
@@ -25,6 +25,7 @@ from app.graphql.v2.core.factories.strawberry.factory_landing_page_response impo
 class FactoriesRepository(BaseRepository[Factory]):
     entity_type = EntityType.FACTORY
     landing_model = FactoryLandingPageResponse
+    rbac_resource: RbacResourceEnum | None = RbacResourceEnum.FACTORY
 
     def __init__(
         self,
@@ -76,6 +77,7 @@ class FactoriesRepository(BaseRepository[Factory]):
                 func.coalesce(split_rates_subq.c.split_rates, empty_array).label(
                     "split_rates"
                 ),
+                array([Factory.created_by_id]).label("user_ids"),
             )
             .select_from(Factory)
             .options(lazyload("*"))

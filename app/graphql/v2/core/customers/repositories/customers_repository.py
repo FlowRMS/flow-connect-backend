@@ -5,7 +5,7 @@ from commons.db.v6.core.customers.customer_split_rate import CustomerSplitRate
 from commons.db.v6.crm.links.entity_type import EntityType
 from commons.db.v6.user.rep_type import RepTypeEnum
 from sqlalchemy import Select, String, func, literal, select
-from sqlalchemy.dialects.postgresql import ARRAY
+from sqlalchemy.dialects.postgresql import ARRAY, array
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import aliased, lazyload
 
@@ -24,10 +24,9 @@ from app.graphql.v2.rbac.strategies.created_by_filter import CreatedByFilterStra
 
 
 class CustomersRepository(BaseRepository[Customer]):
-    """Repository for Customers entity."""
-
     entity_type = EntityType.CUSTOMER
     landing_model = CustomerLandingPageResponse
+    rbac_resource: RbacResourceEnum | None = RbacResourceEnum.CUSTOMER
 
     def __init__(
         self,
@@ -100,6 +99,7 @@ class CustomersRepository(BaseRepository[Customer]):
                 func.coalesce(outside_subq.c.outside_reps, empty_array).label(
                     "outside_reps"
                 ),
+                array([Customer.created_by_id]).label("user_ids"),
             )
             .select_from(Customer)
             .options(lazyload("*"))

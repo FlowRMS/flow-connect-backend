@@ -1,9 +1,7 @@
-"""Repository for PreOpportunity entity with specific database operations."""
-
 from typing import Any
 from uuid import UUID
 
-from commons.db.v6 import User
+from commons.db.v6 import RbacResourceEnum, User
 from commons.db.v6.crm.links.entity_type import EntityType
 from commons.db.v6.crm.links.link_relation_model import LinkRelation
 from commons.db.v6.crm.pre_opportunities.pre_opportunity_balance_model import (
@@ -11,6 +9,7 @@ from commons.db.v6.crm.pre_opportunities.pre_opportunity_balance_model import (
 )
 from commons.db.v6.crm.pre_opportunities.pre_opportunity_model import PreOpportunity
 from sqlalchemy import Select, func, or_, select
+from sqlalchemy.dialects.postgresql import array
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import lazyload
 
@@ -25,9 +24,8 @@ from app.graphql.pre_opportunities.strawberry.pre_opportunity_landing_page_respo
 
 
 class PreOpportunitiesRepository(BaseRepository[PreOpportunity]):
-    """Repository for PreOpportunity entity."""
-
     landing_model = PreOpportunityLandingPageResponse
+    rbac_resource: RbacResourceEnum | None = RbacResourceEnum.PRE_OPPORTUNITY
 
     def __init__(
         self,
@@ -39,12 +37,6 @@ class PreOpportunitiesRepository(BaseRepository[PreOpportunity]):
         self.balance_repository = balance_repository
 
     def paginated_stmt(self) -> Select[Any]:
-        """
-        Build paginated query for pre-opportunities landing page.
-
-        Returns:
-            SQLAlchemy select statement with columns for landing page
-        """
         return (
             select(
                 PreOpportunity.id,
@@ -56,6 +48,7 @@ class PreOpportunitiesRepository(BaseRepository[PreOpportunity]):
                 PreOpportunity.exp_date,
                 PreOpportunityBalance.total.label("total"),
                 PreOpportunity.tags,
+                array([PreOpportunity.created_by_id]).label("user_ids"),
             )
             .select_from(PreOpportunity)
             .options(lazyload("*"))

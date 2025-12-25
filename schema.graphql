@@ -22,6 +22,7 @@ type CampaignLandingPage implements LandingPageInterfaceBase {
   id: UUID!
   createdAt: datetime!
   createdBy: String!
+  userIds: [UUID!]!
   name: String!
   status: CampaignStatus!
   recipientListType: RecipientListType!
@@ -113,6 +114,7 @@ type CompanyLandingPage implements LandingPageInterfaceBase {
   id: UUID!
   createdAt: datetime!
   createdBy: String!
+  userIds: [UUID!]!
   name: String!
   companySourceType: String!
   website: String
@@ -153,6 +155,7 @@ type ContactLandingPage implements LandingPageInterfaceBase {
   id: UUID!
   createdAt: datetime!
   createdBy: String!
+  userIds: [UUID!]!
   firstName: String!
   lastName: String!
   email: String
@@ -249,6 +252,7 @@ type CustomerLandingPage implements LandingPageInterfaceBase {
   id: UUID!
   createdAt: datetime!
   createdBy: String!
+  userIds: [UUID!]!
   companyName: String!
   published: Boolean!
   isParent: Boolean!
@@ -350,6 +354,7 @@ type FactoryLandingPage implements LandingPageInterfaceBase {
   id: UUID!
   createdAt: datetime!
   createdBy: String!
+  userIds: [UUID!]!
   title: String!
   published: Boolean!
   freightDiscountType: Int!
@@ -543,6 +548,7 @@ type JobLandingPage implements LandingPageInterfaceBase {
   id: UUID!
   createdAt: datetime!
   createdBy: String!
+  userIds: [UUID!]!
   jobName: String!
   statusName: String!
   startDate: Date
@@ -593,6 +599,7 @@ interface LandingPageInterfaceBase {
   id: UUID!
   createdAt: datetime!
   createdBy: String!
+  userIds: [UUID!]!
 }
 
 union LandingRecord = JobLandingPage | CompanyLandingPage | ContactLandingPage | PreOpportunityLandingPage | NoteLandingPage | TaskLandingPage | CampaignLandingPage | CustomerLandingPage | FactoryLandingPage | ProductLandingPage | QuoteLandingPage
@@ -746,6 +753,7 @@ type NoteLandingPage implements LandingPageInterfaceBase {
   id: UUID!
   createdAt: datetime!
   createdBy: String!
+  userIds: [UUID!]!
   title: String!
   content: String!
   tags: [String!]
@@ -931,6 +939,7 @@ type PreOpportunityLandingPage implements LandingPageInterfaceBase {
   id: UUID!
   createdAt: datetime!
   createdBy: String!
+  userIds: [UUID!]!
   entityNumber: String!
   status: String!
   entityDate: Date!
@@ -1025,6 +1034,7 @@ type ProductLandingPage implements LandingPageInterfaceBase {
   id: UUID!
   createdAt: datetime!
   createdBy: String!
+  userIds: [UUID!]!
   factoryPartNumber: String!
   unitPrice: Decimal!
   defaultCommissionRate: Decimal!
@@ -1278,9 +1288,10 @@ type QuoteLandingPage implements LandingPageInterfaceBase {
   id: UUID!
   createdAt: datetime!
   createdBy: String!
+  userIds: [UUID!]!
   quoteNumber: String!
-  status: String!
-  pipelineStage: String!
+  status: QuoteStatus!
+  pipelineStage: PipelineStage!
   entityDate: Date!
   expDate: Date
   total: Decimal!
@@ -1506,6 +1517,7 @@ type TaskLandingPage implements LandingPageInterfaceBase {
   id: UUID!
   createdAt: datetime!
   createdBy: String!
+  userIds: [UUID!]!
   title: String!
   status: TaskStatus!
   priority: TaskPriority!
