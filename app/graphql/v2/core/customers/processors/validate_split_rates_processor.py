@@ -25,17 +25,20 @@ class ValidateSplitRatesProcessor(BaseProcessor[Customer]):
 
     async def process(self, context: EntityContext[Customer]) -> None:
         customer = context.entity
-        if not customer.split_rates:
+        split_rates: list[
+            CustomerSplitRate
+        ] = await customer.awaitable_attrs.split_rates
+        if not split_rates:
             return
 
-        user_ids = [rate.user_id for rate in customer.split_rates]
+        user_ids = [rate.user_id for rate in split_rates]
         users = await self._get_users_by_ids(user_ids)
         user_map = {user.id: user for user in users}
 
         inside_rates: list[CustomerSplitRate] = []
         outside_rates: list[CustomerSplitRate] = []
 
-        for rate in customer.split_rates:
+        for rate in split_rates:
             user = user_map.get(rate.user_id)
             if not user:
                 raise ValidationError(f"User with ID '{rate.user_id}' not found")

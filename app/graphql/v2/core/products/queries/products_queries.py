@@ -29,7 +29,7 @@ class ProductsQueries:
         self,
         service: Injected[ProductService],
         search_term: str,
-        product_category_ids: list[uuid.UUID],
+        product_category_ids: list[uuid.UUID] | None = None,
         factory_id: strawberry.Maybe[uuid.UUID] = None,
         limit: int = 20,
     ) -> list[ProductResponse]:

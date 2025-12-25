@@ -73,7 +73,7 @@ class ProductsRepository(BaseRepository[Product]):
         self,
         search_term: str,
         factory_id: UUID | None,
-        product_category_ids: list[UUID],
+        product_category_ids: list[UUID] | None = None,
         limit: int = 20,
     ) -> list[Product]:
         """

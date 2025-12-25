@@ -720,6 +720,9 @@ type Mutation {
   createProductCategory(input: ProductCategoryInput!): ProductCategoryResponse!
   updateProductCategory(id: UUID!, input: ProductCategoryInput!): ProductCategoryResponse!
   deleteProductCategory(id: UUID!): Boolean!
+  createProductCpn(input: ProductCpnInput!): ProductCpnResponse!
+  updateProductCpn(id: UUID!, input: ProductCpnInput!): ProductCpnResponse!
+  deleteProductCpn(id: UUID!): Boolean!
   createProductUom(input: ProductUomInput!): ProductUomResponse!
   updateProductUom(id: UUID!, input: ProductUomInput!): ProductUomResponse!
   deleteProductUom(id: UUID!): Boolean!
@@ -1027,6 +1030,25 @@ type ProductCategoryResponse {
   commissionRate: Decimal!
 }
 
+input ProductCpnInput {
+  productId: UUID!
+  customerId: UUID!
+  customerPartNumber: String!
+  unitPrice: Decimal!
+  commissionRate: Decimal!
+}
+
+type ProductCpnResponse {
+  id: UUID!
+  productId: UUID!
+  customerId: UUID!
+  customerPartNumber: String!
+  unitPrice: Decimal!
+  commissionRate: Decimal!
+  product: ProductLiteResponse!
+  customer: CustomerLiteResponse!
+}
+
 input ProductInput {
   factoryPartNumber: String!
   factoryId: UUID!
@@ -1150,9 +1172,11 @@ type Query {
   findFactoryById(id: UUID!): FactoryResponse!
   factorySearch(searchTerm: String!, published: Boolean! = true, limit: Int! = 20, useCustomOrder: Boolean! = false): [FactoryResponse!]!
   productCategories(factoryId: UUID, parentId: UUID, grandparentId: UUID): [ProductCategoryResponse!]!
+  findProductCpnById(id: UUID!): ProductCpnResponse!
+  listProductCpnsByProductId(productId: UUID!): [ProductCpnResponse!]!
   productUoms: [ProductUomResponse!]!
   findProductById(id: UUID!): ProductResponse!
-  productSearch(searchTerm: String!, productCategoryIds: [UUID!]!, factoryId: UUID, limit: Int! = 20): [ProductResponse!]!
+  productSearch(searchTerm: String!, productCategoryIds: [UUID!] = null, factoryId: UUID, limit: Int! = 20): [ProductResponse!]!
   productCategorySearch(searchTerm: String!, factoryId: UUID, limit: Int! = 20): [ProductCategoryResponse!]!
   user(id: UUID!): UserResponse!
   userSearch(searchTerm: String!, isInside: Boolean = null, isOutside: Boolean = null, enabled: Boolean = true, limit: Int! = 20): [UserResponse!]!

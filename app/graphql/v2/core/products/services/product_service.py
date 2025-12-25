@@ -44,7 +44,7 @@ class ProductService:
         self,
         search_term: str,
         factory_id: UUID | None,
-        product_category_ids: list[UUID],
+        product_category_ids: list[UUID] | None,
         limit: int = 20,
     ) -> list[Product]:
         return await self.repository.search_by_fpn(

@@ -43,9 +43,11 @@ class CustomerResponse(CustomerLiteResponse):
     @strawberry.field
     async def outside_reps(self) -> list[CustomerSplitRateResponse]:
         return CustomerSplitRateResponse.from_orm_model_list(
-            self._instance.outside_reps
+            await self._instance.awaitable_attrs.outside_reps
         )
 
     @strawberry.field
     async def inside_reps(self) -> list[CustomerSplitRateResponse]:
-        return CustomerSplitRateResponse.from_orm_model_list(self._instance.inside_reps)
+        return CustomerSplitRateResponse.from_orm_model_list(
+            await self._instance.awaitable_attrs.inside_reps
+        )

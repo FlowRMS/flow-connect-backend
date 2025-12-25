@@ -3,6 +3,7 @@ from uuid import UUID
 
 from commons.db.v6 import User
 from commons.db.v6.core.factories.factory import Factory
+from commons.db.v6.core.factories.factory_split_rate import FactorySplitRate
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -25,14 +26,15 @@ class ValidateFactorySplitRatesProcessor(BaseProcessor[Factory]):
 
     async def process(self, context: EntityContext[Factory]) -> None:
         factory = context.entity
-        if not factory.split_rates:
+        split_rates: list[FactorySplitRate] = await factory.awaitable_attrs.split_rates
+        if not split_rates:
             return
 
-        user_ids = [rate.user_id for rate in factory.split_rates]
+        user_ids = [rate.user_id for rate in split_rates]
         users = await self._get_users_by_ids(user_ids)
         user_map = {user.id: user for user in users}
 
-        for rate in factory.split_rates:
+        for rate in split_rates:
             user = user_map.get(rate.user_id)
             if not user:
                 raise ValidationError(f"User with ID '{rate.user_id}' not found")
