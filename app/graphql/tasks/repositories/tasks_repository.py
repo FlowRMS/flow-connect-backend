@@ -1,11 +1,11 @@
 from typing import Any
 from uuid import UUID
 
-from commons.db.v6.commission import (
-    Check,
-    Invoice,
-    Order,
-)
+# from commons.db.v6.commission import (
+#     Check,
+#     Invoice,
+#     Order,
+# )
 from commons.db.v6.core import Customer, Factory, Product
 from commons.db.v6.crm import Quote
 from commons.db.v6.crm.companies.company_model import Company
@@ -101,9 +101,9 @@ class TasksRepository(BaseRepository[Task]):
                 PreOpportunity.entity_number,
             ),
             (links_cte.c.entity_type == EntityType.QUOTE, Quote.quote_number),
-            (links_cte.c.entity_type == EntityType.ORDER, Order.order_number),
-            (links_cte.c.entity_type == EntityType.INVOICE, Invoice.invoice_number),
-            (links_cte.c.entity_type == EntityType.CHECK, Check.check_number),
+            # (links_cte.c.entity_type == EntityType.ORDER, Order.order_number),
+            # (links_cte.c.entity_type == EntityType.INVOICE, Invoice.invoice_number),
+            # (links_cte.c.entity_type == EntityType.CHECK, Check.check_number),
             (links_cte.c.entity_type == EntityType.FACTORY, Factory.title),
             (
                 links_cte.c.entity_type == EntityType.PRODUCT,
@@ -163,21 +163,21 @@ class TasksRepository(BaseRepository[Task]):
                 (links_cte.c.entity_type == EntityType.QUOTE)
                 & (links_cte.c.entity_id == Quote.id),
             )
-            .outerjoin(
-                Order,
-                (links_cte.c.entity_type == EntityType.ORDER)
-                & (links_cte.c.entity_id == Order.id),
-            )
-            .outerjoin(
-                Invoice,
-                (links_cte.c.entity_type == EntityType.INVOICE)
-                & (links_cte.c.entity_id == Invoice.id),
-            )
-            .outerjoin(
-                Check,
-                (links_cte.c.entity_type == EntityType.CHECK)
-                & (links_cte.c.entity_id == Check.id),
-            )
+            # .outerjoin(
+            #     Order,
+            #     (links_cte.c.entity_type == EntityType.ORDER)
+            #     & (links_cte.c.entity_id == Order.id),
+            # )
+            # .outerjoin(
+            #     Invoice,
+            #     (links_cte.c.entity_type == EntityType.INVOICE)
+            #     & (links_cte.c.entity_id == Invoice.id),
+            # )
+            # .outerjoin(
+            #     Check,
+            #     (links_cte.c.entity_type == EntityType.CHECK)
+            #     & (links_cte.c.entity_id == Check.id),
+            # )
             .outerjoin(
                 Factory,
                 (links_cte.c.entity_type == EntityType.FACTORY)
