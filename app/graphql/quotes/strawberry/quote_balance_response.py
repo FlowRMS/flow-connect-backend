@@ -11,7 +11,7 @@ from app.core.db.adapters.dto import DTOMixin
 @strawberry.type
 class QuoteBalanceResponse(DTOMixin[QuoteBalance]):
     id: UUID
-    quantity: int
+    quantity: Decimal
     subtotal: Decimal
     total: Decimal
     commission: Decimal

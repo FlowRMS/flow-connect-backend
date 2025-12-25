@@ -23,7 +23,12 @@ depends_on: str | Sequence[str] | None = None
 def upgrade() -> None:
     _ = op.create_table(
         "quote_balances",
-        sa.Column("quantity", sa.Integer(), nullable=False, server_default="0"),
+        sa.Column(
+            "quantity",
+            sa.Numeric(precision=18, scale=6),
+            nullable=False,
+            server_default="0",
+        ),
         sa.Column(
             "subtotal",
             sa.Numeric(precision=18, scale=6),
@@ -183,7 +188,12 @@ def upgrade() -> None:
         "quote_details",
         sa.Column("quote_id", sa.UUID(), nullable=False),
         sa.Column("item_number", sa.Integer(), nullable=False),
-        sa.Column("quantity", sa.Integer(), nullable=False, server_default="0"),
+        sa.Column(
+            "quantity",
+            sa.Numeric(precision=18, scale=6),
+            nullable=False,
+            server_default="0",
+        ),
         sa.Column(
             "unit_price",
             sa.Numeric(precision=18, scale=6),
@@ -249,6 +259,12 @@ def upgrade() -> None:
         sa.Column("product_description_adhoc", sa.Text(), nullable=True),
         sa.Column("factory_id", sa.UUID(), nullable=True),
         sa.Column("end_user_id", sa.UUID(), nullable=True),
+        sa.Column("uom_id", sa.UUID(), nullable=True),
+        sa.Column(
+            "division_factor",
+            sa.Numeric(precision=18, scale=6),
+            nullable=True,
+        ),
         sa.Column("lead_time", sa.String(length=255), nullable=True),
         sa.Column("note", sa.String(length=2000), nullable=True),
         sa.Column("status", sa.SmallInteger(), nullable=False, server_default="0"),
@@ -273,6 +289,10 @@ def upgrade() -> None:
         sa.ForeignKeyConstraint(
             ["quote_id"],
             ["pycrm.quotes.id"],
+        ),
+        sa.ForeignKeyConstraint(
+            ["uom_id"],
+            ["pycore.product_uoms.id"],
         ),
         sa.PrimaryKeyConstraint("id"),
         schema="pycrm",

@@ -9,6 +9,10 @@ from app.core.db.adapters.dto import DTOMixin
 from app.graphql.quotes.strawberry.quote_split_rate_response import (
     QuoteSplitRateResponse,
 )
+from app.graphql.v2.core.products.strawberry.product_response import ProductLiteResponse
+from app.graphql.v2.core.products.strawberry.product_uom_response import (
+    ProductUomResponse,
+)
 
 
 @strawberry.type
@@ -17,7 +21,7 @@ class QuoteDetailResponse(DTOMixin[QuoteDetail]):
     id: UUID
     quote_id: UUID
     item_number: int
-    quantity: int
+    quantity: Decimal
     unit_price: Decimal
     subtotal: Decimal
     total: Decimal
@@ -68,3 +72,21 @@ class QuoteDetailResponse(DTOMixin[QuoteDetail]):
     @strawberry.field
     def split_rates(self) -> list[QuoteSplitRateResponse]:
         return QuoteSplitRateResponse.from_orm_model_list(self._instance.split_rates)
+
+    @strawberry.field
+    async def product(self) -> ProductLiteResponse | None:
+        if not self._instance.product_id:
+            return None
+
+        return ProductLiteResponse.from_orm_model(
+            await self._instance.awaitable_attrs.product
+        )
+
+    @strawberry.field
+    async def uom(self) -> ProductUomResponse | None:
+        if not self._instance.uom_id:
+            return None
+
+        return ProductUomResponse.from_orm_model(
+            await self._instance.awaitable_attrs.uom
+        )

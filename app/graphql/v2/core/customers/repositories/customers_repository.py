@@ -91,8 +91,6 @@ class CustomersRepository(BaseRepository[Customer]):
                 Customer.company_name,
                 Customer.published,
                 Customer.is_parent,
-                Customer.contact_email,
-                Customer.contact_number,
                 func.coalesce(inside_subq.c.inside_reps, empty_array).label(
                     "inside_reps"
                 ),

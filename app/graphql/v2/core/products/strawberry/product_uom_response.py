@@ -1,3 +1,4 @@
+from decimal import Decimal
 from typing import Self
 from uuid import UUID
 
@@ -12,8 +13,7 @@ class ProductUomResponse(DTOMixin[ProductUom]):
     id: UUID
     title: str
     description: str | None
-    multiply: bool
-    multiply_by: int
+    division_factor: Decimal | None
 
     @classmethod
     def from_orm_model(cls, model: ProductUom) -> Self:
@@ -21,6 +21,5 @@ class ProductUomResponse(DTOMixin[ProductUom]):
             id=model.id,
             title=model.title,
             description=model.description,
-            multiply=model.multiply,
-            multiply_by=model.multiply_by,
+            division_factor=model.division_factor,
         )

@@ -19,8 +19,6 @@ class CustomerLiteResponse(DTOMixin[Customer]):
     published: bool
     is_parent: bool
     parent_id: UUID | None
-    contact_email: str | None
-    contact_number: str | None
 
     @classmethod
     def from_orm_model(cls, model: Customer) -> Self:
@@ -31,8 +29,6 @@ class CustomerLiteResponse(DTOMixin[Customer]):
             published=model.published,
             is_parent=model.is_parent,
             parent_id=model.parent_id,
-            contact_email=model.contact_email,
-            contact_number=model.contact_number,
         )
 
 

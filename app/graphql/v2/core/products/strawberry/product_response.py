@@ -17,21 +17,6 @@ from app.graphql.v2.core.products.strawberry.product_uom_response import (
 
 @strawberry.type
 class ProductLiteResponse(DTOMixin[Product]):
-    id: UUID
-    factory_part_number: str
-    factory_id: UUID
-
-    @classmethod
-    def from_orm_model(cls, model: Product) -> Self:
-        return cls(
-            id=model.id,
-            factory_part_number=model.factory_part_number,
-            factory_id=model.factory_id,
-        )
-
-
-@strawberry.type
-class ProductResponse(DTOMixin[Product]):
     _instance: strawberry.Private[Product]
     id: UUID
     factory_part_number: str
@@ -54,6 +39,9 @@ class ProductResponse(DTOMixin[Product]):
             description=model.description,
         )
 
+
+@strawberry.type
+class ProductResponse(ProductLiteResponse):
     @strawberry.field
     async def factory(self) -> FactoryResponse:
         return FactoryResponse.from_orm_model(

@@ -21,7 +21,7 @@ class QuoteBalanceRepository(BaseRepository[QuoteBalance]):
         details: Sequence[QuoteDetail],
         balance_id: UUID | None = None,
     ) -> QuoteBalance:
-        quantity = sum(detail.quantity for detail in details)
+        quantity = self._sum_decimal([detail.quantity for detail in details])
         subtotal = self._sum_decimal([detail.subtotal for detail in details])
         discount = self._sum_decimal([detail.discount for detail in details])
         total = subtotal - discount

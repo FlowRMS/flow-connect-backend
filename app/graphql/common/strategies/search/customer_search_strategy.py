@@ -1,7 +1,6 @@
 from typing import Any, override
 
 from commons.db.v6.core.customers.customer import Customer
-from sqlalchemy import func
 from sqlalchemy.orm import InstrumentedAttribute
 
 from app.graphql.common.builders.search_query_builder import SearchQueryBuilder
@@ -14,15 +13,11 @@ class CustomerSearchQueryBuilder(SearchQueryBuilder[Customer]):
     def get_searchable_fields(
         self,
     ) -> list[InstrumentedAttribute[str] | InstrumentedAttribute[str | None]]:
-        return [Customer.company_name, Customer.contact_email, Customer.contact_number]
+        return [Customer.company_name]
 
     @override
     def get_title_field(self) -> InstrumentedAttribute[str]:
         return Customer.company_name
-
-    @override
-    def get_alias_field(self) -> Any | None:
-        return func.coalesce(Customer.contact_email, Customer.contact_number)
 
 
 class CustomerSearchStrategy(SearchQueryStrategy):

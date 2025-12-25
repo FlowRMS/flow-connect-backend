@@ -53,6 +53,7 @@ class QuoteService:
                 joinedload(Quote.details),
                 joinedload(Quote.details).joinedload(QuoteDetail.product),
                 joinedload(Quote.details).joinedload(QuoteDetail.split_rates),
+                joinedload(Quote.details).joinedload(QuoteDetail.uom),
                 joinedload(Quote.inside_reps),
                 joinedload(Quote.balance),
                 joinedload(Quote.sold_to_customer),

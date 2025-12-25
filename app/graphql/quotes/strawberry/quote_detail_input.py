@@ -11,10 +11,12 @@ from app.graphql.quotes.strawberry.quote_split_rate_input import QuoteSplitRateI
 @strawberry.input
 class QuoteDetailInput(BaseInputGQL[QuoteDetail]):
     item_number: int
-    quantity: int
+    quantity: Decimal
     unit_price: Decimal
 
     id: UUID | None = None
+    uom_id: UUID | None = None
+    division_factor: Decimal | None = None
     product_id: UUID | None = None
     product_name_adhoc: str | None = None
     product_description_adhoc: str | None = None
@@ -56,6 +58,8 @@ class QuoteDetailInput(BaseInputGQL[QuoteDetail]):
             product_description_adhoc=self.product_description_adhoc,
             factory_id=self.factory_id,
             end_user_id=self.end_user_id,
+            uom_id=self.uom_id,
+            division_factor=self.division_factor,
             lead_time=self.lead_time,
             note=self.note,
             status=self.status,

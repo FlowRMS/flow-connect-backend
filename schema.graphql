@@ -245,8 +245,6 @@ input CustomerInput {
   published: Boolean! = false
   isParent: Boolean! = false
   parentId: UUID = null
-  contactEmail: String = null
-  contactNumber: String = null
 }
 
 type CustomerLandingPage implements LandingPageInterfaceBase {
@@ -257,8 +255,6 @@ type CustomerLandingPage implements LandingPageInterfaceBase {
   companyName: String!
   published: Boolean!
   isParent: Boolean!
-  contactEmail: String
-  contactNumber: String
   insideReps: [String!]!
   outsideReps: [String!]!
 }
@@ -269,8 +265,6 @@ type CustomerLiteResponse {
   published: Boolean!
   isParent: Boolean!
   parentId: UUID
-  contactEmail: String
-  contactNumber: String
 }
 
 type CustomerResponse {
@@ -279,8 +273,6 @@ type CustomerResponse {
   published: Boolean!
   isParent: Boolean!
   parentId: UUID
-  contactEmail: String
-  contactNumber: String
   createdBy: UserResponse!
   outsideReps: [CustomerSplitRateResponse!]!
   insideReps: [CustomerSplitRateResponse!]!
@@ -1066,7 +1058,11 @@ type ProductLandingPage implements LandingPageInterfaceBase {
 type ProductLiteResponse {
   id: UUID!
   factoryPartNumber: String!
-  factoryId: UUID!
+  unitPrice: Decimal!
+  defaultCommissionRate: Decimal!
+  published: Boolean!
+  approvalNeeded: Boolean
+  description: String
 }
 
 type ProductResponse {
@@ -1084,8 +1080,7 @@ type ProductResponse {
 
 input ProductUomInput {
   title: String!
-  multiply: Boolean!
-  multiplyBy: Int!
+  divisionFactor: Decimal = null
   description: String = null
 }
 
@@ -1093,8 +1088,7 @@ type ProductUomResponse {
   id: UUID!
   title: String!
   description: String
-  multiply: Boolean!
-  multiplyBy: Int!
+  divisionFactor: Decimal
 }
 
 type Query {
@@ -1120,7 +1114,6 @@ type Query {
   o365CalendarEvents(top: Int! = 50, skip: Int! = 0): O365CalendarEventsResultType!
   o365CalendarEventsInRange(startDate: datetime!, endDate: datetime!, top: Int! = 100): O365CalendarEventsResultType!
   invoiceSearch(searchTerm: String!, limit: Int! = 20): [InvoiceResponse!]!
-  dummyField: String!
   job(id: UUID!): JobType!
   jobStatuses: [JobStatusType!]!
   jobRelatedEntities(jobId: UUID!): JobRelatedEntitiesResponse!
@@ -1169,7 +1162,7 @@ type Query {
 
 type QuoteBalanceResponse {
   id: UUID!
-  quantity: Int!
+  quantity: Decimal!
   subtotal: Decimal!
   total: Decimal!
   commission: Decimal!
@@ -1182,9 +1175,11 @@ type QuoteBalanceResponse {
 
 input QuoteDetailInput {
   itemNumber: Int!
-  quantity: Int!
+  quantity: Decimal!
   unitPrice: Decimal!
   id: UUID = null
+  uomId: UUID = null
+  divisionFactor: Decimal = null
   productId: UUID = null
   productNameAdhoc: String = null
   productDescriptionAdhoc: String = null
@@ -1203,7 +1198,7 @@ type QuoteDetailResponse {
   id: UUID!
   quoteId: UUID!
   itemNumber: Int!
-  quantity: Int!
+  quantity: Decimal!
   unitPrice: Decimal!
   subtotal: Decimal!
   total: Decimal!
@@ -1223,6 +1218,8 @@ type QuoteDetailResponse {
   note: String
   status: QuoteDetailStatus!
   splitRates: [QuoteSplitRateResponse!]!
+  product: ProductLiteResponse
+  uom: ProductUomResponse
 }
 
 enum QuoteDetailStatus {
