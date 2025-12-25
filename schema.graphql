@@ -240,7 +240,8 @@ enum CriteriaOperator {
 
 input CustomerInput {
   companyName: String!
-  splitRates: [CustomerSplitRateInput!]! = []
+  insideSplitRates: [InsideSplitRateInput!]! = []
+  outsideSplitRates: [OutsideSplitRateInput!]! = []
   published: Boolean! = false
   isParent: Boolean! = false
   parentId: UUID = null
@@ -283,14 +284,6 @@ type CustomerResponse {
   createdBy: UserResponse!
   outsideReps: [CustomerSplitRateResponse!]!
   insideReps: [CustomerSplitRateResponse!]!
-}
-
-input CustomerSplitRateInput {
-  userId: UUID!
-  repType: RepTypeEnum!
-  splitRate: Decimal!
-  position: Int!
-  id: UUID = null
 }
 
 type CustomerSplitRateResponse {
@@ -518,6 +511,13 @@ type HighlightVersionResponse {
   regionCount: Int!
   createdAt: datetime!
   createdBy: UserResponse!
+}
+
+input InsideSplitRateInput {
+  userId: UUID!
+  splitRate: Decimal!
+  position: Int!
+  id: UUID = null
 }
 
 type InvoiceResponse {
@@ -875,6 +875,13 @@ type OrderResponse {
   factSoNumber: String
   quoteId: UUID
   url: String!
+}
+
+input OutsideSplitRateInput {
+  userId: UUID!
+  splitRate: Decimal!
+  position: Int!
+  id: UUID = null
 }
 
 enum PipelineStage {
