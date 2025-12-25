@@ -201,6 +201,13 @@ input CreateSpecSheetInput {
   file: Upload = null
 }
 
+enum CreationType {
+  MANUAL
+  IMPORT
+  API
+  DUPLICATION
+}
+
 input CriteriaConditionInput {
   entityType: EntityType!
   field: String!
@@ -588,7 +595,7 @@ interface LandingPageInterfaceBase {
   createdBy: String!
 }
 
-union LandingRecord = JobLandingPage | CompanyLandingPage | ContactLandingPage | PreOpportunityLandingPage | NoteLandingPage | TaskLandingPage | CampaignLandingPage | CustomerLandingPage | FactoryLandingPage | ProductLandingPage
+union LandingRecord = JobLandingPage | CompanyLandingPage | ContactLandingPage | PreOpportunityLandingPage | NoteLandingPage | TaskLandingPage | CampaignLandingPage | CustomerLandingPage | FactoryLandingPage | ProductLandingPage | QuoteLandingPage
 
 enum LandingSourceType {
   JOBS
@@ -601,6 +608,7 @@ enum LandingSourceType {
   CUSTOMERS
   FACTORIES
   PRODUCTS
+  QUOTES
 }
 
 input LinkRelationInput {
@@ -673,6 +681,11 @@ type Mutation {
   createPreOpportunity(input: PreOpportunityInput!): PreOpportunityResponse!
   updatePreOpportunity(input: PreOpportunityInput!): PreOpportunityResponse!
   deletePreOpportunity(id: UUID!): Boolean!
+  createQuote(input: QuoteInput!): QuoteFullResponse!
+  updateQuote(input: QuoteInput!): QuoteFullResponse!
+  deleteQuote(id: UUID!): Boolean!
+  createQuoteFromPreOpportunity(preOpportunityId: UUID!, quoteNumber: String!): QuoteFullResponse!
+  duplicateQuote(sourceQuoteId: UUID!, newQuoteNumber: String!): QuoteFullResponse!
   createHighlightVersion(input: CreateHighlightVersionInput!): HighlightVersionResponse!
   updateHighlightVersion(id: UUID!, input: UpdateHighlightVersionInput!): HighlightVersionResponse!
   updateHighlightRegions(input: UpdateHighlightRegionsInput!): HighlightVersionResponse!
@@ -838,13 +851,22 @@ type OrderResponse {
   factoryId: UUID
   soldToCustomerId: UUID
   billToCustomerId: UUID
-  jobName: String
   entityDate: Date!
   shipDate: Date
   dueDate: Date!
   factSoNumber: String
   quoteId: UUID
   url: String!
+}
+
+enum PipelineStage {
+  DISCOVERY
+  PROSPECT
+  QUALIFICATION
+  PROPOSAL
+  NEGOTIATION
+  CLOSED_WON
+  CLOSED_LOST
 }
 
 type PreOpportunityBalanceResponse {
@@ -1091,7 +1113,8 @@ type Query {
   orderSearch(searchTerm: String!, limit: Int! = 20): [OrderResponse!]!
   preOpportunity(id: UUID!): PreOpportunityResponse!
   preOpportunitySearch(searchTerm: String!, limit: Int! = 20): [PreOpportunityLiteResponse!]!
-  quoteSearch(searchTerm: String!, limit: Int! = 20): [QuoteResponse!]!
+  quote(id: UUID!): QuoteFullResponse!
+  quoteSearch(searchTerm: String!, limit: Int! = 20): [QuoteLiteResponse!]!
   highlightVersion(id: UUID!): HighlightVersionResponse
   highlightVersionsBySpecSheet(specSheetId: UUID!, activeOnly: Boolean! = false): [HighlightVersionResponse!]!
   specSheet(id: UUID!): SpecSheetResponse
@@ -1117,17 +1140,211 @@ type Query {
   getRbacGrid: [RbacGridResponse!]!
 }
 
+type QuoteBalanceResponse {
+  id: UUID!
+  quantity: Int!
+  subtotal: Decimal!
+  total: Decimal!
+  commission: Decimal!
+  discount: Decimal!
+  discountRate: Decimal!
+  commissionRate: Decimal!
+  commissionDiscount: Decimal!
+  commissionDiscountRate: Decimal!
+}
+
+input QuoteDetailInput {
+  itemNumber: Int!
+  quantity: Int!
+  unitPrice: Decimal!
+  id: UUID = null
+  productId: UUID = null
+  productNameAdhoc: String = null
+  productDescriptionAdhoc: String = null
+  factoryId: UUID = null
+  endUserId: UUID = null
+  leadTime: String = null
+  note: String = null
+  status: QuoteDetailStatus! = OPEN
+  discountRate: Decimal! = "0.0000"
+  commissionRate: Decimal! = "0.0000"
+  commissionDiscountRate: Decimal! = "0.0000"
+  splitRates: [QuoteSplitRateInput!] = null
+}
+
+type QuoteDetailResponse {
+  id: UUID!
+  quoteId: UUID!
+  itemNumber: Int!
+  quantity: Int!
+  unitPrice: Decimal!
+  subtotal: Decimal!
+  total: Decimal!
+  totalLineCommission: Decimal!
+  commissionRate: Decimal!
+  commission: Decimal!
+  commissionDiscountRate: Decimal!
+  commissionDiscount: Decimal!
+  discountRate: Decimal!
+  discount: Decimal!
+  productId: UUID
+  productNameAdhoc: String
+  productDescriptionAdhoc: String
+  factoryId: UUID
+  endUserId: UUID
+  leadTime: String
+  note: String
+  status: QuoteDetailStatus!
+  splitRates: [QuoteSplitRateResponse!]!
+}
+
+enum QuoteDetailStatus {
+  OPEN
+  ORDERED
+  LOST
+}
+
+type QuoteFullResponse {
+  id: UUID!
+  createdAt: datetime!
+  createdById: UUID!
+  quoteNumber: String!
+  entityDate: Date!
+  status: QuoteStatus!
+  pipelineStage: PipelineStage!
+  published: Boolean!
+  creationType: CreationType!
+  soldToCustomerId: UUID!
+  billToCustomerId: UUID
+  paymentTerms: String
+  customerRef: String
+  freightTerms: String
+  expDate: Date
+  reviseDate: Date
+  acceptDate: Date
+  blanket: Boolean!
+  duplicatedFrom: UUID
+  versionOf: UUID
+  balanceId: UUID!
+  url: String!
+  balance: QuoteBalanceResponse!
+  details: [QuoteDetailResponse!]!
+  insideReps: [QuoteInsideRepResponse!]!
+}
+
+input QuoteInput {
+  quoteNumber: String!
+  entityDate: Date!
+  soldToCustomerId: UUID!
+  status: QuoteStatus!
+  pipelineStage: PipelineStage!
+  details: [QuoteDetailInput!]!
+  id: UUID
+  published: Boolean!
+  creationType: CreationType!
+  billToCustomerId: UUID
+  paymentTerms: String
+  customerRef: String
+  freightTerms: String
+  expDate: Date
+  reviseDate: Date
+  acceptDate: Date
+  blanket: Boolean!
+  insideReps: [QuoteInsideRepInput!]
+}
+
+input QuoteInsideRepInput {
+  userId: UUID!
+  splitRate: Decimal!
+  position: Int! = 0
+  salesAmount: Decimal! = "0.0000"
+  commissionAmount: Decimal! = "0.0000"
+  id: UUID = null
+}
+
+type QuoteInsideRepResponse {
+  id: UUID!
+  createdAt: datetime!
+  createdById: UUID!
+  quoteId: UUID!
+  userId: UUID!
+  splitRate: Decimal!
+  salesAmount: Decimal!
+  commissionAmount: Decimal!
+  position: Int!
+}
+
+type QuoteLandingPage implements LandingPageInterfaceBase {
+  id: UUID!
+  createdAt: datetime!
+  createdBy: String!
+  quoteNumber: String!
+  status: String!
+  pipelineStage: String!
+  entityDate: Date!
+  expDate: Date
+  total: Decimal!
+  published: Boolean!
+}
+
+type QuoteLiteResponse {
+  id: UUID!
+  createdAt: datetime!
+  createdById: UUID!
+  quoteNumber: String!
+  entityDate: Date!
+  status: QuoteStatus!
+  pipelineStage: PipelineStage!
+  published: Boolean!
+  creationType: CreationType!
+  soldToCustomerId: UUID!
+  billToCustomerId: UUID
+  paymentTerms: String
+  customerRef: String
+  freightTerms: String
+  expDate: Date
+  reviseDate: Date
+  acceptDate: Date
+  blanket: Boolean!
+  duplicatedFrom: UUID
+  versionOf: UUID
+  balanceId: UUID!
+  url: String!
+}
+
 type QuoteResponse {
   id: UUID!
   quoteNumber: String!
   entityDate: Date!
-  createdBy: UUID!
-  soldToCustomerId: UUID
+  createdById: UUID!
+  soldToCustomerId: UUID!
   billToCustomerId: UUID
-  jobName: String
   expDate: Date
   blanket: Boolean!
   url: String!
+}
+
+input QuoteSplitRateInput {
+  userId: UUID!
+  splitRate: Decimal!
+  position: Int! = 0
+  id: UUID = null
+}
+
+type QuoteSplitRateResponse {
+  id: UUID!
+  createdAt: datetime!
+  quoteDetailId: UUID!
+  userId: UUID!
+  splitRate: Decimal!
+  position: Int!
+}
+
+enum QuoteStatus {
+  OPEN
+  ORDERED
+  EXPIRED
+  LOST
 }
 
 input RbacGridInput {

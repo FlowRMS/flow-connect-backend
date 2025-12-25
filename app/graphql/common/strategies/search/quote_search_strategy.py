@@ -14,7 +14,7 @@ class QuoteSearchQueryBuilder(SearchQueryBuilder[Quote]):
     def get_searchable_fields(
         self,
     ) -> list[InstrumentedAttribute[str] | InstrumentedAttribute[str | None]]:
-        return [Quote.quote_number, Quote.job_name]
+        return [Quote.quote_number, Quote.customer_ref]
 
     @override
     def get_title_field(self) -> InstrumentedAttribute[str]:
@@ -22,7 +22,7 @@ class QuoteSearchQueryBuilder(SearchQueryBuilder[Quote]):
 
     @override
     def get_alias_field(self) -> Any | None:
-        return func.coalesce(Quote.job_name)
+        return func.coalesce(Quote.customer_ref)
 
 
 class QuoteSearchStrategy(SearchQueryStrategy):

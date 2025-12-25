@@ -20,7 +20,6 @@ class OrderResponse(DTOMixin[Order]):
     factory_id: UUID | None
     sold_to_customer_id: UUID | None
     bill_to_customer_id: UUID | None
-    job_name: str | None
     entity_date: date
     ship_date: date | None
     due_date: date
@@ -38,7 +37,6 @@ class OrderResponse(DTOMixin[Order]):
             factory_id=model.factory_id,
             sold_to_customer_id=model.sold_to_customer_id,
             bill_to_customer_id=model.bill_to_customer_id,
-            job_name=model.job_name,
             entity_date=model.entity_date,
             ship_date=model.ship_date,
             due_date=model.due_date,

@@ -1,0 +1,70 @@
+from decimal import Decimal
+from uuid import UUID
+
+import strawberry
+from commons.db.v6.crm.quotes import QuoteDetail, QuoteDetailStatus
+
+from app.core.strawberry.inputs import BaseInputGQL
+from app.graphql.quotes.strawberry.quote_split_rate_input import QuoteSplitRateInput
+
+
+@strawberry.input
+class QuoteDetailInput(BaseInputGQL[QuoteDetail]):
+    item_number: int
+    quantity: int
+    unit_price: Decimal
+
+    id: UUID | None = None
+    product_id: UUID | None = None
+    product_name_adhoc: str | None = None
+    product_description_adhoc: str | None = None
+    factory_id: UUID | None = None
+    end_user_id: UUID | None = None
+    lead_time: str | None = None
+    note: str | None = None
+    status: QuoteDetailStatus = QuoteDetailStatus.OPEN
+    discount_rate: Decimal = Decimal("0")
+    commission_rate: Decimal = Decimal("0")
+    commission_discount_rate: Decimal = Decimal("0")
+    split_rates: list[QuoteSplitRateInput] | None = None
+
+    def to_orm_model(self) -> QuoteDetail:
+        subtotal = self.quantity * self.unit_price
+        discount = subtotal * (self.discount_rate / Decimal("100"))
+        total = subtotal - discount
+        commission = total * (self.commission_rate / Decimal("100"))
+        commission_discount = commission * (
+            self.commission_discount_rate / Decimal("100")
+        )
+        total_line_commission = commission - commission_discount
+
+        detail = QuoteDetail(
+            item_number=self.item_number,
+            quantity=self.quantity,
+            unit_price=self.unit_price,
+            subtotal=subtotal,
+            discount_rate=self.discount_rate,
+            discount=discount,
+            total=total,
+            commission_rate=self.commission_rate,
+            commission=commission,
+            commission_discount_rate=self.commission_discount_rate,
+            commission_discount=commission_discount,
+            total_line_commission=total_line_commission,
+            product_id=self.product_id,
+            product_name_adhoc=self.product_name_adhoc,
+            product_description_adhoc=self.product_description_adhoc,
+            factory_id=self.factory_id,
+            end_user_id=self.end_user_id,
+            lead_time=self.lead_time,
+            note=self.note,
+            status=self.status,
+            split_rates=(
+                [sr.to_orm_model() for sr in self.split_rates]
+                if self.split_rates
+                else []
+            ),
+        )
+        if self.id:
+            detail.id = self.id
+        return detail

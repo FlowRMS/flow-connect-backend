@@ -25,6 +25,9 @@ from app.graphql.notes.strawberry.note_landing_page_response import (
 from app.graphql.pre_opportunities.strawberry.pre_opportunity_landing_page_response import (
     PreOpportunityLandingPageResponse,
 )
+from app.graphql.quotes.strawberry.quote_landing_page_response import (
+    QuoteLandingPageResponse,
+)
 from app.graphql.tasks.strawberry.task_landing_page_response import (
     TaskLandingPageResponse,
 )
@@ -51,6 +54,7 @@ LandingRecord = strawberry.union(
         CustomerLandingPageResponse,
         FactoryLandingPageResponse,
         ProductLandingPageResponse,
+        QuoteLandingPageResponse,
     ],
 )
 

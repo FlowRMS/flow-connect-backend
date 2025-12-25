@@ -144,7 +144,6 @@ class AdminUserService:
         if not workos_org_id:
             raise ValueError(f"WorkOS organization not found for tenant {tenant.name}")
 
-        user_id = uuid.uuid4()
         username = input.username or input.email
 
         auth_user = await self.workos_service.create_user(
@@ -152,7 +151,7 @@ class AdminUserService:
                 email=input.email,
                 tenant_id=workos_org_id,
                 role=input.role,
-                external_id=user_id,
+                external_id=uuid.uuid4(),
                 first_name=input.first_name,
                 last_name=input.last_name,
                 email_verified=False,
@@ -164,7 +163,7 @@ class AdminUserService:
         database_url = await self._get_tenant_database_url(tenant)
         await self._create_user_in_tenant_db(
             database_url=database_url,
-            user_id=user_id,
+            user_id=auth_user.external_id,
             email=input.email,
             username=username,
             workos_user_id=auth_user.id,
@@ -177,7 +176,7 @@ class AdminUserService:
         )
 
         return AdminUserData(
-            id=user_id,
+            id=auth_user.external_id,
             username=username,
             first_name=input.first_name,
             last_name=input.last_name,
