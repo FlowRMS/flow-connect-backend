@@ -5,8 +5,8 @@ from aioinject import Injected
 
 from app.graphql.inject import inject
 from app.graphql.quotes.services.quote_service import QuoteService
-from app.graphql.quotes.strawberry.quote_full_response import QuoteFullResponse
 from app.graphql.quotes.strawberry.quote_input import QuoteInput
+from app.graphql.quotes.strawberry.quote_response import QuoteResponse
 
 
 @strawberry.type
@@ -17,9 +17,9 @@ class QuotesMutations:
         self,
         input: QuoteInput,
         service: Injected[QuoteService],
-    ) -> QuoteFullResponse:
+    ) -> QuoteResponse:
         quote = await service.create_quote(quote_input=input)
-        return QuoteFullResponse.from_orm_model(quote)
+        return QuoteResponse.from_orm_model(quote)
 
     @strawberry.mutation
     @inject
@@ -27,9 +27,9 @@ class QuotesMutations:
         self,
         input: QuoteInput,
         service: Injected[QuoteService],
-    ) -> QuoteFullResponse:
+    ) -> QuoteResponse:
         quote = await service.update_quote(quote_input=input)
-        return QuoteFullResponse.from_orm_model(quote)
+        return QuoteResponse.from_orm_model(quote)
 
     @strawberry.mutation
     @inject
@@ -47,12 +47,12 @@ class QuotesMutations:
         pre_opportunity_id: UUID,
         quote_number: str,
         service: Injected[QuoteService],
-    ) -> QuoteFullResponse:
+    ) -> QuoteResponse:
         quote = await service.create_quote_from_pre_opportunity(
             pre_opportunity_id=pre_opportunity_id,
             quote_number=quote_number,
         )
-        return QuoteFullResponse.from_orm_model(quote)
+        return QuoteResponse.from_orm_model(quote)
 
     @strawberry.mutation
     @inject
@@ -61,9 +61,9 @@ class QuotesMutations:
         source_quote_id: UUID,
         new_quote_number: str,
         service: Injected[QuoteService],
-    ) -> QuoteFullResponse:
+    ) -> QuoteResponse:
         quote = await service.duplicate_quote(
             source_quote_id=source_quote_id,
             new_quote_number=new_quote_number,
         )
-        return QuoteFullResponse.from_orm_model(quote)
+        return QuoteResponse.from_orm_model(quote)

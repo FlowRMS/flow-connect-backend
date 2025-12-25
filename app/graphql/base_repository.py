@@ -125,7 +125,9 @@ class BaseRepository(Generic[T]):
 
         return entity
 
-    async def get_by_id(self, entity_id: UUID | str) -> T | None:
+    async def get_by_id(
+        self, entity_id: UUID | str, options: list[ExecutableOption] | None = None
+    ) -> T | None:
         """
         Get an entity by its ID.
 
@@ -137,11 +139,14 @@ class BaseRepository(Generic[T]):
         """
         if isinstance(entity_id, str):
             entity_id = UUID(entity_id)
+        stmt = select(self.model_class).where(self.model_class.id == entity_id)
 
-        result = await self.session.execute(
-            select(self.model_class).where(self.model_class.id == entity_id)
+        if options:
+            stmt = stmt.options(*options)
+        result = await self.execute(
+            stmt,
         )
-        return result.scalar_one_or_none()
+        return result.unique().scalar_one_or_none()
 
     async def list_all(self, limit: int | None = None, offset: int = 0) -> list[T]:
         """

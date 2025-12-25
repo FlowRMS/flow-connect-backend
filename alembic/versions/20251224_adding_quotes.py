@@ -160,30 +160,13 @@ def upgrade() -> None:
             nullable=False,
             server_default="0",
         ),
-        sa.Column(
-            "sales_amount",
-            sa.Numeric(precision=18, scale=6),
-            nullable=False,
-            server_default="0",
-        ),
-        sa.Column(
-            "commission_amount",
-            sa.Numeric(precision=18, scale=6),
-            nullable=False,
-            server_default="0",
-        ),
         sa.Column("position", sa.Integer(), nullable=False, server_default="0"),
         sa.Column("id", sa.UUID(), nullable=False),
-        sa.Column("created_by_id", sa.UUID(), nullable=False),
         sa.Column(
             "created_at",
             postgresql.TIMESTAMP(timezone=True),
             server_default=sa.text("now()"),
             nullable=False,
-        ),
-        sa.ForeignKeyConstraint(
-            ["created_by_id"],
-            ["pyuser.users.id"],
         ),
         sa.ForeignKeyConstraint(
             ["quote_id"],

@@ -262,6 +262,16 @@ type CustomerLandingPage implements LandingPageInterfaceBase {
   outsideReps: [String!]!
 }
 
+type CustomerLiteResponse {
+  id: UUID!
+  companyName: String!
+  published: Boolean!
+  isParent: Boolean!
+  parentId: UUID
+  contactEmail: String
+  contactNumber: String
+}
+
 type CustomerResponse {
   id: UUID!
   companyName: String!
@@ -688,11 +698,11 @@ type Mutation {
   createPreOpportunity(input: PreOpportunityInput!): PreOpportunityResponse!
   updatePreOpportunity(input: PreOpportunityInput!): PreOpportunityResponse!
   deletePreOpportunity(id: UUID!): Boolean!
-  createQuote(input: QuoteInput!): QuoteFullResponse!
-  updateQuote(input: QuoteInput!): QuoteFullResponse!
+  createQuote(input: QuoteInput!): QuoteResponse!
+  updateQuote(input: QuoteInput!): QuoteResponse!
   deleteQuote(id: UUID!): Boolean!
-  createQuoteFromPreOpportunity(preOpportunityId: UUID!, quoteNumber: String!): QuoteFullResponse!
-  duplicateQuote(sourceQuoteId: UUID!, newQuoteNumber: String!): QuoteFullResponse!
+  createQuoteFromPreOpportunity(preOpportunityId: UUID!, quoteNumber: String!): QuoteResponse!
+  duplicateQuote(sourceQuoteId: UUID!, newQuoteNumber: String!): QuoteResponse!
   createHighlightVersion(input: CreateHighlightVersionInput!): HighlightVersionResponse!
   updateHighlightVersion(id: UUID!, input: UpdateHighlightVersionInput!): HighlightVersionResponse!
   updateHighlightRegions(input: UpdateHighlightRegionsInput!): HighlightVersionResponse!
@@ -1123,7 +1133,7 @@ type Query {
   orderSearch(searchTerm: String!, limit: Int! = 20): [OrderResponse!]!
   preOpportunity(id: UUID!): PreOpportunityResponse!
   preOpportunitySearch(searchTerm: String!, limit: Int! = 20): [PreOpportunityLiteResponse!]!
-  quote(id: UUID!): QuoteFullResponse!
+  findQuoteById(id: UUID!): QuoteResponse!
   quoteSearch(searchTerm: String!, limit: Int! = 20): [QuoteLiteResponse!]!
   highlightVersion(id: UUID!): HighlightVersionResponse
   highlightVersionsBySpecSheet(specSheetId: UUID!, activeOnly: Boolean! = false): [HighlightVersionResponse!]!
@@ -1214,34 +1224,6 @@ enum QuoteDetailStatus {
   LOST
 }
 
-type QuoteFullResponse {
-  id: UUID!
-  createdAt: datetime!
-  createdById: UUID!
-  quoteNumber: String!
-  entityDate: Date!
-  status: QuoteStatus!
-  pipelineStage: PipelineStage!
-  published: Boolean!
-  creationType: CreationType!
-  soldToCustomerId: UUID!
-  billToCustomerId: UUID
-  paymentTerms: String
-  customerRef: String
-  freightTerms: String
-  expDate: Date
-  reviseDate: Date
-  acceptDate: Date
-  blanket: Boolean!
-  duplicatedFrom: UUID
-  versionOf: UUID
-  balanceId: UUID!
-  url: String!
-  balance: QuoteBalanceResponse!
-  details: [QuoteDetailResponse!]!
-  insideReps: [QuoteInsideRepResponse!]!
-}
-
 input QuoteInput {
   quoteNumber: String!
   entityDate: Date!
@@ -1267,20 +1249,15 @@ input QuoteInsideRepInput {
   userId: UUID!
   splitRate: Decimal!
   position: Int! = 0
-  salesAmount: Decimal! = "0.0000"
-  commissionAmount: Decimal! = "0.0000"
   id: UUID = null
 }
 
 type QuoteInsideRepResponse {
   id: UUID!
   createdAt: datetime!
-  createdById: UUID!
   quoteId: UUID!
   userId: UUID!
   splitRate: Decimal!
-  salesAmount: Decimal!
-  commissionAmount: Decimal!
   position: Int!
 }
 
@@ -1325,14 +1302,33 @@ type QuoteLiteResponse {
 
 type QuoteResponse {
   id: UUID!
+  createdAt: datetime!
+  createdById: UUID!
   quoteNumber: String!
   entityDate: Date!
-  createdById: UUID!
+  status: QuoteStatus!
+  pipelineStage: PipelineStage!
+  published: Boolean!
+  creationType: CreationType!
   soldToCustomerId: UUID!
   billToCustomerId: UUID
+  paymentTerms: String
+  customerRef: String
+  freightTerms: String
   expDate: Date
+  reviseDate: Date
+  acceptDate: Date
   blanket: Boolean!
+  duplicatedFrom: UUID
+  versionOf: UUID
+  balanceId: UUID!
   url: String!
+  createdBy: UserResponse!
+  soldToCustomer: CustomerLiteResponse!
+  billToCustomer: CustomerLiteResponse
+  balance: QuoteBalanceResponse!
+  details: [QuoteDetailResponse!]!
+  insideReps: [QuoteInsideRepResponse!]!
 }
 
 input QuoteSplitRateInput {

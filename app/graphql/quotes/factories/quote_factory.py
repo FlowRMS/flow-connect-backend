@@ -126,8 +126,6 @@ class QuoteFactory:
                 user_id=rep.user_id,
                 split_rate=rep.split_rate,
                 position=rep.position,
-                sales_amount=rep.sales_amount,
-                commission_amount=rep.commission_amount,
             )
             for rep in inside_reps
         ]

@@ -12,8 +12,6 @@ class QuoteInsideRepInput(BaseInputGQL[QuoteInsideRep]):
     user_id: UUID
     split_rate: Decimal
     position: int = 0
-    sales_amount: Decimal = Decimal("0")
-    commission_amount: Decimal = Decimal("0")
     id: UUID | None = None
 
     def to_orm_model(self) -> QuoteInsideRep:
@@ -21,8 +19,6 @@ class QuoteInsideRepInput(BaseInputGQL[QuoteInsideRep]):
             user_id=self.user_id,
             split_rate=self.split_rate,
             position=self.position,
-            sales_amount=self.sales_amount,
-            commission_amount=self.commission_amount,
         )
         if self.id:
             inside_rep.id = self.id

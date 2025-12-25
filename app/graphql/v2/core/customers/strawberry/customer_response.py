@@ -12,7 +12,7 @@ from app.graphql.v2.core.users.strawberry.user_response import UserResponse
 
 
 @strawberry.type
-class CustomerResponse(DTOMixin[Customer]):
+class CustomerLiteResponse(DTOMixin[Customer]):
     _instance: strawberry.Private[Customer]
     id: UUID
     company_name: str
@@ -35,6 +35,9 @@ class CustomerResponse(DTOMixin[Customer]):
             contact_number=model.contact_number,
         )
 
+
+@strawberry.type
+class CustomerResponse(CustomerLiteResponse):
     @strawberry.field
     async def created_by(self) -> UserResponse:
         return UserResponse.from_orm_model(

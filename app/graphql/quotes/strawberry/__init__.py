@@ -1,7 +1,6 @@
 from app.graphql.quotes.strawberry.quote_balance_response import QuoteBalanceResponse
 from app.graphql.quotes.strawberry.quote_detail_input import QuoteDetailInput
 from app.graphql.quotes.strawberry.quote_detail_response import QuoteDetailResponse
-from app.graphql.quotes.strawberry.quote_full_response import QuoteFullResponse
 from app.graphql.quotes.strawberry.quote_input import QuoteInput
 from app.graphql.quotes.strawberry.quote_inside_rep_input import QuoteInsideRepInput
 from app.graphql.quotes.strawberry.quote_inside_rep_response import (
@@ -21,7 +20,7 @@ __all__ = [
     "QuoteBalanceResponse",
     "QuoteDetailInput",
     "QuoteDetailResponse",
-    "QuoteFullResponse",
+    "QuoteResponse",
     "QuoteInput",
     "QuoteInsideRepInput",
     "QuoteInsideRepResponse",

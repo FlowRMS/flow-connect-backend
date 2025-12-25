@@ -1,8 +1,9 @@
 from uuid import UUID
 
 from commons.auth import AuthInfo
+from commons.db.v6.crm import Quote, QuoteDetail
 from commons.db.v6.crm.links.entity_type import EntityType
-from commons.db.v6.crm.quotes import Quote
+from sqlalchemy.orm import joinedload, lazyload
 
 from app.errors.common_errors import NameAlreadyExistsError, NotFoundError
 from app.graphql.pre_opportunities.repositories.pre_opportunities_repository import (
@@ -46,7 +47,20 @@ class QuoteService:
         return await self.repository.delete(quote_id)
 
     async def find_quote_by_id(self, quote_id: UUID) -> Quote:
-        quote = await self.repository.get_by_id(quote_id)
+        quote = await self.repository.get_by_id(
+            quote_id,
+            options=[
+                joinedload(Quote.details),
+                joinedload(Quote.details).joinedload(QuoteDetail.product),
+                joinedload(Quote.details).joinedload(QuoteDetail.split_rates),
+                joinedload(Quote.inside_reps),
+                joinedload(Quote.balance),
+                joinedload(Quote.sold_to_customer),
+                joinedload(Quote.bill_to_customer),
+                joinedload(Quote.created_by),
+                lazyload("*"),
+            ],
+        )
         if not quote:
             raise NotFoundError(str(quote_id))
         return quote

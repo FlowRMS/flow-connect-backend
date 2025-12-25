@@ -5,21 +5,21 @@ from aioinject import Injected
 
 from app.graphql.inject import inject
 from app.graphql.quotes.services.quote_service import QuoteService
-from app.graphql.quotes.strawberry.quote_full_response import QuoteFullResponse
 from app.graphql.quotes.strawberry.quote_lite_response import QuoteLiteResponse
+from app.graphql.quotes.strawberry.quote_response import QuoteResponse
 
 
 @strawberry.type
 class QuotesQueries:
     @strawberry.field
     @inject
-    async def quote(
+    async def find_quote_by_id(
         self,
         id: UUID,
         service: Injected[QuoteService],
-    ) -> QuoteFullResponse:
+    ) -> QuoteResponse:
         quote = await service.find_quote_by_id(id)
-        return QuoteFullResponse.from_orm_model(quote)
+        return QuoteResponse.from_orm_model(quote)
 
     @strawberry.field
     @inject
