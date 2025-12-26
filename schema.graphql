@@ -1,3 +1,45 @@
+input AddressInput {
+  sourceId: UUID!
+  sourceType: AddressSourceTypeEnum!
+  addressType: AddressTypeEnum! = OTHER
+  line1: String!
+  city: String!
+  country: String!
+  line2: String = null
+  state: String = null
+  zipCode: String = null
+  notes: String = null
+  isPrimary: Boolean! = false
+}
+
+type AddressResponse {
+  id: UUID!
+  createdAt: datetime!
+  sourceId: UUID!
+  sourceType: AddressSourceTypeEnum!
+  addressType: AddressTypeEnum!
+  line1: String!
+  line2: String
+  city: String!
+  state: String
+  zipCode: String
+  country: String!
+  notes: String
+  isPrimary: Boolean!
+}
+
+enum AddressSourceTypeEnum {
+  CUSTOMER
+  FACTORY
+}
+
+enum AddressTypeEnum {
+  BILLING
+  SHIPPING
+  MAILING
+  OTHER
+}
+
 input CampaignCriteriaInput {
   groups: [CriteriaGroupInput!]!
   groupOperator: LogicalOperator! = AND
@@ -693,6 +735,9 @@ input MoveFolderInput {
 }
 
 type Mutation {
+  createAddress(input: AddressInput!): AddressResponse!
+  updateAddress(id: UUID!, input: AddressInput!): AddressResponse!
+  deleteAddress(id: UUID!): Boolean!
   createCampaign(input: CampaignInput!): CampaignResponse!
   updateCampaign(id: UUID!, input: CampaignInput!): CampaignResponse!
   deleteCampaign(id: UUID!): Boolean!
@@ -1204,6 +1249,9 @@ type ProductUomResponse {
 
 type Query {
   _service: _Service!
+  address(id: UUID!): AddressResponse!
+  addressesBySource(sourceType: AddressSourceTypeEnum!, sourceId: UUID!): [AddressResponse!]!
+  addressesBySourceId(sourceId: UUID!): [AddressResponse!]!
   campaign(id: UUID!): CampaignResponse!
   campaignRecipients(campaignId: UUID!, limit: Int! = 100, offset: Int! = 0): [CampaignRecipientResponse!]!
   estimateRecipients(criteria: CampaignCriteriaInput!, sampleLimit: Int! = 10): EstimateRecipientsResponse!
