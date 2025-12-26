@@ -3,9 +3,9 @@
 from uuid import UUID
 
 from commons.auth import AuthInfo
+from commons.db.v6 import ContainerType
 
 from app.errors.common_errors import NotFoundError
-from app.graphql.v2.core.container_types.models import ContainerType
 from app.graphql.v2.core.container_types.repositories import ContainerTypesRepository
 from app.graphql.v2.core.container_types.strawberry.container_type_input import (
     ContainerTypeInput,
@@ -49,14 +49,16 @@ class ContainerTypeService:
         self, container_type_id: UUID, input: ContainerTypeInput
     ) -> ContainerType:
         """Update a container type."""
+        existing = await self.repository.get_by_id(container_type_id)
+        if not existing:
+            raise NotFoundError(f"Container type with id {container_type_id} not found")
+
         container_type = input.to_orm_model()
         container_type.id = container_type_id
 
         # Keep existing order if not provided
         if container_type.order == 0:
-            existing = await self.repository.get_by_id(container_type_id)
-            if existing:
-                container_type.order = existing.order
+            container_type.order = existing.order
 
         return await self.repository.update(container_type)
 

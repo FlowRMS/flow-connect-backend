@@ -2,18 +2,18 @@
 
 from uuid import UUID
 
+from commons.db.v6 import (
+    Warehouse,
+    WarehouseMember,
+    WarehouseSettings,
+    WarehouseStructure,
+)
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
 from app.core.context_wrapper import ContextWrapper
 from app.graphql.base_repository import BaseRepository
-from app.graphql.v2.core.warehouses.models import (
-    Warehouse,
-    WarehouseMember,
-    WarehouseSettings,
-    WarehouseStructure,
-)
 
 
 class WarehousesRepository(BaseRepository[Warehouse]):

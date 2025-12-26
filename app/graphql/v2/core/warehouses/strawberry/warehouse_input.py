@@ -1,16 +1,28 @@
 """Strawberry input types for warehouses."""
 
+from decimal import Decimal
+from enum import IntEnum
 from uuid import UUID
 
 import strawberry
 
-from app.core.strawberry.inputs import BaseInputGQL
-from app.graphql.v2.core.warehouses.models import (
+from commons.db.v6 import (
     Warehouse,
     WarehouseMember,
+    WarehouseMemberRole,
     WarehouseSettings,
     WarehouseStructure,
 )
+
+from app.core.strawberry.inputs import BaseInputGQL
+
+
+@strawberry.enum
+class WarehouseMemberRoleGQL(IntEnum):
+    """GraphQL enum for warehouse member roles."""
+
+    WORKER = 1
+    MANAGER = 2
 
 
 @strawberry.input
@@ -25,8 +37,8 @@ class WarehouseInput(BaseInputGQL[Warehouse]):
     state: str | None = None
     postal_code: str | None = None  # Maps to zip
     country: str | None = None
-    latitude: float | None = None
-    longitude: float | None = None
+    latitude: Decimal | None = None
+    longitude: Decimal | None = None
     description: str | None = None
     is_active: bool = True
 
@@ -40,8 +52,8 @@ class WarehouseInput(BaseInputGQL[Warehouse]):
             state=self.state,
             zip=self.postal_code,
             country=self.country,
-            latitude=self.latitude,  # type: ignore[arg-type]
-            longitude=self.longitude,  # type: ignore[arg-type]
+            latitude=self.latitude,
+            longitude=self.longitude,
             description=self.description,
             is_active=self.is_active,
         )
@@ -53,15 +65,13 @@ class WarehouseMemberInput(BaseInputGQL[WarehouseMember]):
 
     warehouse_id: UUID
     user_id: UUID
-    role: int  # 1=worker, 2=manager
-    role_name: str | None = None
+    role: WarehouseMemberRoleGQL
 
     def to_orm_model(self) -> WarehouseMember:
         return WarehouseMember(
             warehouse_id=self.warehouse_id,
             user_id=self.user_id,
-            role=self.role,
-            role_name=self.role_name,
+            role=WarehouseMemberRole(self.role.value),
         )
 
 

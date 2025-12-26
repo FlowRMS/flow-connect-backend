@@ -1,13 +1,15 @@
 """Strawberry response types for shipping carriers."""
 
 from datetime import datetime
+from decimal import Decimal
 from typing import Self
 from uuid import UUID
 
 import strawberry
 
+from commons.db.v6 import ShippingCarrier
+
 from app.core.db.adapters.dto import DTOMixin
-from app.graphql.v2.core.shipping_carriers.models import ShippingCarrier
 
 
 @strawberry.type
@@ -20,7 +22,7 @@ class ShippingCarrierResponse(DTOMixin[ShippingCarrier]):
     code: str | None  # SCAC code
     account_number: str | None
     is_active: bool | None
-    created_at: datetime | None
+    created_at: datetime
 
     # Account & Billing
     billing_address: str | None
@@ -40,11 +42,11 @@ class ShippingCarrierResponse(DTOMixin[ShippingCarrier]):
     service_types: list[str] | None
     default_service_type: str | None
 
-    # Shipping Settings
-    max_weight: float | None
+    # Shipping Settings - using Decimal
+    max_weight: Decimal | None
     max_dimensions: str | None
-    residential_surcharge: float | None
-    fuel_surcharge_percent: float | None
+    residential_surcharge: Decimal | None
+    fuel_surcharge_percent: Decimal | None
 
     # Pickup Settings
     pickup_schedule: str | None
@@ -74,18 +76,10 @@ class ShippingCarrierResponse(DTOMixin[ShippingCarrier]):
             contact_email=model.contact_email,
             service_types=model.service_types,
             default_service_type=model.default_service_type,
-            max_weight=float(model.max_weight) if model.max_weight else None,
+            max_weight=model.max_weight,
             max_dimensions=model.max_dimensions,
-            residential_surcharge=(
-                float(model.residential_surcharge)
-                if model.residential_surcharge
-                else None
-            ),
-            fuel_surcharge_percent=(
-                float(model.fuel_surcharge_percent)
-                if model.fuel_surcharge_percent
-                else None
-            ),
+            residential_surcharge=model.residential_surcharge,
+            fuel_surcharge_percent=model.fuel_surcharge_percent,
             pickup_schedule=model.pickup_schedule,
             pickup_location=model.pickup_location,
             remarks=model.remarks,

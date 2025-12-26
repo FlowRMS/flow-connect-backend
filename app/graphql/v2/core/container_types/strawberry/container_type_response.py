@@ -1,13 +1,15 @@
 """Strawberry response types for container types."""
 
 from datetime import datetime
+from decimal import Decimal
 from typing import Self
 from uuid import UUID
 
 import strawberry
 
+from commons.db.v6 import ContainerType
+
 from app.core.db.adapters.dto import DTOMixin
-from app.graphql.v2.core.container_types.models import ContainerType
 
 
 @strawberry.type
@@ -17,12 +19,12 @@ class ContainerTypeResponse(DTOMixin[ContainerType]):
     _instance: strawberry.Private[ContainerType]
     id: UUID
     name: str
-    length: float  # in inches
-    width: float  # in inches
-    height: float  # in inches
-    weight: float  # tare weight in lbs
+    length: Decimal  # in inches
+    width: Decimal  # in inches
+    height: Decimal  # in inches
+    weight: Decimal  # tare weight in lbs
     order: int  # display order
-    created_at: datetime | None
+    created_at: datetime
 
     @classmethod
     def from_orm_model(cls, model: ContainerType) -> Self:
@@ -30,10 +32,10 @@ class ContainerTypeResponse(DTOMixin[ContainerType]):
             _instance=model,
             id=model.id,
             name=model.name,
-            length=float(model.length),
-            width=float(model.width),
-            height=float(model.height),
-            weight=float(model.weight),
+            length=model.length,
+            width=model.width,
+            height=model.height,
+            weight=model.weight,
             order=model.order,
             created_at=model.created_at,
         )

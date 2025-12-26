@@ -1,12 +1,13 @@
 """Warehouse module for GraphQL API."""
 
-from app.graphql.v2.core.warehouses.models import (
+from commons.db.v6 import (
     Warehouse,
-    WarehouseLocation,
     WarehouseMember,
+    WarehouseMemberRole,
     WarehouseSettings,
     WarehouseStructure,
 )
+
 from app.graphql.v2.core.warehouses.mutations import WarehousesMutations
 from app.graphql.v2.core.warehouses.queries import WarehousesQueries
 from app.graphql.v2.core.warehouses.repositories import (
@@ -20,6 +21,7 @@ from app.graphql.v2.core.warehouses.strawberry import (
     WarehouseInput,
     WarehouseMemberInput,
     WarehouseMemberResponse,
+    WarehouseMemberRoleGQL,
     WarehouseResponse,
     WarehouseSettingsInput,
     WarehouseSettingsResponse,
@@ -29,12 +31,12 @@ from app.graphql.v2.core.warehouses.strawberry import (
 )
 
 __all__ = [
-    # Models
+    # Models (from commons)
     "Warehouse",
     "WarehouseMember",
+    "WarehouseMemberRole",
     "WarehouseSettings",
     "WarehouseStructure",
-    "WarehouseLocation",
     # Repositories
     "WarehousesRepository",
     "WarehouseMembersRepository",
@@ -45,6 +47,7 @@ __all__ = [
     # GraphQL Types
     "WarehouseResponse",
     "WarehouseMemberResponse",
+    "WarehouseMemberRoleGQL",
     "WarehouseSettingsResponse",
     "WarehouseStructureResponse",
     "WarehouseInput",

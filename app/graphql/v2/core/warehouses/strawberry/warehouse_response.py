@@ -1,17 +1,23 @@
 """Strawberry response types for warehouses."""
 
 from datetime import datetime
+from decimal import Decimal
 from typing import Self
 from uuid import UUID
 
 import strawberry
 
-from app.core.db.adapters.dto import DTOMixin
-from app.graphql.v2.core.warehouses.models import (
+from commons.db.v6 import (
     Warehouse,
     WarehouseMember,
+    WarehouseMemberRole,
     WarehouseSettings,
     WarehouseStructure,
+)
+
+from app.core.db.adapters.dto import DTOMixin
+from app.graphql.v2.core.warehouses.strawberry.warehouse_input import (
+    WarehouseMemberRoleGQL,
 )
 
 
@@ -69,9 +75,8 @@ class WarehouseMemberResponse(DTOMixin[WarehouseMember]):
     id: UUID
     warehouse_id: UUID
     user_id: UUID
-    role: int | None  # 1=worker, 2=manager
-    role_name: str | None
-    created_at: datetime | None
+    role: WarehouseMemberRoleGQL
+    created_at: datetime
 
     @classmethod
     def from_orm_model(cls, model: WarehouseMember) -> Self:
@@ -80,8 +85,7 @@ class WarehouseMemberResponse(DTOMixin[WarehouseMember]):
             id=model.id,
             warehouse_id=model.warehouse_id,
             user_id=model.user_id,
-            role=model.role,
-            role_name=model.role_name,
+            role=WarehouseMemberRoleGQL(model.role.value),
             created_at=model.created_at,
         )
 
@@ -100,8 +104,8 @@ class WarehouseResponse(DTOMixin[Warehouse]):
     state: str | None
     postal_code: str | None  # Mapped from zip
     country: str | None
-    latitude: float | None
-    longitude: float | None
+    latitude: Decimal | None
+    longitude: Decimal | None
     description: str | None
     is_active: bool | None
     created_at: datetime
@@ -119,8 +123,8 @@ class WarehouseResponse(DTOMixin[Warehouse]):
             state=model.state,
             postal_code=model.zip,
             country=model.country,
-            latitude=float(model.latitude) if model.latitude else None,
-            longitude=float(model.longitude) if model.longitude else None,
+            latitude=model.latitude,
+            longitude=model.longitude,
             description=model.description,
             is_active=model.is_active,
             created_at=model.created_at,

@@ -1,9 +1,12 @@
 """Strawberry input types for shipping carriers."""
 
+from decimal import Decimal
+
 import strawberry
 
+from commons.db.v6 import ShippingCarrier
+
 from app.core.strawberry.inputs import BaseInputGQL
-from app.graphql.v2.core.shipping_carriers.models import ShippingCarrier
 
 
 @strawberry.input
@@ -33,11 +36,11 @@ class ShippingCarrierInput(BaseInputGQL[ShippingCarrier]):
     service_types: list[str] | None = None
     default_service_type: str | None = None
 
-    # Shipping Settings
-    max_weight: float | None = None
+    # Shipping Settings - using Decimal
+    max_weight: Decimal | None = None
     max_dimensions: str | None = None
-    residential_surcharge: float | None = None
-    fuel_surcharge_percent: float | None = None
+    residential_surcharge: Decimal | None = None
+    fuel_surcharge_percent: Decimal | None = None
 
     # Pickup Settings
     pickup_schedule: str | None = None
@@ -61,12 +64,12 @@ class ShippingCarrierInput(BaseInputGQL[ShippingCarrier]):
             contact_name=self.contact_name,
             contact_phone=self.contact_phone,
             contact_email=self.contact_email,
-            service_types=self.service_types,  # type: ignore[arg-type]
+            service_types=self.service_types,
             default_service_type=self.default_service_type,
-            max_weight=self.max_weight,  # type: ignore[arg-type]
+            max_weight=self.max_weight,
             max_dimensions=self.max_dimensions,
-            residential_surcharge=self.residential_surcharge,  # type: ignore[arg-type]
-            fuel_surcharge_percent=self.fuel_surcharge_percent,  # type: ignore[arg-type]
+            residential_surcharge=self.residential_surcharge,
+            fuel_surcharge_percent=self.fuel_surcharge_percent,
             pickup_schedule=self.pickup_schedule,
             pickup_location=self.pickup_location,
             remarks=self.remarks,

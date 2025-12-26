@@ -2,12 +2,12 @@
 
 from uuid import UUID
 
+from commons.db.v6 import ContainerType
 from sqlalchemy import select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.context_wrapper import ContextWrapper
 from app.graphql.base_repository import BaseRepository
-from app.graphql.v2.core.container_types.models import ContainerType
 
 
 class ContainerTypesRepository(BaseRepository[ContainerType]):

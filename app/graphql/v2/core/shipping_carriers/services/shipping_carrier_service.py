@@ -3,9 +3,9 @@
 from uuid import UUID
 
 from commons.auth import AuthInfo
+from commons.db.v6 import ShippingCarrier
 
 from app.errors.common_errors import NotFoundError
-from app.graphql.v2.core.shipping_carriers.models import ShippingCarrier
 from app.graphql.v2.core.shipping_carriers.repositories import ShippingCarriersRepository
 from app.graphql.v2.core.shipping_carriers.strawberry.shipping_carrier_input import (
     ShippingCarrierInput,
@@ -46,6 +46,9 @@ class ShippingCarrierService:
         self, carrier_id: UUID, input: ShippingCarrierInput
     ) -> ShippingCarrier:
         """Update a shipping carrier."""
+        if not await self.repository.exists(carrier_id):
+            raise NotFoundError(f"Shipping carrier with id {carrier_id} not found")
+
         carrier = input.to_orm_model()
         carrier.id = carrier_id
         return await self.repository.update(carrier)
