@@ -21,6 +21,10 @@ WORKDIR /app
 COPY pyproject.toml uv.lock ./
 RUN sed -i "s/{ workspace = true }/{ git = \"ssh:\/\/git@github.com\/FlowRMS\/flowbot-commons.git\", tag = \"${COMMONS_VERSION}\" }/" pyproject.toml
 
+# Regenerate lock file with the patched git source
+RUN --mount=type=cache,target=/root/.cache/uv \
+    uv lock
+
 RUN --mount=type=cache,target=/root/.cache/uv \
     uv sync --frozen --no-install-project --no-dev
 
