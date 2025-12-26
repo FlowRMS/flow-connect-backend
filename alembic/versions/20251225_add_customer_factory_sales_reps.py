@@ -45,7 +45,7 @@ def upgrade() -> None:
         ),
         sa.ForeignKeyConstraint(
             ["user_id"],
-            ["pycore.users.id"],
+            ["pyuser.users.id"],
             name="fk_customer_factory_sales_reps_user_id",
         ),
         sa.PrimaryKeyConstraint("id"),

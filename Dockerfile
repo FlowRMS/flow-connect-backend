@@ -1,6 +1,7 @@
 FROM ghcr.io/astral-sh/uv:python3.13-bookworm-slim AS builder
 
 ARG GITHUB_TOKEN
+ARG COMMONS_VERSION=1.06.8
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
     libpq-dev cmake build-essential locales curl ca-certificates git \
@@ -16,13 +17,12 @@ ENV UV_PYTHON_DOWNLOADS=0
 
 WORKDIR /app
 
-RUN --mount=type=cache,target=/root/.cache/uv \
-    --mount=type=bind,source=uv.lock,target=uv.lock \
-    --mount=type=bind,source=pyproject.toml,target=pyproject.toml \
-    uv sync --frozen --no-install-project --no-dev
-
-# Copy source code
+# Copy and patch pyproject.toml to use git source instead of workspace
 COPY pyproject.toml uv.lock ./
+RUN sed -i "s/{ workspace = true }/{ git = \"ssh:\/\/git@github.com\/FlowRMS\/flowbot-commons.git\", tag = \"${COMMONS_VERSION}\" }/" pyproject.toml
+
+RUN --mount=type=cache,target=/root/.cache/uv \
+    uv sync --frozen --no-install-project --no-dev
 
 RUN --mount=type=cache,target=/root/.cache/uv \
     uv sync --frozen --no-dev
