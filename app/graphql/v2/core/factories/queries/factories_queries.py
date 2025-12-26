@@ -14,7 +14,7 @@ class FactoriesQueries:
 
     @strawberry.field
     @inject
-    async def find_factory_by_id(
+    async def factory(
         self,
         id: UUID,
         service: Injected[FactoryService],

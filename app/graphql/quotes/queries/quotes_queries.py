@@ -13,7 +13,7 @@ from app.graphql.quotes.strawberry.quote_response import QuoteResponse
 class QuotesQueries:
     @strawberry.field
     @inject
-    async def find_quote_by_id(
+    async def quote(
         self,
         id: UUID,
         service: Injected[QuoteService],

@@ -7,8 +7,11 @@ from commons.db.v6.crm.links.link_relation_model import LinkRelation
 from commons.db.v6.crm.pre_opportunities.pre_opportunity_balance_model import (
     PreOpportunityBalance,
 )
+from commons.db.v6.crm.pre_opportunities.pre_opportunity_detail_model import (
+    PreOpportunityDetail,
+)
 from commons.db.v6.crm.pre_opportunities.pre_opportunity_model import PreOpportunity
-from sqlalchemy import Select, func, or_, select
+from sqlalchemy import Select, func, or_, select, update
 from sqlalchemy.dialects.postgresql import array
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import lazyload
@@ -185,3 +188,13 @@ class PreOpportunitiesRepository(BaseRepository[PreOpportunity]):
         )
         result = await self.session.execute(stmt)
         return list(result.scalars().all())
+
+    async def update_detail_quote_ids(
+        self, detail_ids: list[UUID], quote_id: UUID
+    ) -> None:
+        stmt = (
+            update(PreOpportunityDetail)
+            .where(PreOpportunityDetail.id.in_(detail_ids))
+            .values(quote_id=quote_id)
+        )
+        _ = await self.session.execute(stmt)

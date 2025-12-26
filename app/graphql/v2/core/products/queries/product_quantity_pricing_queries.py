@@ -16,7 +16,7 @@ from app.graphql.v2.core.products.strawberry.product_quantity_pricing_response i
 class ProductQuantityPricingQueries:
     @strawberry.field
     @inject
-    async def find_product_quantity_pricing_by_id(
+    async def product_quantity_pricing(
         self,
         id: UUID,
         service: Injected[ProductQuantityPricingService],

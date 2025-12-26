@@ -10,6 +10,7 @@ from commons.db.v6.crm.pre_opportunities.pre_opportunity_detail_model import (
 )
 
 from app.core.db.adapters.dto import DTOMixin
+from app.graphql.quotes.strawberry.quote_lite_response import QuoteLiteResponse
 from app.graphql.v2.core.products.strawberry.product_response import ProductLiteResponse
 
 
@@ -52,3 +53,7 @@ class PreOpportunityDetailResponse(DTOMixin[PreOpportunityDetail]):
     @strawberry.field
     def product(self) -> ProductLiteResponse:
         return ProductLiteResponse.from_orm_model(self._instance.product)
+
+    @strawberry.field
+    def quote(self) -> QuoteLiteResponse | None:
+        return QuoteLiteResponse.from_orm_model_optional(self._instance.quote)

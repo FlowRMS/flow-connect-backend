@@ -732,7 +732,7 @@ type Mutation {
   createQuote(input: QuoteInput!): QuoteResponse!
   updateQuote(input: QuoteInput!): QuoteResponse!
   deleteQuote(id: UUID!): Boolean!
-  createQuoteFromPreOpportunity(preOpportunityId: UUID!, quoteNumber: String!): QuoteResponse!
+  createQuoteFromPreOpportunity(preOpportunityId: UUID!, quoteNumber: String!, preOpportunityDetailIds: [UUID!] = null): QuoteResponse!
   duplicateQuote(sourceQuoteId: UUID!, newQuoteNumber: String!): QuoteResponse!
   createHighlightVersion(input: CreateHighlightVersionInput!): HighlightVersionResponse!
   updateHighlightVersion(id: UUID!, input: UpdateHighlightVersionInput!): HighlightVersionResponse!
@@ -970,6 +970,7 @@ type PreOpportunityDetailResponse {
   endUserId: UUID!
   leadTime: String
   product: ProductLiteResponse!
+  quote: QuoteLiteResponse
 }
 
 input PreOpportunityInput {
@@ -1243,7 +1244,7 @@ type Query {
   orderSearch(searchTerm: String!, limit: Int! = 20): [OrderResponse!]!
   preOpportunity(id: UUID!): PreOpportunityResponse!
   preOpportunitySearch(searchTerm: String!, limit: Int! = 20): [PreOpportunityLiteResponse!]!
-  findQuoteById(id: UUID!): QuoteResponse!
+  quote(id: UUID!): QuoteResponse!
   quoteSearch(searchTerm: String!, limit: Int! = 20): [QuoteLiteResponse!]!
   highlightVersion(id: UUID!): HighlightVersionResponse
   highlightVersionsBySpecSheet(specSheetId: UUID!, activeOnly: Boolean! = false): [HighlightVersionResponse!]!
@@ -1255,19 +1256,19 @@ type Query {
   taskSearch(searchTerm: String!, limit: Int! = 20): [TaskType!]!
   taskRelatedEntities(taskId: UUID!): TaskRelatedEntitiesResponse!
   tasksByEntity(entityType: EntityType!, entityId: UUID!): [TaskType!]!
-  findCustomerFactorySalesRepById(id: UUID!): CustomerFactorySalesRepResponse!
+  customerFactorySalesRep(id: UUID!): CustomerFactorySalesRepResponse!
   listCustomerFactorySalesReps(customerId: UUID, factoryId: UUID): [CustomerFactorySalesRepResponse!]!
-  findCustomerById(id: UUID!): CustomerResponse!
+  customer(id: UUID!): CustomerResponse!
   customerSearch(searchTerm: String!, published: Boolean! = true, limit: Int! = 20): [CustomerResponse!]!
-  findFactoryById(id: UUID!): FactoryResponse!
+  factory(id: UUID!): FactoryResponse!
   factorySearch(searchTerm: String!, published: Boolean! = true, limit: Int! = 20, useCustomOrder: Boolean! = false): [FactoryResponse!]!
   productCategories(factoryId: UUID, parentId: UUID, grandparentId: UUID): [ProductCategoryResponse!]!
-  findProductCpnById(id: UUID!): ProductCpnResponse!
+  productCpn(id: UUID!): ProductCpnResponse!
   listProductCpnsByProductId(productId: UUID!): [ProductCpnResponse!]!
-  findProductQuantityPricingById(id: UUID!): ProductQuantityPricingResponse!
+  productQuantityPricing(id: UUID!): ProductQuantityPricingResponse!
   listProductQuantityPricingByProductId(productId: UUID!): [ProductQuantityPricingResponse!]!
   productUoms: [ProductUomResponse!]!
-  findProductById(id: UUID!): ProductResponse!
+  product(id: UUID!): ProductResponse!
   productSearch(searchTerm: String!, productCategoryIds: [UUID!] = null, factoryId: UUID, limit: Int! = 20): [ProductResponse!]!
   productCategorySearch(searchTerm: String!, factoryId: UUID, limit: Int! = 20): [ProductCategoryResponse!]!
   user(id: UUID!): UserResponse!

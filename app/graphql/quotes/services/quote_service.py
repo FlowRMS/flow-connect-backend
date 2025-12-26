@@ -70,6 +70,7 @@ class QuoteService:
         self,
         pre_opportunity_id: UUID,
         quote_number: str,
+        pre_opportunity_detail_ids: list[UUID] | None = None,
     ) -> Quote:
         pre_opp = await self.pre_opportunity_repository.get_by_id(pre_opportunity_id)
         if not pre_opp:
@@ -79,7 +80,15 @@ class QuoteService:
             raise NameAlreadyExistsError(quote_number)
 
         quote = QuoteFactory.from_pre_opportunity(pre_opp, quote_number)
-        return await self.repository.create_with_balance(quote)
+        created_quote = await self.repository.create_with_balance(quote)
+
+        if pre_opportunity_detail_ids:
+            await self.pre_opportunity_repository.update_detail_quote_ids(
+                detail_ids=pre_opportunity_detail_ids,
+                quote_id=created_quote.id,
+            )
+
+        return created_quote
 
     async def duplicate_quote(
         self,

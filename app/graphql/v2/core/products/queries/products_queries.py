@@ -15,7 +15,7 @@ from app.graphql.v2.core.products.strawberry.product_response import ProductResp
 class ProductsQueries:
     @strawberry.field
     @inject
-    async def find_product_by_id(
+    async def product(
         self,
         id: uuid.UUID,
         service: Injected[ProductService],

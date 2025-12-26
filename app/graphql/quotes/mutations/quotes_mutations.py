@@ -47,10 +47,12 @@ class QuotesMutations:
         pre_opportunity_id: UUID,
         quote_number: str,
         service: Injected[QuoteService],
+        pre_opportunity_detail_ids: list[UUID] | None = None,
     ) -> QuoteResponse:
         quote = await service.create_quote_from_pre_opportunity(
             pre_opportunity_id=pre_opportunity_id,
             quote_number=quote_number,
+            pre_opportunity_detail_ids=pre_opportunity_detail_ids,
         )
         return QuoteResponse.from_orm_model(quote)
 

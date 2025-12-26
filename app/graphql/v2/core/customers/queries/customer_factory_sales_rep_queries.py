@@ -16,7 +16,7 @@ from app.graphql.v2.core.customers.strawberry.customer_factory_sales_rep_respons
 class CustomerFactorySalesRepQueries:
     @strawberry.field
     @inject
-    async def find_customer_factory_sales_rep_by_id(
+    async def customer_factory_sales_rep(
         self,
         id: UUID,
         service: Injected[CustomerFactorySalesRepService],

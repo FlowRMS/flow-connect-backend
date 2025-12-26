@@ -12,7 +12,7 @@ from app.graphql.v2.core.customers.strawberry.customer_response import CustomerR
 class CustomersQueries:
     @strawberry.field
     @inject
-    async def find_customer_by_id(
+    async def customer(
         self,
         service: Injected[CustomerService],
         id: UUID,

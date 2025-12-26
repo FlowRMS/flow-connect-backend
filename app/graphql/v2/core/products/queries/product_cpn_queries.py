@@ -14,7 +14,7 @@ from app.graphql.v2.core.products.strawberry.product_cpn_response import (
 class ProductCpnQueries:
     @strawberry.field
     @inject
-    async def find_product_cpn_by_id(
+    async def product_cpn(
         self,
         id: UUID,
         service: Injected[ProductCpnService],
