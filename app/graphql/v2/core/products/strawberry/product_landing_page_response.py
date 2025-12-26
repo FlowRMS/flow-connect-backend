@@ -16,3 +16,4 @@ class ProductLandingPageResponse(LandingPageInterfaceBase):
     factory_title: str
     category_title: str | None
     uom_title: str | None
+    tags: list[str] | None

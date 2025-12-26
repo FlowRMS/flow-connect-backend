@@ -1,5 +1,4 @@
 from collections.abc import Sequence
-from decimal import Decimal
 from uuid import UUID
 
 from commons.db.v6 import Customer, CustomerSplitRate, RepTypeEnum, User
@@ -10,6 +9,7 @@ from app.core.processors import (
     BaseProcessor,
     EntityContext,
     RepositoryEvent,
+    validate_split_rates_sum_to_100,
 )
 from app.errors.common_errors import ValidationError
 
@@ -50,8 +50,8 @@ class ValidateSplitRatesProcessor(BaseProcessor[Customer]):
             else:
                 outside_rates.append(rate)
 
-        self._validate_split_sum(inside_rates, "inside")
-        self._validate_split_sum(outside_rates, "outside")
+        validate_split_rates_sum_to_100(inside_rates, label="inside split rates")
+        validate_split_rates_sum_to_100(outside_rates, label="outside split rates")
 
     async def _get_users_by_ids(self, user_ids: list[UUID]) -> Sequence[User]:
         stmt = select(User).where(User.id.in_(user_ids))
@@ -69,18 +69,4 @@ class ValidateSplitRatesProcessor(BaseProcessor[Customer]):
             raise ValidationError(
                 f"User '{user.first_name} {user.last_name}' cannot be an outside rep "
                 "(outside flag is not set)"
-            )
-
-    def _validate_split_sum(
-        self,
-        rates: list[CustomerSplitRate],
-        rep_type_label: str,
-    ) -> None:
-        if not rates:
-            return
-
-        total = sum(rate.split_rate for rate in rates)
-        if total != Decimal("100"):
-            raise ValidationError(
-                f"Total {rep_type_label} split rates must equal 100%. Got: {total}%"
             )

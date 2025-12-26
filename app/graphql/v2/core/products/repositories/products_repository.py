@@ -57,6 +57,7 @@ class ProductsRepository(BaseRepository[Product]):
                 Factory.title.label("factory_title"),
                 ProductCategory.title.label("category_title"),
                 ProductUom.title.label("uom_title"),
+                Product.tags,
                 array([Product.created_by_id]).label("user_ids"),
             )
             .select_from(Product)

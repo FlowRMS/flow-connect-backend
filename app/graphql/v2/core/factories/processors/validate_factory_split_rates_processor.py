@@ -11,6 +11,7 @@ from app.core.processors import (
     BaseProcessor,
     EntityContext,
     RepositoryEvent,
+    validate_split_rates_sum_to_100,
 )
 from app.errors.common_errors import ValidationError
 
@@ -44,6 +45,8 @@ class ValidateFactorySplitRatesProcessor(BaseProcessor[Factory]):
                     f"User '{user.first_name} {user.last_name}' cannot be a factory rep "
                     "(inside flag is not set)"
                 )
+
+        validate_split_rates_sum_to_100(split_rates, label="factory split rates")
 
     async def _get_users_by_ids(self, user_ids: list[UUID]) -> Sequence[User]:
         stmt = select(User).where(User.id.in_(user_ids))

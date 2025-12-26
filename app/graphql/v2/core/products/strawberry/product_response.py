@@ -1,3 +1,4 @@
+from datetime import date
 from decimal import Decimal
 from typing import Self
 from uuid import UUID
@@ -27,6 +28,15 @@ class ProductLiteResponse(DTOMixin[Product]):
     published: bool
     approval_needed: bool | None
     description: str | None
+    upc: str | None
+    default_divisor: Decimal | None
+    min_order_qty: Decimal | None
+    lead_time: int | None
+    unit_price_discount_rate: Decimal | None
+    commission_discount_rate: Decimal | None
+    approval_date: date | None
+    approval_comments: str | None
+    tags: list[str] | None
 
     @classmethod
     def from_orm_model(cls, model: Product) -> Self:
@@ -39,6 +49,15 @@ class ProductLiteResponse(DTOMixin[Product]):
             published=model.published,
             approval_needed=model.approval_needed,
             description=model.description,
+            upc=model.upc,
+            default_divisor=model.default_divisor,
+            min_order_qty=model.min_order_qty,
+            lead_time=model.lead_time,
+            unit_price_discount_rate=model.unit_price_discount_rate,
+            commission_discount_rate=model.commission_discount_rate,
+            approval_date=model.approval_date,
+            approval_comments=model.approval_comments,
+            tags=model.tags,
         )
 
 

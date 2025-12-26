@@ -1101,6 +1101,15 @@ input ProductInput {
   approvalNeeded: Boolean = null
   published: Boolean! = false
   description: String = null
+  upc: String = null
+  defaultDivisor: Decimal = null
+  minOrderQty: Decimal = null
+  leadTime: Int = null
+  unitPriceDiscountRate: Decimal = null
+  commissionDiscountRate: Decimal = null
+  approvalDate: Date = null
+  approvalComments: String = null
+  tags: [String!] = null
 }
 
 type ProductLandingPage implements LandingPageInterfaceBase {
@@ -1117,6 +1126,7 @@ type ProductLandingPage implements LandingPageInterfaceBase {
   factoryTitle: String!
   categoryTitle: String
   uomTitle: String
+  tags: [String!]
 }
 
 type ProductLiteResponse {
@@ -1127,6 +1137,15 @@ type ProductLiteResponse {
   published: Boolean!
   approvalNeeded: Boolean
   description: String
+  upc: String
+  defaultDivisor: Decimal
+  minOrderQty: Decimal
+  leadTime: Int
+  unitPriceDiscountRate: Decimal
+  commissionDiscountRate: Decimal
+  approvalDate: Date
+  approvalComments: String
+  tags: [String!]
 }
 
 type ProductResponse {
@@ -1137,6 +1156,15 @@ type ProductResponse {
   published: Boolean!
   approvalNeeded: Boolean
   description: String
+  upc: String
+  defaultDivisor: Decimal
+  minOrderQty: Decimal
+  leadTime: Int
+  unitPriceDiscountRate: Decimal
+  commissionDiscountRate: Decimal
+  approvalDate: Date
+  approvalComments: String
+  tags: [String!]
   factory: FactoryLiteResponse!
   category: ProductCategoryResponse
   uom: ProductUomResponse
