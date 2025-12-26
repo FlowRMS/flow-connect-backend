@@ -92,18 +92,16 @@ class WarehouseMemberResponse(DTOMixin[WarehouseMember]):
 
 @strawberry.type
 class WarehouseResponse(DTOMixin[Warehouse]):
-    """Response type for warehouses."""
+    """Response type for warehouses.
+
+    Note: Address information is managed separately via the Address model
+    using source_id = warehouse.id and source_type = FACTORY.
+    """
 
     _instance: strawberry.Private[Warehouse]
     id: UUID
     name: str
     status: str
-    address_line_1: str | None  # Mapped from address_line
-    address_line_2: str | None
-    city: str | None
-    state: str | None
-    postal_code: str | None  # Mapped from zip
-    country: str | None
     latitude: Decimal | None
     longitude: Decimal | None
     description: str | None
@@ -117,12 +115,6 @@ class WarehouseResponse(DTOMixin[Warehouse]):
             id=model.id,
             name=model.name,
             status=model.status,
-            address_line_1=model.address_line,
-            address_line_2=model.address_line_2,
-            city=model.city,
-            state=model.state,
-            postal_code=model.zip,
-            country=model.country,
             latitude=model.latitude,
             longitude=model.longitude,
             description=model.description,

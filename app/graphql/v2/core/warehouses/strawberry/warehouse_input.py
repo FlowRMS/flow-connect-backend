@@ -27,16 +27,14 @@ class WarehouseMemberRoleGQL(IntEnum):
 
 @strawberry.input
 class WarehouseInput(BaseInputGQL[Warehouse]):
-    """Input type for creating/updating warehouses."""
+    """Input type for creating/updating warehouses.
+
+    Note: Address information is managed separately via the Address model
+    using source_id = warehouse.id and source_type = FACTORY.
+    """
 
     name: str
     status: str = "active"
-    address_line_1: str | None = None  # Maps to address_line
-    address_line_2: str | None = None
-    city: str | None = None
-    state: str | None = None
-    postal_code: str | None = None  # Maps to zip
-    country: str | None = None
     latitude: Decimal | None = None
     longitude: Decimal | None = None
     description: str | None = None
@@ -46,12 +44,6 @@ class WarehouseInput(BaseInputGQL[Warehouse]):
         return Warehouse(
             name=self.name,
             status=self.status,
-            address_line=self.address_line_1,
-            address_line_2=self.address_line_2,
-            city=self.city,
-            state=self.state,
-            zip=self.postal_code,
-            country=self.country,
             latitude=self.latitude,
             longitude=self.longitude,
             description=self.description,
