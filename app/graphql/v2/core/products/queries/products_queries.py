@@ -6,7 +6,7 @@ from aioinject import Injected
 from app.graphql.inject import inject
 from app.graphql.v2.core.products.services.product_service import ProductService
 from app.graphql.v2.core.products.strawberry.product_category_response import (
-    ProductCategoryResponse,
+    ProductCategoryLiteResponse,
 )
 from app.graphql.v2.core.products.strawberry.product_response import ProductResponse
 
@@ -48,9 +48,9 @@ class ProductsQueries:
         search_term: str,
         factory_id: strawberry.Maybe[uuid.UUID] = None,
         limit: int = 20,
-    ) -> list[ProductCategoryResponse]:
+    ) -> list[ProductCategoryLiteResponse]:
         factory_id_value = factory_id.value if factory_id else None
-        return ProductCategoryResponse.from_orm_model_list(
+        return ProductCategoryLiteResponse.from_orm_model_list(
             await service.search_product_categories(
                 search_term, factory_id_value, limit
             )
