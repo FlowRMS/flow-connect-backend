@@ -28,8 +28,8 @@ class CustomerFactorySalesRepQueries:
     @inject
     async def list_customer_factory_sales_reps(
         self,
-        customer_id: UUID,
-        factory_id: UUID,
+        customer_id: UUID | None,
+        factory_id: UUID | None,
         service: Injected[CustomerFactorySalesRepService],
     ) -> list[CustomerFactorySalesRepResponse]:
         reps = await service.list_by_customer_and_factory(customer_id, factory_id)

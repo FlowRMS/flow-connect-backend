@@ -3,6 +3,7 @@ from uuid import UUID
 from commons.auth import AuthInfo
 from commons.db.v6.core.factories.factory import Factory
 from commons.db.v6.crm.links.entity_type import EntityType
+from sqlalchemy.orm import joinedload
 
 from app.errors.common_errors import NotFoundError
 from app.graphql.v2.core.factories.repositories.factories_repository import (
@@ -22,7 +23,9 @@ class FactoryService:
         self.auth_info = auth_info
 
     async def get_by_id(self, factory_id: UUID) -> Factory:
-        factory = await self.repository.get_by_id(factory_id)
+        factory = await self.repository.get_by_id(
+            factory_id, options=[joinedload(Factory.split_rates)]
+        )
         if not factory:
             raise NotFoundError(f"Factory with id {factory_id} not found")
         return factory

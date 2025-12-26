@@ -1,7 +1,7 @@
 """add customer factory sales reps table
 
 Revision ID: 6b9c4d3e2f1a
-Revises: 5a8b3c2d1e0f
+Revises: b57a72ba9d00
 Create Date: 2025-12-25 10:00:00.000000
 
 """
@@ -13,7 +13,7 @@ import sqlalchemy as sa
 from alembic import op
 
 revision: str = "6b9c4d3e2f1a"
-down_revision: str | None = "5a8b3c2d1e0f"
+down_revision: str | None = "b57a72ba9d00"
 branch_labels: str | Sequence[str] | None = None
 depends_on: str | Sequence[str] | None = None
 

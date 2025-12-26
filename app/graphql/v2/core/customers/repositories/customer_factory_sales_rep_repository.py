@@ -21,15 +21,15 @@ class CustomerFactorySalesRepRepository(BaseRepository[CustomerFactorySalesRep])
 
     async def list_by_customer_and_factory(
         self,
-        customer_id: UUID,
-        factory_id: UUID,
+        customer_id: UUID | None,
+        factory_id: UUID | None,
     ) -> list[CustomerFactorySalesRep]:
         stmt = (
             select(CustomerFactorySalesRep)
-            .where(
-                CustomerFactorySalesRep.customer_id == customer_id,
-                CustomerFactorySalesRep.factory_id == factory_id,
-            )
+            # .where(
+            #     CustomerFactorySalesRep.customer_id == customer_id,
+            #     CustomerFactorySalesRep.factory_id == factory_id,
+            # )
             .options(
                 joinedload(CustomerFactorySalesRep.customer),
                 joinedload(CustomerFactorySalesRep.factory),
@@ -37,6 +37,10 @@ class CustomerFactorySalesRepRepository(BaseRepository[CustomerFactorySalesRep])
             )
             .order_by(CustomerFactorySalesRep.position)
         )
+        if customer_id:
+            stmt = stmt.where(CustomerFactorySalesRep.customer_id == customer_id)
+        if factory_id:
+            stmt = stmt.where(CustomerFactorySalesRep.factory_id == factory_id)
         result = await self.session.execute(stmt)
         return list(result.unique().scalars().all())
 

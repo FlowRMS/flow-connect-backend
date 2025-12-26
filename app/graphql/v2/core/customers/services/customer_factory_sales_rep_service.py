@@ -27,8 +27,8 @@ class CustomerFactorySalesRepService:
 
     async def list_by_customer_and_factory(
         self,
-        customer_id: UUID,
-        factory_id: UUID,
+        customer_id: UUID | None,
+        factory_id: UUID | None,
     ) -> list[CustomerFactorySalesRep]:
         return await self.repository.list_by_customer_and_factory(
             customer_id, factory_id

@@ -238,6 +238,26 @@ enum CriteriaOperator {
   NOT_IN
 }
 
+input CustomerFactorySalesRepInput {
+  customerId: UUID!
+  factoryId: UUID!
+  userId: UUID!
+  rate: Decimal!
+  position: Int! = 0
+}
+
+type CustomerFactorySalesRepResponse {
+  id: UUID!
+  customerId: UUID!
+  factoryId: UUID!
+  userId: UUID!
+  rate: Decimal!
+  position: Int!
+  customer: CustomerLiteResponse!
+  factory: FactoryLiteResponse!
+  user: UserResponse!
+}
+
 input CustomerInput {
   companyName: String!
   insideSplitRates: [InsideSplitRateInput!]! = []
@@ -362,6 +382,25 @@ type FactoryLandingPage implements LandingPageInterfaceBase {
   commissionDiscountRate: Decimal!
   overallDiscountRate: Decimal!
   splitRates: [String!]!
+}
+
+type FactoryLiteResponse {
+  id: UUID!
+  title: String!
+  published: Boolean!
+  freightDiscountType: Int!
+  accountNumber: String
+  email: String
+  phone: String
+  logoId: UUID
+  leadTime: Int
+  paymentTerms: Int
+  baseCommissionRate: Decimal!
+  commissionDiscountRate: Decimal!
+  overallDiscountRate: Decimal!
+  additionalInformation: String
+  freightTerms: String
+  externalPaymentTerms: String
 }
 
 type FactoryResponse {
@@ -710,6 +749,9 @@ type Mutation {
   addTaskConversation(input: TaskConversationInput!): TaskConversationType!
   updateTaskConversation(id: UUID!, input: TaskConversationInput!): TaskConversationType!
   deleteTaskConversation(id: UUID!): Boolean!
+  createCustomerFactorySalesRep(input: CustomerFactorySalesRepInput!): CustomerFactorySalesRepResponse!
+  updateCustomerFactorySalesRep(id: UUID!, input: CustomerFactorySalesRepInput!): CustomerFactorySalesRepResponse!
+  deleteCustomerFactorySalesRep(id: UUID!): Boolean!
   createCustomer(input: CustomerInput!): CustomerResponse!
   updateCustomer(id: UUID!, input: CustomerInput!): CustomerResponse!
   deleteCustomer(id: UUID!): Boolean!
@@ -1095,7 +1137,7 @@ type ProductResponse {
   published: Boolean!
   approvalNeeded: Boolean
   description: String
-  factory: FactoryResponse!
+  factory: FactoryLiteResponse!
   category: ProductCategoryResponse
   uom: ProductUomResponse
 }
@@ -1167,6 +1209,8 @@ type Query {
   taskSearch(searchTerm: String!, limit: Int! = 20): [TaskType!]!
   taskRelatedEntities(taskId: UUID!): TaskRelatedEntitiesResponse!
   tasksByEntity(entityType: EntityType!, entityId: UUID!): [TaskType!]!
+  findCustomerFactorySalesRepById(id: UUID!): CustomerFactorySalesRepResponse!
+  listCustomerFactorySalesReps(customerId: UUID, factoryId: UUID): [CustomerFactorySalesRepResponse!]!
   findCustomerById(id: UUID!): CustomerResponse!
   customerSearch(searchTerm: String!, published: Boolean! = true, limit: Int! = 20): [CustomerResponse!]!
   findFactoryById(id: UUID!): FactoryResponse!
