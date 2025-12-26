@@ -6,7 +6,9 @@ import strawberry
 from commons.db.v6.core.products.product import Product
 
 from app.core.db.adapters.dto import DTOMixin
-from app.graphql.v2.core.factories.strawberry.factory_response import FactoryResponse
+from app.graphql.v2.core.factories.strawberry.factory_response import (
+    FactoryLiteResponse,
+)
 from app.graphql.v2.core.products.strawberry.product_category_response import (
     ProductCategoryResponse,
 )
@@ -43,8 +45,8 @@ class ProductLiteResponse(DTOMixin[Product]):
 @strawberry.type
 class ProductResponse(ProductLiteResponse):
     @strawberry.field
-    async def factory(self) -> FactoryResponse:
-        return FactoryResponse.from_orm_model(
+    async def factory(self) -> FactoryLiteResponse:
+        return FactoryLiteResponse.from_orm_model(
             await self._instance.awaitable_attrs.factory
         )
 

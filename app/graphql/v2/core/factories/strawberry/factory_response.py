@@ -13,7 +13,7 @@ from app.graphql.v2.core.users.strawberry.user_response import UserResponse
 
 
 @strawberry.type
-class FactoryResponse(DTOMixin[Factory]):
+class FactoryLiteResponse(DTOMixin[Factory]):
     _instance: strawberry.Private[Factory]
     id: UUID
     title: str
@@ -54,6 +54,9 @@ class FactoryResponse(DTOMixin[Factory]):
             external_payment_terms=model.external_payment_terms,
         )
 
+
+@strawberry.type
+class FactoryResponse(FactoryLiteResponse):
     @strawberry.field
     async def created_by(self) -> UserResponse:
         return UserResponse.from_orm_model(
