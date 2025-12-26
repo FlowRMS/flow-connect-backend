@@ -765,6 +765,9 @@ type Mutation {
   createProductCpn(input: ProductCpnInput!): ProductCpnResponse!
   updateProductCpn(id: UUID!, input: ProductCpnInput!): ProductCpnResponse!
   deleteProductCpn(id: UUID!): Boolean!
+  createProductQuantityPricing(input: ProductQuantityPricingInput!): ProductQuantityPricingResponse!
+  updateProductQuantityPricing(id: UUID!, input: ProductQuantityPricingInput!): ProductQuantityPricingResponse!
+  deleteProductQuantityPricing(id: UUID!): Boolean!
   createProductUom(input: ProductUomInput!): ProductUomResponse!
   updateProductUom(id: UUID!, input: ProductUomInput!): ProductUomResponse!
   deleteProductUom(id: UUID!): Boolean!
@@ -1148,6 +1151,21 @@ type ProductLiteResponse {
   tags: [String!]
 }
 
+input ProductQuantityPricingInput {
+  productId: UUID!
+  quantityLow: Decimal!
+  quantityHigh: Decimal!
+  unitPrice: Decimal!
+}
+
+type ProductQuantityPricingResponse {
+  id: UUID!
+  productId: UUID!
+  quantityLow: Decimal!
+  quantityHigh: Decimal!
+  unitPrice: Decimal!
+}
+
 type ProductResponse {
   id: UUID!
   factoryPartNumber: String!
@@ -1246,6 +1264,8 @@ type Query {
   productCategories(factoryId: UUID, parentId: UUID, grandparentId: UUID): [ProductCategoryResponse!]!
   findProductCpnById(id: UUID!): ProductCpnResponse!
   listProductCpnsByProductId(productId: UUID!): [ProductCpnResponse!]!
+  findProductQuantityPricingById(id: UUID!): ProductQuantityPricingResponse!
+  listProductQuantityPricingByProductId(productId: UUID!): [ProductQuantityPricingResponse!]!
   productUoms: [ProductUomResponse!]!
   findProductById(id: UUID!): ProductResponse!
   productSearch(searchTerm: String!, productCategoryIds: [UUID!] = null, factoryId: UUID, limit: Int! = 20): [ProductResponse!]!
