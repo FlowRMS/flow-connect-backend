@@ -1,0 +1,91 @@
+from uuid import UUID
+
+from sqlalchemy import func, select
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import selectinload
+
+from app.core.context_wrapper import ContextWrapper
+from app.graphql.base_repository import BaseRepository
+from commons.db.v6.crm.inventory.inventory import Inventory
+from app.graphql.v2.core.inventory.strawberry.inventory_stats_response import (
+    InventoryStatsResponse,
+)
+
+
+class InventoryRepository(BaseRepository[Inventory]):
+    def __init__(
+        self,
+        context_wrapper: ContextWrapper,
+        session: AsyncSession,
+    ) -> None:
+        super().__init__(
+            session,
+            context_wrapper,
+            Inventory,
+        )
+
+    async def find_by_warehouse(
+        self,
+        warehouse_id: UUID,
+        factory_id: UUID | None = None,
+        status: str | None = None,
+        search: str | None = None,
+        limit: int = 100,
+        offset: int = 0,
+    ) -> list[Inventory]:
+        stmt = (
+            select(Inventory)
+            .where(Inventory.warehouse_id == warehouse_id)
+            .options(selectinload(Inventory.items))
+            .limit(limit)
+            .offset(offset)
+        )
+
+        if factory_id:
+            stmt = stmt.where(Inventory.factory_id == factory_id)
+
+        if search:
+            search_pattern = f"%{search}%"
+            stmt = stmt.where(
+                (Inventory.product_name.ilike(search_pattern))
+                | (Inventory.part_number.ilike(search_pattern))
+            )
+
+        result = await self.session.execute(stmt)
+        return list(result.unique().scalars().all())
+
+    async def get_stats_by_warehouse(self, warehouse_id: UUID) -> InventoryStatsResponse:
+        stmt = select(
+            func.count(Inventory.id).label("total_products"),
+            func.coalesce(func.sum(Inventory.total_quantity), 0).label("total_quantity"),
+            func.coalesce(func.sum(Inventory.available_quantity), 0).label(
+                "available_quantity"
+            ),
+            func.coalesce(func.sum(Inventory.reserved_quantity), 0).label(
+                "reserved_quantity"
+            ),
+            func.coalesce(func.sum(Inventory.picking_quantity), 0).label(
+                "picking_quantity"
+            ),
+        ).where(Inventory.warehouse_id == warehouse_id)
+
+        result = await self.session.execute(stmt)
+        row = result.one()
+
+        low_stock_stmt = (
+            select(func.count(Inventory.id))
+            .where(Inventory.warehouse_id == warehouse_id)
+            .where(Inventory.reorder_point.isnot(None))
+            .where(Inventory.available_quantity <= Inventory.reorder_point)
+        )
+        low_stock_result = await self.session.execute(low_stock_stmt)
+        low_stock_count = low_stock_result.scalar_one()
+
+        return InventoryStatsResponse(
+            total_products=row.total_products,
+            total_quantity=row.total_quantity,
+            available_quantity=row.available_quantity,
+            reserved_quantity=row.reserved_quantity,
+            picking_quantity=row.picking_quantity,
+            low_stock_count=low_stock_count,
+        )
