@@ -643,6 +643,21 @@ type JobLandingPage implements LandingPageInterfaceBase {
   tags: [String!]
 }
 
+type JobLiteType {
+  id: UUID!
+  createdAt: datetime!
+  jobName: String!
+  startDate: Date
+  endDate: Date
+  description: String
+  jobType: String
+  structuralDetails: String
+  structuralInformation: String
+  additionalInformation: String
+  requesterId: UUID
+  tags: [String!]
+}
+
 type JobRelatedEntitiesResponse {
   preOpportunities: [PreOpportunityLiteResponse!]!
   contacts: [ContactResponse!]!
@@ -1132,6 +1147,7 @@ type OrderResponse {
   balance: OrderBalanceResponse!
   details: [OrderDetailResponse!]!
   insideReps: [OrderInsideRepResponse!]!
+  job: JobLiteType
 }
 
 input OrderSplitRateInput {
@@ -1340,6 +1356,15 @@ input ProductCpnInput {
   commissionRate: Decimal!
 }
 
+type ProductCpnLiteResponse {
+  id: UUID!
+  productId: UUID!
+  customerId: UUID!
+  customerPartNumber: String!
+  unitPrice: Decimal!
+  commissionRate: Decimal!
+}
+
 type ProductCpnResponse {
   id: UUID!
   productId: UUID!
@@ -1525,11 +1550,12 @@ type Query {
   productCategories(factoryId: UUID, parentId: UUID, grandparentId: UUID): [ProductCategoryResponse!]!
   productCpn(id: UUID!): ProductCpnResponse!
   listProductCpnsByProductId(productId: UUID!): [ProductCpnResponse!]!
+  productCpnByProductIdAndCustomerId(productId: UUID!, customerId: UUID!): ProductCpnLiteResponse
   productQuantityPricing(id: UUID!): ProductQuantityPricingResponse!
   listProductQuantityPricingByProductId(productId: UUID!): [ProductQuantityPricingResponse!]!
   productUoms: [ProductUomResponse!]!
   product(id: UUID!): ProductResponse!
-  productSearch(searchTerm: String!, productCategoryIds: [UUID!] = null, factoryId: UUID, limit: Int! = 20): [ProductResponse!]!
+  productSearch(searchTerm: String!, productCategoryIds: [UUID!] = null, factoryId: UUID, limit: Int! = 20): [ProductLiteResponse!]!
   productCategorySearch(searchTerm: String!, factoryId: UUID, limit: Int! = 20): [ProductCategoryLiteResponse!]!
   user(id: UUID!): UserResponse!
   userSearch(searchTerm: String!, isInside: Boolean = null, isOutside: Boolean = null, enabled: Boolean = true, limit: Int! = 20): [UserResponse!]!
@@ -1597,6 +1623,7 @@ type QuoteDetailResponse {
   splitRates: [QuoteSplitRateResponse!]!
   product: ProductLiteResponse
   uom: ProductUomResponse
+  order: OrderLiteResponse
 }
 
 enum QuoteDetailStatus {
@@ -1711,7 +1738,7 @@ type QuoteResponse {
   balance: QuoteBalanceResponse!
   details: [QuoteDetailResponse!]!
   insideReps: [QuoteInsideRepResponse!]!
-  job: JobType
+  job: JobLiteType
 }
 
 input QuoteSplitRateInput {
