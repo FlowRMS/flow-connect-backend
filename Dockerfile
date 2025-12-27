@@ -1,7 +1,7 @@
 FROM ghcr.io/astral-sh/uv:python3.13-bookworm-slim AS builder
 
 ARG GITHUB_TOKEN
-ENV COMMONS_VERSION=1.07.6
+ENV COMMONS_VERSION=1.07.7
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
     libpq-dev cmake build-essential locales curl ca-certificates git \
