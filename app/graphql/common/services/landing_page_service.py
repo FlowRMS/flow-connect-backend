@@ -11,6 +11,7 @@ from app.graphql.companies.repositories.companies_repository import CompaniesRep
 from app.graphql.contacts.repositories.contacts_repository import ContactsRepository
 from app.graphql.jobs.repositories.jobs_repository import JobsRepository
 from app.graphql.notes.repositories.notes_repository import NotesRepository
+from app.graphql.orders.repositories.orders_repository import OrdersRepository
 from app.graphql.pre_opportunities.repositories.pre_opportunities_repository import (
     PreOpportunitiesRepository,
 )
@@ -43,6 +44,7 @@ class LandingPageService:
         factories_repository: FactoriesRepository,
         products_repository: ProductsRepository,
         quotes_repository: QuotesRepository,
+        orders_repository: OrdersRepository,
         rbac_filter_service: RbacFilterService,
     ) -> None:
         super().__init__()
@@ -60,6 +62,7 @@ class LandingPageService:
             LandingSourceType.FACTORIES: factories_repository,
             LandingSourceType.PRODUCTS: products_repository,
             LandingSourceType.QUOTES: quotes_repository,
+            LandingSourceType.ORDERS: orders_repository,
         }
 
     async def find_landing_pages(

@@ -3,8 +3,8 @@ from typing import Self
 from uuid import UUID
 
 import strawberry
+from commons.db.v6.common.creation_type import CreationType
 from commons.db.v6.crm.quotes import (
-    CreationType,
     PipelineStage,
     Quote,
     QuoteStatus,

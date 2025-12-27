@@ -58,11 +58,9 @@ class FactoryLiteResponse(DTOMixin[Factory]):
 @strawberry.type
 class FactoryResponse(FactoryLiteResponse):
     @strawberry.field
-    async def created_by(self) -> UserResponse:
-        return UserResponse.from_orm_model(
-            await self._instance.awaitable_attrs.created_by
-        )
+    def created_by(self) -> UserResponse:
+        return UserResponse.from_orm_model(self._instance.created_by)
 
     @strawberry.field
-    async def split_rates(self) -> list[FactorySplitRateResponse]:
+    def split_rates(self) -> list[FactorySplitRateResponse]:
         return FactorySplitRateResponse.from_orm_model_list(self._instance.split_rates)

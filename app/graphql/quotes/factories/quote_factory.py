@@ -1,9 +1,9 @@
 from datetime import date
 from decimal import Decimal
 
+from commons.db.v6.common.creation_type import CreationType
 from commons.db.v6.crm.pre_opportunities.pre_opportunity_model import PreOpportunity
 from commons.db.v6.crm.quotes import (
-    CreationType,
     PipelineStage,
     Quote,
     QuoteDetail,

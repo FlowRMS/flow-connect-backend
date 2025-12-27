@@ -685,7 +685,7 @@ interface LandingPageInterfaceBase {
   userIds: [UUID!]!
 }
 
-union LandingRecord = JobLandingPage | CompanyLandingPage | ContactLandingPage | PreOpportunityLandingPage | NoteLandingPage | TaskLandingPage | CampaignLandingPage | CustomerLandingPage | FactoryLandingPage | ProductLandingPage | QuoteLandingPage
+union LandingRecord = JobLandingPage | CompanyLandingPage | ContactLandingPage | PreOpportunityLandingPage | NoteLandingPage | TaskLandingPage | CampaignLandingPage | CustomerLandingPage | FactoryLandingPage | ProductLandingPage | QuoteLandingPage | OrderLandingPage
 
 enum LandingSourceType {
   JOBS
@@ -699,6 +699,7 @@ enum LandingSourceType {
   FACTORIES
   PRODUCTS
   QUOTES
+  ORDERS
 }
 
 input LinkRelationInput {
@@ -771,6 +772,9 @@ type Mutation {
   updateNoteConversation(noteConversationId: UUID!, input: NoteConversationInput!): NoteConversationType!
   deleteNoteConversation(conversationId: UUID!): Boolean!
   deleteNoteConversations(noteId: UUID!): Boolean!
+  createOrder(input: OrderInput!): OrderResponse!
+  updateOrder(input: OrderInput!): OrderResponse!
+  deleteOrder(id: UUID!): Boolean!
   createPreOpportunity(input: PreOpportunityInput!): PreOpportunityResponse!
   updatePreOpportunity(input: PreOpportunityInput!): PreOpportunityResponse!
   deletePreOpportunity(id: UUID!): Boolean!
@@ -936,6 +940,22 @@ type O365SendEmailResultType {
   error: String
 }
 
+type OrderBalanceResponse {
+  id: UUID!
+  quantity: Decimal!
+  subtotal: Decimal!
+  total: Decimal!
+  commission: Decimal!
+  discount: Decimal!
+  discountRate: Decimal!
+  commissionRate: Decimal!
+  commissionDiscount: Decimal!
+  commissionDiscountRate: Decimal!
+  shippingBalance: Decimal!
+  cancelledBalance: Decimal!
+  freightChargeBalance: Decimal!
+}
+
 input OrderBy {
   columnName: String!
   direction: OrderByOperator!
@@ -946,20 +966,202 @@ enum OrderByOperator {
   DESC
 }
 
-type OrderResponse {
+input OrderDetailInput {
+  itemNumber: Int!
+  quantity: Decimal!
+  unitPrice: Decimal!
+  endUserId: UUID!
+  id: UUID = null
+  uomId: UUID = null
+  divisionFactor: Decimal = null
+  productId: UUID = null
+  productNameAdhoc: String = null
+  productDescriptionAdhoc: String = null
+  leadTime: String = null
+  note: String = null
+  discountRate: Decimal! = "0.0000"
+  commissionRate: Decimal! = "0.0000"
+  commissionDiscountRate: Decimal! = "0.0000"
+  freightCharge: Decimal! = "0.0000"
+  splitRates: [OrderSplitRateInput!] = null
+}
+
+type OrderDetailResponse {
   id: UUID!
+  orderId: UUID!
+  itemNumber: Int!
+  quantity: Decimal!
+  unitPrice: Decimal!
+  subtotal: Decimal!
+  total: Decimal!
+  totalLineCommission: Decimal!
+  commissionRate: Decimal!
+  commission: Decimal!
+  commissionDiscountRate: Decimal!
+  commissionDiscount: Decimal!
+  discountRate: Decimal!
+  discount: Decimal!
+  productId: UUID
+  productNameAdhoc: String
+  productDescriptionAdhoc: String
+  endUserId: UUID
+  leadTime: String
+  note: String
+  status: OrderStatus!
+  freightCharge: Decimal!
+  shippingBalance: Decimal!
+  cancelledBalance: Decimal!
+  splitRates: [OrderSplitRateResponse!]!
+  product: ProductLiteResponse
+  uom: ProductUomResponse
+}
+
+enum OrderHeaderStatus {
+  OPEN
+  DRAFT
+  SUBMITTED
+  CONFIRMED
+  CANCELLED
+  CLOSED
+}
+
+input OrderInput {
   orderNumber: String!
-  status: Int!
-  balanceId: UUID
-  factoryId: UUID
-  soldToCustomerId: UUID
-  billToCustomerId: UUID
   entityDate: Date!
-  shipDate: Date
   dueDate: Date!
+  soldToCustomerId: UUID!
+  factoryId: UUID!
+  details: [OrderDetailInput!]!
+  id: UUID
+  published: Boolean!
+  creationType: CreationType!
+  orderType: OrderType!
+  billToCustomerId: UUID
+  shippingTerms: String
+  freightTerms: String
+  markNumber: String
+  shipDate: Date
+  projectedShipDate: Date
   factSoNumber: String
   quoteId: UUID
+  insideReps: [OrderInsideRepInput!]
+}
+
+input OrderInsideRepInput {
+  userId: UUID!
+  splitRate: Decimal!
+  position: Int! = 0
+  id: UUID = null
+}
+
+type OrderInsideRepResponse {
+  id: UUID!
+  userId: UUID!
+  splitRate: Decimal!
+  position: Int!
+}
+
+type OrderLandingPage implements LandingPageInterfaceBase {
+  id: UUID!
+  createdAt: datetime!
+  createdBy: String!
+  userIds: [UUID!]!
+  orderNumber: String!
+  status: OrderStatus!
+  headerStatus: OrderHeaderStatus!
+  orderType: OrderType!
+  entityDate: Date!
+  dueDate: Date!
+  total: Decimal!
+  published: Boolean!
+}
+
+type OrderLiteResponse {
+  id: UUID!
+  createdAt: datetime!
+  createdById: UUID!
+  orderNumber: String!
+  entityDate: Date!
+  dueDate: Date!
+  status: OrderStatus!
+  headerStatus: OrderHeaderStatus!
+  orderType: OrderType!
+  published: Boolean!
+  creationType: CreationType!
+  soldToCustomerId: UUID!
+  billToCustomerId: UUID
+  factoryId: UUID
+  shippingTerms: String
+  freightTerms: String
+  markNumber: String
+  shipDate: Date
+  projectedShipDate: Date
+  factSoNumber: String
+  quoteId: UUID
+  balanceId: UUID!
   url: String!
+}
+
+type OrderResponse {
+  id: UUID!
+  createdAt: datetime!
+  createdById: UUID!
+  orderNumber: String!
+  entityDate: Date!
+  dueDate: Date!
+  status: OrderStatus!
+  headerStatus: OrderHeaderStatus!
+  orderType: OrderType!
+  published: Boolean!
+  creationType: CreationType!
+  soldToCustomerId: UUID!
+  billToCustomerId: UUID
+  factoryId: UUID
+  shippingTerms: String
+  freightTerms: String
+  markNumber: String
+  shipDate: Date
+  projectedShipDate: Date
+  factSoNumber: String
+  quoteId: UUID
+  balanceId: UUID!
+  url: String!
+  createdBy: UserResponse!
+  soldToCustomer: CustomerLiteResponse!
+  billToCustomer: CustomerLiteResponse
+  balance: OrderBalanceResponse!
+  details: [OrderDetailResponse!]!
+  insideReps: [OrderInsideRepResponse!]!
+}
+
+input OrderSplitRateInput {
+  userId: UUID!
+  splitRate: Decimal!
+  position: Int! = 0
+  id: UUID = null
+}
+
+type OrderSplitRateResponse {
+  id: UUID!
+  userId: UUID!
+  splitRate: Decimal!
+  position: Int!
+}
+
+enum OrderStatus {
+  OPEN
+  PARTIAL_SHIPPED
+  SHIPPED_COMPLETE
+  CANCELLED
+  OVER_SHIPPED
+  PARTIAL_CANCELLED
+  OVER_CANCELLED
+}
+
+enum OrderType {
+  NORMAL
+  BLANKET
+  RELEASE
 }
 
 input OutsideSplitRateInput {
@@ -1298,7 +1500,8 @@ type Query {
   noteConversations(noteId: UUID!): [NoteConversationType!]!
   noteSearch(searchTerm: String!, limit: Int! = 20): [NoteType!]!
   noteRelatedEntities(noteId: UUID!): NoteRelatedEntitiesResponse!
-  orderSearch(searchTerm: String!, limit: Int! = 20): [OrderResponse!]!
+  order(id: UUID!): OrderResponse!
+  orderSearch(searchTerm: String!, limit: Int! = 20): [OrderLiteResponse!]!
   preOpportunity(id: UUID!): PreOpportunityResponse!
   preOpportunitySearch(searchTerm: String!, limit: Int! = 20): [PreOpportunityLiteResponse!]!
   quote(id: UUID!): QuoteResponse!
@@ -1410,6 +1613,7 @@ input QuoteInput {
   pipelineStage: PipelineStage!
   details: [QuoteDetailInput!]!
   id: UUID
+  jobId: UUID
   published: Boolean!
   creationType: CreationType!
   billToCustomerId: UUID
@@ -1507,6 +1711,7 @@ type QuoteResponse {
   balance: QuoteBalanceResponse!
   details: [QuoteDetailResponse!]!
   insideReps: [QuoteInsideRepResponse!]!
+  job: JobType
 }
 
 input QuoteSplitRateInput {

@@ -2,8 +2,8 @@ from datetime import date
 from uuid import UUID
 
 import strawberry
+from commons.db.v6.common.creation_type import CreationType
 from commons.db.v6.crm.quotes import (
-    CreationType,
     PipelineStage,
     Quote,
     QuoteStatus,
@@ -24,6 +24,7 @@ class QuoteInput(BaseInputGQL[Quote]):
     details: list[QuoteDetailInput]
 
     id: UUID | None = strawberry.UNSET
+    job_id: UUID | None = strawberry.UNSET
     published: bool = strawberry.UNSET
     creation_type: CreationType = strawberry.UNSET
     bill_to_customer_id: UUID | None = strawberry.UNSET
@@ -50,6 +51,7 @@ class QuoteInput(BaseInputGQL[Quote]):
             quote_number=self.quote_number,
             entity_date=self.entity_date,
             sold_to_customer_id=self.sold_to_customer_id,
+            job_id=self.optional_field(self.job_id),
             status=self.status,
             pipeline_stage=self.pipeline_stage,
             published=published,

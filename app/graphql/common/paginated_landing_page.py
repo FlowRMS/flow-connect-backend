@@ -22,6 +22,9 @@ from app.graphql.jobs.strawberry.job_landing_page_response import JobLandingPage
 from app.graphql.notes.strawberry.note_landing_page_response import (
     NoteLandingPageResponse,
 )
+from app.graphql.orders.strawberry.order_landing_page_response import (
+    OrderLandingPageResponse,
+)
 from app.graphql.pre_opportunities.strawberry.pre_opportunity_landing_page_response import (
     PreOpportunityLandingPageResponse,
 )
@@ -55,6 +58,7 @@ LandingRecord = strawberry.union(
         FactoryLandingPageResponse,
         ProductLandingPageResponse,
         QuoteLandingPageResponse,
+        OrderLandingPageResponse,
     ],
 )
 

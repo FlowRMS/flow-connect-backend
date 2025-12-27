@@ -4,9 +4,10 @@ from uuid import UUID
 from commons.db.v6 import RbacResourceEnum, User
 from commons.db.v6.core import Product, ProductCategory
 from commons.db.v6.core.factories.factory import Factory
+from commons.db.v6.core.products.product_cpn import ProductCpn
 from commons.db.v6.core.products.product_uom import ProductUom
 from commons.db.v6.crm.links.entity_type import EntityType
-from sqlalchemy import Select, select
+from sqlalchemy import Select, func, select
 from sqlalchemy.dialects.postgresql import array
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import lazyload
@@ -89,10 +90,19 @@ class ProductsRepository(BaseRepository[Product]):
         Returns:
             List of Product objects matching the search criteria
         """
+
+        greatest = func.greatest(
+            func.similarity(Product.factory_part_number, search_term),
+            func.similarity(Product.description, search_term),
+            func.similarity(ProductCpn.customer_part_number, search_term),
+        )
         stmt = (
             select(Product)
-            .where(Product.factory_part_number.ilike(f"%{search_term}%"))
+            .options(lazyload("*"))
+            .outerjoin(ProductCpn, ProductCpn.product_id == Product.id)
+            .where(greatest > 0.2)
             .limit(limit)
+            .order_by(greatest.desc())
         )
 
         if factory_id is not None:
@@ -102,7 +112,7 @@ class ProductsRepository(BaseRepository[Product]):
             stmt = stmt.where(Product.product_category_id.in_(product_category_ids))
 
         result = await self.session.execute(stmt)
-        return list(result.scalars().all())
+        return list(result.unique().scalars().all())
 
     async def search_product_categories(
         self, search_term: str, factory_id: UUID | None, limit: int = 20

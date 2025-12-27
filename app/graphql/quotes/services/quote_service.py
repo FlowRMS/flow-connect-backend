@@ -1,9 +1,8 @@
 from uuid import UUID
 
 from commons.auth import AuthInfo
-from commons.db.v6.crm import Quote, QuoteDetail
+from commons.db.v6.crm import Quote
 from commons.db.v6.crm.links.entity_type import EntityType
-from sqlalchemy.orm import joinedload, lazyload
 
 from app.errors.common_errors import NameAlreadyExistsError, NotFoundError
 from app.graphql.pre_opportunities.repositories.pre_opportunities_repository import (
@@ -26,6 +25,9 @@ class QuoteService:
         self.pre_opportunity_repository = pre_opportunity_repository
         self.auth_info = auth_info
 
+    async def find_quote_by_id(self, quote_id: UUID) -> Quote:
+        return await self.repository.find_quote_by_id(quote_id)
+
     async def create_quote(self, quote_input: QuoteInput) -> Quote:
         if await self.repository.quote_number_exists(quote_input.quote_number):
             raise NameAlreadyExistsError(quote_input.quote_number)
@@ -45,26 +47,6 @@ class QuoteService:
         if not await self.repository.exists(quote_id):
             raise NotFoundError(str(quote_id))
         return await self.repository.delete(quote_id)
-
-    async def find_quote_by_id(self, quote_id: UUID) -> Quote:
-        quote = await self.repository.get_by_id(
-            quote_id,
-            options=[
-                joinedload(Quote.details),
-                joinedload(Quote.details).joinedload(QuoteDetail.product),
-                joinedload(Quote.details).joinedload(QuoteDetail.split_rates),
-                joinedload(Quote.details).joinedload(QuoteDetail.uom),
-                joinedload(Quote.inside_reps),
-                joinedload(Quote.balance),
-                joinedload(Quote.sold_to_customer),
-                joinedload(Quote.bill_to_customer),
-                joinedload(Quote.created_by),
-                lazyload("*"),
-            ],
-        )
-        if not quote:
-            raise NotFoundError(str(quote_id))
-        return quote
 
     async def create_quote_from_pre_opportunity(
         self,

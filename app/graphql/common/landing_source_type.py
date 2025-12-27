@@ -20,3 +20,4 @@ class LandingSourceType(Enum):
     FACTORIES = "factories"
     PRODUCTS = "products"
     QUOTES = "quotes"
+    ORDERS = "orders"

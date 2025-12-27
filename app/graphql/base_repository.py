@@ -177,7 +177,6 @@ class BaseRepository(Generic[T]):
 
         self.session.add(entity)
         await self.session.flush()
-        await self.session.refresh(entity)
 
         await self._run_processors(RepositoryEvent.POST_CREATE, entity)
 
@@ -200,8 +199,6 @@ class BaseRepository(Generic[T]):
 
         merged = await self.session.merge(incoming_entity)
         await self.session.flush()
-        await self.session.refresh(merged)
-
         await self._run_processors(RepositoryEvent.POST_UPDATE, merged, original_entity)
 
         return merged
@@ -264,8 +261,6 @@ class BaseRepository(Generic[T]):
         """
         self.session.add_all(entities)
         await self.session.flush()
-        for entity in entities:
-            await self.session.refresh(entity)
         return entities
 
     async def find_by_entity(self, entity_type: EntityType, entity_id: UUID) -> list[T]:
