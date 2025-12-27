@@ -36,16 +36,4 @@ class AddInventoryItemInput:
         )
 
 
-@strawberry.input
-class CreateInventoryInput:
-    product_id: str
-    product_name: str
-    part_number: str
-    warehouse_id: UUID
-    factory_id: UUID | None = None
-    factory_name: str | None = None
-    total_quantity: int = 0
-    available_quantity: int = 0
-    reserved_quantity: int = 0
-    picking_quantity: int = 0
-    reorder_point: int | None = None
+

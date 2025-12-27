@@ -7,6 +7,7 @@ from sqlalchemy.orm import selectinload
 from app.core.context_wrapper import ContextWrapper
 from app.graphql.base_repository import BaseRepository
 from commons.db.v6.crm.inventory.inventory import Inventory
+from commons.db.v6.core.products.product import Product
 from app.graphql.v2.core.inventory.strawberry.inventory_stats_response import (
     InventoryStatsResponse,
 )
@@ -35,6 +36,7 @@ class InventoryRepository(BaseRepository[Inventory]):
     ) -> list[Inventory]:
         stmt = (
             select(Inventory)
+            .join(Inventory.product)
             .where(Inventory.warehouse_id == warehouse_id)
             .options(selectinload(Inventory.items))
             .limit(limit)
@@ -42,13 +44,13 @@ class InventoryRepository(BaseRepository[Inventory]):
         )
 
         if factory_id:
-            stmt = stmt.where(Inventory.factory_id == factory_id)
+            stmt = stmt.where(Product.factory_id == factory_id)
 
         if search:
             search_pattern = f"%{search}%"
             stmt = stmt.where(
-                (Inventory.product_name.ilike(search_pattern))
-                | (Inventory.part_number.ilike(search_pattern))
+                (Product.description.ilike(search_pattern))
+                | (Product.factory_part_number.ilike(search_pattern))
             )
 
         result = await self.session.execute(stmt)
@@ -74,9 +76,10 @@ class InventoryRepository(BaseRepository[Inventory]):
 
         low_stock_stmt = (
             select(func.count(Inventory.id))
+            .join(Inventory.product)
             .where(Inventory.warehouse_id == warehouse_id)
-            .where(Inventory.reorder_point.isnot(None))
-            .where(Inventory.available_quantity <= Inventory.reorder_point)
+            .where(Product.min_order_qty.isnot(None))
+            .where(Inventory.available_quantity <= Product.min_order_qty)
         )
         low_stock_result = await self.session.execute(low_stock_stmt)
         low_stock_count = low_stock_result.scalar_one()

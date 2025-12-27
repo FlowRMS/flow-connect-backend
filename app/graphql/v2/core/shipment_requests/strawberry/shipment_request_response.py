@@ -16,7 +16,8 @@ from app.graphql.v2.core.shipment_requests.strawberry.shipment_request_item_resp
 @strawberry.enum
 class ShipmentRequestStatusEnum(strawberry.enum.Enum):
     PENDING = "PENDING"
-    APPROVED = "APPROVED"
+    CONFIRMED = "CONFIRMED"
+    SENT = "SENT"
     REJECTED = "REJECTED"
     IN_PROGRESS = "IN_PROGRESS"
     SHIPPED = "SHIPPED"
@@ -27,11 +28,15 @@ class ShipmentRequestStatusEnum(strawberry.enum.Enum):
 class ShipmentRequestResponse(DTOMixin[ShipmentRequest]):
     _instance: strawberry.Private[ShipmentRequest]
     id: UUID
+    request_number: str
     warehouse_id: UUID
     factory_id: UUID | None
     status: ShipmentRequestStatusEnum
+    method: str | None
+    priority: str | None
     notes: str | None
-    requested_delivery_date: datetime | None
+    request_date: datetime | None
+    is_active: bool
     created_at: datetime
     updated_at: datetime
 
@@ -40,11 +45,15 @@ class ShipmentRequestResponse(DTOMixin[ShipmentRequest]):
         return cls(
             _instance=model,
             id=model.id,
+            request_number=model.request_number,
             warehouse_id=model.warehouse_id,
             factory_id=model.factory_id,
             status=ShipmentRequestStatusEnum(model.status.value),
+            method=model.method,
+            priority=model.priority,
             notes=model.notes,
-            requested_delivery_date=model.requested_delivery_date,
+            request_date=model.request_date,
+            is_active=model.is_active,
             created_at=model.created_at,
             updated_at=model.updated_at,
         )
