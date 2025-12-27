@@ -26,6 +26,7 @@ from app.graphql.v2.core.factories.repositories.factories_repository import (
 from app.graphql.v2.core.products.repositories.products_repository import (
     ProductsRepository,
 )
+from app.graphql.v2.files.repositories.file_repository import FileRepository
 from app.graphql.v2.rbac.services.rbac_filter_service import RbacFilterService
 
 
@@ -45,6 +46,7 @@ class LandingPageService:
         products_repository: ProductsRepository,
         quotes_repository: QuotesRepository,
         orders_repository: OrdersRepository,
+        file_repository: FileRepository,
         rbac_filter_service: RbacFilterService,
     ) -> None:
         super().__init__()
@@ -63,6 +65,7 @@ class LandingPageService:
             LandingSourceType.PRODUCTS: products_repository,
             LandingSourceType.QUOTES: quotes_repository,
             LandingSourceType.ORDERS: orders_repository,
+            LandingSourceType.FILES: file_repository,
         }
 
     async def find_landing_pages(

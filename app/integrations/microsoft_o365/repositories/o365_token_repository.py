@@ -50,7 +50,7 @@ class O365TokenRepository(BaseRepository[O365UserToken]):
         result = await self.session.execute(
             select(O365UserToken).where(
                 O365UserToken.user_id == user_id,
-                O365UserToken.is_active == True,  # noqa: E712
+                O365UserToken.is_active.is_(True),
             )
         )
         return result.scalar_one_or_none()

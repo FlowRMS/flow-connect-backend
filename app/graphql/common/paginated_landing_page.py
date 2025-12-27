@@ -43,6 +43,7 @@ from app.graphql.v2.core.factories.strawberry.factory_landing_page_response impo
 from app.graphql.v2.core.products.strawberry.product_landing_page_response import (
     ProductLandingPageResponse,
 )
+from app.graphql.v2.files.strawberry.file_landing_page_response import FileLandingPageResponse
 
 LandingRecord = strawberry.union(
     name="LandingRecord",
@@ -59,6 +60,7 @@ LandingRecord = strawberry.union(
         ProductLandingPageResponse,
         QuoteLandingPageResponse,
         OrderLandingPageResponse,
+        FileLandingPageResponse
     ],
 )
 
