@@ -21,6 +21,9 @@ from app.core.context_wrapper import ContextWrapper
 from app.core.exceptions import NotFoundError
 from app.core.processors import ProcessorExecutor
 from app.graphql.base_repository import BaseRepository
+from app.graphql.quotes.processors.default_rep_split_processor import (
+    DefaultRepSplitProcessor,
+)
 from app.graphql.quotes.processors.validate_rep_split_processor import (
     ValidateRepSplitProcessor,
 )
@@ -47,6 +50,7 @@ class QuotesRepository(BaseRepository[Quote]):
         balance_repository: QuoteBalanceRepository,
         rbac_filter_service: RbacFilterService,
         processor_executor: ProcessorExecutor,
+        default_rep_split_processor: DefaultRepSplitProcessor,
         validate_rep_split_processor: ValidateRepSplitProcessor,
     ) -> None:
         super().__init__(
@@ -55,7 +59,10 @@ class QuotesRepository(BaseRepository[Quote]):
             Quote,
             rbac_filter_service,
             processor_executor,
-            processor_executor_classes=[validate_rep_split_processor],
+            processor_executor_classes=[
+                default_rep_split_processor,
+                validate_rep_split_processor,
+            ],
         )
         self.balance_repository = balance_repository
 
