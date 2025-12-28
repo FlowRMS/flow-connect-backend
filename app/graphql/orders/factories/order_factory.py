@@ -39,7 +39,6 @@ class OrderFactory:
             published=False,
             quote_id=quote.id,
             details=OrderFactory._map_quote_details(quote.details),
-            inside_reps=OrderFactory._map_inside_reps(quote.inside_reps),
         )
 
     @staticmethod
@@ -66,25 +65,22 @@ class OrderFactory:
                 commission_discount=detail.commission_discount,
                 total_line_commission=detail.total_line_commission,
                 freight_charge=Decimal("0"),
-                split_rates=[
+                outside_split_rates=[
                     OrderSplitRate(
                         user_id=sr.user_id,
                         split_rate=sr.split_rate,
                         position=sr.position,
                     )
-                    for sr in detail.split_rates
+                    for sr in detail.outside_split_rates
+                ],
+                inside_split_rates=[
+                    OrderInsideRep(
+                        user_id=ir.user_id,
+                        split_rate=ir.split_rate,
+                        position=ir.position,
+                    )
+                    for ir in detail.inside_split_rates
                 ],
             )
             for detail in quote_details
-        ]
-
-    @staticmethod
-    def _map_inside_reps(quote_inside_reps: list) -> list[OrderInsideRep]:
-        return [
-            OrderInsideRep(
-                user_id=rep.user_id,
-                split_rate=rep.split_rate,
-                position=rep.position,
-            )
-            for rep in quote_inside_reps
         ]

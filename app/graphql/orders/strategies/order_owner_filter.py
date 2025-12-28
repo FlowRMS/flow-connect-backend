@@ -36,7 +36,8 @@ class OrderOwnerFilterStrategy(RbacFilterStrategy):
         )
 
         inside_rep_subq = (
-            select(OrderInsideRep.order_id)
+            select(OrderDetail.order_id)
+            .join(OrderInsideRep, OrderInsideRep.order_detail_id == OrderDetail.id)
             .where(OrderInsideRep.user_id == user_id)
             .distinct()
             .scalar_subquery()

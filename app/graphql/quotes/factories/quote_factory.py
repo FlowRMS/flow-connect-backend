@@ -54,7 +54,6 @@ class QuoteFactory:
             blanket=source_quote.blanket,
             published=False,
             details=QuoteFactory._deep_copy_details(source_quote.details),
-            inside_reps=QuoteFactory._deep_copy_inside_reps(source_quote.inside_reps),
         )
 
     @staticmethod
@@ -105,27 +104,22 @@ class QuoteFactory:
                 lead_time=d.lead_time,
                 note=d.note,
                 status=QuoteDetailStatus.OPEN,
-                split_rates=[
+                outside_split_rates=[
                     QuoteSplitRate(
                         user_id=sr.user_id,
                         split_rate=sr.split_rate,
                         position=sr.position,
                     )
-                    for sr in d.split_rates
+                    for sr in d.outside_split_rates
+                ],
+                inside_split_rates=[
+                    QuoteInsideRep(
+                        user_id=ir.user_id,
+                        split_rate=ir.split_rate,
+                        position=ir.position,
+                    )
+                    for ir in d.inside_split_rates
                 ],
             )
             for d in details
-        ]
-
-    @staticmethod
-    def _deep_copy_inside_reps(
-        inside_reps: list[QuoteInsideRep],
-    ) -> list[QuoteInsideRep]:
-        return [
-            QuoteInsideRep(
-                user_id=rep.user_id,
-                split_rate=rep.split_rate,
-                position=rep.position,
-            )
-            for rep in inside_reps
         ]

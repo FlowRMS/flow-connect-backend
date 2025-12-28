@@ -9,15 +9,6 @@ from app.graphql.v2.rbac.strategies.base import RbacFilterStrategy
 
 
 class QuoteOwnerFilterStrategy(RbacFilterStrategy):
-    """
-    Filter quotes by ownership through multiple paths.
-
-    User can view quotes where they are:
-    1. The creator (created_by_id)
-    2. An inside rep (user_id in QuoteInsideRep)
-    3. Assigned to any line item split rate (user_id in QuoteSplitRate)
-    """
-
     def __init__(self, resource: RbacResourceEnum) -> None:
         super().__init__()
         self._resource = resource
@@ -40,7 +31,8 @@ class QuoteOwnerFilterStrategy(RbacFilterStrategy):
         )
 
         inside_rep_subq = (
-            select(QuoteInsideRep.quote_id)
+            select(QuoteDetail.quote_id)
+            .join(QuoteInsideRep, QuoteInsideRep.quote_detail_id == QuoteDetail.id)
             .where(QuoteInsideRep.user_id == user_id)
             .distinct()
             .scalar_subquery()

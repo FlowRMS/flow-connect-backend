@@ -68,10 +68,11 @@ class OrdersRepository(BaseRepository[Order]):
 
         inside_rep_user_ids_subq = (
             select(
-                OrderInsideRep.order_id,
+                OrderDetail.order_id,
                 func.array_agg(OrderInsideRep.user_id).label("inside_rep_user_ids"),
             )
-            .group_by(OrderInsideRep.order_id)
+            .join(OrderInsideRep, OrderInsideRep.order_detail_id == OrderDetail.id)
+            .group_by(OrderDetail.order_id)
             .subquery()
         )
 
@@ -132,9 +133,9 @@ class OrdersRepository(BaseRepository[Order]):
             options=[
                 joinedload(Order.details),
                 joinedload(Order.details).joinedload(OrderDetail.product),
-                joinedload(Order.details).joinedload(OrderDetail.split_rates),
+                joinedload(Order.details).joinedload(OrderDetail.outside_split_rates),
+                joinedload(Order.details).joinedload(OrderDetail.inside_split_rates),
                 joinedload(Order.details).joinedload(OrderDetail.uom),
-                joinedload(Order.inside_reps),
                 joinedload(Order.balance),
                 joinedload(Order.sold_to_customer),
                 joinedload(Order.bill_to_customer),

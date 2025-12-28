@@ -5,6 +5,7 @@ import strawberry
 from commons.db.v6.commission.orders import OrderDetail
 
 from app.core.strawberry.inputs import BaseInputGQL
+from app.graphql.orders.strawberry.order_inside_rep_input import OrderInsideRepInput
 from app.graphql.orders.strawberry.order_split_rate_input import OrderSplitRateInput
 
 
@@ -26,7 +27,8 @@ class OrderDetailInput(BaseInputGQL[OrderDetail]):
     commission_rate: Decimal = Decimal("0")
     commission_discount_rate: Decimal = Decimal("0")
     freight_charge: Decimal = Decimal("0")
-    split_rates: list[OrderSplitRateInput] | None = None
+    outside_split_rates: list[OrderSplitRateInput] | None = None
+    inside_split_rates: list[OrderInsideRepInput] | None = None
 
     def to_orm_model(self) -> OrderDetail:
         subtotal = self.quantity * self.unit_price
@@ -60,9 +62,14 @@ class OrderDetailInput(BaseInputGQL[OrderDetail]):
             lead_time=self.lead_time,
             note=self.note,
             freight_charge=self.freight_charge,
-            split_rates=(
-                [sr.to_orm_model() for sr in self.split_rates]
-                if self.split_rates
+            outside_split_rates=(
+                [sr.to_orm_model() for sr in self.outside_split_rates]
+                if self.outside_split_rates
+                else []
+            ),
+            inside_split_rates=(
+                [ir.to_orm_model() for ir in self.inside_split_rates]
+                if self.inside_split_rates
                 else []
             ),
         )

@@ -3,9 +3,6 @@ import strawberry
 from app.graphql.jobs.strawberry.job_response import JobLiteType
 from app.graphql.orders.strawberry.order_balance_response import OrderBalanceResponse
 from app.graphql.orders.strawberry.order_detail_response import OrderDetailResponse
-from app.graphql.orders.strawberry.order_inside_rep_response import (
-    OrderInsideRepResponse,
-)
 from app.graphql.orders.strawberry.order_lite_response import OrderLiteResponse
 from app.graphql.v2.core.customers.strawberry.customer_response import (
     CustomerLiteResponse,
@@ -36,10 +33,6 @@ class OrderResponse(OrderLiteResponse):
     @strawberry.field
     def details(self) -> list[OrderDetailResponse]:
         return OrderDetailResponse.from_orm_model_list(self._instance.details)
-
-    @strawberry.field
-    def inside_reps(self) -> list[OrderInsideRepResponse]:
-        return OrderInsideRepResponse.from_orm_model_list(self._instance.inside_reps)
 
     @strawberry.field
     def job(self) -> JobLiteType | None:

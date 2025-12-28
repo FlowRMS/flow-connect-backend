@@ -6,6 +6,9 @@ import strawberry
 from commons.db.v6.commission.orders import OrderDetail, OrderStatus
 
 from app.core.db.adapters.dto import DTOMixin
+from app.graphql.orders.strawberry.order_inside_rep_response import (
+    OrderInsideRepResponse,
+)
 from app.graphql.orders.strawberry.order_split_rate_response import (
     OrderSplitRateResponse,
 )
@@ -74,8 +77,16 @@ class OrderDetailResponse(DTOMixin[OrderDetail]):
         )
 
     @strawberry.field
-    def split_rates(self) -> list[OrderSplitRateResponse]:
-        return OrderSplitRateResponse.from_orm_model_list(self._instance.split_rates)
+    def outside_split_rates(self) -> list[OrderSplitRateResponse]:
+        return OrderSplitRateResponse.from_orm_model_list(
+            self._instance.outside_split_rates
+        )
+
+    @strawberry.field
+    def inside_split_rates(self) -> list[OrderInsideRepResponse]:
+        return OrderInsideRepResponse.from_orm_model_list(
+            self._instance.inside_split_rates
+        )
 
     @strawberry.field
     def product(self) -> ProductLiteResponse | None:

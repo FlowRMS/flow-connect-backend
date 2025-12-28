@@ -11,7 +11,6 @@ from commons.db.v6.crm.quotes import (
 
 from app.core.strawberry.inputs import BaseInputGQL
 from app.graphql.quotes.strawberry.quote_detail_input import QuoteDetailInput
-from app.graphql.quotes.strawberry.quote_inside_rep_input import QuoteInsideRepInput
 
 
 @strawberry.input
@@ -35,10 +34,8 @@ class QuoteInput(BaseInputGQL[Quote]):
     revise_date: date | None = strawberry.UNSET
     accept_date: date | None = strawberry.UNSET
     blanket: bool = strawberry.UNSET
-    inside_reps: list[QuoteInsideRepInput] | None = strawberry.UNSET
 
     def to_orm_model(self) -> Quote:
-        inside_reps_val = self.optional_field(self.inside_reps)
         published = self.published if self.published != strawberry.UNSET else False
         creation_type = (
             self.creation_type
@@ -65,9 +62,4 @@ class QuoteInput(BaseInputGQL[Quote]):
             accept_date=self.optional_field(self.accept_date),
             blanket=blanket,
             details=[detail.to_orm_model() for detail in self.details],
-            inside_reps=(
-                [rep.to_orm_model() for rep in inside_reps_val]
-                if inside_reps_val
-                else []
-            ),
         )

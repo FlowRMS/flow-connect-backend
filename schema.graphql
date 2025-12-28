@@ -835,6 +835,7 @@ type Mutation {
   createOrder(input: OrderInput!): OrderResponse!
   updateOrder(input: OrderInput!): OrderResponse!
   deleteOrder(id: UUID!): Boolean!
+  createOrderFromQuote(quoteId: UUID!, orderNumber: String!, factoryId: UUID!, dueDate: Date = null, quoteDetailIds: [UUID!] = null): OrderResponse!
   createPreOpportunity(input: PreOpportunityInput!): PreOpportunityResponse!
   updatePreOpportunity(input: PreOpportunityInput!): PreOpportunityResponse!
   deletePreOpportunity(id: UUID!): Boolean!
@@ -1047,7 +1048,8 @@ input OrderDetailInput {
   commissionRate: Decimal! = "0.0000"
   commissionDiscountRate: Decimal! = "0.0000"
   freightCharge: Decimal! = "0.0000"
-  splitRates: [OrderSplitRateInput!] = null
+  outsideSplitRates: [OrderSplitRateInput!] = null
+  insideSplitRates: [OrderInsideRepInput!] = null
 }
 
 type OrderDetailResponse {
@@ -1075,7 +1077,8 @@ type OrderDetailResponse {
   freightCharge: Decimal!
   shippingBalance: Decimal!
   cancelledBalance: Decimal!
-  splitRates: [OrderSplitRateResponse!]!
+  outsideSplitRates: [OrderSplitRateResponse!]!
+  insideSplitRates: [OrderInsideRepResponse!]!
   product: ProductLiteResponse
   uom: ProductUomResponse
 }
@@ -1108,7 +1111,6 @@ input OrderInput {
   projectedShipDate: Date
   factSoNumber: String
   quoteId: UUID
-  insideReps: [OrderInsideRepInput!]
 }
 
 input OrderInsideRepInput {
@@ -1195,7 +1197,6 @@ type OrderResponse {
   billToCustomer: CustomerLiteResponse
   balance: OrderBalanceResponse!
   details: [OrderDetailResponse!]!
-  insideReps: [OrderInsideRepResponse!]!
   job: JobLiteType
 }
 
@@ -1647,7 +1648,8 @@ input QuoteDetailInput {
   discountRate: Decimal! = "0.0000"
   commissionRate: Decimal! = "0.0000"
   commissionDiscountRate: Decimal! = "0.0000"
-  splitRates: [QuoteSplitRateInput!] = null
+  outsideSplitRates: [QuoteSplitRateInput!] = null
+  insideSplitRates: [QuoteInsideRepInput!] = null
 }
 
 type QuoteDetailResponse {
@@ -1673,7 +1675,8 @@ type QuoteDetailResponse {
   leadTime: String
   note: String
   status: QuoteDetailStatus!
-  splitRates: [QuoteSplitRateResponse!]!
+  outsideSplitRates: [QuoteSplitRateResponse!]!
+  insideSplitRates: [QuoteInsideRepResponse!]!
   product: ProductLiteResponse
   uom: ProductUomResponse
   order: OrderLiteResponse
@@ -1704,7 +1707,6 @@ input QuoteInput {
   reviseDate: Date
   acceptDate: Date
   blanket: Boolean!
-  insideReps: [QuoteInsideRepInput!]
 }
 
 input QuoteInsideRepInput {
@@ -1716,8 +1718,6 @@ input QuoteInsideRepInput {
 
 type QuoteInsideRepResponse {
   id: UUID!
-  createdAt: datetime!
-  quoteId: UUID!
   userId: UUID!
   splitRate: Decimal!
   position: Int!
@@ -1790,7 +1790,6 @@ type QuoteResponse {
   billToCustomer: CustomerLiteResponse
   balance: QuoteBalanceResponse!
   details: [QuoteDetailResponse!]!
-  insideReps: [QuoteInsideRepResponse!]!
   job: JobLiteType
 }
 

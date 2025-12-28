@@ -21,16 +21,16 @@ class ValidateRepSplitProcessor(BaseProcessor[Quote]):
         quote = context.entity
 
         for detail in quote.details:
-            if not detail.split_rates:
+            if not detail.outside_split_rates:
                 continue
 
             context_msg = f"on line {detail.item_number}"
             validate_split_rate_range(
-                detail.split_rates,
+                detail.outside_split_rates,
                 label="split rate",
                 context=context_msg,
             )
             validate_split_rates_sum_to_100(
-                detail.split_rates,
+                detail.outside_split_rates,
                 label=f"split rates {context_msg}",
             )

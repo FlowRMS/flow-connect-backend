@@ -68,10 +68,11 @@ class QuotesRepository(BaseRepository[Quote]):
 
         inside_rep_user_ids_subq = (
             select(
-                QuoteInsideRep.quote_id,
+                QuoteDetail.quote_id,
                 func.array_agg(QuoteInsideRep.user_id).label("inside_rep_user_ids"),
             )
-            .group_by(QuoteInsideRep.quote_id)
+            .join(QuoteInsideRep, QuoteInsideRep.quote_detail_id == QuoteDetail.id)
+            .group_by(QuoteDetail.quote_id)
             .subquery()
         )
 
@@ -131,10 +132,10 @@ class QuotesRepository(BaseRepository[Quote]):
             options=[
                 joinedload(Quote.details),
                 joinedload(Quote.details).joinedload(QuoteDetail.product),
-                joinedload(Quote.details).joinedload(QuoteDetail.split_rates),
+                joinedload(Quote.details).joinedload(QuoteDetail.outside_split_rates),
+                joinedload(Quote.details).joinedload(QuoteDetail.inside_split_rates),
                 joinedload(Quote.details).joinedload(QuoteDetail.uom),
                 joinedload(Quote.details).joinedload(QuoteDetail.order),
-                joinedload(Quote.inside_reps),
                 joinedload(Quote.balance),
                 joinedload(Quote.sold_to_customer),
                 joinedload(Quote.bill_to_customer),

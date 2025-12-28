@@ -7,6 +7,9 @@ from commons.db.v6.crm.quotes import QuoteDetail, QuoteDetailStatus
 
 from app.core.db.adapters.dto import DTOMixin
 from app.graphql.orders.strawberry.order_lite_response import OrderLiteResponse
+from app.graphql.quotes.strawberry.quote_inside_rep_response import (
+    QuoteInsideRepResponse,
+)
 from app.graphql.quotes.strawberry.quote_split_rate_response import (
     QuoteSplitRateResponse,
 )
@@ -71,8 +74,16 @@ class QuoteDetailResponse(DTOMixin[QuoteDetail]):
         )
 
     @strawberry.field
-    def split_rates(self) -> list[QuoteSplitRateResponse]:
-        return QuoteSplitRateResponse.from_orm_model_list(self._instance.split_rates)
+    def outside_split_rates(self) -> list[QuoteSplitRateResponse]:
+        return QuoteSplitRateResponse.from_orm_model_list(
+            self._instance.outside_split_rates
+        )
+
+    @strawberry.field
+    def inside_split_rates(self) -> list[QuoteInsideRepResponse]:
+        return QuoteInsideRepResponse.from_orm_model_list(
+            self._instance.inside_split_rates
+        )
 
     @strawberry.field
     def product(self) -> ProductLiteResponse | None:

@@ -3,9 +3,6 @@ import strawberry
 from app.graphql.jobs.strawberry.job_response import JobLiteType
 from app.graphql.quotes.strawberry.quote_balance_response import QuoteBalanceResponse
 from app.graphql.quotes.strawberry.quote_detail_response import QuoteDetailResponse
-from app.graphql.quotes.strawberry.quote_inside_rep_response import (
-    QuoteInsideRepResponse,
-)
 from app.graphql.quotes.strawberry.quote_lite_response import QuoteLiteResponse
 from app.graphql.v2.core.customers.strawberry.customer_response import (
     CustomerLiteResponse,
@@ -40,10 +37,6 @@ class QuoteResponse(QuoteLiteResponse):
     @strawberry.field
     def details(self) -> list[QuoteDetailResponse]:
         return QuoteDetailResponse.from_orm_model_list(self._instance.details)
-
-    @strawberry.field
-    def inside_reps(self) -> list[QuoteInsideRepResponse]:
-        return QuoteInsideRepResponse.from_orm_model_list(self._instance.inside_reps)
 
     @strawberry.field
     def job(self) -> JobLiteType | None:
