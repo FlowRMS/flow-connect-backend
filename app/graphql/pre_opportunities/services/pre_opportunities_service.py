@@ -81,6 +81,7 @@ class PreOpportunitiesService:
             pre_opportunity_id,
             options=[
                 joinedload(PreOpportunity.created_by),
+                joinedload(PreOpportunity.job),
                 joinedload(PreOpportunity.balance),
                 joinedload(PreOpportunity.details),
                 joinedload(PreOpportunity.details).joinedload(
