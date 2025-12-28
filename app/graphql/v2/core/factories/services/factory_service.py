@@ -2,6 +2,7 @@ from uuid import UUID
 
 from commons.auth import AuthInfo
 from commons.db.v6.core.factories.factory import Factory
+from commons.db.v6.core.factories.factory_split_rate import FactorySplitRate
 from commons.db.v6.crm.links.entity_type import EntityType
 from sqlalchemy.orm import joinedload, lazyload
 
@@ -27,6 +28,7 @@ class FactoryService:
             factory_id,
             options=[
                 joinedload(Factory.split_rates),
+                joinedload(Factory.split_rates).joinedload(FactorySplitRate.user),
                 joinedload(Factory.created_by),
                 lazyload("*"),
             ],
