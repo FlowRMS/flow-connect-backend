@@ -640,7 +640,6 @@ type InvoiceResponse {
   status: Int!
   published: Boolean!
   locked: Boolean!
-  createdBy: UUID!
   creationType: Int!
   balanceId: UUID!
   url: String!

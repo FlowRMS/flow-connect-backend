@@ -1,7 +1,6 @@
 FROM ghcr.io/astral-sh/uv:python3.13-bookworm-slim AS builder
 
 ARG GITHUB_TOKEN
-ENV COMMONS_VERSION=1.08.1
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
     libpq-dev cmake build-essential locales curl ca-certificates git \
@@ -10,28 +9,24 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 
 RUN git config --global url."https://${GITHUB_TOKEN}@github.com/".insteadOf "ssh://git@github.com/"
 
-
 # Configure uv
 ENV UV_COMPILE_BYTECODE=1 UV_LINK_MODE=copy
 ENV UV_PYTHON_DOWNLOADS=0
 
 WORKDIR /app
 
-# Copy and patch pyproject.toml to use git source instead of workspace
-COPY pyproject.toml uv.lock ./
-RUN sed -i "s/{ workspace = true }/{ git = \"ssh:\/\/git@github.com\/FlowRMS\/flowbot-commons.git\", tag = \"${COMMONS_VERSION}\" }/" pyproject.toml
-
-# Regenerate lock file with the patched git source
 RUN --mount=type=cache,target=/root/.cache/uv \
-    uv lock
-
-RUN --mount=type=cache,target=/root/.cache/uv \
+    --mount=type=bind,source=uv.lock,target=uv.lock \
+    --mount=type=bind,source=pyproject.toml,target=pyproject.toml \
     uv sync --frozen --no-install-project --no-dev
+
+# Copy source code
+COPY pyproject.toml uv.lock ./
 
 RUN --mount=type=cache,target=/root/.cache/uv \
     uv sync --frozen --no-dev
 
-FROM python:3.13-slim as runtime
+FROM python:3.13.7-slim as runtime
 
 COPY --from=builder /app/.venv /app/.venv
 

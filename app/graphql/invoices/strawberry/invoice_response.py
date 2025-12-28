@@ -18,11 +18,10 @@ class InvoiceResponse(DTOMixin[Invoice]):
     entity_date: date
     due_date: date | None
     factory_id: UUID | None
-    order_id: UUID
+    order_id: UUID | None
     status: int
     published: bool
     locked: bool
-    created_by: UUID
     creation_type: int
     balance_id: UUID
 
@@ -39,7 +38,6 @@ class InvoiceResponse(DTOMixin[Invoice]):
             status=model.status,
             published=model.published,
             locked=model.locked,
-            created_by=model.created_by,
             creation_type=model.creation_type,
             balance_id=model.balance_id,
         )
