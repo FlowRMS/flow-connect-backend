@@ -1,3 +1,4 @@
+from datetime import date
 from uuid import UUID
 
 import strawberry
@@ -39,3 +40,23 @@ class OrdersMutations:
         service: Injected[OrderService],
     ) -> bool:
         return await service.delete_order(order_id=id)
+
+    @strawberry.mutation
+    @inject
+    async def create_order_from_quote(
+        self,
+        quote_id: UUID,
+        order_number: str,
+        factory_id: UUID,
+        service: Injected[OrderService],
+        due_date: date | None = None,
+        quote_detail_ids: list[UUID] | None = None,
+    ) -> OrderResponse:
+        order = await service.create_order_from_quote(
+            quote_id=quote_id,
+            order_number=order_number,
+            factory_id=factory_id,
+            due_date=due_date,
+            quote_detail_ids=quote_detail_ids,
+        )
+        return OrderResponse.from_orm_model(order)

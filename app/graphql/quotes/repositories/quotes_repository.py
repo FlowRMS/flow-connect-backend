@@ -11,7 +11,7 @@ from commons.db.v6.crm.quotes import (
     QuoteInsideRep,
     QuoteSplitRate,
 )
-from sqlalchemy import Select, func, literal, or_, select
+from sqlalchemy import Select, func, literal, or_, select, update
 from sqlalchemy.dialects.postgresql import ARRAY, array
 from sqlalchemy.dialects.postgresql import UUID as PG_UUID
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -205,3 +205,13 @@ class QuotesRepository(BaseRepository[Quote]):
         )
         result = await self.session.execute(stmt)
         return list(result.scalars().all())
+
+    async def update_detail_order_ids(
+        self, detail_ids: list[UUID], order_id: UUID
+    ) -> None:
+        stmt = (
+            update(QuoteDetail)
+            .where(QuoteDetail.id.in_(detail_ids))
+            .values(order_id=order_id)
+        )
+        _ = await self.session.execute(stmt)
