@@ -4,6 +4,20 @@ from dataclasses import dataclass
 
 import asyncpg
 
+from migrations.v5_to_v6.migrate_customer_relations import (
+    migrate_addresses,
+    migrate_contact_links,
+    migrate_contacts,
+    migrate_customer_factory_sales_reps,
+)
+from migrations.v5_to_v6.migrate_orders import (
+    migrate_order_balances,
+    migrate_order_details,
+    migrate_order_inside_reps,
+    migrate_order_split_rates,
+    migrate_orders,
+)
+
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
 logger = logging.getLogger(__name__)
 
@@ -984,35 +998,54 @@ async def run_migration(config: MigrationConfig) -> dict[str, int]:
     try:
         # Order matters due to foreign key dependencies
         # 1. Users first (referenced by most tables)
-        # results["users"] = await migrate_users(source, dest)
+        results["users"] = await migrate_users(source, dest)
         # 2. Customers (referenced by CPNs)
-        # results["customers"] = await migrate_customers(source, dest)
+        results["customers"] = await migrate_customers(source, dest)
         # 3. Factories (referenced by products and categories)
-        # results["factories"] = await migrate_factories(source, dest)
+        results["factories"] = await migrate_factories(source, dest)
         # 4. Product UOMs (referenced by products)
-        # results["product_uoms"] = await migrate_product_uoms(source, dest)
+        results["product_uoms"] = await migrate_product_uoms(source, dest)
         # 5. Product Categories (referenced by products)
-        # results["product_categories"] = await migrate_product_categories(source, dest)
+        results["product_categories"] = await migrate_product_categories(source, dest)
         # 6. Products (referenced by CPNs)
-        # results["products"] = await migrate_products(source, dest)
+        results["products"] = await migrate_products(source, dest)
         # 7. Product CPNs (depends on products and customers)
-        # results["product_cpns"] = await migrate_product_cpns(source, dest)
+        results["product_cpns"] = await migrate_product_cpns(source, dest)
         # 8. Job Statuses (no dependencies)
-        # results["job_statuses"] = await migrate_job_statuses(source, dest)
+        results["job_statuses"] = await migrate_job_statuses(source, dest)
         # 9. Jobs (depends on job_statuses, users)
-        # results["jobs"] = await migrate_jobs(source, dest)
+        results["jobs"] = await migrate_jobs(source, dest)
         # 10. Quote Balances (no dependencies)
-        # results["quote_balances"] = await migrate_quote_balances(source, dest)
+        results["quote_balances"] = await migrate_quote_balances(source, dest)
         # 11. Quote Lost Reasons (depends on users)
-        # results["quote_lost_reasons"] = await migrate_quote_lost_reasons(source, dest)
+        results["quote_lost_reasons"] = await migrate_quote_lost_reasons(source, dest)
         # 12. Quotes (depends on customers, quote_balances, jobs)
-        # results["quotes"] = await migrate_quotes(source, dest)
+        results["quotes"] = await migrate_quotes(source, dest)
         # 13. Quote Details (depends on quotes, products, quote_lost_reasons)
-        # results["quote_details"] = await migrate_quote_details(source, dest)
+        results["quote_details"] = await migrate_quote_details(source, dest)
         # 14. Quote Split Rates (depends on quote_details, users)
         results["quote_split_rates"] = await migrate_quote_split_rates(source, dest)
         # 15. Quote Inside Reps (depends on quote_details, users)
         results["quote_inside_reps"] = await migrate_quote_inside_reps(source, dest)
+        # 16. Customer Factory Sales Reps (depends on customers, factories, users)
+        results["customer_factory_sales_reps"] = await migrate_customer_factory_sales_reps(source, dest)
+        # 17. Addresses (depends on customers, factories)
+        results["addresses"] = await migrate_addresses(source, dest)
+        # 18. Contacts (no direct dependencies, but links depend on customers)
+        results["contacts"] = await migrate_contacts(source, dest)
+        # 19. Contact Links (depends on contacts, customers)
+        results["contact_links"] = await migrate_contact_links(source, dest)
+        # 20. Order Balances (no dependencies)
+        results["order_balances"] = await migrate_order_balances(source, dest)
+        # 21. Orders (depends on order_balances, customers, factories, quotes, jobs)
+        results["orders"] = await migrate_orders(source, dest)
+        # 22. Order Inside Reps (depends on orders, users)
+        # 23. Order Details (depends on orders, products, customers)
+        results["order_details"] = await migrate_order_details(source, dest)
+        # 22. Order Inside Reps (depends on orders, users)
+        results["order_inside_reps"] = await migrate_order_inside_reps(source, dest)
+        # 24. Order Split Rates (depends on order_details, users)
+        results["order_split_rates"] = await migrate_order_split_rates(source, dest)
 
         logger.info("Migration completed successfully!")
         logger.info(f"Results: {results}")

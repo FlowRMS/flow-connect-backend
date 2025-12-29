@@ -161,7 +161,7 @@ def upgrade() -> None:
     )
     _ = op.create_table(
         "order_inside_reps",
-        sa.Column("order_id", sa.UUID(), nullable=False),
+        sa.Column("order_detail_id", sa.UUID(), nullable=False),
         sa.Column("user_id", sa.UUID(), nullable=False),
         sa.Column(
             "split_rate",
@@ -178,8 +178,8 @@ def upgrade() -> None:
             nullable=False,
         ),
         sa.ForeignKeyConstraint(
-            ["order_id"],
-            ["pycommission.orders.id"],
+            ["order_detail_id"],
+            ["pycommission.order_details.id"],
         ),
         sa.ForeignKeyConstraint(
             ["user_id"],
