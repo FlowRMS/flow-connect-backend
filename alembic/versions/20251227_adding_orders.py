@@ -343,6 +343,15 @@ def upgrade() -> None:
         sa.PrimaryKeyConstraint("id"),
         schema="pycommission",
     )
+    op.create_foreign_key(
+        "fk_quote_details_order_id_orders",
+        "quote_details",
+        "orders",
+        ["order_id"],
+        ["id"],
+        source_schema="pycrm",
+        referent_schema="pycommission",
+    )
 
 
 def downgrade() -> None:

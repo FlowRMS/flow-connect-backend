@@ -22,7 +22,6 @@ class CheckResponse(DTOMixin[Check]):
     commission: Decimal
     factory_id: UUID
     status: int
-    created_by: UUID
     creation_type: int
 
     @classmethod
@@ -37,7 +36,6 @@ class CheckResponse(DTOMixin[Check]):
             commission=model.commission,
             factory_id=model.factory_id,
             status=model.status,
-            created_by=model.created_by,
             creation_type=model.creation_type,
         )
 
