@@ -3,6 +3,7 @@ from uuid import UUID
 from commons.auth import AuthInfo
 from commons.db.v6.crm.links.entity_type import EntityType
 from commons.db.v6.files import File, FileType
+from sqlalchemy.orm import joinedload, lazyload
 from strawberry.file_uploads import Upload
 
 from app.graphql.v2.files.repositories.file_repository import FileRepository
@@ -52,18 +53,25 @@ def detect_file_type(file_name: str) -> FileType:
 
 
 class FileService:
-    def __init__(  # pyright: ignore[reportMissingSuperCall]
+    def __init__(
         self,
         repository: FileRepository,
         upload_service: FileUploadService,
         auth_info: AuthInfo,
     ) -> None:
+        super().__init__()
         self.repository = repository
         self.upload_service = upload_service
         self.auth_info = auth_info
 
     async def get_by_id(self, file_id: UUID) -> File | None:
-        return await self.repository.get_by_id(file_id)
+        return await self.repository.get_by_id(
+            file_id,
+            options=[
+                joinedload(File.created_by),
+                lazyload("*"),
+            ],
+        )
 
     async def search_files(self, search_term: str, limit: int = 20) -> list[File]:
         return await self.repository.search_by_name(search_term, limit)
