@@ -5,6 +5,117 @@ import asyncpg
 logger = logging.getLogger(__name__)
 
 
+async def migrate_customer_split_rates(
+    source: asyncpg.Connection,
+    dest: asyncpg.Connection,
+) -> int:
+    """Migrate customer split rates from v5 to v6.
+
+    v5: core.customer_split_rates (id, user_id, customer_id, split_rate, position)
+    v6: pycore.customer_split_rates adds rep_type field (1=OUTSIDE, 2=INSIDE)
+
+    Rep type is determined by the user's inside flag from pyuser.users.
+    """
+    logger.info("Starting customer split rate migration...")
+
+    split_rates = await source.fetch("""
+        SELECT
+            csr.id,
+            csr.user_id,
+            csr.customer_id,
+            COALESCE(csr.split_rate, 0) as split_rate,
+            COALESCE(csr."position", 0)::integer as position,
+            COALESCE(csr.entry_date, now()) as created_at,
+            CASE WHEN COALESCE(u.inside, false) = true THEN 2 ELSE 1 END as rep_type
+        FROM core.customer_split_rates csr
+        JOIN "user".users u ON u.id = csr.user_id
+    """)
+
+    if not split_rates:
+        logger.info("No customer split rates to migrate")
+        return 0
+
+    await dest.executemany(
+        """
+        INSERT INTO pycore.customer_split_rates (
+            id, user_id, customer_id, split_rate, rep_type, "position", created_at
+        ) VALUES ($1, $2, $3, $4, $5, $6, $7)
+        ON CONFLICT (id) DO UPDATE SET
+            user_id = EXCLUDED.user_id,
+            customer_id = EXCLUDED.customer_id,
+            split_rate = EXCLUDED.split_rate,
+            rep_type = EXCLUDED.rep_type,
+            "position" = EXCLUDED."position"
+        """,
+        [(
+            sr["id"],
+            sr["user_id"],
+            sr["customer_id"],
+            sr["split_rate"],
+            sr["rep_type"],
+            sr["position"],
+            sr["created_at"],
+        ) for sr in split_rates],
+    )
+
+    logger.info(f"Migrated {len(split_rates)} customer split rates")
+    return len(split_rates)
+
+
+async def migrate_factory_split_rates(
+    source: asyncpg.Connection,
+    dest: asyncpg.Connection,
+) -> int:
+    """Migrate factory split rates from v5 sales_rep_selection_split_rates to v6.
+
+    v5 uses sales_rep_selections + sales_rep_selection_split_rates for factory assignments.
+    v6 has pycore.factory_split_rates (id, user_id, factory_id, split_rate, position).
+
+    This extracts unique factory-user assignments from sales_rep_selection_split_rates.
+    """
+    logger.info("Starting factory split rate migration...")
+
+    split_rates = await source.fetch("""
+        SELECT
+            gen_random_uuid() as id,
+            f.inside_rep_id as user_id,
+            f.id as factory_id,
+            100 as split_rate,
+            0 as position,
+            COALESCE(f.entry_date, now()) as created_at
+        FROM core.factories f
+        WHERE f.inside_rep_id IS NOT NULL
+    """
+)
+    if not split_rates:
+        logger.info("No factory split rates to migrate")
+        return 0
+
+    await dest.executemany(
+        """
+        INSERT INTO pycore.factory_split_rates (
+            id, user_id, factory_id, split_rate, "position", created_at
+        ) VALUES ($1, $2, $3, $4, $5, $6)
+        ON CONFLICT (id) DO UPDATE SET
+            user_id = EXCLUDED.user_id,
+            factory_id = EXCLUDED.factory_id,
+            split_rate = EXCLUDED.split_rate,
+            "position" = EXCLUDED."position"
+        """,
+        [(
+            sr["id"],
+            sr["user_id"],
+            sr["factory_id"],
+            sr["split_rate"],
+            sr["position"],
+            sr["created_at"],
+        ) for sr in split_rates],
+    )
+
+    logger.info(f"Migrated {len(split_rates)} factory split rates")
+    return len(split_rates)
+
+
 async def migrate_customer_factory_sales_reps(
     source: asyncpg.Connection,
     dest: asyncpg.Connection,

@@ -85,7 +85,7 @@ async def migrate_orders(source: asyncpg.Connection, dest: asyncpg.Connection) -
             o.bill_to_customer_id,
             o.published,
             o.creation_type,
-            o.status,
+            o.status + 1 AS status,
             o.order_type,
             o.header_status,
             o.factory_id,
@@ -240,7 +240,7 @@ async def migrate_order_details(source: asyncpg.Connection, dest: asyncpg.Connec
             od.product_id,
             od.end_user_id,
             od.lead_time,
-            od.status,
+            od.status + 1 AS status,
             COALESCE(od.freight_charge, 0) as freight_charge,
             COALESCE(od.shipping_balance, 0) as shipping_balance,
             CASE
