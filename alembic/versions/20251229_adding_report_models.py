@@ -21,6 +21,7 @@ depends_on: str | Sequence[str] | None = None
 
 
 def upgrade() -> None:
+    op.execute("CREATE SCHEMA IF NOT EXISTS report")
     _ = op.create_table(
         "report_templates",
         sa.Column("id", sa.UUID(), nullable=False),
