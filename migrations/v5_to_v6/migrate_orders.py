@@ -101,7 +101,8 @@ async def migrate_orders(source: asyncpg.Connection, dest: asyncpg.Connection) -
             COALESCE(o.entry_date, now()) as created_at
         FROM commission.orders o
         JOIN "user".users u ON u.id = o.created_by
-        WHERE o.sold_to_customer_id IS NOT NULL AND o.balance_id <> 'c2623ea8-9750-407b-864d-b4b2276e1a67'::uuid
+        WHERE 
+            o.sold_to_customer_id IS NOT NULL
     """)
 
     if not orders:
@@ -182,14 +183,7 @@ async def migrate_order_inside_reps(source: asyncpg.Connection, dest: asyncpg.Co
         JOIN commission.order_details od ON od.order_id = o.id
         JOIN "user".users u ON u.id = o.created_by
         JOIN core.products p ON p.id = od.product_id
-        WHERE 
-        o.sold_to_customer_id IS NOT NULL 
-        AND
-        o.balance_id <> 'c2623ea8-9750-407b-864d-b4b2276e1a67'::uuid
-        AND
-        o.entry_date < now() - INTERVAL '4 day' 
-        AND 
-        p.entry_date < now() - INTERVAL '4 day'
+        WHERE o.sold_to_customer_id IS NOT NULL 
     """)
 
     if not inside_reps:
@@ -253,10 +247,6 @@ async def migrate_order_details(source: asyncpg.Connection, dest: asyncpg.Connec
         JOIN "user".users u ON u.id = o.created_by
         WHERE 
         o.sold_to_customer_id IS NOT NULL 
-        AND
-        o.entry_date < now() - INTERVAL '2 day' 
-        AND 
-        p.entry_date < now() - INTERVAL '2 day'
     """)
 
     if not details:
@@ -342,12 +332,6 @@ async def migrate_order_split_rates(source: asyncpg.Connection, dest: asyncpg.Co
         JOIN core.products p ON p.id = od.product_id
         WHERE 
         o.sold_to_customer_id IS NOT NULL 
-        AND
-        o.balance_id <> 'c2623ea8-9750-407b-864d-b4b2276e1a67'::uuid
-        AND
-        o.entry_date < now() - INTERVAL '4 day' 
-        AND 
-        p.entry_date < now() - INTERVAL '4 day'
     """)
 
     if not split_rates:
