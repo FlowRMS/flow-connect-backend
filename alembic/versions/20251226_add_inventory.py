@@ -25,35 +25,40 @@ def upgrade() -> None:
     op.execute("CREATE SCHEMA IF NOT EXISTS warehouse")
 
     # Create inventory table
-    op.create_table(
+    _ = op.create_table(
         "inventory",
         sa.Column("id", postgresql.UUID(as_uuid=True), primary_key=True),
-        sa.Column("product_id", sa.String(100), nullable=False, index=True),
-        sa.Column("product_name", sa.String(255), nullable=False),
-        sa.Column("part_number", sa.String(100), nullable=False, index=True),
         sa.Column(
-            "factory_id",
+            "product_id",
             postgresql.UUID(as_uuid=True),
-            sa.ForeignKey("pycore.companies.id"),
-            nullable=True,
+            sa.ForeignKey("pycore.products.id"),
+            nullable=False,
+            index=True,
         ),
-        sa.Column("factory_name", sa.String(255), nullable=True),
         sa.Column(
             "warehouse_id", postgresql.UUID(as_uuid=True), nullable=False, index=True
         ),
-        sa.Column("total_quantity", sa.Integer, default=0),
-        sa.Column("available_quantity", sa.Integer, default=0),
-        sa.Column("reserved_quantity", sa.Integer, default=0),
-        sa.Column("picking_quantity", sa.Integer, default=0),
-        sa.Column("ownership_type", sa.String(20), default="CONSIGNMENT"),
-        sa.Column("reorder_point", sa.Integer, nullable=True),
-        sa.Column("abc_class", sa.String(1), nullable=True),
+        # Quantities as Numeric to match Decimal in model
+        sa.Column("total_quantity", sa.Numeric, nullable=False, default=0),
+        sa.Column("available_quantity", sa.Numeric, nullable=False, default=0),
+        sa.Column("reserved_quantity", sa.Numeric, nullable=False, default=0),
+        sa.Column("picking_quantity", sa.Numeric, nullable=False, default=0),
+        # IntEnum stored as Integer
+        sa.Column("ownership_type", sa.Integer, nullable=False, default=1),
+        sa.Column("abc_class", sa.Integer, nullable=True),
+        # Audit columns
         sa.Column(
-            "created_at", sa.DateTime(timezone=True), server_default=sa.func.now()
+            "created_by",
+            postgresql.UUID(as_uuid=True),
+            sa.ForeignKey("pycore.users.id"),
+            nullable=True,
+        ),
+        sa.Column(
+            "created_at", sa.DateTime(timezone=False), server_default=sa.func.now()
         ),
         sa.Column(
             "updated_at",
-            sa.DateTime(timezone=True),
+            sa.DateTime(timezone=False),
             server_default=sa.func.now(),
             onupdate=sa.func.now(),
         ),
@@ -61,7 +66,7 @@ def upgrade() -> None:
     )
 
     # Create inventory_items table
-    op.create_table(
+    _ = op.create_table(
         "inventory_items",
         sa.Column("id", postgresql.UUID(as_uuid=True), primary_key=True),
         sa.Column(
@@ -74,12 +79,21 @@ def upgrade() -> None:
         sa.Column("bin_id", postgresql.UUID(as_uuid=True), nullable=True),
         sa.Column("bin_location", sa.String(255), nullable=True),
         sa.Column("full_location_path", sa.String(500), nullable=True),
-        sa.Column("quantity", sa.Integer, nullable=False, default=0),
+        # Quantity as Numeric to match Decimal in model
+        sa.Column("quantity", sa.Numeric, nullable=False, default=0),
         sa.Column("lot_number", sa.String(100), nullable=True),
-        sa.Column("status", sa.String(20), default="AVAILABLE"),
-        sa.Column("received_date", sa.DateTime(timezone=True), nullable=True),
+        # IntEnum stored as Integer
+        sa.Column("status", sa.Integer, nullable=False, default=1),
+        sa.Column("received_date", sa.DateTime(timezone=False), nullable=True),
+        # Audit columns
         sa.Column(
-            "created_at", sa.DateTime(timezone=True), server_default=sa.func.now()
+            "created_by",
+            postgresql.UUID(as_uuid=True),
+            sa.ForeignKey("pycore.users.id"),
+            nullable=True,
+        ),
+        sa.Column(
+            "created_at", sa.DateTime(timezone=False), server_default=sa.func.now()
         ),
         schema="warehouse",
     )

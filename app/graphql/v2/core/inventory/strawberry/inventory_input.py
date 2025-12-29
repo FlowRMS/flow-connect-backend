@@ -1,15 +1,9 @@
 from datetime import datetime
+from decimal import Decimal
 from uuid import UUID
 
 import strawberry
-
-from commons.db.v6.crm.inventory.inventory_item import (
-    InventoryItem,
-    InventoryItemStatus,
-)
-from app.graphql.v2.core.inventory.strawberry.inventory_item_response import (
-    InventoryItemStatusEnum,
-)
+from commons.db.v6.crm.inventory import InventoryItem, InventoryItemStatus
 
 
 @strawberry.input
@@ -18,9 +12,9 @@ class AddInventoryItemInput:
     bin_id: UUID | None = None
     bin_location: str | None = None
     full_location_path: str | None = None
-    quantity: int = 0
+    quantity: Decimal = Decimal(0)
     lot_number: str | None = None
-    status: InventoryItemStatusEnum = InventoryItemStatusEnum.AVAILABLE
+    status: InventoryItemStatus = InventoryItemStatus.AVAILABLE
     received_date: datetime | None = None
 
     def to_orm_model(self) -> InventoryItem:
@@ -31,9 +25,6 @@ class AddInventoryItemInput:
             full_location_path=self.full_location_path,
             quantity=self.quantity,
             lot_number=self.lot_number,
-            status=InventoryItemStatus(self.status.value),
+            status=self.status,
             received_date=self.received_date,
         )
-
-
-

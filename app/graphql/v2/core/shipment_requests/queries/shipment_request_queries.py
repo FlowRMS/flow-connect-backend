@@ -2,6 +2,7 @@ from uuid import UUID
 
 import strawberry
 from aioinject import Injected
+from commons.db.v6.crm.shipment_requests import ShipmentRequestStatus
 
 from app.graphql.inject import inject
 from app.graphql.v2.core.shipment_requests.services.shipment_request_service import (
@@ -20,7 +21,7 @@ class ShipmentRequestQueries:
         self,
         service: Injected[ShipmentRequestService],
         warehouse_id: UUID,
-        status: str | None = None,
+        status: ShipmentRequestStatus | None = None,
         limit: int = 100,
         offset: int = 0,
     ) -> list[ShipmentRequestResponse]:

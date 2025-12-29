@@ -1,7 +1,8 @@
 from uuid import UUID
 
-from app.errors.common_errors import NotFoundError
 from commons.db.v6.crm.inventory.inventory import Inventory
+
+from app.errors.common_errors import NotFoundError
 from app.graphql.v2.core.inventory.repositories.inventory_repository import (
     InventoryRepository,
 )

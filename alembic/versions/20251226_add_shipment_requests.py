@@ -22,27 +22,46 @@ depends_on: str | Sequence[str] | None = None
 
 def upgrade() -> None:
     # Create shipment_requests table
-    op.create_table(
+    _ = op.create_table(
         "shipment_requests",
         sa.Column("id", postgresql.UUID(as_uuid=True), primary_key=True),
+        sa.Column("request_number", sa.String(100), nullable=False, unique=True),
         sa.Column(
-            "warehouse_id", postgresql.UUID(as_uuid=True), nullable=False, index=True
+            "warehouse_id", postgresql.UUID(as_uuid=True), nullable=True, index=True
+        ),
+        sa.Column(
+            "customer_id",
+            postgresql.UUID(as_uuid=True),
+            sa.ForeignKey("pycore.customers.id"),
+            nullable=True,
+            index=True,
         ),
         sa.Column(
             "factory_id",
             postgresql.UUID(as_uuid=True),
-            sa.ForeignKey("pycore.companies.id"),
+            sa.ForeignKey("pycore.factories.id"),
             nullable=True,
         ),
-        sa.Column("status", sa.String(20), nullable=False, default="PENDING"),
+        # IntEnum stored as Integer
+        sa.Column("method", sa.Integer, nullable=True),
+        sa.Column("priority", sa.Integer, nullable=False, default=1),
+        sa.Column("status", sa.Integer, nullable=False, default=1),
+        sa.Column("request_date", sa.DateTime(timezone=False), nullable=True),
+        sa.Column("is_active", sa.Boolean, nullable=False, default=True),
         sa.Column("notes", sa.String(), nullable=True),
-        sa.Column("requested_delivery_date", sa.DateTime(timezone=True), nullable=True),
+        # Audit columns
         sa.Column(
-            "created_at", sa.DateTime(timezone=True), server_default=sa.func.now()
+            "created_by",
+            postgresql.UUID(as_uuid=True),
+            sa.ForeignKey("pycore.users.id"),
+            nullable=True,
+        ),
+        sa.Column(
+            "created_at", sa.DateTime(timezone=False), server_default=sa.func.now()
         ),
         sa.Column(
             "updated_at",
-            sa.DateTime(timezone=True),
+            sa.DateTime(timezone=False),
             server_default=sa.func.now(),
             onupdate=sa.func.now(),
         ),
@@ -50,7 +69,7 @@ def upgrade() -> None:
     )
 
     # Create shipment_request_items table
-    op.create_table(
+    _ = op.create_table(
         "shipment_request_items",
         sa.Column("id", postgresql.UUID(as_uuid=True), primary_key=True),
         sa.Column(
@@ -60,10 +79,24 @@ def upgrade() -> None:
             nullable=False,
             index=True,
         ),
-        sa.Column("product_id", sa.String(100), nullable=False),
-        sa.Column("quantity", sa.Integer, nullable=False, default=1),
         sa.Column(
-            "created_at", sa.DateTime(timezone=True), server_default=sa.func.now()
+            "product_id",
+            postgresql.UUID(as_uuid=True),
+            sa.ForeignKey("pycore.products.id"),
+            nullable=False,
+            index=True,
+        ),
+        # Quantity as Numeric to match Decimal in model
+        sa.Column("quantity", sa.Numeric, nullable=False, default=1),
+        # Audit columns
+        sa.Column(
+            "created_by",
+            postgresql.UUID(as_uuid=True),
+            sa.ForeignKey("pycore.users.id"),
+            nullable=True,
+        ),
+        sa.Column(
+            "created_at", sa.DateTime(timezone=False), server_default=sa.func.now()
         ),
         schema="warehouse",
     )

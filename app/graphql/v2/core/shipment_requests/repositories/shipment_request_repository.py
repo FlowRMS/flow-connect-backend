@@ -1,14 +1,15 @@
 from uuid import UUID
 
+from commons.db.v6.crm.shipment_requests.shipment_request import (
+    ShipmentRequest,
+    ShipmentRequestStatus,
+)
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
 from app.core.context_wrapper import ContextWrapper
 from app.graphql.base_repository import BaseRepository
-from commons.db.v6.crm.shipment_requests.shipment_request import (
-    ShipmentRequest,
-)
 
 
 class ShipmentRequestRepository(BaseRepository[ShipmentRequest]):
@@ -26,7 +27,7 @@ class ShipmentRequestRepository(BaseRepository[ShipmentRequest]):
     async def find_by_warehouse(
         self,
         warehouse_id: UUID,
-        status: str | None = None,
+        status: ShipmentRequestStatus | None = None,
         limit: int = 100,
         offset: int = 0,
     ) -> list[ShipmentRequest]:

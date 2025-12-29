@@ -2,6 +2,7 @@ from uuid import UUID
 
 import strawberry
 from aioinject import Injected
+from commons.db.v6.crm.shipment_requests import ShipmentRequestStatus
 
 from app.graphql.inject import inject
 from app.graphql.v2.core.shipment_requests.services.shipment_request_service import (
@@ -9,7 +10,6 @@ from app.graphql.v2.core.shipment_requests.services.shipment_request_service imp
 )
 from app.graphql.v2.core.shipment_requests.strawberry.shipment_request_response import (
     ShipmentRequestResponse,
-    ShipmentRequestStatusEnum,
 )
 
 
@@ -21,12 +21,12 @@ class ShipmentRequestMutations:
         self,
         service: Injected[ShipmentRequestService],
         id: UUID,
-        status: ShipmentRequestStatusEnum,
+        status: ShipmentRequestStatus,
         notes: str | None = None,
     ) -> ShipmentRequestResponse:
         updated_request = await service.update_status(
             request_id=id,
-            status=status.value,
+            status=status,
             notes=notes,
         )
         return ShipmentRequestResponse.from_orm_model(updated_request)

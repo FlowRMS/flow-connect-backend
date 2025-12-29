@@ -7,7 +7,9 @@ from app.graphql.inject import inject
 from app.graphql.v2.core.inventory.services.inventory_item_service import (
     InventoryItemService,
 )
-from app.graphql.v2.core.inventory.strawberry.inventory_input import AddInventoryItemInput
+from app.graphql.v2.core.inventory.strawberry.inventory_input import (
+    AddInventoryItemInput,
+)
 from app.graphql.v2.core.inventory.strawberry.inventory_item_response import (
     InventoryItemResponse,
 )

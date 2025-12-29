@@ -5,7 +5,9 @@ from aioinject import Injected
 
 from app.graphql.inject import inject
 from app.graphql.v2.core.inventory.services.inventory_service import InventoryService
-from app.graphql.v2.core.inventory.strawberry.inventory_response import InventoryResponse
+from app.graphql.v2.core.inventory.strawberry.inventory_response import (
+    InventoryResponse,
+)
 from app.graphql.v2.core.inventory.strawberry.inventory_stats_response import (
     InventoryStatsResponse,
 )

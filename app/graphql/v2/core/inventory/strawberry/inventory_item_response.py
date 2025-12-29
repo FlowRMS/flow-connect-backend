@@ -1,20 +1,12 @@
 from datetime import datetime
+from decimal import Decimal
 from typing import Self
 from uuid import UUID
 
 import strawberry
+from commons.db.v6.crm.inventory import InventoryItem, InventoryItemStatus
 
 from app.core.db.adapters.dto import DTOMixin
-from commons.db.v6.crm.inventory.inventory_item import InventoryItem
-
-
-@strawberry.enum
-class InventoryItemStatusEnum(strawberry.enum.Enum):
-    AVAILABLE = "AVAILABLE"
-    RESERVED = "RESERVED"
-    PICKING = "PICKING"
-    DAMAGED = "DAMAGED"
-    QUARANTINE = "QUARANTINE"
 
 
 @strawberry.type
@@ -24,9 +16,9 @@ class InventoryItemResponse(DTOMixin[InventoryItem]):
     bin_id: UUID | None
     bin_location: str | None
     full_location_path: str | None
-    quantity: int
+    quantity: Decimal
     lot_number: str | None
-    status: InventoryItemStatusEnum
+    status: InventoryItemStatus
     received_date: datetime | None
 
     @classmethod
@@ -39,6 +31,6 @@ class InventoryItemResponse(DTOMixin[InventoryItem]):
             full_location_path=model.full_location_path,
             quantity=model.quantity,
             lot_number=model.lot_number,
-            status=InventoryItemStatusEnum(model.status.value),
+            status=model.status,
             received_date=model.received_date,
         )

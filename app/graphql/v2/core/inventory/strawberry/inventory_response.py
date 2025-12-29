@@ -1,28 +1,15 @@
 from datetime import datetime
+from decimal import Decimal
 from typing import Self
 from uuid import UUID
 
 import strawberry
+from commons.db.v6.crm.inventory import ABCClass, Inventory, OwnershipType
 
 from app.core.db.adapters.dto import DTOMixin
-from commons.db.v6.crm.inventory.inventory import Inventory
 from app.graphql.v2.core.inventory.strawberry.inventory_item_response import (
     InventoryItemResponse,
 )
-
-
-@strawberry.enum
-class OwnershipTypeEnum(strawberry.enum.Enum):
-    CONSIGNMENT = "CONSIGNMENT"
-    OWNED = "OWNED"
-    THIRD_PARTY = "THIRD_PARTY"
-
-
-@strawberry.enum
-class ABCClassEnum(strawberry.enum.Enum):
-    A = "A"
-    B = "B"
-    C = "C"
 
 
 @strawberry.type
@@ -30,12 +17,12 @@ class InventoryLiteResponse(DTOMixin[Inventory]):
     id: UUID
     product_id: UUID
     warehouse_id: UUID
-    total_quantity: int
-    available_quantity: int
-    reserved_quantity: int
-    picking_quantity: int
-    ownership_type: OwnershipTypeEnum
-    abc_class: ABCClassEnum | None
+    total_quantity: Decimal
+    available_quantity: Decimal
+    reserved_quantity: Decimal
+    picking_quantity: Decimal
+    ownership_type: OwnershipType
+    abc_class: ABCClass | None
     created_at: datetime
     updated_at: datetime
 
@@ -49,8 +36,8 @@ class InventoryLiteResponse(DTOMixin[Inventory]):
             available_quantity=model.available_quantity,
             reserved_quantity=model.reserved_quantity,
             picking_quantity=model.picking_quantity,
-            ownership_type=OwnershipTypeEnum(model.ownership_type.value),
-            abc_class=ABCClassEnum(model.abc_class.value) if model.abc_class else None,
+            ownership_type=model.ownership_type,
+            abc_class=model.abc_class,
             created_at=model.created_at,
             updated_at=model.updated_at,
         )
@@ -71,8 +58,8 @@ class InventoryResponse(InventoryLiteResponse):
             available_quantity=model.available_quantity,
             reserved_quantity=model.reserved_quantity,
             picking_quantity=model.picking_quantity,
-            ownership_type=OwnershipTypeEnum(model.ownership_type.value),
-            abc_class=ABCClassEnum(model.abc_class.value) if model.abc_class else None,
+            ownership_type=model.ownership_type,
+            abc_class=model.abc_class,
             created_at=model.created_at,
             updated_at=model.updated_at,
         )

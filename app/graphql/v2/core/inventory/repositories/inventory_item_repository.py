@@ -1,11 +1,11 @@
 from uuid import UUID
 
+from commons.db.v6.crm.inventory.inventory_item import InventoryItem
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.context_wrapper import ContextWrapper
 from app.graphql.base_repository import BaseRepository
-from commons.db.v6.crm.inventory.inventory_item import InventoryItem
 
 
 class InventoryItemRepository(BaseRepository[InventoryItem]):

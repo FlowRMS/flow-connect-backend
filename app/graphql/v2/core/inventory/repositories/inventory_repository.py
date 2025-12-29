@@ -1,13 +1,13 @@
 from uuid import UUID
 
+from commons.db.v6.core.products.product import Product
+from commons.db.v6.crm.inventory.inventory import Inventory
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
 from app.core.context_wrapper import ContextWrapper
 from app.graphql.base_repository import BaseRepository
-from commons.db.v6.crm.inventory.inventory import Inventory
-from commons.db.v6.core.products.product import Product
 from app.graphql.v2.core.inventory.strawberry.inventory_stats_response import (
     InventoryStatsResponse,
 )
@@ -56,10 +56,14 @@ class InventoryRepository(BaseRepository[Inventory]):
         result = await self.session.execute(stmt)
         return list(result.unique().scalars().all())
 
-    async def get_stats_by_warehouse(self, warehouse_id: UUID) -> InventoryStatsResponse:
+    async def get_stats_by_warehouse(
+        self, warehouse_id: UUID
+    ) -> InventoryStatsResponse:
         stmt = select(
             func.count(Inventory.id).label("total_products"),
-            func.coalesce(func.sum(Inventory.total_quantity), 0).label("total_quantity"),
+            func.coalesce(func.sum(Inventory.total_quantity), 0).label(
+                "total_quantity"
+            ),
             func.coalesce(func.sum(Inventory.available_quantity), 0).label(
                 "available_quantity"
             ),

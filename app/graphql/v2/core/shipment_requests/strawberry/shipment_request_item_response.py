@@ -1,21 +1,22 @@
 from datetime import datetime
+from decimal import Decimal
 from typing import Self
 from uuid import UUID
 
 import strawberry
-
-from app.core.db.adapters.dto import DTOMixin
 from commons.db.v6.crm.shipment_requests.shipment_request_item import (
     ShipmentRequestItem,
 )
+
+from app.core.db.adapters.dto import DTOMixin
 
 
 @strawberry.type
 class ShipmentRequestItemResponse(DTOMixin[ShipmentRequestItem]):
     id: UUID
     request_id: UUID
-    product_id: str
-    quantity: int
+    product_id: UUID
+    quantity: Decimal
     created_at: datetime
 
     @classmethod

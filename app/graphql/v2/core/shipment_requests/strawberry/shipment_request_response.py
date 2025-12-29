@@ -3,25 +3,17 @@ from typing import Self
 from uuid import UUID
 
 import strawberry
+from commons.db.v6.crm.shipment_requests import (
+    ShipmentMethod,
+    ShipmentPriority,
+    ShipmentRequest,
+    ShipmentRequestStatus,
+)
 
 from app.core.db.adapters.dto import DTOMixin
-from commons.db.v6.crm.shipment_requests.shipment_request import (
-    ShipmentRequest,
-)
 from app.graphql.v2.core.shipment_requests.strawberry.shipment_request_item_response import (
     ShipmentRequestItemResponse,
 )
-
-
-@strawberry.enum
-class ShipmentRequestStatusEnum(strawberry.enum.Enum):
-    PENDING = "PENDING"
-    CONFIRMED = "CONFIRMED"
-    SENT = "SENT"
-    REJECTED = "REJECTED"
-    IN_PROGRESS = "IN_PROGRESS"
-    SHIPPED = "SHIPPED"
-    CANCELLED = "CANCELLED"
 
 
 @strawberry.type
@@ -29,11 +21,11 @@ class ShipmentRequestResponse(DTOMixin[ShipmentRequest]):
     _instance: strawberry.Private[ShipmentRequest]
     id: UUID
     request_number: str
-    warehouse_id: UUID
+    warehouse_id: UUID | None
     factory_id: UUID | None
-    status: ShipmentRequestStatusEnum
-    method: str | None
-    priority: str | None
+    status: ShipmentRequestStatus
+    method: ShipmentMethod | None
+    priority: ShipmentPriority
     notes: str | None
     request_date: datetime | None
     is_active: bool
@@ -48,7 +40,7 @@ class ShipmentRequestResponse(DTOMixin[ShipmentRequest]):
             request_number=model.request_number,
             warehouse_id=model.warehouse_id,
             factory_id=model.factory_id,
-            status=ShipmentRequestStatusEnum(model.status.value),
+            status=model.status,
             method=model.method,
             priority=model.priority,
             notes=model.notes,

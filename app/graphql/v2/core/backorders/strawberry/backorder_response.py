@@ -1,24 +1,27 @@
 from datetime import date
+from decimal import Decimal
 from uuid import UUID
 
 import strawberry
+from app.graphql.v2.core.customers.strawberry.customer_response import (
+    CustomerLiteResponse,
+)
+from app.graphql.v2.core.products.strawberry.product_response import ProductLiteResponse
 
 
 @strawberry.type
 class BackorderResponse:
     order_id: UUID
     order_number: str
-    product_id: str
-    
-    # We can try to fetch product name if we join with Product, 
-    # but for now let's stick to what's in OrderDetail or easily joinable.
-    # OrderDetail has product_id.
-    
+    product_id: UUID | None
+    product: ProductLiteResponse | None
+
     customer_id: UUID | None
-    
-    ordered_quantity: int
-    shipped_quantity: float  # Decimal to float
-    backordered_quantity: float
-    
+    customer: CustomerLiteResponse | None
+
+    ordered_quantity: Decimal
+    shipped_quantity: Decimal
+    backordered_quantity: Decimal
+
     due_date: date
     status: str
