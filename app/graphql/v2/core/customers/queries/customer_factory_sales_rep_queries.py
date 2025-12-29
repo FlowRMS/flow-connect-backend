@@ -28,9 +28,9 @@ class CustomerFactorySalesRepQueries:
     @inject
     async def list_customer_factory_sales_reps(
         self,
-        customer_id: UUID | None,
-        factory_id: UUID | None,
         service: Injected[CustomerFactorySalesRepService],
+        customer_id: UUID | None = None,
+        factory_id: UUID | None = None,
     ) -> list[CustomerFactorySalesRepResponse]:
         reps = await service.list_by_customer_and_factory(customer_id, factory_id)
         return CustomerFactorySalesRepResponse.from_orm_model_list(reps)

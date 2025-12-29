@@ -252,20 +252,767 @@ async def migrate_factories(source: asyncpg.Connection, dest: asyncpg.Connection
     return len(factories)
 
 
+async def migrate_product_uoms(source: asyncpg.Connection, dest: asyncpg.Connection) -> int:
+    """Migrate product UOMs from v5 (core.product_uoms) to v6 (pycore.product_uoms)."""
+    logger.info("Starting product UOM migration...")
+
+    uoms = await source.fetch("""
+        SELECT
+            u.id,
+            u.title,
+            u.description,
+            u.creation_type,
+            u.created_by as created_by_id,
+            COALESCE(u.entry_date, now()) as created_at,
+            CASE
+                WHEN u.multiply AND u.multiply_by > 0 THEN u.multiply_by
+                ELSE 1
+            END AS division_factor
+        FROM core.product_uoms u
+    """)
+
+    if not uoms:
+        logger.info("No product UOMs to migrate")
+        return 0
+
+    await dest.executemany(
+        """
+        INSERT INTO pycore.product_uoms (
+            id, title, description, creation_type, created_by_id, created_at, division_factor
+        ) VALUES ($1, $2, $3, $4, $5, $6, $7)
+        ON CONFLICT (id) DO UPDATE SET
+            title = EXCLUDED.title,
+            description = EXCLUDED.description,
+            creation_type = EXCLUDED.creation_type,
+            division_factor = EXCLUDED.division_factor
+        """,
+        [(
+            u["id"],
+            u["title"],
+            u["description"],
+            u["creation_type"],
+            u["created_by_id"],
+            u["created_at"],
+            u["division_factor"],
+        ) for u in uoms],
+    )
+
+    logger.info(f"Migrated {len(uoms)} product UOMs")
+    return len(uoms)
+
+
+async def migrate_product_categories(source: asyncpg.Connection, dest: asyncpg.Connection) -> int:
+    """Migrate product categories from v5 (core.product_categories) to v6 (pycore.product_categories)."""
+    logger.info("Starting product category migration...")
+
+    categories = await source.fetch("""
+        SELECT
+            pc.id,
+            pc.title,
+            COALESCE(pc.commission_rate, 0) as commission_rate,
+            pc.factory_id
+        FROM core.product_categories pc
+    """)
+
+    if not categories:
+        logger.info("No product categories to migrate")
+        return 0
+
+    await dest.executemany(
+        """
+        INSERT INTO pycore.product_categories (
+            id, title, commission_rate, factory_id, parent_id, grandparent_id
+        ) VALUES ($1, $2, $3, $4, NULL, NULL)
+        ON CONFLICT (id) DO UPDATE SET
+            title = EXCLUDED.title,
+            commission_rate = EXCLUDED.commission_rate,
+            factory_id = EXCLUDED.factory_id
+        """,
+        [(
+            c["id"],
+            c["title"],
+            c["commission_rate"],
+            c["factory_id"],
+        ) for c in categories],
+    )
+
+    logger.info(f"Migrated {len(categories)} product categories")
+    return len(categories)
+
+
+async def migrate_products(source: asyncpg.Connection, dest: asyncpg.Connection) -> int:
+    """Migrate products from v5 (core.products) to v6 (pycore.products)."""
+    logger.info("Starting product migration...")
+
+    products = await source.fetch(r"""
+        SELECT
+            p.id,
+            p.factory_part_number,
+            COALESCE(p.unit_price, 0) as unit_price,
+            COALESCE(p.default_commission_rate, 0) as default_commission_rate,
+            p.factory_id,
+            p.product_category_id,
+            p.product_uom_id,
+            p.published,
+            COALESCE(p.approval_needed, false) as approval_needed,
+            p.description,
+            p.creation_type,
+            COALESCE(p.entry_date, now()) as created_at,
+            p.created_by as created_by_id,
+            p.individual_upc as upc,
+            p.min_order_qty,
+            CASE
+                WHEN p.lead_time ~ '^\d+$' THEN p.lead_time::integer
+                ELSE NULL
+            END AS lead_time,
+            p.overall_discount_rate as unit_price_discount_rate,
+            p.commission_discount_rate,
+            p.approval_date,
+            p.approval_comments
+        FROM core.products p
+    """)
+
+    if not products:
+        logger.info("No products to migrate")
+        return 0
+
+    await dest.executemany(
+        """
+        INSERT INTO pycore.products (
+            id, factory_part_number, unit_price, default_commission_rate,
+            factory_id, product_category_id, product_uom_id, published,
+            approval_needed, description, creation_type, created_at,
+            created_by_id, upc, default_divisor, min_order_qty, lead_time,
+            unit_price_discount_rate, commission_discount_rate,
+            approval_date, approval_comments, tags
+        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, NULL, $15, $16, $17, $18, $19, $20, NULL)
+        ON CONFLICT (id) DO UPDATE SET
+            factory_part_number = EXCLUDED.factory_part_number,
+            unit_price = EXCLUDED.unit_price,
+            default_commission_rate = EXCLUDED.default_commission_rate,
+            factory_id = EXCLUDED.factory_id,
+            product_category_id = EXCLUDED.product_category_id,
+            product_uom_id = EXCLUDED.product_uom_id,
+            published = EXCLUDED.published,
+            approval_needed = EXCLUDED.approval_needed,
+            description = EXCLUDED.description,
+            creation_type = EXCLUDED.creation_type,
+            upc = EXCLUDED.upc,
+            min_order_qty = EXCLUDED.min_order_qty,
+            lead_time = EXCLUDED.lead_time,
+            unit_price_discount_rate = EXCLUDED.unit_price_discount_rate,
+            commission_discount_rate = EXCLUDED.commission_discount_rate,
+            approval_date = EXCLUDED.approval_date,
+            approval_comments = EXCLUDED.approval_comments
+        """,
+        [(
+            p["id"],
+            p["factory_part_number"],
+            p["unit_price"],
+            p["default_commission_rate"],
+            p["factory_id"],
+            p["product_category_id"],
+            p["product_uom_id"],
+            p["published"],
+            p["approval_needed"],
+            p["description"],
+            p["creation_type"],
+            p["created_at"],
+            p["created_by_id"],
+            p["upc"],
+            p["min_order_qty"],
+            p["lead_time"],
+            p["unit_price_discount_rate"],
+            p["commission_discount_rate"],
+            p["approval_date"],
+            p["approval_comments"],
+        ) for p in products],
+    )
+
+    logger.info(f"Migrated {len(products)} products")
+    return len(products)
+
+
+async def migrate_product_cpns(source: asyncpg.Connection, dest: asyncpg.Connection) -> int:
+    """Migrate product CPNs from v5 (core.product_cpns) to v6 (pycore.product_cpns)."""
+    logger.info("Starting product CPN migration...")
+
+    cpns = await source.fetch("""
+        SELECT
+            c.id,
+            c.customer_part_number,
+            COALESCE(c.unit_price, 0) as unit_price,
+            COALESCE(c.commission_rate, 0) as commission_rate,
+            c.product_id,
+            c.customer_id
+        FROM core.product_cpns c
+    """)
+
+    if not cpns:
+        logger.info("No product CPNs to migrate")
+        return 0
+
+    await dest.executemany(
+        """
+        INSERT INTO pycore.product_cpns (
+            id, customer_part_number, unit_price, commission_rate, product_id, customer_id
+        ) VALUES ($1, $2, $3, $4, $5, $6)
+        ON CONFLICT (id) DO UPDATE SET
+            customer_part_number = EXCLUDED.customer_part_number,
+            unit_price = EXCLUDED.unit_price,
+            commission_rate = EXCLUDED.commission_rate,
+            product_id = EXCLUDED.product_id,
+            customer_id = EXCLUDED.customer_id
+        """,
+        [(
+            c["id"],
+            c["customer_part_number"],
+            c["unit_price"],
+            c["commission_rate"],
+            c["product_id"],
+            c["customer_id"],
+        ) for c in cpns],
+    )
+
+    logger.info(f"Migrated {len(cpns)} product CPNs")
+    return len(cpns)
+
+
+async def migrate_job_statuses(source: asyncpg.Connection, dest: asyncpg.Connection) -> int:
+    """Migrate job statuses from v5 (crm.jobs.status) to v6 (pycrm.job_statuses)."""
+    logger.info("Starting job status migration...")
+
+    # Get unique statuses from v5 jobs
+    statuses = await source.fetch("""
+        SELECT DISTINCT j.status
+        FROM crm.jobs j
+        WHERE j.status IS NOT NULL
+    """)
+
+    # Create default statuses if none exist
+    default_statuses = ["Open", "In Progress", "Closed"]
+    status_names = [s["status"] for s in statuses] if statuses else []
+
+    # Add defaults if not present
+    for default in default_statuses:
+        if default not in status_names:
+            status_names.append(default)
+
+    if not status_names:
+        logger.info("No job statuses to migrate")
+        return 0
+
+    # Check which statuses already exist in destination
+    existing = await dest.fetch("SELECT name FROM pycrm.job_statuses")
+    existing_names = {e["name"] for e in existing}
+
+    new_statuses = [name for name in status_names if name not in existing_names]
+
+    if new_statuses:
+        await dest.executemany(
+            """
+            INSERT INTO pycrm.job_statuses (id, name)
+            VALUES (gen_random_uuid(), $1)
+            ON CONFLICT DO NOTHING
+            """,
+            [(name,) for name in new_statuses],
+        )
+
+    logger.info(f"Migrated {len(new_statuses)} job statuses (total: {len(status_names)})")
+    return len(new_statuses)
+
+
+async def migrate_jobs(source: asyncpg.Connection, dest: asyncpg.Connection) -> int:
+    """Migrate jobs from v5 (crm.jobs) to v6 (pycrm.jobs)."""
+    logger.info("Starting job migration...")
+
+    # First get status mapping from destination
+    status_mapping = await dest.fetch("SELECT id, name FROM pycrm.job_statuses")
+    status_map = {s["name"]: s["id"] for s in status_mapping}
+
+    # Default to 'Open' status if not found
+    default_status_id = status_map.get("Open")
+
+    jobs = await source.fetch("""
+        SELECT
+            j.id,
+            j.job_name,
+            j.status,
+            j.start_date,
+            j.end_date,
+            j.description,
+            j.requester_id,
+            j.job_owner_id,
+            j.created_by as created_by_id,
+            COALESCE(j.entry_date, now()) as created_at
+        FROM crm.jobs j
+    """)
+
+    if not jobs:
+        logger.info("No jobs to migrate")
+        return 0
+
+    await dest.executemany(
+        """
+        INSERT INTO pycrm.jobs (
+            id, job_name, status_id, start_date, end_date, job_type,
+            structural_details, structural_information, additional_information,
+            description, requester_id, job_owner_id, tags, created_at, created_by_id
+        ) VALUES ($1, $2, $3, $4, $5, NULL, NULL, NULL, NULL, $6, $7, $8, NULL, $9, $10)
+        ON CONFLICT (id) DO UPDATE SET
+            job_name = EXCLUDED.job_name,
+            status_id = EXCLUDED.status_id,
+            start_date = EXCLUDED.start_date,
+            end_date = EXCLUDED.end_date,
+            description = EXCLUDED.description,
+            requester_id = EXCLUDED.requester_id,
+            job_owner_id = EXCLUDED.job_owner_id
+        """,
+        [(
+            j["id"],
+            j["job_name"],
+            status_map.get(j["status"], default_status_id),
+            j["start_date"],
+            j["end_date"],
+            j["description"],
+            j["requester_id"],
+            j["job_owner_id"],
+            j["created_at"],
+            j["created_by_id"],
+        ) for j in jobs],
+    )
+
+    logger.info(f"Migrated {len(jobs)} jobs")
+    return len(jobs)
+
+
+async def migrate_quote_balances(source: asyncpg.Connection, dest: asyncpg.Connection) -> int:
+    """Migrate quote balances from v5 (crm.quote_balances) to v6 (pycrm.quote_balances)."""
+    logger.info("Starting quote balance migration...")
+
+    balances = await source.fetch("""
+        SELECT
+            qb.id,
+            COALESCE(qb.quantity, 0) as quantity,
+            COALESCE(qb.subtotal, 0) as subtotal,
+            COALESCE(qb.total, 0) as total,
+            COALESCE(qb.commission, 0) as commission,
+            COALESCE(qb.discount, 0) as discount,
+            COALESCE(qb.discount_rate, 0) as discount_rate,
+            COALESCE(qb.commission_rate, 0) as commission_rate,
+            COALESCE(qb.commission_discount, 0) as commission_discount,
+            COALESCE(qb.commission_discount_rate, 0) as commission_discount_rate
+        FROM crm.quote_balances qb
+    """)
+
+    if not balances:
+        logger.info("No quote balances to migrate")
+        return 0
+
+    await dest.executemany(
+        """
+        INSERT INTO pycrm.quote_balances (
+            id, quantity, subtotal, total, commission, discount,
+            discount_rate, commission_rate, commission_discount, commission_discount_rate
+        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+        ON CONFLICT (id) DO UPDATE SET
+            quantity = EXCLUDED.quantity,
+            subtotal = EXCLUDED.subtotal,
+            total = EXCLUDED.total,
+            commission = EXCLUDED.commission,
+            discount = EXCLUDED.discount,
+            discount_rate = EXCLUDED.discount_rate,
+            commission_rate = EXCLUDED.commission_rate,
+            commission_discount = EXCLUDED.commission_discount,
+            commission_discount_rate = EXCLUDED.commission_discount_rate
+        """,
+        [(
+            b["id"],
+            b["quantity"],
+            b["subtotal"],
+            b["total"],
+            b["commission"],
+            b["discount"],
+            b["discount_rate"],
+            b["commission_rate"],
+            b["commission_discount"],
+            b["commission_discount_rate"],
+        ) for b in balances],
+    )
+
+    logger.info(f"Migrated {len(balances)} quote balances")
+    return len(balances)
+
+
+async def migrate_quote_lost_reasons(source: asyncpg.Connection, dest: asyncpg.Connection) -> int:
+    """Migrate quote lost reasons from v5 (crm.quote_lost_reasons) to v6 (pycrm.quote_lost_reasons)."""
+    logger.info("Starting quote lost reason migration...")
+
+    reasons = await source.fetch("""
+        SELECT
+            qlr.id,
+            qlr.created_by as created_by_id,
+            qlr.title,
+            COALESCE(qlr."position", 0) as position,
+            COALESCE(qlr.entry_date, now()) as created_at
+        FROM crm.quote_lost_reasons qlr
+    """)
+
+    if not reasons:
+        logger.info("No quote lost reasons to migrate")
+        return 0
+
+    await dest.executemany(
+        """
+        INSERT INTO pycrm.quote_lost_reasons (
+            id, created_by_id, title, "position", created_at
+        ) VALUES ($1, $2, $3, $4, $5)
+        ON CONFLICT (id) DO UPDATE SET
+            created_by_id = EXCLUDED.created_by_id,
+            title = EXCLUDED.title,
+            "position" = EXCLUDED."position"
+        """,
+        [(
+            r["id"],
+            r["created_by_id"],
+            r["title"],
+            r["position"],
+            r["created_at"],
+        ) for r in reasons],
+    )
+
+    logger.info(f"Migrated {len(reasons)} quote lost reasons")
+    return len(reasons)
+
+
+async def migrate_quotes(source: asyncpg.Connection, dest: asyncpg.Connection) -> int:
+    """Migrate quotes from v5 (crm.quotes) to v6 (pycrm.quotes)."""
+    logger.info("Starting quote migration...")
+
+    quotes = await source.fetch("""
+        SELECT
+            q.id,
+            q.quote_number,
+            q.entity_date,
+            q.sold_to_customer_id,
+            q.bill_to_customer_id,
+            q.published,
+            q.creation_type,
+            q.status,
+            q.payment_terms,
+            q.customer_ref,
+            q.freight_terms,
+            q.exp_date,
+            q.revise_date,
+            q.accept_date,
+            COALESCE(q.blanket, false) as blanket,
+            q.duplicated_from,
+            q.balance_id,
+            q.created_by as created_by_id,
+            COALESCE(q.entry_date, now()) as created_at,
+            q.job_id
+        FROM crm.quotes q
+        WHERE
+            q.sold_to_customer_id IS NOT NULL
+    """)
+
+    if not quotes:
+        logger.info("No quotes to migrate")
+        return 0
+
+    await dest.executemany(
+        """
+        INSERT INTO pycrm.quotes (
+            id, quote_number, entity_date, sold_to_customer_id, bill_to_customer_id,
+            published, creation_type, status, pipeline_stage, payment_terms,
+            customer_ref, freight_terms, exp_date, revise_date, accept_date,
+            blanket, duplicated_from, version_of, balance_id, created_by_id,
+            created_at, job_id
+        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, 0, $9, $10, $11, $12, $13, $14, $15, $16, NULL, $17, $18, $19, $20)
+        ON CONFLICT (id) DO UPDATE SET
+            quote_number = EXCLUDED.quote_number,
+            entity_date = EXCLUDED.entity_date,
+            sold_to_customer_id = EXCLUDED.sold_to_customer_id,
+            bill_to_customer_id = EXCLUDED.bill_to_customer_id,
+            published = EXCLUDED.published,
+            creation_type = EXCLUDED.creation_type,
+            status = EXCLUDED.status,
+            payment_terms = EXCLUDED.payment_terms,
+            customer_ref = EXCLUDED.customer_ref,
+            freight_terms = EXCLUDED.freight_terms,
+            exp_date = EXCLUDED.exp_date,
+            revise_date = EXCLUDED.revise_date,
+            accept_date = EXCLUDED.accept_date,
+            blanket = EXCLUDED.blanket,
+            duplicated_from = EXCLUDED.duplicated_from,
+            balance_id = EXCLUDED.balance_id,
+            job_id = EXCLUDED.job_id
+        """,
+        [(
+            q["id"],
+            q["quote_number"],
+            q["entity_date"],
+            q["sold_to_customer_id"],
+            q["bill_to_customer_id"],
+            q["published"],
+            q["creation_type"],
+            q["status"],
+            q["payment_terms"],
+            q["customer_ref"],
+            q["freight_terms"],
+            q["exp_date"],
+            q["revise_date"],
+            q["accept_date"],
+            q["blanket"],
+            q["duplicated_from"],
+            q["balance_id"],
+            q["created_by_id"],
+            q["created_at"],
+            q["job_id"],
+        ) for q in quotes],
+    )
+
+    logger.info(f"Migrated {len(quotes)} quotes")
+    return len(quotes)
+
+
+async def migrate_quote_details(source: asyncpg.Connection, dest: asyncpg.Connection) -> int:
+    """Migrate quote details from v5 (crm.quote_details) to v6 (pycrm.quote_details)."""
+    logger.info("Starting quote detail migration...")
+
+    details = await source.fetch("""
+        SELECT
+            qd.id,
+            qd.quote_id,
+            qd.item_number,
+            COALESCE(qd.quantity, 0) as quantity,
+            COALESCE(qd.unit_price, 0) as unit_price,
+            COALESCE(qd.subtotal, 0) as subtotal,
+            COALESCE(qd.total, 0) as total,
+            COALESCE(qd.commission, 0) as total_line_commission,
+            COALESCE(qd.commission_rate, 0) as commission_rate,
+            COALESCE(qd.commission, 0) as commission,
+            COALESCE(qd.commission_discount_rate, 0) as commission_discount_rate,
+            COALESCE(qd.commission_discount, 0) as commission_discount,
+            COALESCE(qd.discount_rate, 0) as discount_rate,
+            COALESCE(qd.discount, 0) as discount,
+            qd.product_id,
+            qd.factory_id,
+            qd.end_user_id,
+            qd.lead_time,
+            qd.note,
+            qd.status,
+            qd.lost_reason_id,
+            CASE
+                WHEN qd.uom_multiply AND qd.uom_multiply_by > 0 THEN qd.uom_multiply_by
+                ELSE NULL
+            END AS division_factor
+        FROM crm.quote_details qd
+        LEFT JOIN crm.quotes q ON q.id = qd.quote_id
+        WHERE
+            q.sold_to_customer_id IS NOT NULL
+    """)
+
+    if not details:
+        logger.info("No quote details to migrate")
+        return 0
+
+    await dest.executemany(
+        """
+        INSERT INTO pycrm.quote_details (
+            id, quote_id, item_number, quantity, unit_price, subtotal, total,
+            total_line_commission, commission_rate, commission, commission_discount_rate,
+            commission_discount, discount_rate, discount, product_id, product_name_adhoc,
+            product_description_adhoc, factory_id, end_user_id, lead_time, note,
+            status, lost_reason_id, uom_id, division_factor, order_id
+        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, NULL, NULL, $16, $17, $18, $19, $20, $21, NULL, $22, NULL)
+        ON CONFLICT (id) DO UPDATE SET
+            quote_id = EXCLUDED.quote_id,
+            item_number = EXCLUDED.item_number,
+            quantity = EXCLUDED.quantity,
+            unit_price = EXCLUDED.unit_price,
+            subtotal = EXCLUDED.subtotal,
+            total = EXCLUDED.total,
+            total_line_commission = EXCLUDED.total_line_commission,
+            commission_rate = EXCLUDED.commission_rate,
+            commission = EXCLUDED.commission,
+            commission_discount_rate = EXCLUDED.commission_discount_rate,
+            commission_discount = EXCLUDED.commission_discount,
+            discount_rate = EXCLUDED.discount_rate,
+            discount = EXCLUDED.discount,
+            product_id = EXCLUDED.product_id,
+            factory_id = EXCLUDED.factory_id,
+            end_user_id = EXCLUDED.end_user_id,
+            lead_time = EXCLUDED.lead_time,
+            note = EXCLUDED.note,
+            status = EXCLUDED.status,
+            lost_reason_id = EXCLUDED.lost_reason_id,
+            division_factor = EXCLUDED.division_factor
+        """,
+        [(
+            d["id"],
+            d["quote_id"],
+            d["item_number"],
+            d["quantity"],
+            d["unit_price"],
+            d["subtotal"],
+            d["total"],
+            d["total_line_commission"],
+            d["commission_rate"],
+            d["commission"],
+            d["commission_discount_rate"],
+            d["commission_discount"],
+            d["discount_rate"],
+            d["discount"],
+            d["product_id"],
+            d["factory_id"],
+            d["end_user_id"],
+            d["lead_time"],
+            d["note"],
+            d["status"],
+            d["lost_reason_id"],
+            d["division_factor"],
+        ) for d in details],
+    )
+
+    logger.info(f"Migrated {len(details)} quote details")
+    return len(details)
+
+
+async def migrate_quote_split_rates(source: asyncpg.Connection, dest: asyncpg.Connection) -> int:
+    """Migrate quote split rates from v5 (crm.quote_split_rates) to v6 (pycrm.quote_split_rates)."""
+    logger.info("Starting quote split rate migration...")
+
+    split_rates = await source.fetch("""
+        SELECT
+            qsr.id,
+            qsr.quote_detail_id,
+            qsr.user_id,
+            COALESCE(qsr.split_rate, 0) as split_rate,
+            COALESCE(qsr."position", 0) as position,
+            COALESCE(qsr.entry_date, now()) as created_at
+        FROM crm.quote_split_rates qsr
+        JOIN crm.quote_details qd ON qd.id = qsr.quote_detail_id
+        JOIN crm.quotes q ON q.id = qd.quote_id
+        WHERE
+            q.sold_to_customer_id IS NOT NULL
+    """)
+
+    if not split_rates:
+        logger.info("No quote split rates to migrate")
+        return 0
+
+    await dest.executemany(
+        """
+        INSERT INTO pycrm.quote_split_rates (
+            id, quote_detail_id, user_id, split_rate, "position", created_at
+        ) VALUES ($1, $2, $3, $4, $5, $6)
+        ON CONFLICT (id) DO UPDATE SET
+            quote_detail_id = EXCLUDED.quote_detail_id,
+            user_id = EXCLUDED.user_id,
+            split_rate = EXCLUDED.split_rate,
+            "position" = EXCLUDED."position"
+        """,
+        [(
+            sr["id"],
+            sr["quote_detail_id"],
+            sr["user_id"],
+            sr["split_rate"],
+            sr["position"],
+            sr["created_at"],
+        ) for sr in split_rates],
+    )
+
+    logger.info(f"Migrated {len(split_rates)} quote split rates")
+    return len(split_rates)
+
+
+async def migrate_quote_inside_reps(source: asyncpg.Connection, dest: asyncpg.Connection) -> int:
+    """Migrate quote inside reps from v5 (crm.quote_inside_reps) to v6 (pycrm.quote_inside_reps)."""
+    logger.info("Starting quote inside rep migration...")
+
+    inside_reps = await source.fetch("""
+        SELECT
+            qir.id,
+            qd.id AS quote_detail_id,
+            qir.user_id,
+            COALESCE(qir.entry_date, now()) as created_at
+        FROM crm.quote_inside_reps qir
+        LEFT JOIN crm.quote_details qd ON qd.quote_id = qir.quote_id AND qd.item_number = 1
+        JOIN crm.quotes q ON q.id = qd.quote_id
+        WHERE
+            q.sold_to_customer_id IS NOT NULL
+    """)
+
+    if not inside_reps:
+        logger.info("No quote inside reps to migrate")
+        return 0
+
+    await dest.executemany(
+        """
+        INSERT INTO pycrm.quote_inside_reps (
+            id, quote_detail_id, user_id, split_rate, "position", created_at
+        ) VALUES ($1, $2, $3, 100, 0, $4)
+        ON CONFLICT (id) DO UPDATE SET
+            quote_detail_id = EXCLUDED.quote_detail_id,
+            user_id = EXCLUDED.user_id
+        """,
+        [(
+            ir["id"],
+            ir["quote_detail_id"],
+            ir["user_id"],
+            ir["created_at"],
+        ) for ir in inside_reps],
+    )
+
+    logger.info(f"Migrated {len(inside_reps)} quote inside reps")
+    return len(inside_reps)
+
+
 async def run_migration(config: MigrationConfig) -> dict[str, int]:
     """Run full migration from v5 to v6."""
     logger.info("Connecting to databases...")
 
-    source = await asyncpg.connect(config.source_dsn)
-    dest = await asyncpg.connect(config.dest_dsn)
+    # 10 minute timeout for connections
+    connection_timeout = 600
+
+    source = await asyncpg.connect(config.source_dsn, timeout=connection_timeout)
+    dest = await asyncpg.connect(config.dest_dsn, timeout=connection_timeout)
 
     results: dict[str, int] = {}
 
     try:
         # Order matters due to foreign key dependencies
-        results["users"] = await migrate_users(source, dest)
-        results["customers"] = await migrate_customers(source, dest)
-        results["factories"] = await migrate_factories(source, dest)
+        # 1. Users first (referenced by most tables)
+        # results["users"] = await migrate_users(source, dest)
+        # 2. Customers (referenced by CPNs)
+        # results["customers"] = await migrate_customers(source, dest)
+        # 3. Factories (referenced by products and categories)
+        # results["factories"] = await migrate_factories(source, dest)
+        # 4. Product UOMs (referenced by products)
+        # results["product_uoms"] = await migrate_product_uoms(source, dest)
+        # 5. Product Categories (referenced by products)
+        # results["product_categories"] = await migrate_product_categories(source, dest)
+        # 6. Products (referenced by CPNs)
+        # results["products"] = await migrate_products(source, dest)
+        # 7. Product CPNs (depends on products and customers)
+        # results["product_cpns"] = await migrate_product_cpns(source, dest)
+        # 8. Job Statuses (no dependencies)
+        # results["job_statuses"] = await migrate_job_statuses(source, dest)
+        # 9. Jobs (depends on job_statuses, users)
+        # results["jobs"] = await migrate_jobs(source, dest)
+        # 10. Quote Balances (no dependencies)
+        # results["quote_balances"] = await migrate_quote_balances(source, dest)
+        # 11. Quote Lost Reasons (depends on users)
+        # results["quote_lost_reasons"] = await migrate_quote_lost_reasons(source, dest)
+        # 12. Quotes (depends on customers, quote_balances, jobs)
+        # results["quotes"] = await migrate_quotes(source, dest)
+        # 13. Quote Details (depends on quotes, products, quote_lost_reasons)
+        # results["quote_details"] = await migrate_quote_details(source, dest)
+        # 14. Quote Split Rates (depends on quote_details, users)
+        results["quote_split_rates"] = await migrate_quote_split_rates(source, dest)
+        # 15. Quote Inside Reps (depends on quote_details, users)
+        results["quote_inside_reps"] = await migrate_quote_inside_reps(source, dest)
 
         logger.info("Migration completed successfully!")
         logger.info(f"Results: {results}")

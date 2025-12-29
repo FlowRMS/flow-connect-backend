@@ -157,7 +157,7 @@ def upgrade() -> None:
     )
     _ = op.create_table(
         "quote_inside_reps",
-        sa.Column("quote_id", sa.UUID(), nullable=False),
+        sa.Column("quote_detail_id", sa.UUID(), nullable=False),
         sa.Column("user_id", sa.UUID(), nullable=False),
         sa.Column(
             "split_rate",
@@ -174,8 +174,8 @@ def upgrade() -> None:
             nullable=False,
         ),
         sa.ForeignKeyConstraint(
-            ["quote_id"],
-            ["pycrm.quotes.id"],
+            ["quote_detail_id"],
+            ["pycrm.quote_details.id"],
         ),
         sa.ForeignKeyConstraint(
             ["user_id"],
