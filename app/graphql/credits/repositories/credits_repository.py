@@ -2,7 +2,7 @@ from typing import Any
 from uuid import UUID
 
 from commons.db.v6 import RbacResourceEnum, User
-from commons.db.v6.commission import Credit, CreditBalance, Order
+from commons.db.v6.commission import Credit, CreditBalance, Order, CreditDetail
 from commons.db.v6.crm.links.entity_type import EntityType
 from commons.db.v6.crm.links.link_relation_model import LinkRelation
 from sqlalchemy import Select, func, or_, select
@@ -16,6 +16,9 @@ from app.core.processors import ProcessorExecutor
 from app.graphql.base_repository import BaseRepository
 from app.graphql.credits.processors.update_order_on_credit_processor import (
     UpdateOrderOnCreditProcessor,
+)
+from app.graphql.credits.processors.validate_credit_split_rate_processor import (
+    ValidateCreditSplitRateProcessor,
 )
 from app.graphql.credits.processors.validate_credit_status_processor import (
     ValidateCreditStatusProcessor,
@@ -39,6 +42,7 @@ class CreditsRepository(BaseRepository[Credit]):
         balance_repository: CreditBalanceRepository,
         processor_executor: ProcessorExecutor,
         validate_status_processor: ValidateCreditStatusProcessor,
+        validate_split_rate_processor: ValidateCreditSplitRateProcessor,
         update_order_processor: UpdateOrderOnCreditProcessor,
     ) -> None:
         super().__init__(
@@ -48,6 +52,7 @@ class CreditsRepository(BaseRepository[Credit]):
             processor_executor=processor_executor,
             processor_executor_classes=[
                 validate_status_processor,
+                validate_split_rate_processor,
                 update_order_processor,
             ],
         )
@@ -82,6 +87,7 @@ class CreditsRepository(BaseRepository[Credit]):
             credit_id,
             options=[
                 joinedload(Credit.details),
+                joinedload(Credit.details).joinedload(CreditDetail.outside_split_rates),
                 joinedload(Credit.balance),
                 joinedload(Credit.order),
                 joinedload(Credit.created_by),

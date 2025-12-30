@@ -138,7 +138,7 @@ def upgrade() -> None:
     _ = op.create_table(
         "invoice_details",
         sa.Column("invoice_id", sa.UUID(), nullable=False),
-        sa.Column("order_detail_id", sa.UUID(), nullable=False),
+        sa.Column("order_detail_id", sa.UUID(), nullable=True),
         sa.Column("item_number", sa.Integer(), nullable=False),
         sa.Column(
             "quantity",

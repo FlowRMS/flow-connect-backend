@@ -7,6 +7,9 @@ from commons.db.v6.commission import CreditDetail
 from commons.db.v6.commission.credits.enums import CreditStatus
 
 from app.core.db.adapters.dto import DTOMixin
+from app.graphql.credits.strawberry.credit_split_rate_response import (
+    CreditSplitRateResponse,
+)
 
 
 @strawberry.type
@@ -39,4 +42,10 @@ class CreditDetailResponse(DTOMixin[CreditDetail]):
             commission_rate=model.commission_rate,
             commission=model.commission,
             status=model.status,
+        )
+
+    @strawberry.field
+    def outside_split_rates(self) -> list[CreditSplitRateResponse]:
+        return CreditSplitRateResponse.from_orm_model_list(
+            self._instance.outside_split_rates
         )

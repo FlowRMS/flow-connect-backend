@@ -20,10 +20,13 @@ async def migrate_invoice_balances(source: asyncpg.Connection, dest: asyncpg.Con
             0 as discount_rate,
             COALESCE(ib.commission_rate, 0) as commission_rate,
             COALESCE(ib.commission_discount, 0) as commission_discount,
-            COALESCE(ib.commission_discount_rate, 0) as commission_discount_rate
+            COALESCE(ib.commission_discount_rate, 0) as commission_discount_rate,
+            COALESCE(cd.applied_amount, 0) as paid_balance
         FROM commission.invoice_balances ib
-    """)
-
+        JOIN commission.invoices i ON i.balance_id = ib.id
+        LEFT JOIN commission.check_details cd ON cd.invoice_id = i.id
+        """
+    )
     if not balances:
         logger.info("No invoice balances to migrate")
         return 0
@@ -34,7 +37,7 @@ async def migrate_invoice_balances(source: asyncpg.Connection, dest: asyncpg.Con
             id, quantity, subtotal, total, commission, discount,
             discount_rate, commission_rate, commission_discount,
             commission_discount_rate, paid_balance
-        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, 0)
+        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
         ON CONFLICT (id) DO UPDATE SET
             quantity = EXCLUDED.quantity,
             subtotal = EXCLUDED.subtotal,
@@ -57,6 +60,7 @@ async def migrate_invoice_balances(source: asyncpg.Connection, dest: asyncpg.Con
             b["commission_rate"],
             b["commission_discount"],
             b["commission_discount_rate"],
+            b["paid_balance"],
         ) for b in balances],
     )
 
@@ -217,3 +221,52 @@ async def migrate_invoice_details(source: asyncpg.Connection, dest: asyncpg.Conn
 
     logger.info(f"Migrated {len(details)} invoice details")
     return len(details)
+
+
+async def migrate_invoice_split_rates(source: asyncpg.Connection, dest: asyncpg.Connection) -> int:
+    """Migrate invoice split rates from v5 (commission.invoice_split_rates) to v6 (pycommission.invoice_split_rates)."""
+    logger.info("Starting invoice split rate migration...")
+
+    split_rates = await source.fetch("""
+        SELECT
+            isr.id,
+            isr.invoice_detail_id,
+            isr.user_id,
+            COALESCE(isr.split_rate, 0) as split_rate,
+            COALESCE(isr."position", 0) as position,
+            COALESCE(isr.entry_date, now()) as created_at
+        FROM commission.invoice_split_rates isr
+        JOIN commission.invoice_details id ON id.id = isr.invoice_detail_id
+        JOIN commission.invoices i ON i.id = id.invoice_id
+        JOIN commission.orders o ON o.id = i.order_id
+        JOIN "user".users u ON u.id = isr.user_id
+        WHERE o.sold_to_customer_id IS NOT NULL
+    """)
+
+    if not split_rates:
+        logger.info("No invoice split rates to migrate")
+        return 0
+
+    await dest.executemany(
+        """
+        INSERT INTO pycommission.invoice_split_rates (
+            id, invoice_detail_id, user_id, split_rate, "position", created_at
+        ) VALUES ($1, $2, $3, $4, $5, $6)
+        ON CONFLICT (id) DO UPDATE SET
+            invoice_detail_id = EXCLUDED.invoice_detail_id,
+            user_id = EXCLUDED.user_id,
+            split_rate = EXCLUDED.split_rate,
+            "position" = EXCLUDED."position"
+        """,
+        [(
+            sr["id"],
+            sr["invoice_detail_id"],
+            sr["user_id"],
+            sr["split_rate"],
+            sr["position"],
+            sr["created_at"],
+        ) for sr in split_rates],
+    )
+
+    logger.info(f"Migrated {len(split_rates)} invoice split rates")
+    return len(split_rates)

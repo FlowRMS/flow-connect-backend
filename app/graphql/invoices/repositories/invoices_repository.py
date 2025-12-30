@@ -17,6 +17,9 @@ from app.graphql.base_repository import BaseRepository
 from app.graphql.invoices.processors.update_order_on_invoice_processor import (
     UpdateOrderOnInvoiceProcessor,
 )
+from app.graphql.invoices.processors.validate_invoice_split_rate_processor import (
+    ValidateInvoiceSplitRateProcessor,
+)
 from app.graphql.invoices.processors.validate_invoice_status_processor import (
     ValidateInvoiceStatusProcessor,
 )
@@ -40,6 +43,7 @@ class InvoicesRepository(BaseRepository[Invoice]):
         balance_repository: InvoiceBalanceRepository,
         processor_executor: ProcessorExecutor,
         validate_status_processor: ValidateInvoiceStatusProcessor,
+        validate_split_rate_processor: ValidateInvoiceSplitRateProcessor,
         update_order_processor: UpdateOrderOnInvoiceProcessor,
     ) -> None:
         super().__init__(
@@ -49,6 +53,7 @@ class InvoicesRepository(BaseRepository[Invoice]):
             processor_executor=processor_executor,
             processor_executor_classes=[
                 validate_status_processor,
+                validate_split_rate_processor,
                 update_order_processor,
             ],
         )
@@ -85,6 +90,7 @@ class InvoicesRepository(BaseRepository[Invoice]):
                 joinedload(Invoice.details),
                 joinedload(Invoice.details).joinedload(InvoiceDetail.product),
                 joinedload(Invoice.details).joinedload(InvoiceDetail.uom),
+                joinedload(Invoice.details).joinedload(InvoiceDetail.outside_split_rates),
                 joinedload(Invoice.balance),
                 joinedload(Invoice.order),
                 joinedload(Invoice.created_by),

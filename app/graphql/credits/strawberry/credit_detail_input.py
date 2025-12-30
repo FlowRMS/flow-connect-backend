@@ -5,6 +5,7 @@ import strawberry
 from commons.db.v6.commission import CreditDetail
 
 from app.core.strawberry.inputs import BaseInputGQL
+from app.graphql.credits.strawberry.credit_split_rate_input import CreditSplitRateInput
 
 
 @strawberry.input
@@ -15,6 +16,7 @@ class CreditDetailInput(BaseInputGQL[CreditDetail]):
     commission_rate: Decimal
     order_detail_id: UUID
     id: UUID | None = None
+    outside_split_rates: list[CreditSplitRateInput] | None = None
 
     def to_orm_model(self) -> CreditDetail:
         subtotal = self.quantity * self.unit_price
@@ -30,6 +32,11 @@ class CreditDetailInput(BaseInputGQL[CreditDetail]):
             total=total,
             commission_rate=self.commission_rate,
             commission=commission,
+            outside_split_rates=(
+                [sr.to_orm_model() for sr in self.outside_split_rates]
+                if self.outside_split_rates
+                else []
+            ),
         )
         if self.id:
             detail.id = self.id

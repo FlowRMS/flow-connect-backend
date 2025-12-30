@@ -410,6 +410,7 @@ input CreditDetailInput {
   commissionRate: Decimal!
   orderDetailId: UUID!
   id: UUID = null
+  outsideSplitRates: [CreditSplitRateInput!] = null
 }
 
 type CreditDetailResponse {
@@ -424,6 +425,7 @@ type CreditDetailResponse {
   commissionRate: Decimal!
   commission: Decimal!
   status: CreditStatus!
+  outsideSplitRates: [CreditSplitRateResponse!]!
 }
 
 input CreditInput {
@@ -487,6 +489,22 @@ type CreditResponse {
   order: OrderLiteResponse!
   balance: CreditBalanceResponse!
   details: [CreditDetailResponse!]!
+}
+
+input CreditSplitRateInput {
+  userId: UUID!
+  splitRate: Decimal!
+  position: Int! = 0
+  id: UUID = null
+}
+
+type CreditSplitRateResponse {
+  id: UUID!
+  creditDetailId: UUID!
+  userId: UUID!
+  splitRate: Decimal!
+  position: Int!
+  user: UserResponse!
 }
 
 enum CreditStatus {
@@ -910,6 +928,7 @@ input InvoiceDetailInput {
   discountRate: Decimal! = "0.0000"
   commissionRate: Decimal! = "0.0000"
   commissionDiscountRate: Decimal! = "0.0000"
+  outsideSplitRates: [InvoiceSplitRateInput!] = null
 }
 
 type InvoiceDetailResponse {
@@ -940,6 +959,7 @@ type InvoiceDetailResponse {
   invoicedBalance: Decimal!
   product: ProductLiteResponse
   uom: ProductUomResponse
+  outsideSplitRates: [InvoiceSplitRateResponse!]!
 }
 
 input InvoiceInput {
@@ -1004,6 +1024,22 @@ type InvoiceResponse {
   order: OrderLiteResponse!
   balance: InvoiceBalanceResponse!
   details: [InvoiceDetailResponse!]!
+}
+
+input InvoiceSplitRateInput {
+  userId: UUID!
+  splitRate: Decimal!
+  position: Int! = 0
+  id: UUID = null
+}
+
+type InvoiceSplitRateResponse {
+  id: UUID!
+  invoiceDetailId: UUID!
+  userId: UUID!
+  splitRate: Decimal!
+  position: Int!
+  user: UserResponse!
 }
 
 enum InvoiceStatus {

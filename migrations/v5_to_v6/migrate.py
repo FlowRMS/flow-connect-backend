@@ -24,11 +24,13 @@ from migrations.v5_to_v6.migrate_checks import (
 from migrations.v5_to_v6.migrate_credits import (
     migrate_credit_balances,
     migrate_credit_details,
+    migrate_credit_split_rates,
     migrate_credits,
 )
 from migrations.v5_to_v6.migrate_invoices import (
     migrate_invoice_balances,
     migrate_invoice_details,
+    migrate_invoice_split_rates,
     migrate_invoices,
 )
 from migrations.v5_to_v6.migrate_orders import (
@@ -1017,40 +1019,42 @@ async def run_migration(config: MigrationConfig) -> dict[str, int]:
     results: dict[str, int] = {}
 
     try:
-        # Order matters due to foreign key dependencies
-        # results["users"] = await migrate_users(source, dest)
-        # results["customers"] = await migrate_customers(source, dest)
-        # results["factories"] = await migrate_factories(source, dest)
-        # results["product_uoms"] = await migrate_product_uoms(source, dest)
-        # results["product_categories"] = await migrate_product_categories(source, dest)
-        # results["products"] = await migrate_products(source, dest)
-        # results["product_cpns"] = await migrate_product_cpns(source, dest)
-        # results["job_statuses"] = await migrate_job_statuses(source, dest)
-        # results["jobs"] = await migrate_jobs(source, dest)
-        # results["quote_balances"] = await migrate_quote_balances(source, dest)
-        # results["quote_lost_reasons"] = await migrate_quote_lost_reasons(source, dest)
-        # results["quotes"] = await migrate_quotes(source, dest)
-        # results["quote_details"] = await migrate_quote_details(source, dest)
-        # results["quote_split_rates"] = await migrate_quote_split_rates(source, dest)
-        # results["quote_inside_reps"] = await migrate_quote_inside_reps(source, dest)
-        # results["customer_factory_sales_reps"] = await migrate_customer_factory_sales_reps(source, dest)
-        # results["inside_customer_split_rates"] = await migrate_inside_customer_split_rates(source, dest)
-        # results["customer_split_rates"] = await migrate_customer_split_rates(source, dest)
-        # results["factory_split_rates"] = await migrate_factory_split_rates(source, dest)
-        # results["addresses"] = await migrate_addresses(source, dest)
-        # results["contacts"] = await migrate_contacts(source, dest)
-        # results["contact_links"] = await migrate_contact_links(source, dest)
-        # results["order_balances"] = await migrate_order_balances(source, dest)
-        # results["orders"] = await migrate_orders(source, dest)
-        # results["order_details"] = await migrate_order_details(source, dest)
-        # results["order_inside_reps"] = await migrate_order_inside_reps(source, dest)
-        # results["order_split_rates"] = await migrate_order_split_rates(source, dest)
-        # results["invoice_balances"] = await migrate_invoice_balances(source, dest)
-        # results["invoices"] = await migrate_invoices(source, dest)
-        # results["invoice_details"] = await migrate_invoice_details(source, dest)
+        # # Order matters due to foreign key dependencies
+        results["users"] = await migrate_users(source, dest)
+        results["customers"] = await migrate_customers(source, dest)
+        results["factories"] = await migrate_factories(source, dest)
+        results["product_uoms"] = await migrate_product_uoms(source, dest)
+        results["product_categories"] = await migrate_product_categories(source, dest)
+        results["products"] = await migrate_products(source, dest)
+        results["product_cpns"] = await migrate_product_cpns(source, dest)
+        results["job_statuses"] = await migrate_job_statuses(source, dest)
+        results["jobs"] = await migrate_jobs(source, dest)
+        results["quote_balances"] = await migrate_quote_balances(source, dest)
+        results["quote_lost_reasons"] = await migrate_quote_lost_reasons(source, dest)
+        results["quotes"] = await migrate_quotes(source, dest)
+        results["quote_details"] = await migrate_quote_details(source, dest)
+        results["quote_split_rates"] = await migrate_quote_split_rates(source, dest)
+        results["quote_inside_reps"] = await migrate_quote_inside_reps(source, dest)
+        results["customer_factory_sales_reps"] = await migrate_customer_factory_sales_reps(source, dest)
+        results["inside_customer_split_rates"] = await migrate_inside_customer_split_rates(source, dest)
+        results["customer_split_rates"] = await migrate_customer_split_rates(source, dest)
+        results["factory_split_rates"] = await migrate_factory_split_rates(source, dest)
+        results["addresses"] = await migrate_addresses(source, dest)
+        results["contacts"] = await migrate_contacts(source, dest)
+        results["contact_links"] = await migrate_contact_links(source, dest)
+        results["order_balances"] = await migrate_order_balances(source, dest)
+        results["orders"] = await migrate_orders(source, dest)
+        results["order_details"] = await migrate_order_details(source, dest)
+        results["order_inside_reps"] = await migrate_order_inside_reps(source, dest)
+        results["order_split_rates"] = await migrate_order_split_rates(source, dest)
+        results["invoice_balances"] = await migrate_invoice_balances(source, dest)
+        results["invoices"] = await migrate_invoices(source, dest)
+        results["invoice_details"] = await migrate_invoice_details(source, dest)
+        results["invoice_split_rates"] = await migrate_invoice_split_rates(source, dest)
         results["credit_balances"] = await migrate_credit_balances(source, dest)
         results["credits"] = await migrate_credits(source, dest)
         results["credit_details"] = await migrate_credit_details(source, dest)
+        results["credit_split_rates"] = await migrate_credit_split_rates(source, dest)
         results["adjustments"] = await migrate_adjustments(source, dest)
         results["adjustment_split_rates"] = await migrate_adjustment_split_rates(source, dest)
         results["checks"] = await migrate_checks(source, dest)
@@ -1070,16 +1074,17 @@ async def run_migration(config: MigrationConfig) -> dict[str, int]:
 
 
 async def run_migration_for_tenant(
-    tenant: str,
+    source_tenant: str,
     source_base_url: str,
+    dest_tenant: str,
     dest_base_url: str,
 ) -> dict[str, int]:
     """Run migration for a specific tenant."""
     config = MigrationConfig(
-        source_dsn=f"{source_base_url}/{tenant}",
-        dest_dsn=f"{dest_base_url}/{tenant}",
+        source_dsn=f"{source_base_url}/{source_tenant}",
+        dest_dsn=f"{dest_base_url}/{dest_tenant}",
     )
-    logger.info(f"Running migration for tenant: {tenant}")
+    logger.info(f"Running migration for tenant: {source_tenant} to {dest_tenant}")
     return await run_migration(config)
 
 
@@ -1088,11 +1093,20 @@ if __name__ == "__main__":
     import os
 
     parser = argparse.ArgumentParser(description="Migrate data from v5 to v6")
-    _ = parser.add_argument("--tenant", required=True, help="Tenant name to migrate")
+    _ = parser.add_argument(
+        "--source-tenant",
+        required=True,
+        help="Source database tenant name",
+    )
     _ = parser.add_argument(
         "--source-url",
         default=os.environ.get("V5_DATABASE_URL"),
         help="Source database base URL (without tenant)",
+    )
+    _ = parser.add_argument(
+        "--dest-tenant",
+        required=True,
+        help="Destination database tenant name",
     )
     _ = parser.add_argument(
         "--dest-url",
@@ -1110,7 +1124,8 @@ if __name__ == "__main__":
         parser.error("--source-url and --dest-url are required (or set V5_DATABASE_URL and V6_DATABASE_URL)")
 
     _ = asyncio.run(run_migration_for_tenant(
-        tenant=args.tenant,
+        source_tenant=args.source_tenant,
+        dest_tenant=args.dest_tenant,
         source_base_url=args.source_url,
         dest_base_url=args.dest_url,
     ))
