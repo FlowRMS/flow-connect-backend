@@ -24,7 +24,7 @@ def upgrade() -> None:
     # Create pywarehouse schema
     op.execute("CREATE SCHEMA IF NOT EXISTS pywarehouse")
 
-    # Create container_types table in pycrm schema
+    # Create container_types table in pywarehouse schema
     op.create_table(
         "container_types",
         sa.Column("id", postgresql.UUID(as_uuid=True), nullable=False),
@@ -41,10 +41,10 @@ def upgrade() -> None:
             nullable=False,
         ),
         sa.PrimaryKeyConstraint("id"),
-        schema="pycrm",
+        schema="pywarehouse",
     )
 
-    # Create shipping_carriers table in pycrm schema
+    # Create shipping_carriers table in pywarehouse schema
     op.create_table(
         "shipping_carriers",
         sa.Column("id", postgresql.UUID(as_uuid=True), nullable=False),
@@ -73,7 +73,7 @@ def upgrade() -> None:
             nullable=False,
         ),
         sa.PrimaryKeyConstraint("id"),
-        schema="pycrm",
+        schema="pywarehouse",
     )
 
     # Create warehouses table in pywarehouse schema
@@ -164,6 +164,6 @@ def downgrade() -> None:
     op.drop_table("warehouse_settings", schema="pywarehouse")
     op.drop_table("warehouse_members", schema="pywarehouse")
     op.drop_table("warehouses", schema="pywarehouse")
-    op.drop_table("shipping_carriers", schema="pycrm")
-    op.drop_table("container_types", schema="pycrm")
+    op.drop_table("shipping_carriers", schema="pywarehouse")
+    op.drop_table("container_types", schema="pywarehouse")
     op.execute("DROP SCHEMA IF EXISTS pywarehouse")
