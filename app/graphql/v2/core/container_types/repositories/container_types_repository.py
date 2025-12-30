@@ -25,43 +25,43 @@ class ContainerTypesRepository(BaseRepository[ContainerType]):
         )
 
     async def list_all_ordered(self) -> list[ContainerType]:
-        """Get all container types ordered by display order."""
-        stmt = select(ContainerType).order_by(ContainerType.order)
+        """Get all container types ordered by display position."""
+        stmt = select(ContainerType).order_by(ContainerType.position)
         result = await self.session.execute(stmt)
         return list(result.scalars().all())
 
-    async def get_max_order(self) -> int:
-        """Get the maximum order value."""
+    async def get_max_position(self) -> int:
+        """Get the maximum position value."""
         from sqlalchemy import func
 
-        stmt = select(func.max(ContainerType.order))
+        stmt = select(func.max(ContainerType.position))
         result = await self.session.execute(stmt)
-        max_order = result.scalar()
-        return max_order if max_order is not None else 0
+        max_position = result.scalar()
+        return max_position if max_position is not None else 0
 
     async def reorder(self, ordered_ids: list[UUID]) -> list[ContainerType]:
         """Reorder container types based on the provided ID list.
 
-        Each container type's order is set to its index in the list + 1.
+        Each container type's position is set to its index in the list + 1.
         Uses negative temporary values to avoid unique constraint violation.
         """
-        # First pass: set all orders to negative temporary values
+        # First pass: set all positions to negative temporary values
         for idx, container_id in enumerate(ordered_ids):
             stmt = (
                 update(ContainerType)
                 .where(ContainerType.id == container_id)
-                .values(order=-(idx + 1))
+                .values(position=-(idx + 1))
             )
             await self.session.execute(stmt)
 
         await self.session.flush()
 
-        # Second pass: set all orders to positive final values
+        # Second pass: set all positions to positive final values
         for idx, container_id in enumerate(ordered_ids):
             stmt = (
                 update(ContainerType)
                 .where(ContainerType.id == container_id)
-                .values(order=idx + 1)
+                .values(position=idx + 1)
             )
             await self.session.execute(stmt)
 

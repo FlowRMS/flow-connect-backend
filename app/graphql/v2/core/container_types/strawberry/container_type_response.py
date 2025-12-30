@@ -23,7 +23,7 @@ class ContainerTypeResponse(DTOMixin[ContainerType]):
     width: Decimal  # in inches
     height: Decimal  # in inches
     weight: Decimal  # tare weight in lbs
-    order: int  # display order
+    position: int  # display position
     created_at: datetime
 
     @classmethod
@@ -36,6 +36,6 @@ class ContainerTypeResponse(DTOMixin[ContainerType]):
             width=model.width,
             height=model.height,
             weight=model.weight,
-            order=model.order,
+            position=model.position,
             created_at=model.created_at,
         )

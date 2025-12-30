@@ -18,7 +18,7 @@ class ContainerTypeInput(BaseInputGQL[ContainerType]):
     width: Decimal  # in inches
     height: Decimal  # in inches
     weight: Decimal  # tare weight in lbs
-    order: int | None = None  # display order (auto-assigned if not provided)
+    position: int | None = None  # display position (auto-assigned if not provided)
 
     def to_orm_model(self) -> ContainerType:
         return ContainerType(
@@ -27,5 +27,5 @@ class ContainerTypeInput(BaseInputGQL[ContainerType]):
             width=self.width,
             height=self.height,
             weight=self.weight,
-            order=self.order or 0,  # Will be auto-assigned if 0
+            position=self.position or 0,  # Will be auto-assigned if 0
         )

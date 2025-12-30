@@ -19,7 +19,7 @@ class ShippingCarrierInput(BaseInputGQL[ShippingCarrier]):
     is_active: bool = True
 
     # Account & Billing
-    billing_address: str | None = None
+    # Note: billing_address is stored via Address model with source_type=SHIPPING_CARRIER
     payment_terms: str | None = None
 
     # API Integration
@@ -27,13 +27,10 @@ class ShippingCarrierInput(BaseInputGQL[ShippingCarrier]):
     api_endpoint: str | None = None
     tracking_url_template: str | None = None
 
-    # Contact Information
-    contact_name: str | None = None
-    contact_phone: str | None = None
-    contact_email: str | None = None
+    # Contact Information - stored via Contact model with LinkRelation
 
     # Service Configuration
-    service_types: list[str] | None = None
+    service_types: dict | None = None  # Changed from list to dict
     default_service_type: str | None = None
 
     # Shipping Settings - using Decimal
@@ -56,14 +53,10 @@ class ShippingCarrierInput(BaseInputGQL[ShippingCarrier]):
             code=self.code,
             account_number=self.account_number,
             is_active=self.is_active,
-            billing_address=self.billing_address,
             payment_terms=self.payment_terms,
             api_key=self.api_key,
             api_endpoint=self.api_endpoint,
             tracking_url_template=self.tracking_url_template,
-            contact_name=self.contact_name,
-            contact_phone=self.contact_phone,
-            contact_email=self.contact_email,
             service_types=self.service_types,
             default_service_type=self.default_service_type,
             max_weight=self.max_weight,

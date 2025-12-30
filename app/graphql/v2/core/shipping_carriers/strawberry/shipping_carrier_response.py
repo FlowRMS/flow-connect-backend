@@ -25,7 +25,7 @@ class ShippingCarrierResponse(DTOMixin[ShippingCarrier]):
     created_at: datetime
 
     # Account & Billing
-    billing_address: str | None
+    # Note: billing_address is stored via Address model with source_type=SHIPPING_CARRIER
     payment_terms: str | None
 
     # API Integration
@@ -33,13 +33,10 @@ class ShippingCarrierResponse(DTOMixin[ShippingCarrier]):
     api_endpoint: str | None
     tracking_url_template: str | None
 
-    # Contact Information
-    contact_name: str | None
-    contact_phone: str | None
-    contact_email: str | None
+    # Contact Information - stored via Contact model with LinkRelation
 
     # Service Configuration
-    service_types: list[str] | None
+    service_types: dict | None  # Changed from list to dict
     default_service_type: str | None
 
     # Shipping Settings - using Decimal
@@ -66,14 +63,10 @@ class ShippingCarrierResponse(DTOMixin[ShippingCarrier]):
             account_number=model.account_number,
             is_active=model.is_active,
             created_at=model.created_at,
-            billing_address=model.billing_address,
             payment_terms=model.payment_terms,
             api_key=model.api_key,
             api_endpoint=model.api_endpoint,
             tracking_url_template=model.tracking_url_template,
-            contact_name=model.contact_name,
-            contact_phone=model.contact_phone,
-            contact_email=model.contact_email,
             service_types=model.service_types,
             default_service_type=model.default_service_type,
             max_weight=model.max_weight,

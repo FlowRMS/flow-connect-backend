@@ -38,10 +38,10 @@ class ContainerTypeService:
         """Create a new container type."""
         container_type = input.to_orm_model()
 
-        # Auto-assign order if not provided
-        if container_type.order == 0:
-            max_order = await self.repository.get_max_order()
-            container_type.order = max_order + 1
+        # Auto-assign position if not provided
+        if container_type.position == 0:
+            max_position = await self.repository.get_max_position()
+            container_type.position = max_position + 1
 
         return await self.repository.create(container_type)
 
@@ -56,9 +56,9 @@ class ContainerTypeService:
         container_type = input.to_orm_model()
         container_type.id = container_type_id
 
-        # Keep existing order if not provided
-        if container_type.order == 0:
-            container_type.order = existing.order
+        # Keep existing position if not provided
+        if container_type.position == 0:
+            container_type.position = existing.position
 
         return await self.repository.update(container_type)
 
