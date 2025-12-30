@@ -1,11 +1,12 @@
 from typing import Any
 from uuid import UUID
 
-from commons.db.v6 import User
+from commons.db.v6 import RbacResourceEnum, User
 from commons.db.v6.crm.companies.company_model import Company
 from commons.db.v6.crm.links.entity_type import EntityType
 from commons.db.v6.crm.links.link_relation_model import LinkRelation
 from sqlalchemy import Select, or_, select
+from sqlalchemy.dialects.postgresql import array
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import lazyload
 
@@ -17,20 +18,13 @@ from app.graphql.companies.strawberry.company_landing_page_response import (
 
 
 class CompaniesRepository(BaseRepository[Company]):
-    """Repository for Companies entity."""
-
     landing_model = CompanyLandingPageResponse
+    rbac_resource: RbacResourceEnum | None = None
 
     def __init__(self, context_wrapper: ContextWrapper, session: AsyncSession) -> None:
         super().__init__(session, context_wrapper, Company)
 
     def paginated_stmt(self) -> Select[Any]:
-        """
-        Build paginated query for companies landing page.
-
-        Returns:
-            SQLAlchemy select statement with columns for landing page
-        """
         return (
             select(
                 Company.id,
@@ -41,6 +35,7 @@ class CompaniesRepository(BaseRepository[Company]):
                 Company.website,
                 Company.phone,
                 Company.tags,
+                array([Company.created_by_id]).label("user_ids"),
             )
             .select_from(Company)
             .options(lazyload("*"))

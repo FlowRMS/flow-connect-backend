@@ -13,7 +13,7 @@ from app.graphql.v2.core.users.strawberry.user_response import UserResponse
 
 
 @strawberry.type
-class JobType(DTOMixin[Job]):
+class JobLiteType(DTOMixin[Job]):
     _instance: strawberry.Private[Job]
     id: UUID
     created_at: datetime
@@ -49,6 +49,9 @@ class JobType(DTOMixin[Job]):
             tags=model.tags,
         )
 
+
+@strawberry.type
+class JobType(JobLiteType):
     @strawberry.field
     def status(self) -> JobStatusType:
         return JobStatusType.from_orm_model(self._instance.status)

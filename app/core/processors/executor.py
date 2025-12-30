@@ -1,10 +1,9 @@
-from typing import Any, TypeVar
+from typing import TypeVar
 
 from commons.db.v6 import BaseModel
 
+from app.core.processors.base import BaseProcessor
 from app.core.processors.context import EntityContext
-from app.core.processors.events import RepositoryEvent
-from app.core.processors.registry import processor_registry
 
 T = TypeVar("T", bound=BaseModel)
 
@@ -17,16 +16,8 @@ class ProcessorExecutor:
 
     async def execute(
         self,
-        entity_type: type[T],
-        event: RepositoryEvent,
         entity_context: EntityContext[T],
+        processor_classes: list[BaseProcessor],
     ) -> None:
-        from app.core.container import create_container
-
-        """Execute all processors for an entity/event combination sequentially."""
-        processor_classes = processor_registry.get_processors(entity_type, event)
-
-        async with create_container().context() as conn_ctx:
-            for processor_class in processor_classes:
-                processor: Any = await conn_ctx.resolve(processor_class)
-                await processor.process(entity_context)
+        for processor_class in processor_classes:
+            await processor_class.process(entity_context)

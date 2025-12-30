@@ -1,12 +1,13 @@
 from typing import Any
 from uuid import UUID
 
-from commons.db.v6 import User
+from commons.db.v6 import RbacResourceEnum, User
 from commons.db.v6.crm.companies.company_model import Company
 from commons.db.v6.crm.contact_model import Contact
 from commons.db.v6.crm.links.entity_type import EntityType
 from commons.db.v6.crm.links.link_relation_model import LinkRelation
 from sqlalchemy import Select, or_, select
+from sqlalchemy.dialects.postgresql import array
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import lazyload
 
@@ -18,20 +19,13 @@ from app.graphql.contacts.strawberry.contact_landing_page_response import (
 
 
 class ContactsRepository(BaseRepository[Contact]):
-    """Repository for Contacts entity."""
-
     landing_model = ContactLandingPageResponse
+    rbac_resource: RbacResourceEnum | None = None
 
     def __init__(self, context_wrapper: ContextWrapper, session: AsyncSession) -> None:
         super().__init__(session, context_wrapper, Contact)
 
     def paginated_stmt(self) -> Select[Any]:
-        """
-        Build paginated query for contacts landing page.
-
-        Returns:
-            SQLAlchemy select statement with columns for landing page
-        """
         return (
             select(
                 Contact.id,
@@ -44,6 +38,7 @@ class ContactsRepository(BaseRepository[Contact]):
                 Contact.role,
                 Company.name.label("company_name"),
                 Contact.tags,
+                array([Contact.created_by_id]).label("user_ids"),
             )
             .select_from(Contact)
             .options(lazyload("*"))

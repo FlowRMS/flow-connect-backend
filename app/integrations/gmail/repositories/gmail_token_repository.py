@@ -50,7 +50,7 @@ class GmailTokenRepository(BaseRepository[GmailUserToken]):
         result = await self.session.execute(
             select(GmailUserToken).where(
                 GmailUserToken.user_id == user_id,
-                GmailUserToken.is_active == True,  # noqa: E712
+                GmailUserToken.is_active.is_(True),
             )
         )
         return result.scalar_one_or_none()

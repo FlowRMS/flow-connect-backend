@@ -20,11 +20,6 @@ class JobsQueries:
     """GraphQL queries for Jobs entity."""
 
     @strawberry.field
-    def dummy_field(self) -> str:
-        """A dummy field to ensure the class is not empty."""
-        return "JobsQueries is active"
-
-    @strawberry.field
     @inject
     async def job(
         self,

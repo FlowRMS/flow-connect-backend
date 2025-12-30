@@ -75,6 +75,7 @@ class LandingPageInterfaceBase(LandingPageBase):
     id: uuid.UUID
     created_at: datetime.datetime
     created_by: str
+    user_ids: list[uuid.UUID]
 
     @classmethod
     def from_orm_model(cls, row: Row[Any]) -> Self:

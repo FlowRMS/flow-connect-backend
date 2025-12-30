@@ -1,53 +1,39 @@
-"""GraphQL response type for Order."""
-
-from datetime import date, datetime
-from typing import Self
-from uuid import UUID
-
 import strawberry
-from commons.db.v6.commission.orders.order import Order
 
-from app.core.db.adapters.dto import DTOMixin
+from app.graphql.jobs.strawberry.job_response import JobLiteType
+from app.graphql.orders.strawberry.order_balance_response import OrderBalanceResponse
+from app.graphql.orders.strawberry.order_detail_response import OrderDetailResponse
+from app.graphql.orders.strawberry.order_lite_response import OrderLiteResponse
+from app.graphql.v2.core.customers.strawberry.customer_response import (
+    CustomerLiteResponse,
+)
+from app.graphql.v2.core.users.strawberry.user_response import UserResponse
 
 
 @strawberry.type
-class OrderResponse(DTOMixin[Order]):
-    id: UUID
-    entry_date: datetime
-    order_number: str
-    status: int
-    balance_id: UUID | None
-    factory_id: UUID | None
-    sold_to_customer_id: UUID | None
-    bill_to_customer_id: UUID | None
-    job_name: str | None
-    entity_date: date
-    ship_date: date | None
-    due_date: date
-    fact_so_number: str | None
-    user_owner_ids: list[UUID]
-    quote_id: UUID | None
-
-    @classmethod
-    def from_orm_model(cls, model: Order) -> Self:
-        return cls(
-            id=model.id,
-            entry_date=model.entry_date,
-            order_number=model.order_number,
-            status=model.status,
-            balance_id=model.balance_id,
-            factory_id=model.factory_id,
-            sold_to_customer_id=model.sold_to_customer_id,
-            bill_to_customer_id=model.bill_to_customer_id,
-            job_name=model.job_name,
-            entity_date=model.entity_date,
-            ship_date=model.ship_date,
-            due_date=model.due_date,
-            fact_so_number=model.fact_so_number,
-            user_owner_ids=model.user_owner_ids,
-            quote_id=model.quote_id,
-        )
+class OrderResponse(OrderLiteResponse):
+    @strawberry.field
+    def created_by(self) -> UserResponse:
+        return UserResponse.from_orm_model(self._instance.created_by)
 
     @strawberry.field
-    def url(self) -> str:
-        return f"/cm/orders/list/{self.id}"
+    def sold_to_customer(self) -> CustomerLiteResponse:
+        return CustomerLiteResponse.from_orm_model(self._instance.sold_to_customer)
+
+    @strawberry.field
+    def bill_to_customer(self) -> CustomerLiteResponse | None:
+        if self._instance.bill_to_customer is None:
+            return None
+        return CustomerLiteResponse.from_orm_model(self._instance.bill_to_customer)
+
+    @strawberry.field
+    def balance(self) -> OrderBalanceResponse:
+        return OrderBalanceResponse.from_orm_model(self._instance.balance)
+
+    @strawberry.field
+    def details(self) -> list[OrderDetailResponse]:
+        return OrderDetailResponse.from_orm_model_list(self._instance.details)
+
+    @strawberry.field
+    def job(self) -> JobLiteType | None:
+        return JobLiteType.from_orm_model_optional(self._instance.job)

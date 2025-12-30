@@ -1,3 +1,5 @@
+from uuid import UUID
+
 import strawberry
 from aioinject import Injected
 
@@ -8,7 +10,15 @@ from app.graphql.v2.core.customers.strawberry.customer_response import CustomerR
 
 @strawberry.type
 class CustomersQueries:
-    """GraphQL queries for Customers entity."""
+    @strawberry.field
+    @inject
+    async def customer(
+        self,
+        service: Injected[CustomerService],
+        id: UUID,
+    ) -> CustomerResponse:
+        customer = await service.get_by_id(id)
+        return CustomerResponse.from_orm_model(customer)
 
     @strawberry.field
     @inject
@@ -19,17 +29,6 @@ class CustomersQueries:
         published: bool = True,
         limit: int = 20,
     ) -> list[CustomerResponse]:
-        """
-        Search customers by company name.
-
-        Args:
-            search_term: The search term to match against company name
-            published: Filter by published status (default: True)
-            limit: Maximum number of customers to return (default: 20)
-
-        Returns:
-            List of CustomerResponse objects matching the search criteria
-        """
         return CustomerResponse.from_orm_model_list(
             await service.search_customers(search_term, published, limit)
         )

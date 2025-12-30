@@ -26,11 +26,15 @@ class UsersQueries:
         self,
         service: Injected[UserService],
         search_term: str,
+        is_inside: bool | None = None,
+        is_outside: bool | None = None,
         enabled: bool | None = True,
         limit: int = 20,
     ) -> list[UserResponse]:
         return UserResponse.from_orm_model_list(
-            await service.search_users(search_term, enabled, limit)
+            await service.search_users(
+                search_term, enabled, is_inside, is_outside, limit
+            )
         )
 
     @strawberry.field

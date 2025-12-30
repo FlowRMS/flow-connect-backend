@@ -4,7 +4,11 @@ from uuid import UUID
 
 from commons.auth import AuthInfo
 from commons.db.v6.crm.links.entity_type import EntityType
+from commons.db.v6.crm.pre_opportunities.pre_opportunity_detail_model import (
+    PreOpportunityDetail,
+)
 from commons.db.v6.crm.pre_opportunities.pre_opportunity_model import PreOpportunity
+from sqlalchemy.orm import joinedload, lazyload
 
 from app.errors.common_errors import NameAlreadyExistsError, NotFoundError
 from app.graphql.pre_opportunities.repositories.pre_opportunities_repository import (
@@ -73,7 +77,22 @@ class PreOpportunitiesService:
         self, pre_opportunity_id: UUID | str
     ) -> PreOpportunity:
         """Get a pre-opportunity by ID."""
-        pre_opportunity = await self.repository.get_by_id(pre_opportunity_id)
+        pre_opportunity = await self.repository.get_by_id(
+            pre_opportunity_id,
+            options=[
+                joinedload(PreOpportunity.created_by),
+                joinedload(PreOpportunity.job),
+                joinedload(PreOpportunity.balance),
+                joinedload(PreOpportunity.details),
+                joinedload(PreOpportunity.details).joinedload(
+                    PreOpportunityDetail.product
+                ),
+                joinedload(PreOpportunity.details).joinedload(
+                    PreOpportunityDetail.quote
+                ),
+                lazyload("*"),
+            ],
+        )
         if not pre_opportunity:
             raise NotFoundError(str(pre_opportunity_id))
         return pre_opportunity

@@ -1,15 +1,14 @@
-"""Repository for Campaigns entity with database operations."""
-
 from typing import Any
 from uuid import UUID
 
-from commons.db.v6 import User
+from commons.db.v6 import RbacResourceEnum, User
 from commons.db.v6.crm.campaigns.campaign_model import Campaign
 from commons.db.v6.crm.campaigns.campaign_recipient_model import CampaignRecipient
 from commons.db.v6.crm.campaigns.campaign_status import CampaignStatus
 from commons.db.v6.crm.campaigns.email_status import EmailStatus
 from commons.db.v6.crm.campaigns.recipient_list_type import RecipientListType
 from sqlalchemy import Select, func, select
+from sqlalchemy.dialects.postgresql import array
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import lazyload, selectinload
 
@@ -21,15 +20,13 @@ from app.graphql.campaigns.strawberry.campaign_landing_page_response import (
 
 
 class CampaignsRepository(BaseRepository[Campaign]):
-    """Repository for Campaigns entity."""
-
     landing_model = CampaignLandingPageResponse
+    rbac_resource: RbacResourceEnum | None = None
 
     def __init__(self, context_wrapper: ContextWrapper, session: AsyncSession) -> None:
         super().__init__(session, context_wrapper, Campaign)
 
     def paginated_stmt(self) -> Select[Any]:
-        """Build paginated query for campaigns landing page."""
         recipients_count_subq = (
             select(
                 CampaignRecipient.campaign_id,
@@ -62,6 +59,7 @@ class CampaignsRepository(BaseRepository[Campaign]):
                 ),
                 func.coalesce(sent_count_subq.c.sent_count, 0).label("sent_count"),
                 Campaign.scheduled_at,
+                array([Campaign.created_by_id]).label("user_ids"),
             )
             .select_from(Campaign)
             .options(lazyload("*"))

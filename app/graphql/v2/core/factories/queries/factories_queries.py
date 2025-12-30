@@ -1,3 +1,5 @@
+from uuid import UUID
+
 import strawberry
 from aioinject import Injected
 
@@ -9,6 +11,16 @@ from app.graphql.v2.core.factories.strawberry.factory_response import FactoryRes
 @strawberry.type
 class FactoriesQueries:
     """GraphQL queries for Factories entity."""
+
+    @strawberry.field
+    @inject
+    async def factory(
+        self,
+        id: UUID,
+        service: Injected[FactoryService],
+    ) -> FactoryResponse:
+        factory = await service.get_by_id(id)
+        return FactoryResponse.from_orm_model(factory)
 
     @strawberry.field
     @inject

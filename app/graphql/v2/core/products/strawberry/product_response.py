@@ -1,3 +1,4 @@
+from datetime import date
 from decimal import Decimal
 from typing import Self
 from uuid import UUID
@@ -6,7 +7,9 @@ import strawberry
 from commons.db.v6.core.products.product import Product
 
 from app.core.db.adapters.dto import DTOMixin
-from app.graphql.v2.core.factories.strawberry.factory_response import FactoryResponse
+from app.graphql.v2.core.factories.strawberry.factory_response import (
+    FactoryLiteResponse,
+)
 from app.graphql.v2.core.products.strawberry.product_category_response import (
     ProductCategoryResponse,
 )
@@ -17,21 +20,6 @@ from app.graphql.v2.core.products.strawberry.product_uom_response import (
 
 @strawberry.type
 class ProductLiteResponse(DTOMixin[Product]):
-    id: UUID
-    factory_part_number: str
-    factory_id: UUID
-
-    @classmethod
-    def from_orm_model(cls, model: Product) -> Self:
-        return cls(
-            id=model.id,
-            factory_part_number=model.factory_part_number,
-            factory_id=model.factory_id,
-        )
-
-
-@strawberry.type
-class ProductResponse(DTOMixin[Product]):
     _instance: strawberry.Private[Product]
     id: UUID
     factory_part_number: str
@@ -40,6 +28,15 @@ class ProductResponse(DTOMixin[Product]):
     published: bool
     approval_needed: bool | None
     description: str | None
+    upc: str | None
+    default_divisor: Decimal | None
+    min_order_qty: Decimal | None
+    lead_time: int | None
+    unit_price_discount_rate: Decimal | None
+    commission_discount_rate: Decimal | None
+    approval_date: date | None
+    approval_comments: str | None
+    tags: list[str] | None
 
     @classmethod
     def from_orm_model(cls, model: Product) -> Self:
@@ -52,28 +49,28 @@ class ProductResponse(DTOMixin[Product]):
             published=model.published,
             approval_needed=model.approval_needed,
             description=model.description,
+            upc=model.upc,
+            default_divisor=model.default_divisor,
+            min_order_qty=model.min_order_qty,
+            lead_time=model.lead_time,
+            unit_price_discount_rate=model.unit_price_discount_rate,
+            commission_discount_rate=model.commission_discount_rate,
+            approval_date=model.approval_date,
+            approval_comments=model.approval_comments,
+            tags=model.tags,
         )
+
+
+@strawberry.type
+class ProductResponse(ProductLiteResponse):
+    @strawberry.field
+    def factory(self) -> FactoryLiteResponse:
+        return FactoryLiteResponse.from_orm_model(self._instance.factory)
 
     @strawberry.field
-    async def factory(self) -> FactoryResponse:
-        return FactoryResponse.from_orm_model(
-            await self._instance.awaitable_attrs.factory
-        )
+    def category(self) -> ProductCategoryResponse | None:
+        return ProductCategoryResponse.from_orm_model_optional(self._instance.category)
 
     @strawberry.field
-    async def category(self) -> ProductCategoryResponse | None:
-        if self._instance.category is None:
-            return None
-
-        return ProductCategoryResponse.from_orm_model(
-            await self._instance.awaitable_attrs.category
-        )
-
-    @strawberry.field
-    async def uom(self) -> ProductUomResponse | None:
-        if self._instance.uom is None:
-            return None
-
-        return ProductUomResponse.from_orm_model(
-            await self._instance.awaitable_attrs.uom
-        )
+    def uom(self) -> ProductUomResponse | None:
+        return ProductUomResponse.from_orm_model_optional(self._instance.uom)

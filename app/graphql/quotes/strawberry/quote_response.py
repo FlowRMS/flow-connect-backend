@@ -1,45 +1,43 @@
-"""GraphQL response type for Quote."""
-
-from datetime import date, datetime
-from typing import Self
-from uuid import UUID
-
 import strawberry
-from commons.db.v6.crm import Quote
 
-from app.core.db.adapters.dto import DTOMixin
+from app.graphql.jobs.strawberry.job_response import JobLiteType
+from app.graphql.quotes.strawberry.quote_balance_response import QuoteBalanceResponse
+from app.graphql.quotes.strawberry.quote_detail_response import QuoteDetailResponse
+from app.graphql.quotes.strawberry.quote_lite_response import QuoteLiteResponse
+from app.graphql.v2.core.customers.strawberry.customer_response import (
+    CustomerLiteResponse,
+)
+from app.graphql.v2.core.users.strawberry.user_response import UserResponse
 
 
 @strawberry.type
-class QuoteResponse(DTOMixin[Quote]):
-    id: UUID
-    entry_date: datetime
-    quote_number: str
-    entity_date: date
-    created_by: UUID
-    user_owner_ids: list[UUID]
-    sold_to_customer_id: UUID | None
-    bill_to_customer_id: UUID | None
-    job_name: str | None
-    exp_date: date | None
-    blanket: bool
-
-    @classmethod
-    def from_orm_model(cls, model: Quote) -> Self:
-        return cls(
-            id=model.id,
-            entry_date=model.entry_date,
-            quote_number=model.quote_number,
-            entity_date=model.entity_date,
-            created_by=model.created_by,
-            user_owner_ids=model.user_owner_ids,
-            sold_to_customer_id=model.sold_to_customer_id,
-            bill_to_customer_id=model.bill_to_customer_id,
-            job_name=model.job_name,
-            exp_date=model.exp_date,
-            blanket=model.blanket,
-        )
-
+class QuoteResponse(QuoteLiteResponse):
     @strawberry.field
     def url(self) -> str:
         return f"/crm/quotes/list/{self.id}"
+
+    @strawberry.field
+    def created_by(self) -> UserResponse:
+        return UserResponse.from_orm_model(self._instance.created_by)
+
+    @strawberry.field
+    def sold_to_customer(self) -> CustomerLiteResponse:
+        return CustomerLiteResponse.from_orm_model(self._instance.sold_to_customer)
+
+    @strawberry.field
+    def bill_to_customer(self) -> CustomerLiteResponse | None:
+        if self._instance.bill_to_customer is None:
+            return None
+        return CustomerLiteResponse.from_orm_model(self._instance.bill_to_customer)
+
+    @strawberry.field
+    def balance(self) -> QuoteBalanceResponse:
+        return QuoteBalanceResponse.from_orm_model(self._instance.balance)
+
+    @strawberry.field
+    def details(self) -> list[QuoteDetailResponse]:
+        return QuoteDetailResponse.from_orm_model_list(self._instance.details)
+
+    @strawberry.field
+    def job(self) -> JobLiteType | None:
+        return JobLiteType.from_orm_model_optional(self._instance.job)

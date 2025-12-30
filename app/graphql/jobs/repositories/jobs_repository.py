@@ -1,12 +1,11 @@
-"""Repository for Jobs entity with specific database operations."""
-
 from typing import Any
 from uuid import UUID
 
-from commons.db.v6 import User
+from commons.db.v6 import RbacResourceEnum, User
 from commons.db.v6.crm.jobs.job_status_model import JobStatus
 from commons.db.v6.crm.jobs.jobs_model import Job
 from sqlalchemy import Select, func, or_, select
+from sqlalchemy.dialects.postgresql import array
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import aliased, lazyload
 
@@ -18,13 +17,8 @@ from app.graphql.jobs.strawberry.job_landing_page_response import (
 
 
 class JobsRepository(BaseRepository[Job]):
-    """
-    Repository for Jobs entity.
-
-    Extends BaseRepository with job-specific query methods.
-    """
-
     landing_model = JobLandingPageResponse
+    rbac_resource: RbacResourceEnum | None = RbacResourceEnum.JOB
 
     def __init__(self, context_wrapper: ContextWrapper, session: AsyncSession) -> None:
         """
@@ -36,12 +30,6 @@ class JobsRepository(BaseRepository[Job]):
         super().__init__(session, context_wrapper, Job)
 
     def paginated_stmt(self) -> Select[Any]:
-        """
-        Build paginated query for jobs landing page.
-
-        Returns:
-            SQLAlchemy select statement with columns for landing page
-        """
         user_owner_alias = aliased(User)
         requester_alias = aliased(User)
         return (
@@ -58,6 +46,7 @@ class JobsRepository(BaseRepository[Job]):
                 requester_alias.full_name.label("requester"),
                 user_owner_alias.full_name.label("job_owner"),
                 Job.tags,
+                array([Job.created_by_id]).label("user_ids"),
             )
             .select_from(Job)
             .options(lazyload("*"))

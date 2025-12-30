@@ -11,6 +11,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.sql.base import ExecutableOption
 
 from app.core.context_wrapper import ContextWrapper
+from app.core.processors.base import BaseProcessor
 from app.core.processors.context import EntityContext
 from app.core.processors.events import RepositoryEvent
 from app.core.processors.executor import ProcessorExecutor
@@ -43,6 +44,7 @@ class BaseRepository(Generic[T]):
         model_class: type[T],
         rbac_filter_service: RbacFilterService | None = None,
         processor_executor: ProcessorExecutor | None = None,
+        processor_executor_classes: list[BaseProcessor] | None = None,
     ) -> None:
         super().__init__()
         self.context = context_wrapper.get()
@@ -50,6 +52,7 @@ class BaseRepository(Generic[T]):
         self.model_class = model_class
         self._rbac_filter_service = rbac_filter_service
         self._processor_executor = processor_executor
+        self._processor_executor_classes = processor_executor_classes or []
 
     async def _run_processors(
         self,
@@ -65,7 +68,9 @@ class BaseRepository(Generic[T]):
             event=event,
             original_entity=original_entity,
         )
-        await self._processor_executor.execute(self.model_class, event, context)
+        await self._processor_executor.execute(
+            context, self._processor_executor_classes
+        )
 
     def get_rbac_filter_strategy(self) -> RbacFilterStrategy | None:
         """
@@ -120,7 +125,9 @@ class BaseRepository(Generic[T]):
 
         return entity
 
-    async def get_by_id(self, entity_id: UUID | str) -> T | None:
+    async def get_by_id(
+        self, entity_id: UUID | str, options: list[ExecutableOption] | None = None
+    ) -> T | None:
         """
         Get an entity by its ID.
 
@@ -132,11 +139,14 @@ class BaseRepository(Generic[T]):
         """
         if isinstance(entity_id, str):
             entity_id = UUID(entity_id)
+        stmt = select(self.model_class).where(self.model_class.id == entity_id)
 
-        result = await self.session.execute(
-            select(self.model_class).where(self.model_class.id == entity_id)
+        if options:
+            stmt = stmt.options(*options)
+        result = await self.execute(
+            stmt,
         )
-        return result.scalar_one_or_none()
+        return result.unique().scalar_one_or_none()
 
     async def list_all(self, limit: int | None = None, offset: int = 0) -> list[T]:
         """
@@ -167,7 +177,6 @@ class BaseRepository(Generic[T]):
 
         self.session.add(entity)
         await self.session.flush()
-        await self.session.refresh(entity)
 
         await self._run_processors(RepositoryEvent.POST_CREATE, entity)
 
@@ -190,8 +199,6 @@ class BaseRepository(Generic[T]):
 
         merged = await self.session.merge(incoming_entity)
         await self.session.flush()
-        await self.session.refresh(merged)
-
         await self._run_processors(RepositoryEvent.POST_UPDATE, merged, original_entity)
 
         return merged
@@ -254,8 +261,6 @@ class BaseRepository(Generic[T]):
         """
         self.session.add_all(entities)
         await self.session.flush()
-        for entity in entities:
-            await self.session.refresh(entity)
         return entities
 
     async def find_by_entity(self, entity_type: EntityType, entity_id: UUID) -> list[T]:

@@ -1,13 +1,7 @@
-"""Repository for Note entity."""
-
 from typing import Any
 from uuid import UUID
 
-from commons.db.v6.commission import (
-    Check,
-    Invoice,
-    Order,
-)
+from commons.db.v6 import RbacResourceEnum
 from commons.db.v6.core import Customer, Factory, Product
 from commons.db.v6.crm import Quote
 from commons.db.v6.crm.companies.company_model import Company
@@ -18,11 +12,9 @@ from commons.db.v6.crm.links.link_relation_model import LinkRelation
 from commons.db.v6.crm.notes.note_model import Note
 from commons.db.v6.crm.pre_opportunities.pre_opportunity_model import PreOpportunity
 from commons.db.v6.crm.tasks.task_model import Task
-from commons.db.v6.user import (
-    User,
-)
+from commons.db.v6.user import User
 from sqlalchemy import Select, case, func, literal, or_, select
-from sqlalchemy.dialects.postgresql import JSONB
+from sqlalchemy.dialects.postgresql import JSONB, array
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import lazyload
 
@@ -34,9 +26,8 @@ from app.graphql.notes.strawberry.note_landing_page_response import (
 
 
 class NotesRepository(BaseRepository[Note]):
-    """Repository for Notes entity."""
-
     landing_model = NoteLandingPageResponse
+    rbac_resource: RbacResourceEnum | None = None
 
     def __init__(self, context_wrapper: ContextWrapper, session: AsyncSession) -> None:
         super().__init__(session, context_wrapper, Note)
@@ -101,9 +92,9 @@ class NotesRepository(BaseRepository[Note]):
                 PreOpportunity.entity_number,
             ),
             (links_cte.c.entity_type == EntityType.QUOTE, Quote.quote_number),
-            (links_cte.c.entity_type == EntityType.ORDER, Order.order_number),
-            (links_cte.c.entity_type == EntityType.INVOICE, Invoice.invoice_number),
-            (links_cte.c.entity_type == EntityType.CHECK, Check.check_number),
+            # (links_cte.c.entity_type == EntityType.ORDER, Order.order_number),
+            # (links_cte.c.entity_type == EntityType.INVOICE, Invoice.invoice_number),
+            # (links_cte.c.entity_type == EntityType.CHECK, Check.check_number),
             (links_cte.c.entity_type == EntityType.FACTORY, Factory.title),
             (
                 links_cte.c.entity_type == EntityType.PRODUCT,
@@ -163,21 +154,21 @@ class NotesRepository(BaseRepository[Note]):
                 (links_cte.c.entity_type == EntityType.QUOTE)
                 & (links_cte.c.entity_id == Quote.id),
             )
-            .outerjoin(
-                Order,
-                (links_cte.c.entity_type == EntityType.ORDER)
-                & (links_cte.c.entity_id == Order.id),
-            )
-            .outerjoin(
-                Invoice,
-                (links_cte.c.entity_type == EntityType.INVOICE)
-                & (links_cte.c.entity_id == Invoice.id),
-            )
-            .outerjoin(
-                Check,
-                (links_cte.c.entity_type == EntityType.CHECK)
-                & (links_cte.c.entity_id == Check.id),
-            )
+            # .outerjoin(
+            #     Order,
+            #     (links_cte.c.entity_type == EntityType.ORDER)
+            #     & (links_cte.c.entity_id == Order.id),
+            # )
+            # .outerjoin(
+            #     Invoice,
+            #     (links_cte.c.entity_type == EntityType.INVOICE)
+            #     & (links_cte.c.entity_id == Invoice.id),
+            # )
+            # .outerjoin(
+            #     Check,
+            #     (links_cte.c.entity_type == EntityType.CHECK)
+            #     & (links_cte.c.entity_id == Check.id),
+            # )
             .outerjoin(
                 Factory,
                 (links_cte.c.entity_type == EntityType.FACTORY)
@@ -209,6 +200,7 @@ class NotesRepository(BaseRepository[Note]):
                 func.coalesce(
                     linked_entities_subq.c.linked_entities, literal("[]").cast(JSONB)
                 ).label("linked_entities"),
+                array([Note.created_by_id]).label("user_ids"),
             )
             .select_from(Note)
             .options(lazyload("*"))
