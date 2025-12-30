@@ -3,6 +3,7 @@
 from decimal import Decimal
 
 import strawberry
+from strawberry.scalars import JSON
 
 from commons.db.v6 import ShippingCarrier
 
@@ -30,7 +31,7 @@ class ShippingCarrierInput(BaseInputGQL[ShippingCarrier]):
     # Contact Information - stored via Contact model with LinkRelation
 
     # Service Configuration
-    service_types: dict | None = None  # Changed from list to dict
+    service_types: JSON | None = None  # JSONB in database
     default_service_type: str | None = None
 
     # Shipping Settings - using Decimal
