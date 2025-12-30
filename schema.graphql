@@ -130,17 +130,74 @@ enum CampaignStatus {
   PAUSED
 }
 
-type CheckResponse {
+input CheckDetailInput {
+  appliedAmount: Decimal!
+  id: UUID = null
+  invoiceId: UUID = null
+  deductionId: UUID = null
+  creditId: UUID = null
+}
+
+type CheckDetailResponse {
   id: UUID!
+  checkId: UUID!
+  invoiceId: UUID
+  deductionId: UUID
+  creditId: UUID
+  appliedAmount: Decimal!
+  invoice: InvoiceLiteResponse
+  deduction: DeductionLiteResponse
+  credit: CreditLiteResponse
+}
+
+input CheckInput {
+  checkNumber: String!
+  entityDate: Date!
+  factoryId: UUID!
+  enteredCommissionAmount: Decimal!
+  details: [CheckDetailInput!]!
+  id: UUID
+  postDate: Date
+  commissionMonth: Date
+  status: CheckStatus!
+  creationType: CreationType!
+}
+
+type CheckLiteResponse {
+  id: UUID!
+  createdAt: datetime!
+  createdById: UUID!
   checkNumber: String!
   entityDate: Date!
   postDate: Date
   commissionMonth: Date
   enteredCommissionAmount: Decimal!
   factoryId: UUID!
-  status: Int!
-  creationType: Int!
+  status: CheckStatus!
+  creationType: CreationType!
   url: String!
+}
+
+type CheckResponse {
+  id: UUID!
+  createdAt: datetime!
+  createdById: UUID!
+  checkNumber: String!
+  entityDate: Date!
+  postDate: Date
+  commissionMonth: Date
+  enteredCommissionAmount: Decimal!
+  factoryId: UUID!
+  status: CheckStatus!
+  creationType: CreationType!
+  url: String!
+  factory: FactoryLiteResponse!
+  details: [CheckDetailResponse!]!
+}
+
+enum CheckStatus {
+  OPEN
+  POSTED
 }
 
 input CompanyInput {
@@ -446,6 +503,57 @@ type CustomerSplitRateResponse {
 scalar Date
 
 scalar Decimal
+
+input DeductionInput {
+  checkId: UUID!
+  factoryId: UUID!
+  amount: Decimal!
+  splitRates: [DeductionSplitRateInput!]!
+  id: UUID
+  reason: String
+  creationType: CreationType!
+}
+
+type DeductionLiteResponse {
+  id: UUID!
+  createdAt: datetime!
+  createdById: UUID!
+  checkId: UUID!
+  factoryId: UUID!
+  amount: Decimal!
+  reason: String
+  creationType: CreationType!
+}
+
+type DeductionResponse {
+  id: UUID!
+  createdAt: datetime!
+  createdById: UUID!
+  checkId: UUID!
+  factoryId: UUID!
+  amount: Decimal!
+  reason: String
+  creationType: CreationType!
+  createdBy: UserResponse!
+  factory: FactoryLiteResponse!
+  splitRates: [DeductionSplitRateResponse!]!
+}
+
+input DeductionSplitRateInput {
+  userId: UUID!
+  splitRate: Decimal!
+  position: Int!
+  id: UUID = null
+}
+
+type DeductionSplitRateResponse {
+  id: UUID!
+  deductionId: UUID!
+  userId: UUID!
+  splitRate: Decimal!
+  position: Int!
+  user: UserResponse!
+}
 
 input DeleteLinkByEntitiesInput {
   sourceEntityType: EntityType!
@@ -1003,6 +1111,9 @@ type Mutation {
   refreshDynamicRecipients(campaignId: UUID!): CampaignResponse!
   sendTestEmail(campaignId: UUID!, testEmail: String!): SendTestEmailResponse!
   startCampaignSending(campaignId: UUID!): CampaignResponse!
+  createCheck(input: CheckInput!): CheckResponse!
+  updateCheck(input: CheckInput!): CheckResponse!
+  deleteCheck(id: UUID!): Boolean!
   createCompany(input: CompanyInput!): CompanyResponse!
   deleteCompany(id: UUID!): Boolean!
   updateCompany(id: UUID!, input: CompanyInput!): CompanyResponse!
@@ -1012,6 +1123,9 @@ type Mutation {
   createCredit(input: CreditInput!): CreditResponse!
   updateCredit(input: CreditInput!): CreditResponse!
   deleteCredit(id: UUID!): Boolean!
+  createDeduction(input: DeductionInput!): DeductionResponse!
+  updateDeduction(input: DeductionInput!): DeductionResponse!
+  deleteDeduction(id: UUID!): Boolean!
   gmailConnect(code: String!): GmailConnectionResultType!
   gmailDisconnect: Boolean!
   gmailSendEmail(input: GmailSendEmailInput!): GmailSendEmailResultType!
@@ -1753,7 +1867,9 @@ type Query {
   campaignRecipients(campaignId: UUID!, limit: Int! = 100, offset: Int! = 0): [CampaignRecipientResponse!]!
   estimateRecipients(criteria: CampaignCriteriaInput!, sampleLimit: Int! = 10): EstimateRecipientsResponse!
   campaignSendingStatus(campaignId: UUID!): CampaignSendingStatusResponse!
-  checkSearch(searchTerm: String!, limit: Int! = 20): [CheckResponse!]!
+  check(id: UUID!): CheckResponse!
+  checkSearch(searchTerm: String!, limit: Int! = 20): [CheckLiteResponse!]!
+  checksByFactory(factoryId: UUID!): [CheckLiteResponse!]!
   findLandingPages(sourceType: LandingSourceType!, filters: [Filter!] = null, orderBy: [OrderBy!] = null, limit: Int = 10, offset: Int = 0): GenericLandingPage!
   universalSearch(searchTerm: String!, limit: Int! = 20): [SearchResult!]!
   company(id: UUID!): CompanyResponse!
@@ -1764,6 +1880,9 @@ type Query {
   contactRelatedEntities(contactId: UUID!): ContactRelatedEntitiesResponse!
   credit(id: UUID!): CreditResponse!
   creditSearch(searchTerm: String!, limit: Int! = 20): [CreditLiteResponse!]!
+  deduction(id: UUID!): DeductionResponse!
+  deductionsByCheck(checkId: UUID!): [DeductionResponse!]!
+  deductionSearch(searchTerm: String!, limit: Int! = 20): [DeductionLiteResponse!]!
   gmailAuthUrl(state: String = null): String!
   gmailConnectionStatus: GmailConnectionStatusType!
   o365AuthUrl(state: String = null): String!
