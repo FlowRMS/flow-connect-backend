@@ -9,6 +9,7 @@ from migrations.v5_to_v6.migrate_customer_relations import (
     migrate_contact_links,
     migrate_contacts,
     migrate_customer_factory_sales_reps,
+    migrate_inside_customer_split_rates,
     migrate_customer_split_rates,
     migrate_factory_split_rates,
 )
@@ -1015,6 +1016,7 @@ async def run_migration(config: MigrationConfig) -> dict[str, int]:
         results["quote_split_rates"] = await migrate_quote_split_rates(source, dest)
         results["quote_inside_reps"] = await migrate_quote_inside_reps(source, dest)
         results["customer_factory_sales_reps"] = await migrate_customer_factory_sales_reps(source, dest)
+        results["inside_customer_split_rates"] = await migrate_inside_customer_split_rates(source, dest)
         results["customer_split_rates"] = await migrate_customer_split_rates(source, dest)
         results["factory_split_rates"] = await migrate_factory_split_rates(source, dest)
         results["addresses"] = await migrate_addresses(source, dest)

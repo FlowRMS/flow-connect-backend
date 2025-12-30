@@ -61,6 +61,62 @@ async def migrate_customer_split_rates(
     logger.info(f"Migrated {len(split_rates)} customer split rates")
     return len(split_rates)
 
+async def migrate_inside_customer_split_rates(
+    source: asyncpg.Connection,
+    dest: asyncpg.Connection,
+) -> int:
+    """Migrate customer split rates from v5 to v6.
+
+    v5: core.customer_split_rates (id, user_id, customer_id, split_rate, position)
+    v6: pycore.customer_split_rates adds rep_type field (1=OUTSIDE, 2=INSIDE)
+
+    Rep type is determined by the user's inside flag from pyuser.users.
+    """
+    logger.info("Starting customer split rate migration...")
+
+    split_rates = await source.fetch("""
+        SELECT
+            gen_random_uuid() as id,
+            c.inside_rep_id as user_id,
+            c.id as customer_id,
+            100 as split_rate,
+            0 as position,
+            COALESCE(c.entry_date, now()) as created_at,
+            2 as rep_type
+        FROM core.customers c
+        JOIN "user".users u ON u.id = c.inside_rep_id
+    """)
+
+    if not split_rates:
+        logger.info("No customer split rates to migrate")
+        return 0
+
+    await dest.executemany(
+        """
+        INSERT INTO pycore.customer_split_rates (
+            id, user_id, customer_id, split_rate, rep_type, "position", created_at
+        ) VALUES ($1, $2, $3, $4, $5, $6, $7)
+        ON CONFLICT (id) DO UPDATE SET
+            user_id = EXCLUDED.user_id,
+            customer_id = EXCLUDED.customer_id,
+            split_rate = EXCLUDED.split_rate,
+            rep_type = EXCLUDED.rep_type,
+            "position" = EXCLUDED."position"
+        """,
+        [(
+            sr["id"],
+            sr["user_id"],
+            sr["customer_id"],
+            sr["split_rate"],
+            sr["rep_type"],
+            sr["position"],
+            sr["created_at"],
+        ) for sr in split_rates],
+    )
+
+    logger.info(f"Migrated {len(split_rates)} customer split rates")
+    return len(split_rates)
+
 
 async def migrate_factory_split_rates(
     source: asyncpg.Connection,
