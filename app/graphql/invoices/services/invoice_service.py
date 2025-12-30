@@ -2,6 +2,7 @@ from uuid import UUID
 
 from commons.auth import AuthInfo
 from commons.db.v6.commission import Invoice
+from commons.db.v6.commission.invoices.enums import InvoiceStatus
 from commons.db.v6.crm.links.entity_type import EntityType
 
 from app.errors.common_errors import NameAlreadyExistsError, NotFoundError
@@ -29,6 +30,8 @@ class InvoiceService:
             raise NameAlreadyExistsError(invoice_input.invoice_number)
 
         invoice = invoice_input.to_orm_model()
+        invoice.status = InvoiceStatus.OPEN
+        invoice.locked = False
         return await self.repository.create_with_balance(invoice)
 
     async def update_invoice(self, invoice_input: InvoiceInput) -> Invoice:

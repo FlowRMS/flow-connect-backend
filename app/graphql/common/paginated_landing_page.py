@@ -9,6 +9,9 @@ from commons.graphql.pagination import get_pagination_window as _get_pagination_
 from sqlalchemy import Select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.graphql.adjustments.strawberry.adjustment_landing_page_response import (
+    AdjustmentLandingPageResponse,
+)
 from app.graphql.campaigns.strawberry.campaign_landing_page_response import (
     CampaignLandingPageResponse,
 )
@@ -17,6 +20,12 @@ from app.graphql.companies.strawberry.company_landing_page_response import (
 )
 from app.graphql.contacts.strawberry.contact_landing_page_response import (
     ContactLandingPageResponse,
+)
+from app.graphql.credits.strawberry.credit_landing_page_response import (
+    CreditLandingPageResponse,
+)
+from app.graphql.invoices.strawberry.invoice_landing_page_response import (
+    InvoiceLandingPageResponse,
 )
 from app.graphql.jobs.strawberry.job_landing_page_response import JobLandingPageResponse
 from app.graphql.notes.strawberry.note_landing_page_response import (
@@ -63,6 +72,9 @@ LandingRecord = strawberry.union(
         QuoteLandingPageResponse,
         OrderLandingPageResponse,
         FileLandingPageResponse,
+        InvoiceLandingPageResponse,
+        CreditLandingPageResponse,
+        AdjustmentLandingPageResponse,
     ],
 )
 

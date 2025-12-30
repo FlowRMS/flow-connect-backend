@@ -5,6 +5,9 @@ import strawberry
 from commons.db.v6.commission import InvoiceDetail
 
 from app.core.strawberry.inputs import BaseInputGQL
+from app.graphql.invoices.strawberry.invoice_split_rate_input import (
+    InvoiceSplitRateInput,
+)
 
 
 @strawberry.input
@@ -25,6 +28,7 @@ class InvoiceDetailInput(BaseInputGQL[InvoiceDetail]):
     discount_rate: Decimal = Decimal("0")
     commission_rate: Decimal = Decimal("0")
     commission_discount_rate: Decimal = Decimal("0")
+    outside_split_rates: list[InvoiceSplitRateInput] | None = None
 
     def to_orm_model(self) -> InvoiceDetail:
         subtotal = self.quantity * self.unit_price
@@ -57,6 +61,11 @@ class InvoiceDetailInput(BaseInputGQL[InvoiceDetail]):
             division_factor=self.division_factor,
             lead_time=self.lead_time,
             note=self.note,
+            outside_split_rates=(
+                [sr.to_orm_model() for sr in self.outside_split_rates]
+                if self.outside_split_rates
+                else []
+            ),
         )
         if self.order_detail_id:
             detail.order_detail_id = self.order_detail_id

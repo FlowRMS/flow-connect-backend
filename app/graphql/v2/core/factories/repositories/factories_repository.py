@@ -115,7 +115,7 @@ class FactoriesRepository(BaseRepository[Factory]):
             stmt = stmt.where(Factory.published == published)
 
         result = await self.session.execute(stmt)
-        return list(result.scalars().all())
+        return list(result.unique().scalars().all())
 
     async def get_manufacturer_order(self) -> dict[UUID, int]:
         """

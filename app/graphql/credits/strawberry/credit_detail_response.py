@@ -7,9 +7,8 @@ from commons.db.v6.commission import CreditDetail
 from commons.db.v6.commission.credits.enums import CreditStatus
 
 from app.core.db.adapters.dto import DTOMixin
-from app.graphql.v2.core.products.strawberry.product_response import ProductLiteResponse
-from app.graphql.v2.core.products.strawberry.product_uom_response import (
-    ProductUomResponse,
+from app.graphql.credits.strawberry.credit_split_rate_response import (
+    CreditSplitRateResponse,
 )
 
 
@@ -46,9 +45,7 @@ class CreditDetailResponse(DTOMixin[CreditDetail]):
         )
 
     @strawberry.field
-    def product(self) -> ProductLiteResponse | None:
-        return ProductLiteResponse.from_orm_model_optional(self._instance.product)
-
-    @strawberry.field
-    def uom(self) -> ProductUomResponse | None:
-        return ProductUomResponse.from_orm_model_optional(self._instance.uom)
+    def outside_split_rates(self) -> list[CreditSplitRateResponse]:
+        return CreditSplitRateResponse.from_orm_model_list(
+            self._instance.outside_split_rates
+        )

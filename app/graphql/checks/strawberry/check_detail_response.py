@@ -6,8 +6,10 @@ import strawberry
 from commons.db.v6.commission import CheckDetail
 
 from app.core.db.adapters.dto import DTOMixin
+from app.graphql.adjustments.strawberry.adjustment_response import (
+    AdjustmentLiteResponse,
+)
 from app.graphql.credits.strawberry.credit_response import CreditLiteResponse
-from app.graphql.deductions.strawberry.deduction_response import DeductionLiteResponse
 from app.graphql.invoices.strawberry.invoice_response import InvoiceLiteResponse
 
 
@@ -17,7 +19,7 @@ class CheckDetailResponse(DTOMixin[CheckDetail]):
     id: UUID
     check_id: UUID
     invoice_id: UUID | None
-    deduction_id: UUID | None
+    adjustment_id: UUID | None
     credit_id: UUID | None
     applied_amount: Decimal
 
@@ -28,7 +30,7 @@ class CheckDetailResponse(DTOMixin[CheckDetail]):
             id=model.id,
             check_id=model.check_id,
             invoice_id=model.invoice_id,
-            deduction_id=model.deduction_id,
+            adjustment_id=model.adjustment_id,
             credit_id=model.credit_id,
             applied_amount=model.applied_amount,
         )
@@ -38,8 +40,8 @@ class CheckDetailResponse(DTOMixin[CheckDetail]):
         return InvoiceLiteResponse.from_orm_model_optional(self._instance.invoice)
 
     @strawberry.field
-    def deduction(self) -> DeductionLiteResponse | None:
-        return DeductionLiteResponse.from_orm_model_optional(self._instance.deduction)
+    def adjustment(self) -> AdjustmentLiteResponse | None:
+        return AdjustmentLiteResponse.from_orm_model_optional(self._instance.adjustment)
 
     @strawberry.field
     def credit(self) -> CreditLiteResponse | None:

@@ -165,3 +165,49 @@ async def migrate_credit_details(source: asyncpg.Connection, dest: asyncpg.Conne
 
     logger.info(f"Migrated {len(details)} credit details")
     return len(details)
+
+
+async def migrate_credit_split_rates(source: asyncpg.Connection, dest: asyncpg.Connection) -> int:
+    """Migrate credit split rates from v5 (commission.credit_split_rates) to v6 (pycommission.credit_split_rates)."""
+    logger.info("Starting credit split rate migration...")
+
+    split_rates = await source.fetch("""
+        SELECT
+            osr.id,
+            cd.id as credit_detail_id,
+            osr.user_id,
+            COALESCE(osr.split_rate, 0) as split_rate,
+            COALESCE(osr."position", 0) as position,
+            COALESCE(osr.entry_date, now()) as created_at
+        FROM commission.order_split_rates osr
+        JOIN commission.credit_details cd ON cd.order_detail_id = osr.order_detail_id
+        JOIN "user".users u ON u.id = osr.user_id
+    """)
+
+    if not split_rates:
+        logger.info("No credit split rates to migrate")
+        return 0
+
+    await dest.executemany(
+        """
+        INSERT INTO pycommission.credit_split_rates (
+            id, credit_detail_id, user_id, split_rate, "position", created_at
+        ) VALUES ($1, $2, $3, $4, $5, $6)
+        ON CONFLICT (id) DO UPDATE SET
+            credit_detail_id = EXCLUDED.credit_detail_id,
+            user_id = EXCLUDED.user_id,
+            split_rate = EXCLUDED.split_rate,
+            "position" = EXCLUDED."position"
+        """,
+        [(
+            sr["id"],
+            sr["credit_detail_id"],
+            sr["user_id"],
+            sr["split_rate"],
+            sr["position"],
+            sr["created_at"],
+        ) for sr in split_rates],
+    )
+
+    logger.info(f"Migrated {len(split_rates)} credit split rates")
+    return len(split_rates)

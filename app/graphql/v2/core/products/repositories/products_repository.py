@@ -100,10 +100,10 @@ class ProductsRepository(BaseRepository[Product]):
             select(Product)
             .options(lazyload("*"))
             .outerjoin(ProductCpn, ProductCpn.product_id == Product.id)
-            .where(greatest > 0.2)
             .limit(limit)
-            .order_by(greatest.desc())
         )
+        if search_term != "":
+            stmt = stmt.where(greatest > 0.2).order_by(greatest.desc())
 
         if factory_id is not None:
             stmt = stmt.where(Product.factory_id == factory_id)

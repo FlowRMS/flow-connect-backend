@@ -22,6 +22,15 @@ class SourceType(enum.IntEnum):
     CUSTOMER = auto()
     FACTORY = auto()
     PRODUCT = auto()
+    INVOICE = auto()
+    ORDER = auto()
+    CREDIT = auto()
+    CHECK = auto()
+    ADJUSTMENT = auto()
+    ADDRESS = auto()
+    SHIPPING_CARRIER = auto()
+    CONTAINER_TYPE = auto()
+    WAREHOUSE = auto()
 
 
 @strawberry.type(name="SearchResult")

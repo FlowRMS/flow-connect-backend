@@ -12,14 +12,14 @@ class CheckDetailInput(BaseInputGQL[CheckDetail]):
     applied_amount: Decimal
     id: UUID | None = None
     invoice_id: UUID | None = None
-    deduction_id: UUID | None = None
+    adjustment_id: UUID | None = None
     credit_id: UUID | None = None
 
     def to_orm_model(self) -> CheckDetail:
         detail = CheckDetail(
             applied_amount=self.applied_amount,
             invoice_id=self.invoice_id,
-            deduction_id=self.deduction_id,
+            adjustment_id=self.adjustment_id,
             credit_id=self.credit_id,
         )
         if self.id:

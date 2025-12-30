@@ -2,6 +2,7 @@ from uuid import UUID
 
 from commons.auth import AuthInfo
 from commons.db.v6.commission import Credit
+from commons.db.v6.commission.credits.enums import CreditStatus
 
 from app.errors.common_errors import NameAlreadyExistsError, NotFoundError
 from app.graphql.credits.repositories.credits_repository import CreditsRepository
@@ -28,6 +29,8 @@ class CreditService:
             raise NameAlreadyExistsError(credit_input.credit_number)
 
         credit = credit_input.to_orm_model()
+        credit.status = CreditStatus.PENDING
+        credit.locked = False
         return await self.repository.create_with_balance(credit)
 
     async def update_credit(self, credit_input: CreditInput) -> Credit:
