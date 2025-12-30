@@ -31,6 +31,7 @@ type AddressResponse {
 enum AddressSourceTypeEnum {
   CUSTOMER
   FACTORY
+  SHIPPING_CARRIER
 }
 
 enum AddressTypeEnum {
@@ -135,10 +136,9 @@ type CheckResponse {
   entityDate: Date!
   postDate: Date
   commissionMonth: Date
-  commission: Decimal!
+  enteredCommissionAmount: Decimal!
   factoryId: UUID!
   status: Int!
-  createdBy: UUID!
   creationType: Int!
   url: String!
 }
@@ -630,19 +630,123 @@ input InsideSplitRateInput {
   id: UUID = null
 }
 
-type InvoiceResponse {
+type InvoiceBalanceResponse {
   id: UUID!
+  quantity: Decimal!
+  subtotal: Decimal!
+  total: Decimal!
+  commission: Decimal!
+  discount: Decimal!
+  discountRate: Decimal!
+  commissionRate: Decimal!
+  commissionDiscount: Decimal!
+  commissionDiscountRate: Decimal!
+  paidBalance: Decimal!
+}
+
+input InvoiceDetailInput {
+  itemNumber: Int!
+  quantity: Decimal!
+  unitPrice: Decimal!
+  id: UUID = null
+  orderDetailId: UUID = null
+  uomId: UUID = null
+  divisionFactor: Decimal = null
+  productId: UUID = null
+  productNameAdhoc: String = null
+  productDescriptionAdhoc: String = null
+  endUserId: UUID = null
+  leadTime: String = null
+  note: String = null
+  discountRate: Decimal! = "0.0000"
+  commissionRate: Decimal! = "0.0000"
+  commissionDiscountRate: Decimal! = "0.0000"
+}
+
+type InvoiceDetailResponse {
+  id: UUID!
+  invoiceId: UUID!
+  orderDetailId: UUID
+  itemNumber: Int!
+  quantity: Decimal!
+  unitPrice: Decimal!
+  subtotal: Decimal!
+  total: Decimal!
+  totalLineCommission: Decimal!
+  commissionRate: Decimal!
+  commission: Decimal!
+  commissionDiscountRate: Decimal!
+  commissionDiscount: Decimal!
+  discountRate: Decimal!
+  discount: Decimal!
+  divisionFactor: Decimal
+  productId: UUID
+  productNameAdhoc: String
+  productDescriptionAdhoc: String
+  uomId: UUID
+  endUserId: UUID
+  leadTime: String
+  note: String
+  status: InvoiceStatus!
+  invoicedBalance: Decimal!
+  product: ProductLiteResponse
+  uom: ProductUomResponse
+}
+
+input InvoiceInput {
+  invoiceNumber: String!
+  entityDate: Date!
+  orderId: UUID!
+  details: [InvoiceDetailInput!]!
+  id: UUID
+  dueDate: Date
+  published: Boolean!
+  locked: Boolean!
+  creationType: CreationType!
+  status: InvoiceStatus!
+}
+
+type InvoiceLiteResponse {
+  id: UUID!
+  createdAt: datetime!
+  createdById: UUID!
   invoiceNumber: String!
   entityDate: Date!
   dueDate: Date
-  factoryId: UUID
   orderId: UUID!
-  status: Int!
+  status: InvoiceStatus!
   published: Boolean!
   locked: Boolean!
-  creationType: Int!
+  creationType: CreationType!
   balanceId: UUID!
   url: String!
+}
+
+type InvoiceResponse {
+  id: UUID!
+  createdAt: datetime!
+  createdById: UUID!
+  invoiceNumber: String!
+  entityDate: Date!
+  dueDate: Date
+  orderId: UUID!
+  status: InvoiceStatus!
+  published: Boolean!
+  locked: Boolean!
+  creationType: CreationType!
+  balanceId: UUID!
+  url: String!
+  createdBy: UserResponse!
+  order: OrderLiteResponse!
+  balance: InvoiceBalanceResponse!
+  details: [InvoiceDetailResponse!]!
+}
+
+enum InvoiceStatus {
+  OPEN
+  PAID
+  PARTIAL_PAID
+  OVER_PAID
 }
 
 """The `JSON` scalar type represents JSON values as specified by ECMA-404"""
@@ -700,7 +804,7 @@ type JobRelatedEntitiesResponse {
   companies: [CompanyResponse!]!
   quotes: [QuoteResponse!]!
   orders: [OrderResponse!]!
-  invoices: [InvoiceResponse!]!
+  invoices: [InvoiceLiteResponse!]!
   checks: [CheckResponse!]!
   factories: [FactoryResponse!]!
   products: [ProductResponse!]!
@@ -818,6 +922,9 @@ type Mutation {
   o365Connect(code: String!): O365ConnectionResultType!
   o365Disconnect: Boolean!
   o365SendEmail(input: O365SendEmailInput!): O365SendEmailResultType!
+  createInvoice(input: InvoiceInput!): InvoiceResponse!
+  updateInvoice(input: InvoiceInput!): InvoiceResponse!
+  deleteInvoice(id: UUID!): Boolean!
   createJob(input: JobInput!): JobType!
   updateJob(id: UUID!, input: JobInput!): JobType!
   deleteJob(id: UUID!): Boolean!
@@ -932,7 +1039,7 @@ type NoteRelatedEntitiesResponse {
   preOpportunities: [PreOpportunityLiteResponse!]!
   quotes: [QuoteResponse!]!
   orders: [OrderResponse!]!
-  invoices: [InvoiceResponse!]!
+  invoices: [InvoiceLiteResponse!]!
   checks: [CheckResponse!]!
   factories: [FactoryResponse!]!
   products: [ProductResponse!]!
@@ -1110,6 +1217,9 @@ input OrderInput {
   projectedShipDate: Date
   factSoNumber: String
   quoteId: UUID
+  insidePerLineItem: Boolean! = true
+  outsidePerLineItem: Boolean! = true
+  endUserPerLineItem: Boolean! = false
 }
 
 input OrderInsideRepInput {
@@ -1164,6 +1274,9 @@ type OrderLiteResponse {
   factSoNumber: String
   quoteId: UUID
   balanceId: UUID!
+  insidePerLineItem: Boolean
+  outsidePerLineItem: Boolean
+  endUserPerLineItem: Boolean
   url: String!
 }
 
@@ -1190,6 +1303,9 @@ type OrderResponse {
   factSoNumber: String
   quoteId: UUID
   balanceId: UUID!
+  insidePerLineItem: Boolean
+  outsidePerLineItem: Boolean
+  endUserPerLineItem: Boolean
   url: String!
   createdBy: UserResponse!
   soldToCustomer: CustomerLiteResponse!
@@ -1556,7 +1672,8 @@ type Query {
   o365ConnectionStatus: O365ConnectionStatusType!
   o365CalendarEvents(top: Int! = 50, skip: Int! = 0): O365CalendarEventsResultType!
   o365CalendarEventsInRange(startDate: datetime!, endDate: datetime!, top: Int! = 100): O365CalendarEventsResultType!
-  invoiceSearch(searchTerm: String!, limit: Int! = 20): [InvoiceResponse!]!
+  invoice(id: UUID!): InvoiceResponse!
+  invoiceSearch(searchTerm: String!, limit: Int! = 20): [InvoiceLiteResponse!]!
   job(id: UUID!): JobType!
   jobStatuses: [JobStatusType!]!
   jobRelatedEntities(jobId: UUID!): JobRelatedEntitiesResponse!
@@ -1590,7 +1707,7 @@ type Query {
   taskRelatedEntities(taskId: UUID!): TaskRelatedEntitiesResponse!
   tasksByEntity(entityType: EntityType!, entityId: UUID!): [TaskType!]!
   customerFactorySalesRep(id: UUID!): CustomerFactorySalesRepResponse!
-  listCustomerFactorySalesReps(customerId: UUID, factoryId: UUID): [CustomerFactorySalesRepResponse!]!
+  listCustomerFactorySalesReps(customerId: UUID = null, factoryId: UUID = null): [CustomerFactorySalesRepResponse!]!
   customer(id: UUID!): CustomerResponse!
   customerSearch(searchTerm: String!, published: Boolean! = true, limit: Int! = 20): [CustomerResponse!]!
   factory(id: UUID!): FactoryResponse!
@@ -1684,6 +1801,7 @@ type QuoteDetailResponse {
 enum QuoteDetailStatus {
   OPEN
   ORDERED
+  EXPIRED
   LOST
 }
 
@@ -1706,6 +1824,9 @@ input QuoteInput {
   reviseDate: Date
   acceptDate: Date
   blanket: Boolean!
+  insidePerLineItem: Boolean! = true
+  outsidePerLineItem: Boolean! = true
+  endUserPerLineItem: Boolean! = false
 }
 
 input QuoteInsideRepInput {
@@ -1758,6 +1879,9 @@ type QuoteLiteResponse {
   duplicatedFrom: UUID
   versionOf: UUID
   balanceId: UUID!
+  insidePerLineItem: Boolean
+  outsidePerLineItem: Boolean
+  endUserPerLineItem: Boolean
   url: String!
 }
 
@@ -1783,6 +1907,9 @@ type QuoteResponse {
   duplicatedFrom: UUID
   versionOf: UUID
   balanceId: UUID!
+  insidePerLineItem: Boolean
+  outsidePerLineItem: Boolean
+  endUserPerLineItem: Boolean
   url: String!
   createdBy: UserResponse!
   soldToCustomer: CustomerLiteResponse!
@@ -2001,7 +2128,7 @@ type TaskRelatedEntitiesResponse {
   preOpportunities: [PreOpportunityLiteResponse!]!
   quotes: [QuoteResponse!]!
   orders: [OrderResponse!]!
-  invoices: [InvoiceResponse!]!
+  invoices: [InvoiceLiteResponse!]!
   checks: [CheckResponse!]!
   factories: [FactoryResponse!]!
   products: [ProductResponse!]!

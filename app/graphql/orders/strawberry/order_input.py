@@ -35,6 +35,9 @@ class OrderInput(BaseInputGQL[Order]):
     projected_ship_date: date | None = strawberry.UNSET
     fact_so_number: str | None = strawberry.UNSET
     quote_id: UUID | None = strawberry.UNSET
+    inside_per_line_item: bool = True
+    outside_per_line_item: bool = True
+    end_user_per_line_item: bool = False
 
     def to_orm_model(self) -> Order:
         published = self.published if self.published != strawberry.UNSET else False
@@ -48,6 +51,9 @@ class OrderInput(BaseInputGQL[Order]):
         )
 
         return Order(
+            inside_per_line_item=self.inside_per_line_item,
+            outside_per_line_item=self.outside_per_line_item,
+            end_user_per_line_item=self.end_user_per_line_item,
             order_number=self.order_number,
             entity_date=self.entity_date,
             due_date=self.due_date,

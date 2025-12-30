@@ -25,6 +25,9 @@ class OrderFactory:
     ) -> Order:
         today = date.today()
         return Order(
+            inside_per_line_item=quote.inside_per_line_item,
+            outside_per_line_item=quote.outside_per_line_item,
+            end_user_per_line_item=quote.end_user_per_line_item,
             order_number=order_number,
             entity_date=today,
             due_date=due_date or today,

@@ -39,6 +39,9 @@ class OrderLiteResponse(DTOMixin[Order]):
     fact_so_number: str | None
     quote_id: UUID | None
     balance_id: UUID
+    inside_per_line_item: bool | None
+    outside_per_line_item: bool | None
+    end_user_per_line_item: bool | None
 
     @classmethod
     def from_orm_model(cls, model: Order) -> Self:
@@ -66,6 +69,9 @@ class OrderLiteResponse(DTOMixin[Order]):
             fact_so_number=model.fact_so_number,
             quote_id=model.quote_id,
             balance_id=model.balance_id,
+            inside_per_line_item=model.inside_per_line_item,
+            outside_per_line_item=model.outside_per_line_item,
+            end_user_per_line_item=model.end_user_per_line_item,
         )
 
     @strawberry.field

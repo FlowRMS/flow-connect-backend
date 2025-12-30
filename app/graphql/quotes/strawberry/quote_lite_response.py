@@ -37,6 +37,9 @@ class QuoteLiteResponse(DTOMixin[Quote]):
     duplicated_from: UUID | None
     version_of: UUID | None
     balance_id: UUID
+    inside_per_line_item: bool | None
+    outside_per_line_item: bool | None
+    end_user_per_line_item: bool | None
 
     @classmethod
     def from_orm_model(cls, model: Quote) -> Self:
@@ -63,6 +66,9 @@ class QuoteLiteResponse(DTOMixin[Quote]):
             duplicated_from=model.duplicated_from,
             version_of=model.version_of,
             balance_id=model.balance_id,
+            inside_per_line_item=model.inside_per_line_item,
+            outside_per_line_item=model.outside_per_line_item,
+            end_user_per_line_item=model.end_user_per_line_item,
         )
 
     @strawberry.field

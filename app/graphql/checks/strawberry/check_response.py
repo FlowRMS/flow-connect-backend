@@ -19,7 +19,7 @@ class CheckResponse(DTOMixin[Check]):
     entity_date: date
     post_date: date | None
     commission_month: date | None
-    commission: Decimal
+    entered_commission_amount: Decimal
     factory_id: UUID
     status: int
     creation_type: int
@@ -33,7 +33,7 @@ class CheckResponse(DTOMixin[Check]):
             entity_date=model.entity_date,
             post_date=model.post_date,
             commission_month=model.commission_month,
-            commission=model.commission,
+            entered_commission_amount=model.entered_commission_amount,
             factory_id=model.factory_id,
             status=model.status,
             creation_type=model.creation_type,

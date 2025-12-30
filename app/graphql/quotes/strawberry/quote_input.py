@@ -34,6 +34,9 @@ class QuoteInput(BaseInputGQL[Quote]):
     revise_date: date | None = strawberry.UNSET
     accept_date: date | None = strawberry.UNSET
     blanket: bool = strawberry.UNSET
+    inside_per_line_item: bool = True
+    outside_per_line_item: bool = True
+    end_user_per_line_item: bool = False
 
     def to_orm_model(self) -> Quote:
         published = self.published if self.published != strawberry.UNSET else False
@@ -45,6 +48,9 @@ class QuoteInput(BaseInputGQL[Quote]):
         blanket = self.blanket if self.blanket != strawberry.UNSET else False
 
         return Quote(
+            inside_per_line_item=self.inside_per_line_item,
+            outside_per_line_item=self.outside_per_line_item,
+            end_user_per_line_item=self.end_user_per_line_item,
             quote_number=self.quote_number,
             entity_date=self.entity_date,
             sold_to_customer_id=self.sold_to_customer_id,
