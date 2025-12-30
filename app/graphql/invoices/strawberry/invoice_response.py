@@ -15,6 +15,9 @@ from app.graphql.invoices.strawberry.invoice_detail_response import (
     InvoiceDetailResponse,
 )
 from app.graphql.orders.strawberry.order_lite_response import OrderLiteResponse
+from app.graphql.v2.core.factories.strawberry.factory_response import (
+    FactoryLiteResponse,
+)
 from app.graphql.v2.core.users.strawberry.user_response import UserResponse
 
 
@@ -59,6 +62,10 @@ class InvoiceLiteResponse(DTOMixin[Invoice]):
 
 @strawberry.type
 class InvoiceResponse(InvoiceLiteResponse):
+    @strawberry.field
+    def factory(self) -> FactoryLiteResponse:
+        return FactoryLiteResponse.from_orm_model(self._instance.factory)
+
     @strawberry.field
     def created_by(self) -> UserResponse:
         return UserResponse.from_orm_model(self._instance.created_by)

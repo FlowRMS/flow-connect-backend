@@ -46,7 +46,7 @@ class ChecksRepository(BaseRepository[Check]):
                 joinedload(Check.details),
                 joinedload(Check.details).joinedload(CheckDetail.invoice),
                 joinedload(Check.details).joinedload(CheckDetail.credit),
-                joinedload(Check.details).joinedload(CheckDetail.deduction),
+                joinedload(Check.details).joinedload(CheckDetail.adjustment),
                 joinedload(Check.factory),
                 lazyload("*"),
             ],

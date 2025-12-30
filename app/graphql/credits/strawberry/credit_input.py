@@ -39,7 +39,6 @@ class CreditInput(BaseInputGQL[Credit]):
             entity_date=self.entity_date,
             order_id=self.order_id,
             reason=self.optional_field(self.reason),
-            locked=False,
             creation_type=creation_type,
             credit_type=credit_type,
             details=[detail.to_orm_model() for detail in self.details],

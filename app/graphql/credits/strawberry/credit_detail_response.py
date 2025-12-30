@@ -7,10 +7,6 @@ from commons.db.v6.commission import CreditDetail
 from commons.db.v6.commission.credits.enums import CreditStatus
 
 from app.core.db.adapters.dto import DTOMixin
-from app.graphql.v2.core.products.strawberry.product_response import ProductLiteResponse
-from app.graphql.v2.core.products.strawberry.product_uom_response import (
-    ProductUomResponse,
-)
 
 
 @strawberry.type
@@ -44,11 +40,3 @@ class CreditDetailResponse(DTOMixin[CreditDetail]):
             commission=model.commission,
             status=model.status,
         )
-
-    @strawberry.field
-    def product(self) -> ProductLiteResponse | None:
-        return ProductLiteResponse.from_orm_model_optional(self._instance.product)
-
-    @strawberry.field
-    def uom(self) -> ProductUomResponse | None:
-        return ProductUomResponse.from_orm_model_optional(self._instance.uom)

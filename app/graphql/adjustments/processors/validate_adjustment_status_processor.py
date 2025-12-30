@@ -1,5 +1,5 @@
-from commons.db.v6.commission import Check, Deduction
-from commons.db.v6.commission.checks.enums import CheckStatus
+from commons.db.v6.commission import Adjustment, Check
+from commons.db.v6.commission.checks.enums.adjustment_status import AdjustmentStatus
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -7,7 +7,7 @@ from app.core.processors import BaseProcessor, EntityContext, RepositoryEvent
 from app.errors.common_errors import ValidationError
 
 
-class ValidateDeductionStatusProcessor(BaseProcessor[Deduction]):
+class ValidateAdjustmentStatusProcessor(BaseProcessor[Adjustment]):
     def __init__(self, session: AsyncSession) -> None:
         super().__init__()
         self.session = session
@@ -16,19 +16,16 @@ class ValidateDeductionStatusProcessor(BaseProcessor[Deduction]):
     def events(self) -> list[RepositoryEvent]:
         return [RepositoryEvent.PRE_UPDATE, RepositoryEvent.PRE_DELETE]
 
-    async def process(self, context: EntityContext[Deduction]) -> None:
+    async def process(self, context: EntityContext[Adjustment]) -> None:
         original = context.original_entity
         if original is None:
             return
 
-        check = await self._get_check(original.check_id)
-        if check is None:
-            return
+        if original.locked:
+            raise ValidationError("Cannot modify a locked adjustment.")
 
-        if check.status == CheckStatus.POSTED:
-            raise ValidationError(
-                f"Cannot modify deduction: parent check '{check.check_number}' is posted"
-            )
+        if original.status == AdjustmentStatus.POSTED:
+            raise ValidationError("Cannot modify a posted adjustment.")
 
     async def _get_check(self, check_id: object) -> Check | None:
         result = await self.session.execute(select(Check).where(Check.id == check_id))

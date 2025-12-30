@@ -1,9 +1,12 @@
+from typing import Any
 from uuid import UUID
 
-from commons.db.v6.commission import Credit, CreditDetail
+from commons.db.v6 import RbacResourceEnum, User
+from commons.db.v6.commission import Credit, CreditBalance, Order
 from commons.db.v6.crm.links.entity_type import EntityType
 from commons.db.v6.crm.links.link_relation_model import LinkRelation
-from sqlalchemy import func, or_, select
+from sqlalchemy import Select, func, or_, select
+from sqlalchemy.dialects.postgresql import array
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import joinedload, lazyload
 
@@ -20,9 +23,15 @@ from app.graphql.credits.processors.validate_credit_status_processor import (
 from app.graphql.credits.repositories.credit_balance_repository import (
     CreditBalanceRepository,
 )
+from app.graphql.credits.strawberry.credit_landing_page_response import (
+    CreditLandingPageResponse,
+)
 
 
 class CreditsRepository(BaseRepository[Credit]):
+    landing_model = CreditLandingPageResponse
+    rbac_resource: RbacResourceEnum | None = RbacResourceEnum.CREDIT
+
     def __init__(
         self,
         context_wrapper: ContextWrapper,
@@ -44,13 +53,35 @@ class CreditsRepository(BaseRepository[Credit]):
         )
         self.balance_repository = balance_repository
 
+    def paginated_stmt(self) -> Select[Any]:
+        return (
+            select(
+                Credit.id,
+                Credit.created_at,
+                User.full_name.label("created_by"),
+                Credit.credit_number,
+                Credit.status,
+                Credit.credit_type,
+                Credit.entity_date,
+                CreditBalance.total.label("total"),
+                Credit.locked,
+                Credit.reason,
+                Order.id.label("order_id"),
+                Order.order_number,
+                array([Credit.created_by_id]).label("user_ids"),
+            )
+            .select_from(Credit)
+            .options(lazyload("*"))
+            .join(User, User.id == Credit.created_by_id)
+            .join(Order, Order.id == Credit.order_id)
+            .join(CreditBalance, CreditBalance.id == Credit.balance_id)
+        )
+
     async def find_credit_by_id(self, credit_id: UUID) -> Credit:
         credit = await self.get_by_id(
             credit_id,
             options=[
                 joinedload(Credit.details),
-                joinedload(Credit.details).joinedload(CreditDetail.product),
-                joinedload(Credit.details).joinedload(CreditDetail.uom),
                 joinedload(Credit.balance),
                 joinedload(Credit.order),
                 joinedload(Credit.created_by),

@@ -1,9 +1,12 @@
+from typing import Any
 from uuid import UUID
 
-from commons.db.v6.commission import Invoice, InvoiceDetail
+from commons.db.v6 import RbacResourceEnum, User
+from commons.db.v6.commission import Invoice, InvoiceBalance, InvoiceDetail, Order
 from commons.db.v6.crm.links.entity_type import EntityType
 from commons.db.v6.crm.links.link_relation_model import LinkRelation
-from sqlalchemy import func, or_, select
+from sqlalchemy import Select, func, or_, select
+from sqlalchemy.dialects.postgresql import array
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import joinedload, lazyload
 
@@ -20,10 +23,15 @@ from app.graphql.invoices.processors.validate_invoice_status_processor import (
 from app.graphql.invoices.repositories.invoice_balance_repository import (
     InvoiceBalanceRepository,
 )
+from app.graphql.invoices.strawberry.invoice_landing_page_response import (
+    InvoiceLandingPageResponse,
+)
 
 
 class InvoicesRepository(BaseRepository[Invoice]):
     entity_type = EntityType.INVOICE
+    landing_model = InvoiceLandingPageResponse
+    rbac_resource: RbacResourceEnum | None = RbacResourceEnum.INVOICE
 
     def __init__(
         self,
@@ -45,6 +53,30 @@ class InvoicesRepository(BaseRepository[Invoice]):
             ],
         )
         self.balance_repository = balance_repository
+
+    def paginated_stmt(self) -> Select[Any]:
+        return (
+            select(
+                Invoice.id,
+                Invoice.created_at,
+                User.full_name.label("created_by"),
+                Invoice.invoice_number,
+                Invoice.status,
+                Invoice.entity_date,
+                Invoice.due_date,
+                InvoiceBalance.total.label("total"),
+                Invoice.published,
+                Invoice.locked,
+                Order.order_number,
+                Order.id.label("order_id"),
+                array([Invoice.created_by_id]).label("user_ids"),
+            )
+            .select_from(Invoice)
+            .options(lazyload("*"))
+            .join(User, User.id == Invoice.created_by_id)
+            .join(Order, Order.id == Invoice.order_id)
+            .join(InvoiceBalance, InvoiceBalance.id == Invoice.balance_id)
+        )
 
     async def find_invoice_by_id(self, invoice_id: UUID) -> Invoice:
         invoice = await self.get_by_id(

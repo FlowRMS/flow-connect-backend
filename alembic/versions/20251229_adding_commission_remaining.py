@@ -422,11 +422,15 @@ def upgrade() -> None:
         schema="pycommission",
     )
 
-    # Deductions table
+    # Adjustments table
     _ = op.create_table(
-        "deductions",
-        sa.Column("check_id", sa.UUID(), nullable=False),
+        "adjustments",
         sa.Column("factory_id", sa.UUID(), nullable=False),
+        sa.Column("adjustment_number", sa.String(length=255), nullable=False),
+        sa.Column("entity_date", sa.Date(), nullable=False),
+        sa.Column("locked", sa.Boolean(), nullable=False, server_default="false"),
+        sa.Column("status", sa.SmallInteger(), nullable=False, server_default="1"),
+        sa.Column("customer_id", sa.UUID(), nullable=True),
         sa.Column(
             "amount",
             sa.Numeric(precision=18, scale=6),
@@ -438,7 +442,7 @@ def upgrade() -> None:
             "creation_type", sa.SmallInteger(), nullable=False, server_default="1"
         ),
         sa.Column(
-            "allocation_type", sa.SmallInteger(), nullable=False, server_default="1"
+            "allocation_method", sa.SmallInteger(), nullable=False, server_default="1"
         ),
         sa.Column("id", sa.UUID(), nullable=False),
         sa.Column("created_by_id", sa.UUID(), nullable=False),
@@ -449,10 +453,6 @@ def upgrade() -> None:
             nullable=False,
         ),
         sa.ForeignKeyConstraint(
-            ["check_id"],
-            ["pycommission.checks.id"],
-        ),
-        sa.ForeignKeyConstraint(
             ["factory_id"],
             ["pycore.factories.id"],
         ),
@@ -460,14 +460,18 @@ def upgrade() -> None:
             ["created_by_id"],
             ["pyuser.users.id"],
         ),
+        sa.ForeignKeyConstraint(
+            ["customer_id"],
+            ["pycore.customers.id"],
+        ),
         sa.PrimaryKeyConstraint("id"),
         schema="pycommission",
     )
 
-    # Deduction split rates table
+    # Adjustment split rates table
     _ = op.create_table(
-        "deduction_split_rates",
-        sa.Column("deduction_id", sa.UUID(), nullable=False),
+        "adjustment_split_rates",
+        sa.Column("adjustment_id", sa.UUID(), nullable=False),
         sa.Column("user_id", sa.UUID(), nullable=False),
         sa.Column(
             "split_rate",
@@ -484,8 +488,8 @@ def upgrade() -> None:
             nullable=False,
         ),
         sa.ForeignKeyConstraint(
-            ["deduction_id"],
-            ["pycommission.deductions.id"],
+            ["adjustment_id"],
+            ["pycommission.adjustments.id"],
         ),
         sa.ForeignKeyConstraint(
             ["user_id"],
@@ -500,7 +504,7 @@ def upgrade() -> None:
         "check_details",
         sa.Column("check_id", sa.UUID(), nullable=False),
         sa.Column("invoice_id", sa.UUID(), nullable=True),
-        sa.Column("deduction_id", sa.UUID(), nullable=True),
+        sa.Column("adjustment_id", sa.UUID(), nullable=True),
         sa.Column("credit_id", sa.UUID(), nullable=True),
         sa.Column(
             "applied_amount",
@@ -518,8 +522,8 @@ def upgrade() -> None:
             ["pycommission.invoices.id"],
         ),
         sa.ForeignKeyConstraint(
-            ["deduction_id"],
-            ["pycommission.deductions.id"],
+            ["adjustment_id"],
+            ["pycommission.adjustments.id"],
         ),
         sa.ForeignKeyConstraint(
             ["credit_id"],
@@ -608,8 +612,8 @@ def downgrade() -> None:
 
     # Drop tables in reverse order
     op.drop_table("check_details", schema="pycommission")
-    op.drop_table("deduction_split_rates", schema="pycommission")
-    op.drop_table("deductions", schema="pycommission")
+    op.drop_table("adjustment_split_rates", schema="pycommission")
+    op.drop_table("adjustments", schema="pycommission")
     op.drop_table("checks", schema="pycommission")
     op.drop_table("credit_details", schema="pycommission")
     op.drop_table("credits", schema="pycommission")

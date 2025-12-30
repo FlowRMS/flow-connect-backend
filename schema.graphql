@@ -41,6 +41,91 @@ enum AddressTypeEnum {
   OTHER
 }
 
+enum AdjustmentAllocationMethod {
+  REP_SPLIT
+  CUSTOMER
+  CHECK
+}
+
+input AdjustmentInput {
+  adjustmentNumber: String!
+  entityDate: Date!
+  factoryId: UUID!
+  amount: Decimal!
+  allocationMethod: AdjustmentAllocationMethod!
+  splitRates: [AdjustmentSplitRateInput!]!
+  id: UUID
+  customerId: UUID
+  reason: String
+  creationType: CreationType!
+}
+
+type AdjustmentLandingPage implements LandingPageInterfaceBase {
+  id: UUID!
+  createdAt: datetime!
+  createdBy: String!
+  userIds: [UUID!]!
+  adjustmentNumber: String!
+  status: AdjustmentStatus!
+  entityDate: Date!
+  amount: Decimal!
+  locked: Boolean!
+  reason: String
+}
+
+type AdjustmentLiteResponse {
+  id: UUID!
+  adjustmentNumber: String!
+  status: AdjustmentStatus!
+  locked: Boolean!
+  entityDate: Date!
+  createdAt: datetime!
+  createdById: UUID!
+  factoryId: UUID!
+  amount: Decimal!
+  reason: String
+  creationType: CreationType!
+}
+
+type AdjustmentResponse {
+  id: UUID!
+  adjustmentNumber: String!
+  status: AdjustmentStatus!
+  locked: Boolean!
+  entityDate: Date!
+  createdAt: datetime!
+  createdById: UUID!
+  factoryId: UUID!
+  amount: Decimal!
+  reason: String
+  creationType: CreationType!
+  createdBy: UserResponse!
+  customer: CustomerLiteResponse
+  factory: FactoryLiteResponse!
+  splitRates: [AdjustmentSplitRateResponse!]!
+}
+
+input AdjustmentSplitRateInput {
+  userId: UUID!
+  splitRate: Decimal!
+  position: Int!
+  id: UUID = null
+}
+
+type AdjustmentSplitRateResponse {
+  id: UUID!
+  adjustmentId: UUID!
+  userId: UUID!
+  splitRate: Decimal!
+  position: Int!
+  user: UserResponse!
+}
+
+enum AdjustmentStatus {
+  PENDING
+  POSTED
+}
+
 input CampaignCriteriaInput {
   groups: [CriteriaGroupInput!]!
   groupOperator: LogicalOperator! = AND
@@ -134,7 +219,7 @@ input CheckDetailInput {
   appliedAmount: Decimal!
   id: UUID = null
   invoiceId: UUID = null
-  deductionId: UUID = null
+  adjustmentId: UUID = null
   creditId: UUID = null
 }
 
@@ -142,11 +227,11 @@ type CheckDetailResponse {
   id: UUID!
   checkId: UUID!
   invoiceId: UUID
-  deductionId: UUID
+  adjustmentId: UUID
   creditId: UUID
   appliedAmount: Decimal!
   invoice: InvoiceLiteResponse
-  deduction: DeductionLiteResponse
+  adjustment: AdjustmentLiteResponse
   credit: CreditLiteResponse
 }
 
@@ -339,8 +424,6 @@ type CreditDetailResponse {
   commissionRate: Decimal!
   commission: Decimal!
   status: CreditStatus!
-  product: ProductLiteResponse
-  uom: ProductUomResponse
 }
 
 input CreditInput {
@@ -352,6 +435,22 @@ input CreditInput {
   id: UUID
   reason: String
   creationType: CreationType!
+}
+
+type CreditLandingPage implements LandingPageInterfaceBase {
+  id: UUID!
+  createdAt: datetime!
+  createdBy: String!
+  userIds: [UUID!]!
+  creditNumber: String!
+  status: CreditStatus!
+  creditType: CreditType!
+  entityDate: Date!
+  total: Decimal!
+  locked: Boolean!
+  reason: String
+  orderId: String!
+  orderNumber: String!
 }
 
 type CreditLiteResponse {
@@ -503,57 +602,6 @@ type CustomerSplitRateResponse {
 scalar Date
 
 scalar Decimal
-
-input DeductionInput {
-  checkId: UUID!
-  factoryId: UUID!
-  amount: Decimal!
-  splitRates: [DeductionSplitRateInput!]!
-  id: UUID
-  reason: String
-  creationType: CreationType!
-}
-
-type DeductionLiteResponse {
-  id: UUID!
-  createdAt: datetime!
-  createdById: UUID!
-  checkId: UUID!
-  factoryId: UUID!
-  amount: Decimal!
-  reason: String
-  creationType: CreationType!
-}
-
-type DeductionResponse {
-  id: UUID!
-  createdAt: datetime!
-  createdById: UUID!
-  checkId: UUID!
-  factoryId: UUID!
-  amount: Decimal!
-  reason: String
-  creationType: CreationType!
-  createdBy: UserResponse!
-  factory: FactoryLiteResponse!
-  splitRates: [DeductionSplitRateResponse!]!
-}
-
-input DeductionSplitRateInput {
-  userId: UUID!
-  splitRate: Decimal!
-  position: Int!
-  id: UUID = null
-}
-
-type DeductionSplitRateResponse {
-  id: UUID!
-  deductionId: UUID!
-  userId: UUID!
-  splitRate: Decimal!
-  position: Int!
-  user: UserResponse!
-}
 
 input DeleteLinkByEntitiesInput {
   sourceEntityType: EntityType!
@@ -898,13 +946,27 @@ input InvoiceInput {
   invoiceNumber: String!
   entityDate: Date!
   orderId: UUID!
+  factoryId: UUID!
   details: [InvoiceDetailInput!]!
   id: UUID
   dueDate: Date
+  creationType: CreationType!
+}
+
+type InvoiceLandingPage implements LandingPageInterfaceBase {
+  id: UUID!
+  createdAt: datetime!
+  createdBy: String!
+  userIds: [UUID!]!
+  invoiceNumber: String!
+  status: InvoiceStatus!
+  entityDate: Date!
+  dueDate: Date
+  total: Decimal!
   published: Boolean!
   locked: Boolean!
-  creationType: CreationType!
-  status: InvoiceStatus!
+  orderId: String!
+  orderNumber: String!
 }
 
 type InvoiceLiteResponse {
@@ -937,6 +999,7 @@ type InvoiceResponse {
   creationType: CreationType!
   balanceId: UUID!
   url: String!
+  factory: FactoryLiteResponse!
   createdBy: UserResponse!
   order: OrderLiteResponse!
   balance: InvoiceBalanceResponse!
@@ -1041,7 +1104,7 @@ interface LandingPageInterfaceBase {
   userIds: [UUID!]!
 }
 
-union LandingRecord = JobLandingPage | CompanyLandingPage | ContactLandingPage | PreOpportunityLandingPage | NoteLandingPage | TaskLandingPage | CampaignLandingPage | CustomerLandingPage | FactoryLandingPage | ProductLandingPage | QuoteLandingPage | OrderLandingPage | FileLandingPage
+union LandingRecord = JobLandingPage | CompanyLandingPage | ContactLandingPage | PreOpportunityLandingPage | NoteLandingPage | TaskLandingPage | CampaignLandingPage | CustomerLandingPage | FactoryLandingPage | ProductLandingPage | QuoteLandingPage | OrderLandingPage | FileLandingPage | InvoiceLandingPage | CreditLandingPage | AdjustmentLandingPage
 
 enum LandingSourceType {
   JOBS
@@ -1057,6 +1120,9 @@ enum LandingSourceType {
   QUOTES
   ORDERS
   FILES
+  INVOICES
+  CREDITS
+  ADJUSTMENTS
 }
 
 input LinkRelationInput {
@@ -1103,6 +1169,9 @@ type Mutation {
   createAddress(input: AddressInput!): AddressResponse!
   updateAddress(id: UUID!, input: AddressInput!): AddressResponse!
   deleteAddress(id: UUID!): Boolean!
+  createAdjustment(input: AdjustmentInput!): AdjustmentResponse!
+  updateAdjustment(input: AdjustmentInput!): AdjustmentResponse!
+  deleteAdjustment(id: UUID!): Boolean!
   createCampaign(input: CampaignInput!): CampaignResponse!
   updateCampaign(id: UUID!, input: CampaignInput!): CampaignResponse!
   deleteCampaign(id: UUID!): Boolean!
@@ -1123,9 +1192,6 @@ type Mutation {
   createCredit(input: CreditInput!): CreditResponse!
   updateCredit(input: CreditInput!): CreditResponse!
   deleteCredit(id: UUID!): Boolean!
-  createDeduction(input: DeductionInput!): DeductionResponse!
-  updateDeduction(input: DeductionInput!): DeductionResponse!
-  deleteDeduction(id: UUID!): Boolean!
   gmailConnect(code: String!): GmailConnectionResultType!
   gmailDisconnect: Boolean!
   gmailSendEmail(input: GmailSendEmailInput!): GmailSendEmailResultType!
@@ -1863,6 +1929,8 @@ type Query {
   address(id: UUID!): AddressResponse!
   addressesBySource(sourceType: AddressSourceTypeEnum!, sourceId: UUID!): [AddressResponse!]!
   addressesBySourceId(sourceId: UUID!): [AddressResponse!]!
+  adjustment(id: UUID!): AdjustmentResponse!
+  adjustmentSearch(searchTerm: String!, limit: Int! = 20): [AdjustmentLiteResponse!]!
   campaign(id: UUID!): CampaignResponse!
   campaignRecipients(campaignId: UUID!, limit: Int! = 100, offset: Int! = 0): [CampaignRecipientResponse!]!
   estimateRecipients(criteria: CampaignCriteriaInput!, sampleLimit: Int! = 10): EstimateRecipientsResponse!
@@ -1880,9 +1948,6 @@ type Query {
   contactRelatedEntities(contactId: UUID!): ContactRelatedEntitiesResponse!
   credit(id: UUID!): CreditResponse!
   creditSearch(searchTerm: String!, limit: Int! = 20): [CreditLiteResponse!]!
-  deduction(id: UUID!): DeductionResponse!
-  deductionsByCheck(checkId: UUID!): [DeductionResponse!]!
-  deductionSearch(searchTerm: String!, limit: Int! = 20): [DeductionLiteResponse!]!
   gmailAuthUrl(state: String = null): String!
   gmailConnectionStatus: GmailConnectionStatusType!
   o365AuthUrl(state: String = null): String!
@@ -2205,7 +2270,7 @@ enum RbacResourceEnum {
   INVOICE
   CHECK
   CREDIT
-  EXPENSE
+  ADJUSTMENT
   JOB
   PRE_OPPORTUNITY
   TASK
