@@ -138,6 +138,7 @@ async def migrate_customer_factory_sales_reps(
             COALESCE(srsr."position", 0) as position,
             COALESCE(srsr.entry_date, now()) as created_at
         FROM core.sales_rep_selection_split_rates srsr
+        JOIN "user".users u ON u.id = srsr.user_id
         JOIN core.sales_rep_selections srs ON srs.id = srsr.sales_pep_selection_id
     """)
 

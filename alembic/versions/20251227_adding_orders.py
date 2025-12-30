@@ -160,35 +160,6 @@ def upgrade() -> None:
         schema="pycommission",
     )
     _ = op.create_table(
-        "order_inside_reps",
-        sa.Column("order_detail_id", sa.UUID(), nullable=False),
-        sa.Column("user_id", sa.UUID(), nullable=False),
-        sa.Column(
-            "split_rate",
-            sa.Numeric(precision=18, scale=6),
-            nullable=False,
-            server_default="0",
-        ),
-        sa.Column("position", sa.Integer(), nullable=False, server_default="0"),
-        sa.Column("id", sa.UUID(), nullable=False),
-        sa.Column(
-            "created_at",
-            postgresql.TIMESTAMP(timezone=True),
-            server_default=sa.text("now()"),
-            nullable=False,
-        ),
-        sa.ForeignKeyConstraint(
-            ["order_detail_id"],
-            ["pycommission.order_details.id"],
-        ),
-        sa.ForeignKeyConstraint(
-            ["user_id"],
-            ["pyuser.users.id"],
-        ),
-        sa.PrimaryKeyConstraint("id"),
-        schema="pycommission",
-    )
-    _ = op.create_table(
         "order_details",
         sa.Column("order_id", sa.UUID(), nullable=False),
         sa.Column("item_number", sa.Integer(), nullable=False),
@@ -310,6 +281,35 @@ def upgrade() -> None:
         sa.ForeignKeyConstraint(
             ["uom_id"],
             ["pycore.product_uoms.id"],
+        ),
+        sa.PrimaryKeyConstraint("id"),
+        schema="pycommission",
+    )
+    _ = op.create_table(
+        "order_inside_reps",
+        sa.Column("order_detail_id", sa.UUID(), nullable=False),
+        sa.Column("user_id", sa.UUID(), nullable=False),
+        sa.Column(
+            "split_rate",
+            sa.Numeric(precision=18, scale=6),
+            nullable=False,
+            server_default="0",
+        ),
+        sa.Column("position", sa.Integer(), nullable=False, server_default="0"),
+        sa.Column("id", sa.UUID(), nullable=False),
+        sa.Column(
+            "created_at",
+            postgresql.TIMESTAMP(timezone=True),
+            server_default=sa.text("now()"),
+            nullable=False,
+        ),
+        sa.ForeignKeyConstraint(
+            ["order_detail_id"],
+            ["pycommission.order_details.id"],
+        ),
+        sa.ForeignKeyConstraint(
+            ["user_id"],
+            ["pyuser.users.id"],
         ),
         sa.PrimaryKeyConstraint("id"),
         schema="pycommission",
