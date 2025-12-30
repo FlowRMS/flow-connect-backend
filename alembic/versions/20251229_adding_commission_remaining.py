@@ -277,36 +277,6 @@ def upgrade() -> None:
             nullable=False,
             server_default="0",
         ),
-        sa.Column(
-            "discount",
-            sa.Numeric(precision=18, scale=6),
-            nullable=False,
-            server_default="0",
-        ),
-        sa.Column(
-            "discount_rate",
-            sa.Numeric(precision=18, scale=6),
-            nullable=False,
-            server_default="0",
-        ),
-        sa.Column(
-            "commission_rate",
-            sa.Numeric(precision=18, scale=6),
-            nullable=False,
-            server_default="0",
-        ),
-        sa.Column(
-            "commission_discount",
-            sa.Numeric(precision=18, scale=6),
-            nullable=False,
-            server_default="0",
-        ),
-        sa.Column(
-            "commission_discount_rate",
-            sa.Numeric(precision=18, scale=6),
-            nullable=False,
-            server_default="0",
-        ),
         sa.Column("id", sa.UUID(), nullable=False),
         sa.PrimaryKeyConstraint("id"),
         schema="pycommission",
@@ -319,7 +289,6 @@ def upgrade() -> None:
         sa.Column("order_id", sa.UUID(), nullable=False),
         sa.Column("entity_date", sa.Date(), nullable=False),
         sa.Column("reason", sa.String(length=500), nullable=True),
-        sa.Column("published", sa.Boolean(), nullable=False, server_default="true"),
         sa.Column("locked", sa.Boolean(), nullable=False, server_default="false"),
         sa.Column(
             "creation_type", sa.SmallInteger(), nullable=False, server_default="1"
@@ -390,12 +359,6 @@ def upgrade() -> None:
             server_default="0",
         ),
         sa.Column(
-            "total_line_commission",
-            sa.Numeric(precision=18, scale=6),
-            nullable=False,
-            server_default="0",
-        ),
-        sa.Column(
             "commission_rate",
             sa.Numeric(precision=18, scale=6),
             nullable=False,
@@ -407,42 +370,6 @@ def upgrade() -> None:
             nullable=False,
             server_default="0",
         ),
-        sa.Column(
-            "commission_discount_rate",
-            sa.Numeric(precision=18, scale=6),
-            nullable=False,
-            server_default="0",
-        ),
-        sa.Column(
-            "commission_discount",
-            sa.Numeric(precision=18, scale=6),
-            nullable=False,
-            server_default="0",
-        ),
-        sa.Column(
-            "discount_rate",
-            sa.Numeric(precision=18, scale=6),
-            nullable=False,
-            server_default="0",
-        ),
-        sa.Column(
-            "discount",
-            sa.Numeric(precision=18, scale=6),
-            nullable=False,
-            server_default="0",
-        ),
-        sa.Column(
-            "division_factor",
-            sa.Numeric(precision=18, scale=6),
-            nullable=True,
-        ),
-        sa.Column("product_id", sa.UUID(), nullable=True),
-        sa.Column("product_name_adhoc", sa.String(length=255), nullable=True),
-        sa.Column("product_description_adhoc", sa.Text(), nullable=True),
-        sa.Column("uom_id", sa.UUID(), nullable=True),
-        sa.Column("end_user_id", sa.UUID(), nullable=True),
-        sa.Column("lead_time", sa.String(length=255), nullable=True),
-        sa.Column("note", sa.String(length=2000), nullable=True),
         sa.Column("status", sa.SmallInteger(), nullable=False, server_default="1"),
         sa.Column("id", sa.UUID(), nullable=False),
         sa.ForeignKeyConstraint(
@@ -452,18 +379,6 @@ def upgrade() -> None:
         sa.ForeignKeyConstraint(
             ["order_detail_id"],
             ["pycommission.order_details.id"],
-        ),
-        sa.ForeignKeyConstraint(
-            ["product_id"],
-            ["pycore.products.id"],
-        ),
-        sa.ForeignKeyConstraint(
-            ["uom_id"],
-            ["pycore.product_uoms.id"],
-        ),
-        sa.ForeignKeyConstraint(
-            ["end_user_id"],
-            ["pycore.customers.id"],
         ),
         sa.PrimaryKeyConstraint("id"),
         schema="pycommission",

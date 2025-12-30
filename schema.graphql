@@ -253,6 +253,99 @@ enum CreationType {
   DUPLICATION
 }
 
+type CreditBalanceResponse {
+  id: UUID!
+  quantity: Decimal!
+  subtotal: Decimal!
+  total: Decimal!
+  commission: Decimal!
+}
+
+input CreditDetailInput {
+  itemNumber: Int!
+  quantity: Decimal!
+  unitPrice: Decimal!
+  commissionRate: Decimal!
+  orderDetailId: UUID!
+  id: UUID = null
+}
+
+type CreditDetailResponse {
+  id: UUID!
+  creditId: UUID!
+  orderDetailId: UUID
+  itemNumber: Int!
+  quantity: Decimal!
+  unitPrice: Decimal!
+  subtotal: Decimal!
+  total: Decimal!
+  commissionRate: Decimal!
+  commission: Decimal!
+  status: CreditStatus!
+  product: ProductLiteResponse
+  uom: ProductUomResponse
+}
+
+input CreditInput {
+  creditNumber: String!
+  entityDate: Date!
+  orderId: UUID!
+  creditType: CreditType!
+  details: [CreditDetailInput!]!
+  id: UUID
+  reason: String
+  creationType: CreationType!
+}
+
+type CreditLiteResponse {
+  id: UUID!
+  createdAt: datetime!
+  createdById: UUID!
+  creditNumber: String!
+  entityDate: Date!
+  reason: String
+  orderId: UUID!
+  status: CreditStatus!
+  creditType: CreditType!
+  locked: Boolean!
+  creationType: CreationType!
+  balanceId: UUID!
+  url: String!
+}
+
+type CreditResponse {
+  id: UUID!
+  createdAt: datetime!
+  createdById: UUID!
+  creditNumber: String!
+  entityDate: Date!
+  reason: String
+  orderId: UUID!
+  status: CreditStatus!
+  creditType: CreditType!
+  locked: Boolean!
+  creationType: CreationType!
+  balanceId: UUID!
+  url: String!
+  createdBy: UserResponse!
+  order: OrderLiteResponse!
+  balance: CreditBalanceResponse!
+  details: [CreditDetailResponse!]!
+}
+
+enum CreditStatus {
+  PENDING
+  POSTED
+}
+
+enum CreditType {
+  RETURN
+  CANCELLED
+  PRICE_ADJUSTMENT
+  DEFECTIVE
+  OTHER
+}
+
 input CriteriaConditionInput {
   entityType: EntityType!
   field: String!
@@ -916,6 +1009,9 @@ type Mutation {
   createContact(input: ContactInput!): ContactResponse!
   deleteContact(id: UUID!): Boolean!
   updateContact(id: UUID!, input: ContactInput!): ContactResponse!
+  createCredit(input: CreditInput!): CreditResponse!
+  updateCredit(input: CreditInput!): CreditResponse!
+  deleteCredit(id: UUID!): Boolean!
   gmailConnect(code: String!): GmailConnectionResultType!
   gmailDisconnect: Boolean!
   gmailSendEmail(input: GmailSendEmailInput!): GmailSendEmailResultType!
@@ -1666,6 +1762,8 @@ type Query {
   contactsByCompany(companyId: UUID!): [ContactResponse!]!
   contactSearch(searchTerm: String!, limit: Int! = 20): [ContactResponse!]!
   contactRelatedEntities(contactId: UUID!): ContactRelatedEntitiesResponse!
+  credit(id: UUID!): CreditResponse!
+  creditSearch(searchTerm: String!, limit: Int! = 20): [CreditLiteResponse!]!
   gmailAuthUrl(state: String = null): String!
   gmailConnectionStatus: GmailConnectionStatusType!
   o365AuthUrl(state: String = null): String!

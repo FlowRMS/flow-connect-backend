@@ -13,6 +13,11 @@ from migrations.v5_to_v6.migrate_customer_relations import (
     migrate_customer_split_rates,
     migrate_factory_split_rates,
 )
+from migrations.v5_to_v6.migrate_invoices import (
+    migrate_invoice_balances,
+    migrate_invoice_details,
+    migrate_invoices,
+)
 from migrations.v5_to_v6.migrate_orders import (
     migrate_order_balances,
     migrate_order_details,
@@ -1027,6 +1032,9 @@ async def run_migration(config: MigrationConfig) -> dict[str, int]:
         results["order_details"] = await migrate_order_details(source, dest)
         results["order_inside_reps"] = await migrate_order_inside_reps(source, dest)
         results["order_split_rates"] = await migrate_order_split_rates(source, dest)
+        results["invoice_balances"] = await migrate_invoice_balances(source, dest)
+        results["invoices"] = await migrate_invoices(source, dest)
+        results["invoice_details"] = await migrate_invoice_details(source, dest)
 
         logger.info("Migration completed successfully!")
         logger.info(f"Results: {results}")

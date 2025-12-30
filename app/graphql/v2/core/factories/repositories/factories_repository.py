@@ -9,7 +9,7 @@ from commons.db.v6.crm.manufacturer_order_model import ManufacturerOrder
 from sqlalchemy import Select, String, delete, func, literal, select
 from sqlalchemy.dialects.postgresql import ARRAY, array
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.orm import aliased, lazyload
+from sqlalchemy.orm import aliased, joinedload, lazyload
 
 from app.core.context_wrapper import ContextWrapper
 from app.core.processors.executor import ProcessorExecutor
@@ -100,7 +100,15 @@ class FactoriesRepository(BaseRepository[Factory]):
             List of Factory objects matching the search criteria
         """
         stmt = (
-            select(Factory).where(Factory.title.ilike(f"%{search_term}%")).limit(limit)
+            select(Factory)
+            .options(
+                joinedload(Factory.split_rates),
+                joinedload(Factory.split_rates).joinedload(FactorySplitRate.user),
+                joinedload(Factory.created_by),
+                lazyload("*"),
+            )
+            .where(Factory.title.ilike(f"%{search_term}%"))
+            .limit(limit)
         )
 
         if published is not None:
