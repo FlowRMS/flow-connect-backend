@@ -13,9 +13,7 @@ from app.core.db.adapters.dto import DTOMixin
 class InventoryItemResponse(DTOMixin[InventoryItem]):
     id: UUID
     inventory_id: UUID
-    bin_id: UUID | None
-    bin_location: str | None
-    full_location_path: str | None
+    location_id: UUID | None
     quantity: Decimal
     lot_number: str | None
     status: InventoryItemStatus
@@ -26,9 +24,7 @@ class InventoryItemResponse(DTOMixin[InventoryItem]):
         return cls(
             id=model.id,
             inventory_id=model.inventory_id,
-            bin_id=model.bin_id,
-            bin_location=model.bin_location,
-            full_location_path=model.full_location_path,
+            location_id=model.location_id,
             quantity=model.quantity,
             lot_number=model.lot_number,
             status=model.status,

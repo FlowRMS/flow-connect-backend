@@ -14,8 +14,8 @@ from sqlalchemy.dialects import postgresql
 from alembic import op
 
 # revision identifiers, used by Alembic.
-revision: str = "20251226_add_shipment_requests"
-down_revision: str = "20251226_add_inventory"
+revision: str = "b2c3d4e5f607"
+down_revision: str = "a1b2c3d4e5f6"
 branch_labels: str | Sequence[str] | None = None
 depends_on: str | Sequence[str] | None = None
 
@@ -27,7 +27,11 @@ def upgrade() -> None:
         sa.Column("id", postgresql.UUID(as_uuid=True), primary_key=True),
         sa.Column("request_number", sa.String(100), nullable=False, unique=True),
         sa.Column(
-            "warehouse_id", postgresql.UUID(as_uuid=True), nullable=True, index=True
+            "warehouse_id",
+            postgresql.UUID(as_uuid=True),
+            sa.ForeignKey("pywarehouse.warehouses.id"),
+            nullable=True,
+            index=True,
         ),
         sa.Column(
             "customer_id",
@@ -53,7 +57,7 @@ def upgrade() -> None:
         sa.Column(
             "created_by",
             postgresql.UUID(as_uuid=True),
-            sa.ForeignKey("pycore.users.id"),
+            sa.ForeignKey("pyuser.users.id"),
             nullable=True,
         ),
         sa.Column(
@@ -65,7 +69,7 @@ def upgrade() -> None:
             server_default=sa.func.now(),
             onupdate=sa.func.now(),
         ),
-        schema="warehouse",
+        schema="pywarehouse",
     )
 
     # Create shipment_request_items table
@@ -75,7 +79,7 @@ def upgrade() -> None:
         sa.Column(
             "request_id",
             postgresql.UUID(as_uuid=True),
-            sa.ForeignKey("warehouse.shipment_requests.id", ondelete="CASCADE"),
+            sa.ForeignKey("pywarehouse.shipment_requests.id", ondelete="CASCADE"),
             nullable=False,
             index=True,
         ),
@@ -92,16 +96,16 @@ def upgrade() -> None:
         sa.Column(
             "created_by",
             postgresql.UUID(as_uuid=True),
-            sa.ForeignKey("pycore.users.id"),
+            sa.ForeignKey("pyuser.users.id"),
             nullable=True,
         ),
         sa.Column(
             "created_at", sa.DateTime(timezone=False), server_default=sa.func.now()
         ),
-        schema="warehouse",
+        schema="pywarehouse",
     )
 
 
 def downgrade() -> None:
-    op.drop_table("shipment_request_items", schema="warehouse")
-    op.drop_table("shipment_requests", schema="warehouse")
+    op.drop_table("shipment_request_items", schema="pywarehouse")
+    op.drop_table("shipment_requests", schema="pywarehouse")
