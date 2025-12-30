@@ -1,7 +1,7 @@
 from uuid import UUID
 
 from commons.db.v6.core.products.product import Product
-from commons.db.v6.crm.inventory.inventory import Inventory
+from commons.db.v6.warehouse.inventory.inventory import Inventory
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload

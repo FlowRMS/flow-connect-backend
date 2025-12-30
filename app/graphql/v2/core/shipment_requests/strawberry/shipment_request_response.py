@@ -3,7 +3,7 @@ from typing import Self
 from uuid import UUID
 
 import strawberry
-from commons.db.v6.crm.shipment_requests import (
+from commons.db.v6.warehouse.shipment_requests import (
     ShipmentMethod,
     ShipmentPriority,
     ShipmentRequest,

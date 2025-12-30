@@ -2,7 +2,12 @@ from uuid import UUID
 
 import strawberry
 from aioinject import Injected
-from commons.db.v6.crm.shipment_requests import ShipmentRequestStatus
+from commons.db.v6.warehouse.shipment_requests import (
+    ShipmentMethod,
+    ShipmentPriority,
+    ShipmentRequest,
+    ShipmentRequestStatus,
+)
 
 from app.graphql.inject import inject
 from app.graphql.v2.core.shipment_requests.services.shipment_request_service import (

@@ -4,7 +4,7 @@ from typing import Self
 from uuid import UUID
 
 import strawberry
-from commons.db.v6.crm.inventory import InventoryItem, InventoryItemStatus
+from commons.db.v6.warehouse.inventory import InventoryItem, InventoryItemStatus
 
 from app.core.db.adapters.dto import DTOMixin
 

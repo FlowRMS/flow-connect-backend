@@ -4,7 +4,7 @@ from typing import Self
 from uuid import UUID
 
 import strawberry
-from commons.db.v6.crm.shipment_requests.shipment_request_item import (
+from commons.db.v6.warehouse.shipment_requests.shipment_request_item import (
     ShipmentRequestItem,
 )
 

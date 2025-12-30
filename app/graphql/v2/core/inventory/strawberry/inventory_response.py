@@ -4,7 +4,7 @@ from typing import Self
 from uuid import UUID
 
 import strawberry
-from commons.db.v6.crm.inventory import ABCClass, Inventory, OwnershipType
+from commons.db.v6.warehouse.inventory import ABCClass, Inventory, OwnershipType
 
 from app.core.db.adapters.dto import DTOMixin
 from app.graphql.v2.core.inventory.strawberry.inventory_item_response import (

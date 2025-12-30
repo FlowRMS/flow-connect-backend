@@ -2,12 +2,12 @@ import uuid
 from uuid import UUID
 from decimal import Decimal
 
-from commons.db.v6.crm.shipment_requests.shipment_request import (
+from commons.db.v6.warehouse.shipment_requests import (
     ShipmentRequest,
     ShipmentRequestStatus,
     ShipmentPriority,
 )
-from commons.db.v6.crm.shipment_requests.shipment_request_item import (
+from commons.db.v6.warehouse.shipment_requests.shipment_request_item import (
     ShipmentRequestItem,
 )
 from sqlalchemy.ext.asyncio import AsyncSession

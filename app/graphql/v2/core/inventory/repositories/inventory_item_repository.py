@@ -1,6 +1,6 @@
 from uuid import UUID
 
-from commons.db.v6.crm.inventory.inventory_item import InventoryItem
+from commons.db.v6.warehouse.inventory.inventory_item import InventoryItem
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 

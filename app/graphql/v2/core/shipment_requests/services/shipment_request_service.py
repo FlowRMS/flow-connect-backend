@@ -1,6 +1,6 @@
 from uuid import UUID
 
-from commons.db.v6.crm.shipment_requests.shipment_request import (
+from commons.db.v6.warehouse.shipment_requests.shipment_request import (
     ShipmentRequest,
     ShipmentRequestStatus,
 )
