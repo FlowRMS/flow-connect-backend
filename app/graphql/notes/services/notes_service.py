@@ -6,6 +6,7 @@ from commons.auth import AuthInfo
 from commons.db.v6.crm.links.entity_type import EntityType
 from commons.db.v6.crm.notes.note_conversation_model import NoteConversation
 from commons.db.v6.crm.notes.note_model import Note
+from sqlalchemy.orm import joinedload, lazyload
 
 from app.errors.common_errors import NotFoundError
 from app.graphql.notes.repositories.note_conversations_repository import (
@@ -32,10 +33,23 @@ class NotesService:
         self.conversations_repository = conversations_repository
         self.auth_info = auth_info
 
+    async def find_note_by_id(self, note_id: UUID) -> Note:
+        note = await self.repository.get_by_id(
+            note_id,
+            options=[
+                joinedload(Note.created_by),
+                lazyload("*"),
+            ],
+        )
+        if not note:
+            raise NotFoundError(str(note_id))
+        return note
+
     async def create_note(self, note_input: NoteInput) -> Note:
         """Create a new note."""
         note = note_input.to_orm_model()
-        return await self.repository.create(note)
+        created = await self.repository.create(note)
+        return await self.find_note_by_id(created.id)
 
     async def update_note(self, note_id: UUID, note_input: NoteInput) -> Note:
         """Update an existing note."""
@@ -44,7 +58,8 @@ class NotesService:
 
         note = note_input.to_orm_model()
         note.id = note_id
-        return await self.repository.update(note)
+        _ = await self.repository.update(note)
+        return await self.find_note_by_id(note_id)
 
     async def delete_note(self, note_id: UUID | str) -> bool:
         """Delete a note by ID."""

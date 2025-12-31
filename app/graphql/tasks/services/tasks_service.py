@@ -4,6 +4,7 @@ from commons.auth import AuthInfo
 from commons.db.v6.crm.links.entity_type import EntityType
 from commons.db.v6.crm.tasks.task_conversation_model import TaskConversation
 from commons.db.v6.crm.tasks.task_model import Task
+from sqlalchemy.orm import joinedload, lazyload
 
 from app.errors.common_errors import NotFoundError
 from app.graphql.tasks.repositories.task_conversations_repository import (
@@ -28,10 +29,23 @@ class TasksService:
         self.conversations_repository = conversations_repository
         self.auth_info = auth_info
 
+    async def find_task_by_id(self, task_id: UUID) -> Task:
+        task = await self.repository.get_by_id(
+            task_id,
+            options=[
+                joinedload(Task.created_by),
+                lazyload("*"),
+            ],
+        )
+        if not task:
+            raise NotFoundError(str(task_id))
+        return task
+
     async def create_task(self, task_input: TaskInput) -> Task:
         """Create a new task."""
         task = task_input.to_orm_model()
-        return await self.repository.create(task)
+        created = await self.repository.create(task)
+        return await self.find_task_by_id(created.id)
 
     async def update_task(self, task_id: UUID, task_input: TaskInput) -> Task:
         """Update an existing task."""
@@ -40,7 +54,8 @@ class TasksService:
 
         task = task_input.to_orm_model()
         task.id = task_id
-        return await self.repository.update(task)
+        _ = await self.repository.update(task)
+        return await self.find_task_by_id(task_id)
 
     async def delete_task(self, task_id: UUID | str) -> bool:
         """Delete a task by ID."""

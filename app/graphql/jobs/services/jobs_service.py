@@ -5,6 +5,7 @@ from uuid import UUID
 from commons.auth import AuthInfo
 from commons.db.v6.crm.jobs.jobs_model import Job
 from commons.db.v6.crm.links.entity_type import EntityType
+from sqlalchemy.orm import joinedload, lazyload
 
 from app.errors.common_errors import NameAlreadyExistsError, NotFoundError
 from app.graphql.checks.services.check_service import CheckService
@@ -74,6 +75,19 @@ class JobsService:
         self.product_service = product_service
         self.customer_service = customer_service
 
+    async def find_job_by_id(self, job_id: UUID) -> Job:
+        job = await self.repository.get_by_id(
+            job_id,
+            options=[
+                joinedload(Job.created_by),
+                joinedload(Job.status),
+                lazyload("*"),
+            ],
+        )
+        if not job:
+            raise NotFoundError(str(job_id))
+        return job
+
     async def create_job(
         self,
         job_input: JobInput,
@@ -94,7 +108,8 @@ class JobsService:
             raise NameAlreadyExistsError(job_input.job_name)
 
         job = job_input.to_orm_model()
-        return await self.repository.create(job)
+        created = await self.repository.create(job)
+        return await self.find_job_by_id(created.id)
 
     async def delete_job(self, job_id: UUID | str) -> bool:
         """
@@ -234,7 +249,8 @@ class JobsService:
 
         job = job_input.to_orm_model()
         job.id = job_id
-        return await self.repository.update(job)
+        _ = await self.repository.update(job)
+        return await self.find_job_by_id(job_id)
 
     async def get_jobs_by_task(self, task_id: UUID) -> list[Job]:
         """Find all jobs linked to the given task ID."""
