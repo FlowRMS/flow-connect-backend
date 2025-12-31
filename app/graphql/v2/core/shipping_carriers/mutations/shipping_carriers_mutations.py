@@ -91,7 +91,7 @@ class ShippingCarriersMutations:
         Otherwise, a new address will be created.
         """
         # Verify carrier exists
-        await carrier_service.get_by_id(carrier_id)
+        _ = await carrier_service.get_by_id(carrier_id)
 
         # Check for existing address of this type
         existing_addresses = await address_service.list_by_source(
@@ -137,7 +137,7 @@ class ShippingCarriersMutations:
     ) -> bool:
         """Delete a shipping carrier's address."""
         # Verify carrier exists
-        await carrier_service.get_by_id(carrier_id)
+        _ = await carrier_service.get_by_id(carrier_id)
         # Delete the address
         return await address_service.delete(address_id)
 
@@ -153,9 +153,9 @@ class ShippingCarriersMutations:
     ) -> bool:
         """Link a contact to a shipping carrier."""
         # Verify carrier exists
-        await carrier_service.get_by_id(carrier_id)
+        _ = await carrier_service.get_by_id(carrier_id)
         # Create the link
-        await links_service.create_link(
+        _ = await links_service.create_link(
             source_type=EntityType.SHIPPING_CARRIER,
             source_id=carrier_id,
             target_type=EntityType.CONTACT,
@@ -174,7 +174,7 @@ class ShippingCarriersMutations:
     ) -> bool:
         """Unlink a contact from a shipping carrier."""
         # Verify carrier exists
-        await carrier_service.get_by_id(carrier_id)
+        _ = await carrier_service.get_by_id(carrier_id)
         # Delete the link
         return await links_service.delete_link_by_entities(
             source_type=EntityType.SHIPPING_CARRIER,
