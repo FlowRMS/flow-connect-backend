@@ -23,8 +23,7 @@ class ShippingCarriersRepository(BaseRepository[ShippingCarrier]):
         )
 
     async def list_active(self) -> list[ShippingCarrier]:
-        """Get all active shipping carriers."""
-        stmt = select(ShippingCarrier).where(ShippingCarrier.is_active == True)
+        stmt = select(ShippingCarrier).where(ShippingCarrier.is_active.is_(True))
         result = await self.session.execute(stmt)
         return list(result.scalars().all())
 

@@ -15,8 +15,8 @@ from commons.db.v6 import (
 from app.errors.common_errors import NotFoundError
 from app.graphql.v2.core.warehouses.repositories import (
     WarehouseMembersRepository,
+    WarehouseRepository,
     WarehouseSettingsRepository,
-    WarehousesRepository,
     WarehouseStructureRepository,
 )
 from app.graphql.v2.core.warehouses.strawberry.warehouse_input import (
@@ -31,7 +31,7 @@ class WarehouseService:
 
     def __init__(
         self,
-        repository: WarehousesRepository,
+        repository: WarehouseRepository,
         members_repository: WarehouseMembersRepository,
         settings_repository: WarehouseSettingsRepository,
         structure_repository: WarehouseStructureRepository,

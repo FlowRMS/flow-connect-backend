@@ -12,8 +12,8 @@ from app.graphql.v2.core.warehouses.mutations import WarehousesMutations
 from app.graphql.v2.core.warehouses.queries import WarehousesQueries
 from app.graphql.v2.core.warehouses.repositories import (
     WarehouseMembersRepository,
+    WarehouseRepository,
     WarehouseSettingsRepository,
-    WarehousesRepository,
     WarehouseStructureRepository,
 )
 from app.graphql.v2.core.warehouses.services import WarehouseService
@@ -21,7 +21,7 @@ from app.graphql.v2.core.warehouses.strawberry import (
     WarehouseInput,
     WarehouseMemberInput,
     WarehouseMemberResponse,
-    WarehouseMemberRoleGQL,
+    WarehouseMemberRole,
     WarehouseResponse,
     WarehouseSettingsInput,
     WarehouseSettingsResponse,
@@ -38,7 +38,7 @@ __all__ = [
     "WarehouseSettings",
     "WarehouseStructure",
     # Repositories
-    "WarehousesRepository",
+    "WarehouseRepository",
     "WarehouseMembersRepository",
     "WarehouseSettingsRepository",
     "WarehouseStructureRepository",
@@ -47,7 +47,7 @@ __all__ = [
     # GraphQL Types
     "WarehouseResponse",
     "WarehouseMemberResponse",
-    "WarehouseMemberRoleGQL",
+    "WarehouseMemberRole",
     "WarehouseSettingsResponse",
     "WarehouseStructureResponse",
     "WarehouseInput",

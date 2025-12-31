@@ -394,6 +394,26 @@ type ContactResponse {
   notes: String
 }
 
+input ContainerTypeInput {
+  name: String!
+  length: Decimal!
+  width: Decimal!
+  height: Decimal!
+  weight: Decimal!
+  position: Int = null
+}
+
+type ContainerTypeResponse {
+  id: UUID!
+  name: String!
+  length: Decimal!
+  width: Decimal!
+  height: Decimal!
+  weight: Decimal!
+  position: Int!
+  createdAt: datetime!
+}
+
 input CreateHighlightVersionInput {
   specSheetId: UUID!
   name: String!
@@ -1341,6 +1361,10 @@ type Mutation {
   addTaskConversation(input: TaskConversationInput!): TaskConversationType!
   updateTaskConversation(id: UUID!, input: TaskConversationInput!): TaskConversationType!
   deleteTaskConversation(id: UUID!): Boolean!
+  createContainerType(input: ContainerTypeInput!): ContainerTypeResponse!
+  updateContainerType(id: UUID!, input: ContainerTypeInput!): ContainerTypeResponse!
+  deleteContainerType(id: UUID!): Boolean!
+  reorderContainerTypes(orderedIds: [UUID!]!): [ContainerTypeResponse!]!
   createCustomerFactorySalesRep(input: CustomerFactorySalesRepInput!): CustomerFactorySalesRepResponse!
   updateCustomerFactorySalesRep(id: UUID!, input: CustomerFactorySalesRepInput!): CustomerFactorySalesRepResponse!
   deleteCustomerFactorySalesRep(id: UUID!): Boolean!
@@ -1366,9 +1390,20 @@ type Mutation {
   createProduct(input: ProductInput!): ProductResponse!
   updateProduct(id: UUID!, input: ProductInput!): ProductResponse!
   deleteProduct(id: UUID!): Boolean!
+  createShippingCarrier(input: ShippingCarrierInput!): ShippingCarrierResponse!
+  updateShippingCarrier(id: UUID!, input: ShippingCarrierInput!): ShippingCarrierResponse!
+  deleteShippingCarrier(id: UUID!): Boolean!
   createUser(input: UserInput!): UserResponse!
   updateUser(id: UUID!, input: UserInput!): UserResponse!
   deleteUser(id: UUID!): Boolean!
+  createWarehouse(input: WarehouseInput!): WarehouseResponse!
+  updateWarehouse(id: UUID!, input: WarehouseInput!): WarehouseResponse!
+  deleteWarehouse(id: UUID!): Boolean!
+  assignWorkerToWarehouse(warehouseId: UUID!, userId: UUID!, role: Int!): WarehouseMemberResponse!
+  updateWorkerRole(warehouseId: UUID!, userId: UUID!, role: Int!): WarehouseMemberResponse!
+  removeWorkerFromWarehouse(warehouseId: UUID!, userId: UUID!): Boolean!
+  updateWarehouseSettings(input: WarehouseSettingsInput!): WarehouseSettingsResponse!
+  updateWarehouseStructure(warehouseId: UUID!, levels: [WarehouseStructureLevelInput!]!): [WarehouseStructureResponse!]!
   uploadFile(input: FileUploadInput!): FileResponse!
   uploadFiles(input: MultiFileUploadInput!): [FileResponse!]!
   archiveFile(fileId: UUID!): Boolean!
@@ -2098,6 +2133,8 @@ type Query {
   taskSearch(searchTerm: String!, limit: Int! = 20): [TaskType!]!
   taskRelatedEntities(taskId: UUID!): TaskRelatedEntitiesResponse!
   tasksByEntity(entityType: EntityType!, entityId: UUID!): [TaskType!]!
+  containerTypes: [ContainerTypeResponse!]!
+  containerType(id: UUID!): ContainerTypeResponse!
   customerFactorySalesRep(id: UUID!): CustomerFactorySalesRepResponse!
   listCustomerFactorySalesReps(customerId: UUID = null, factoryId: UUID = null): [CustomerFactorySalesRepResponse!]!
   customer(id: UUID!): CustomerResponse!
@@ -2114,9 +2151,17 @@ type Query {
   product(id: UUID!): ProductResponse!
   productSearch(searchTerm: String!, productCategoryIds: [UUID!] = null, factoryId: UUID, limit: Int! = 20): [ProductLiteResponse!]!
   productCategorySearch(searchTerm: String!, factoryId: UUID, limit: Int! = 20): [ProductCategoryLiteResponse!]!
+  shippingCarriers(activeOnly: Boolean! = false): [ShippingCarrierResponse!]!
+  shippingCarrier(id: UUID!): ShippingCarrierResponse!
+  shippingCarrierSearch(searchTerm: String!, limit: Int! = 20): [ShippingCarrierResponse!]!
   user(id: UUID!): UserResponse!
   userSearch(searchTerm: String!, isInside: Boolean = null, isOutside: Boolean = null, enabled: Boolean = true, limit: Int! = 20): [UserResponse!]!
   users(limit: Int = null, offset: Int! = 0): [UserResponse!]!
+  warehouses: [WarehouseResponse!]!
+  warehouse(id: UUID!): WarehouseResponse!
+  warehouseMembers(warehouseId: UUID!): [WarehouseMemberResponse!]!
+  warehouseSettings(warehouseId: UUID!): WarehouseSettingsResponse
+  warehouseStructure(warehouseId: UUID!): [WarehouseStructureResponse!]!
   file(fileId: UUID!): FileResponse
   searchFiles(searchTerm: String!, limit: Int! = 20): [FileResponse!]!
   filesByFolder(folderId: UUID!): [FileResponse!]!
@@ -2437,6 +2482,50 @@ type SendTestEmailResponse {
   error: String
 }
 
+input ShippingCarrierInput {
+  name: String!
+  code: String = null
+  accountNumber: String = null
+  isActive: Boolean! = true
+  paymentTerms: String = null
+  apiKey: String = null
+  apiEndpoint: String = null
+  trackingUrlTemplate: String = null
+  serviceTypes: JSON = null
+  defaultServiceType: String = null
+  maxWeight: Decimal = null
+  maxDimensions: String = null
+  residentialSurcharge: Decimal = null
+  fuelSurchargePercent: Decimal = null
+  pickupSchedule: String = null
+  pickupLocation: String = null
+  remarks: String = null
+  internalNotes: String = null
+}
+
+type ShippingCarrierResponse {
+  id: UUID!
+  name: String!
+  code: String
+  accountNumber: String
+  isActive: Boolean
+  createdAt: datetime!
+  paymentTerms: String
+  apiKey: String
+  apiEndpoint: String
+  trackingUrlTemplate: String
+  serviceTypes: JSON
+  defaultServiceType: String
+  maxWeight: Decimal
+  maxDimensions: String
+  residentialSurcharge: Decimal
+  fuelSurchargePercent: Decimal
+  pickupSchedule: String
+  pickupLocation: String
+  remarks: String
+  internalNotes: String
+}
+
 enum SourceType {
   CONTACT
   COMPANY
@@ -2621,6 +2710,80 @@ type UserResponse {
   authProviderId: String!
   inside: Boolean
   outside: Boolean
+}
+
+input WarehouseInput {
+  name: String!
+  status: String! = "active"
+  latitude: Decimal = null
+  longitude: Decimal = null
+  description: String = null
+  isActive: Boolean! = true
+}
+
+type WarehouseMemberResponse {
+  id: UUID!
+  warehouseId: UUID!
+  userId: UUID!
+  role: WarehouseMemberRole!
+  createdAt: datetime!
+}
+
+enum WarehouseMemberRole {
+  WORKER
+  MANAGER
+}
+
+type WarehouseResponse {
+  id: UUID!
+  name: String!
+  status: String!
+  latitude: Decimal
+  longitude: Decimal
+  description: String
+  isActive: Boolean
+  createdAt: datetime!
+  members: [WarehouseMemberResponse!]!
+  settings: WarehouseSettingsResponse
+  structure: [WarehouseStructureResponse!]!
+}
+
+input WarehouseSettingsInput {
+  warehouseId: UUID!
+  autoGenerateCodes: Boolean! = false
+  requireLocation: Boolean! = true
+  showInPickLists: Boolean! = true
+  generateQrCodes: Boolean! = false
+}
+
+type WarehouseSettingsResponse {
+  id: UUID!
+  warehouseId: UUID!
+  autoGenerateCodes: Boolean!
+  requireLocation: Boolean!
+  showInPickLists: Boolean!
+  generateQrCodes: Boolean!
+}
+
+enum WarehouseStructureCode {
+  SECTION
+  AISLE
+  SHELF
+  BAY
+  ROW
+  BIN
+}
+
+input WarehouseStructureLevelInput {
+  code: WarehouseStructureCode!
+  levelOrder: Int!
+}
+
+type WarehouseStructureResponse {
+  id: UUID!
+  warehouseId: UUID!
+  code: WarehouseStructureCode!
+  levelOrder: Int!
 }
 
 scalar _Any

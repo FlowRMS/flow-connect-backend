@@ -1,4 +1,3 @@
-import os
 from logging.config import fileConfig
 
 import sqlalchemy as sa
@@ -13,16 +12,6 @@ config = context.config
 
 if config.config_file_name is not None:
     fileConfig(config.config_file_name)
-
-# Read database URL from environment variable if set
-# This allows developers to use their own database without modifying alembic.ini
-# Usage: set PG_URL environment variable (replace asyncpg with psycopg2 for sync)
-pg_url = os.environ.get("PG_URL")
-if pg_url:
-    # Convert asyncpg URL to sync for alembic
-    sync_url = pg_url.replace("postgresql+asyncpg://", "postgresql://")
-    sync_url = sync_url.replace("ssl=require", "sslmode=require")
-    config.set_main_option("sqlalchemy.url", sync_url)
 
 target_metadata = BaseModel.metadata
 

@@ -104,7 +104,7 @@ input WarehouseInput {
 
 input WarehouseMemberInput {
   userId: UUID!
-  role: WarehouseMemberRoleGQL!
+  role: WarehouseMemberRole!
 }
 
 input WarehouseSettingsInput {
@@ -142,7 +142,7 @@ type WarehouseResponse {
 
 ```python
 @strawberry.enum
-class WarehouseMemberRoleGQL(IntEnum):
+class WarehouseMemberRole(IntEnum):
     ADMIN = 1
     MANAGER = 2
     WORKER = 3
@@ -167,7 +167,7 @@ type Mutation {
 
   addWarehouseMember(warehouseId: UUID!, input: WarehouseMemberInput!): WarehouseMemberResponse!
   removeWarehouseMember(warehouseId: UUID!, userId: UUID!): Boolean!
-  updateWarehouseMemberRole(warehouseId: UUID!, userId: UUID!, role: WarehouseMemberRoleGQL!): WarehouseMemberResponse!
+  updateWarehouseMemberRole(warehouseId: UUID!, userId: UUID!, role: WarehouseMemberRole!): WarehouseMemberResponse!
 
   updateWarehouseSettings(warehouseId: UUID!, input: WarehouseSettingsInput!): WarehouseSettingsResponse!
   updateWarehouseStructure(warehouseId: UUID!, levels: [WarehouseStructureLevelInput!]!): [WarehouseStructureResponse!]!

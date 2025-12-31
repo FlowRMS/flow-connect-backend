@@ -15,7 +15,7 @@ from alembic import op
 
 # revision identifiers, used by Alembic.
 revision: str = "warehouse_settings_001"
-down_revision: str | None = "62e4315e9e63"
+down_revision: str | None = "a1b2c3d4e5f6"
 branch_labels: str | Sequence[str] | None = None
 depends_on: str | Sequence[str] | None = None
 
@@ -25,7 +25,7 @@ def upgrade() -> None:
     op.execute("CREATE SCHEMA IF NOT EXISTS pywarehouse")
 
     # Create container_types table in pywarehouse schema
-    op.create_table(
+    _ = op.create_table(
         "container_types",
         sa.Column("id", postgresql.UUID(as_uuid=True), nullable=False),
         sa.Column("name", sa.String(255), nullable=False),
@@ -45,7 +45,7 @@ def upgrade() -> None:
     )
 
     # Create shipping_carriers table in pywarehouse schema
-    op.create_table(
+    _ = op.create_table(
         "shipping_carriers",
         sa.Column("id", postgresql.UUID(as_uuid=True), nullable=False),
         sa.Column("name", sa.String(255), nullable=False),
@@ -77,7 +77,7 @@ def upgrade() -> None:
     )
 
     # Create warehouses table in pywarehouse schema
-    op.create_table(
+    _ = op.create_table(
         "warehouses",
         sa.Column("id", postgresql.UUID(as_uuid=True), nullable=False),
         sa.Column("name", sa.String(255), nullable=False),
@@ -97,12 +97,12 @@ def upgrade() -> None:
     )
 
     # Create warehouse_members table in pywarehouse schema
-    op.create_table(
+    _ = op.create_table(
         "warehouse_members",
         sa.Column("id", postgresql.UUID(as_uuid=True), nullable=False),
         sa.Column("warehouse_id", postgresql.UUID(as_uuid=True), nullable=False),
         sa.Column("user_id", postgresql.UUID(as_uuid=True), nullable=False),
-        sa.Column("role", sa.Integer(), nullable=False),
+        sa.Column("role", sa.SmallInteger(), nullable=False),
         sa.Column(
             "created_at",
             postgresql.TIMESTAMP(timezone=True),
@@ -123,8 +123,7 @@ def upgrade() -> None:
         schema="pywarehouse",
     )
 
-    # Create warehouse_settings table in pywarehouse schema
-    op.create_table(
+    _ = op.create_table(
         "warehouse_settings",
         sa.Column("id", postgresql.UUID(as_uuid=True), nullable=False),
         sa.Column("warehouse_id", postgresql.UUID(as_uuid=True), nullable=False),
@@ -142,8 +141,7 @@ def upgrade() -> None:
         schema="pywarehouse",
     )
 
-    # Create warehouse_structure table in pywarehouse schema
-    op.create_table(
+    _ = op.create_table(
         "warehouse_structure",
         sa.Column("id", postgresql.UUID(as_uuid=True), nullable=False),
         sa.Column("warehouse_id", postgresql.UUID(as_uuid=True), nullable=False),

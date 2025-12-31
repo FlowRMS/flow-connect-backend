@@ -1,7 +1,6 @@
 """Strawberry input types for warehouses."""
 
 from decimal import Decimal
-from enum import IntEnum
 from uuid import UUID
 
 import strawberry
@@ -15,26 +14,6 @@ from commons.db.v6 import (
 )
 
 from app.core.strawberry.inputs import BaseInputGQL
-
-
-@strawberry.enum
-class WarehouseMemberRoleGQL(IntEnum):
-    """GraphQL enum for warehouse member roles."""
-
-    WORKER = 1
-    MANAGER = 2
-
-
-@strawberry.enum
-class WarehouseStructureCodeGQL(IntEnum):
-    """GraphQL enum for warehouse structure codes."""
-
-    SECTION = 1
-    AISLE = 2
-    SHELF = 3
-    BAY = 4
-    ROW = 5
-    BIN = 6
 
 
 @strawberry.input
@@ -69,7 +48,7 @@ class WarehouseMemberInput(BaseInputGQL[WarehouseMember]):
 
     warehouse_id: UUID
     user_id: UUID
-    role: WarehouseMemberRoleGQL
+    role: WarehouseMemberRole
 
     def to_orm_model(self) -> WarehouseMember:
         return WarehouseMember(
@@ -103,7 +82,7 @@ class WarehouseSettingsInput(BaseInputGQL[WarehouseSettings]):
 class WarehouseStructureLevelInput:
     """Input type for a single location level configuration."""
 
-    code: WarehouseStructureCodeGQL
+    code: WarehouseStructureCode
     level_order: int
 
 
@@ -112,7 +91,7 @@ class WarehouseStructureInput(BaseInputGQL[WarehouseStructure]):
     """Input type for warehouse structure (location level configuration)."""
 
     warehouse_id: UUID
-    code: WarehouseStructureCodeGQL
+    code: WarehouseStructureCode
     level_order: int
 
     def to_orm_model(self) -> WarehouseStructure:

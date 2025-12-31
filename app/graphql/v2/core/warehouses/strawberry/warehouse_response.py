@@ -15,8 +15,8 @@ from commons.db.v6 import (
 
 from app.core.db.adapters.dto import DTOMixin
 from app.graphql.v2.core.warehouses.strawberry.warehouse_input import (
-    WarehouseMemberRoleGQL,
-    WarehouseStructureCodeGQL,
+    WarehouseMemberRole,
+    WarehouseStructureCode,
 )
 
 
@@ -27,7 +27,7 @@ class WarehouseStructureResponse(DTOMixin[WarehouseStructure]):
     _instance: strawberry.Private[WarehouseStructure]
     id: UUID
     warehouse_id: UUID
-    code: WarehouseStructureCodeGQL
+    code: WarehouseStructureCode
     level_order: int
 
     @classmethod
@@ -36,7 +36,7 @@ class WarehouseStructureResponse(DTOMixin[WarehouseStructure]):
             _instance=model,
             id=model.id,
             warehouse_id=model.warehouse_id,
-            code=WarehouseStructureCodeGQL(model.code.value),
+            code=WarehouseStructureCode(model.code.value),
             level_order=model.level_order,
         )
 
@@ -74,7 +74,7 @@ class WarehouseMemberResponse(DTOMixin[WarehouseMember]):
     id: UUID
     warehouse_id: UUID
     user_id: UUID
-    role: WarehouseMemberRoleGQL
+    role: WarehouseMemberRole
     created_at: datetime
 
     @classmethod
@@ -84,7 +84,7 @@ class WarehouseMemberResponse(DTOMixin[WarehouseMember]):
             id=model.id,
             warehouse_id=model.warehouse_id,
             user_id=model.user_id,
-            role=WarehouseMemberRoleGQL(model.role.value),
+            role=WarehouseMemberRole(model.role.value),
             created_at=model.created_at,
         )
 

@@ -3,7 +3,7 @@
 from app.graphql.v2.core.warehouses.strawberry.warehouse_input import (
     WarehouseInput,
     WarehouseMemberInput,
-    WarehouseMemberRoleGQL,
+    WarehouseMemberRole,
     WarehouseSettingsInput,
     WarehouseStructureInput,
     WarehouseStructureLevelInput,
@@ -18,7 +18,7 @@ from app.graphql.v2.core.warehouses.strawberry.warehouse_response import (
 __all__ = [
     "WarehouseResponse",
     "WarehouseMemberResponse",
-    "WarehouseMemberRoleGQL",
+    "WarehouseMemberRole",
     "WarehouseSettingsResponse",
     "WarehouseStructureResponse",
     "WarehouseInput",
