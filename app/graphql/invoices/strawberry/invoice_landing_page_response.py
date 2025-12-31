@@ -18,3 +18,4 @@ class InvoiceLandingPageResponse(LandingPageInterfaceBase):
     locked: bool
     order_id: str
     order_number: str
+    factory_name: str

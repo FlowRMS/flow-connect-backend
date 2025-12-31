@@ -9,6 +9,8 @@ from commons.db.v6.commission.orders import (
     OrderInsideRep,
     OrderSplitRate,
 )
+from commons.db.v6.core import Customer, Factory
+from commons.db.v6.crm.jobs.jobs_model import Job
 from commons.db.v6.crm.links.entity_type import EntityType
 from commons.db.v6.crm.links.link_relation_model import LinkRelation
 from sqlalchemy import Select, func, literal, or_, select
@@ -111,12 +113,18 @@ class OrdersRepository(BaseRepository[Order]):
                 Order.due_date,
                 OrderBalance.total.label("total"),
                 Order.published,
+                Factory.title.label("factory_name"),
+                Job.job_name.label("job_name"),
+                Customer.company_name.label("sold_to_customer_name"),
                 user_ids_expr,
             )
             .select_from(Order)
             .options(lazyload("*"))
             .join(User, User.id == Order.created_by_id)
             .join(OrderBalance, OrderBalance.id == Order.balance_id)
+            .join(Factory, Factory.id == Order.factory_id)
+            .join(Customer, Customer.id == Order.sold_to_customer_id)
+            .outerjoin(Job, Job.id == Order.job_id)
             .outerjoin(
                 inside_rep_user_ids_subq,
                 inside_rep_user_ids_subq.c.order_id == Order.id,

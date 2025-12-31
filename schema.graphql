@@ -1049,6 +1049,7 @@ type InvoiceLandingPage implements LandingPageInterfaceBase {
   locked: Boolean!
   orderId: String!
   orderNumber: String!
+  factoryName: String!
 }
 
 type InvoiceLiteResponse {
@@ -1625,6 +1626,9 @@ type OrderLandingPage implements LandingPageInterfaceBase {
   dueDate: Date!
   total: Decimal!
   published: Boolean!
+  factoryName: String!
+  jobName: String
+  soldToCustomerName: String!
 }
 
 type OrderLiteResponse {

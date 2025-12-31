@@ -2,8 +2,15 @@ from typing import Any
 from uuid import UUID
 
 from commons.db.v6 import RbacResourceEnum, User
-from commons.db.v6.commission import Invoice, InvoiceBalance, InvoiceDetail, Order
+from commons.db.v6.commission import (
+    Invoice,
+    InvoiceBalance,
+    InvoiceDetail,
+    InvoiceSplitRate,
+    Order,
+)
 from commons.db.v6.commission.invoices.enums import InvoiceStatus
+from commons.db.v6.core import Factory
 from commons.db.v6.crm.links.entity_type import EntityType
 from commons.db.v6.crm.links.link_relation_model import LinkRelation
 from sqlalchemy import Select, func, or_, select
@@ -75,6 +82,7 @@ class InvoicesRepository(BaseRepository[Invoice]):
                 Invoice.locked,
                 Order.order_number,
                 Order.id.label("order_id"),
+                Factory.title.label("factory_name"),
                 array([Invoice.created_by_id]).label("user_ids"),
             )
             .select_from(Invoice)
@@ -82,6 +90,7 @@ class InvoicesRepository(BaseRepository[Invoice]):
             .join(User, User.id == Invoice.created_by_id)
             .join(Order, Order.id == Invoice.order_id)
             .join(InvoiceBalance, InvoiceBalance.id == Invoice.balance_id)
+            .join(Factory, Factory.id == Invoice.factory_id)
         )
 
     async def find_invoice_by_id(self, invoice_id: UUID) -> Invoice:
@@ -94,6 +103,9 @@ class InvoicesRepository(BaseRepository[Invoice]):
                 joinedload(Invoice.details).joinedload(
                     InvoiceDetail.outside_split_rates
                 ),
+                joinedload(Invoice.details)
+                .joinedload(InvoiceDetail.outside_split_rates)
+                .joinedload(InvoiceSplitRate.user),
                 joinedload(Invoice.balance),
                 joinedload(Invoice.order),
                 joinedload(Invoice.created_by),
