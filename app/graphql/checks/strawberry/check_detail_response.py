@@ -7,10 +7,10 @@ from commons.db.v6.commission import CheckDetail
 
 from app.core.db.adapters.dto import DTOMixin
 from app.graphql.adjustments.strawberry.adjustment_response import (
-    AdjustmentLiteResponse,
+    AdjustmentCheckResponse,
 )
-from app.graphql.credits.strawberry.credit_response import CreditLiteResponse
-from app.graphql.invoices.strawberry.invoice_response import InvoiceLiteResponse
+from app.graphql.credits.strawberry.credit_response import CreditCheckResponse
+from app.graphql.invoices.strawberry.invoice_response import InvoiceCheckResponse
 
 
 @strawberry.type
@@ -36,13 +36,13 @@ class CheckDetailResponse(DTOMixin[CheckDetail]):
         )
 
     @strawberry.field
-    def invoice(self) -> InvoiceLiteResponse | None:
-        return InvoiceLiteResponse.from_orm_model_optional(self._instance.invoice)
+    def invoice(self) -> InvoiceCheckResponse | None:
+        return InvoiceCheckResponse.from_orm_model_optional(self._instance.invoice)
 
     @strawberry.field
-    def adjustment(self) -> AdjustmentLiteResponse | None:
-        return AdjustmentLiteResponse.from_orm_model_optional(self._instance.adjustment)
+    def adjustment(self) -> AdjustmentCheckResponse | None:
+        return AdjustmentCheckResponse.from_orm_model_optional(self._instance.adjustment)
 
     @strawberry.field
-    def credit(self) -> CreditLiteResponse | None:
-        return CreditLiteResponse.from_orm_model_optional(self._instance.credit)
+    def credit(self) -> CreditCheckResponse | None:
+        return CreditCheckResponse.from_orm_model_optional(self._instance.credit)

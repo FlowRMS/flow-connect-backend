@@ -47,6 +47,22 @@ enum AdjustmentAllocationMethod {
   CHECK
 }
 
+type AdjustmentCheckResponse {
+  id: UUID!
+  adjustmentNumber: String!
+  status: AdjustmentStatus!
+  locked: Boolean!
+  entityDate: Date!
+  createdAt: datetime!
+  createdById: UUID!
+  factoryId: UUID!
+  amount: Decimal!
+  reason: String
+  creationType: CreationType!
+  customer: CustomerLiteResponse
+  factory: FactoryLiteResponse!
+}
+
 input AdjustmentInput {
   adjustmentNumber: String!
   entityDate: Date!
@@ -99,9 +115,9 @@ type AdjustmentResponse {
   amount: Decimal!
   reason: String
   creationType: CreationType!
-  createdBy: UserResponse!
   customer: CustomerLiteResponse
   factory: FactoryLiteResponse!
+  createdBy: UserResponse!
   splitRates: [AdjustmentSplitRateResponse!]!
 }
 
@@ -230,9 +246,9 @@ type CheckDetailResponse {
   adjustmentId: UUID
   creditId: UUID
   appliedAmount: Decimal!
-  invoice: InvoiceLiteResponse
-  adjustment: AdjustmentLiteResponse
-  credit: CreditLiteResponse
+  invoice: InvoiceCheckResponse
+  adjustment: AdjustmentCheckResponse
+  credit: CreditCheckResponse
 }
 
 input CheckInput {
@@ -413,6 +429,23 @@ type CreditBalanceResponse {
   subtotal: Decimal!
   total: Decimal!
   commission: Decimal!
+}
+
+type CreditCheckResponse {
+  id: UUID!
+  createdAt: datetime!
+  createdById: UUID!
+  creditNumber: String!
+  entityDate: Date!
+  reason: String
+  orderId: UUID!
+  status: CreditStatus!
+  creditType: CreditType!
+  locked: Boolean!
+  creationType: CreationType!
+  balanceId: UUID!
+  url: String!
+  order: OrderLiteResponse!
 }
 
 input CreditDetailInput {
@@ -923,6 +956,23 @@ type InvoiceBalanceResponse {
   paidBalance: Decimal!
 }
 
+type InvoiceCheckResponse {
+  id: UUID!
+  createdAt: datetime!
+  createdById: UUID!
+  invoiceNumber: String!
+  entityDate: Date!
+  dueDate: Date
+  orderId: UUID!
+  status: InvoiceStatus!
+  published: Boolean!
+  locked: Boolean!
+  creationType: CreationType!
+  balanceId: UUID!
+  url: String!
+  order: OrderLiteResponse!
+}
+
 input InvoiceDetailInput {
   itemNumber: Int!
   quantity: Decimal!
@@ -1031,9 +1081,9 @@ type InvoiceResponse {
   creationType: CreationType!
   balanceId: UUID!
   url: String!
+  order: OrderLiteResponse!
   factory: FactoryLiteResponse!
   createdBy: UserResponse!
-  order: OrderLiteResponse!
   balance: InvoiceBalanceResponse!
   details: [InvoiceDetailResponse!]!
 }

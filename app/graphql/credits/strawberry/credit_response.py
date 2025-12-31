@@ -58,6 +58,13 @@ class CreditLiteResponse(DTOMixin[Credit]):
 
 
 @strawberry.type
+class CreditCheckResponse(CreditLiteResponse):
+    @strawberry.field
+    def order(self) -> OrderLiteResponse:
+        return OrderLiteResponse.from_orm_model(self._instance.order)
+
+
+@strawberry.type
 class CreditResponse(CreditLiteResponse):
     @strawberry.field
     def created_by(self) -> UserResponse:
