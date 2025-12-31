@@ -1856,7 +1856,7 @@ type PreOpportunityResponse {
   tags: [String!]
   balance: PreOpportunityBalanceResponse!
   details: [PreOpportunityDetailResponse!]!
-  job: JobType
+  job: JobLiteType
   createdBy: UserResponse!
 }
 
