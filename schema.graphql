@@ -132,7 +132,7 @@ type AdjustmentSplitRateResponse {
   id: UUID!
   adjustmentId: UUID!
   userId: UUID!
-  splitRate: Decimal!
+  splitRate: Decimal
   position: Int!
   user: UserResponse!
 }
@@ -271,7 +271,7 @@ type CheckLandingPage implements LandingPageInterfaceBase {
   userIds: [UUID!]!
   checkNumber: String!
   status: CheckStatus!
-  enteredCommissionAmount: Decimal!
+  enteredCommissionAmount: Decimal
   commissionMonth: Date
   factoryName: String!
 }
@@ -284,7 +284,7 @@ type CheckLiteResponse {
   entityDate: Date!
   postDate: Date
   commissionMonth: Date
-  enteredCommissionAmount: Decimal!
+  enteredCommissionAmount: Decimal
   factoryId: UUID!
   status: CheckStatus!
   creationType: CreationType!
@@ -299,7 +299,7 @@ type CheckResponse {
   entityDate: Date!
   postDate: Date
   commissionMonth: Date
-  enteredCommissionAmount: Decimal!
+  enteredCommissionAmount: Decimal
   factoryId: UUID!
   status: CheckStatus!
   creationType: CreationType!
@@ -448,7 +448,7 @@ type CreditBalanceResponse {
   quantity: Decimal!
   subtotal: Decimal!
   total: Decimal!
-  commission: Decimal!
+  commission: Decimal
 }
 
 type CreditCheckResponse {
@@ -487,8 +487,8 @@ type CreditDetailResponse {
   unitPrice: Decimal!
   subtotal: Decimal!
   total: Decimal!
-  commissionRate: Decimal!
-  commission: Decimal!
+  commissionRate: Decimal
+  commission: Decimal
   status: CreditStatus!
   outsideSplitRates: [CreditSplitRateResponse!]!
 }
@@ -567,7 +567,7 @@ type CreditSplitRateResponse {
   id: UUID!
   creditDetailId: UUID!
   userId: UUID!
-  splitRate: Decimal!
+  splitRate: Decimal
   position: Int!
   user: UserResponse!
 }
@@ -677,7 +677,7 @@ type CustomerSplitRateResponse {
   customerId: UUID!
   repType: RepTypeEnum!
   position: Int!
-  splitRate: Decimal!
+  splitRate: Decimal
   user: UserResponse!
 }
 
@@ -770,8 +770,8 @@ type FactoryLiteResponse {
   logoId: UUID
   leadTime: Int
   paymentTerms: Int
-  baseCommissionRate: Decimal!
-  commissionDiscountRate: Decimal!
+  baseCommissionRate: Decimal
+  commissionDiscountRate: Decimal
   overallDiscountRate: Decimal!
   additionalInformation: String
   freightTerms: String
@@ -789,8 +789,8 @@ type FactoryResponse {
   logoId: UUID
   leadTime: Int
   paymentTerms: Int
-  baseCommissionRate: Decimal!
-  commissionDiscountRate: Decimal!
+  baseCommissionRate: Decimal
+  commissionDiscountRate: Decimal
   overallDiscountRate: Decimal!
   additionalInformation: String
   freightTerms: String
@@ -810,7 +810,7 @@ type FactorySplitRateResponse {
   id: UUID!
   factoryId: UUID!
   position: Int!
-  splitRate: Decimal!
+  splitRate: Decimal
   user: UserResponse!
 }
 
@@ -967,12 +967,12 @@ type InvoiceBalanceResponse {
   quantity: Decimal!
   subtotal: Decimal!
   total: Decimal!
-  commission: Decimal!
+  commission: Decimal
   discount: Decimal!
   discountRate: Decimal!
-  commissionRate: Decimal!
-  commissionDiscount: Decimal!
-  commissionDiscountRate: Decimal!
+  commissionRate: Decimal
+  commissionDiscount: Decimal
+  commissionDiscountRate: Decimal
   paidBalance: Decimal!
 }
 
@@ -1022,11 +1022,11 @@ type InvoiceDetailResponse {
   unitPrice: Decimal!
   subtotal: Decimal!
   total: Decimal!
-  totalLineCommission: Decimal!
-  commissionRate: Decimal!
-  commission: Decimal!
-  commissionDiscountRate: Decimal!
-  commissionDiscount: Decimal!
+  totalLineCommission: Decimal
+  commissionRate: Decimal
+  commission: Decimal
+  commissionDiscountRate: Decimal
+  commissionDiscount: Decimal
   discountRate: Decimal!
   discount: Decimal!
   divisionFactor: Decimal
@@ -1121,7 +1121,7 @@ type InvoiceSplitRateResponse {
   id: UUID!
   invoiceDetailId: UUID!
   userId: UUID!
-  splitRate: Decimal!
+  splitRate: Decimal
   position: Int!
   user: UserResponse!
 }
@@ -1529,12 +1529,12 @@ type OrderBalanceResponse {
   quantity: Decimal!
   subtotal: Decimal!
   total: Decimal!
-  commission: Decimal!
+  commission: Decimal
   discount: Decimal!
   discountRate: Decimal!
-  commissionRate: Decimal!
-  commissionDiscount: Decimal!
-  commissionDiscountRate: Decimal!
+  commissionRate: Decimal
+  commissionDiscount: Decimal
+  commissionDiscountRate: Decimal
   shippingBalance: Decimal!
   cancelledBalance: Decimal!
   freightChargeBalance: Decimal!
@@ -1579,11 +1579,11 @@ type OrderDetailResponse {
   unitPrice: Decimal!
   subtotal: Decimal!
   total: Decimal!
-  totalLineCommission: Decimal!
-  commissionRate: Decimal!
-  commission: Decimal!
-  commissionDiscountRate: Decimal!
-  commissionDiscount: Decimal!
+  totalLineCommission: Decimal
+  commissionRate: Decimal
+  commission: Decimal
+  commissionDiscountRate: Decimal
+  commissionDiscount: Decimal
   discountRate: Decimal!
   discount: Decimal!
   productId: UUID
@@ -1741,7 +1741,7 @@ input OrderSplitRateInput {
 type OrderSplitRateResponse {
   id: UUID!
   userId: UUID!
-  splitRate: Decimal!
+  splitRate: Decimal
   position: Int!
 }
 
@@ -2004,7 +2004,7 @@ type ProductLiteResponse {
   id: UUID!
   factoryPartNumber: String!
   unitPrice: Decimal!
-  defaultCommissionRate: Decimal!
+  defaultCommissionRate: Decimal
   published: Boolean!
   approvalNeeded: Boolean
   description: String
@@ -2038,7 +2038,7 @@ type ProductResponse {
   id: UUID!
   factoryPartNumber: String!
   unitPrice: Decimal!
-  defaultCommissionRate: Decimal!
+  defaultCommissionRate: Decimal
   published: Boolean!
   approvalNeeded: Boolean
   description: String
@@ -2178,12 +2178,12 @@ type QuoteBalanceResponse {
   quantity: Decimal!
   subtotal: Decimal!
   total: Decimal!
-  commission: Decimal!
+  commission: Decimal
   discount: Decimal!
   discountRate: Decimal!
-  commissionRate: Decimal!
-  commissionDiscount: Decimal!
-  commissionDiscountRate: Decimal!
+  commissionRate: Decimal
+  commissionDiscount: Decimal
+  commissionDiscountRate: Decimal
 }
 
 input QuoteDetailInput {
@@ -2216,11 +2216,11 @@ type QuoteDetailResponse {
   unitPrice: Decimal!
   subtotal: Decimal!
   total: Decimal!
-  totalLineCommission: Decimal!
-  commissionRate: Decimal!
-  commission: Decimal!
-  commissionDiscountRate: Decimal!
-  commissionDiscount: Decimal!
+  totalLineCommission: Decimal
+  commissionRate: Decimal
+  commission: Decimal
+  commissionDiscountRate: Decimal
+  commissionDiscount: Decimal
   discountRate: Decimal!
   discount: Decimal!
   productId: UUID
@@ -2371,7 +2371,7 @@ type QuoteSplitRateResponse {
   createdAt: datetime!
   quoteDetailId: UUID!
   userId: UUID!
-  splitRate: Decimal!
+  splitRate: Decimal
   position: Int!
 }
 

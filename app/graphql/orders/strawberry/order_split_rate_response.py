@@ -12,7 +12,7 @@ from app.core.db.adapters.dto import DTOMixin
 class OrderSplitRateResponse(DTOMixin[OrderSplitRate]):
     id: UUID
     user_id: UUID
-    split_rate: Decimal
+    split_rate: Decimal | None
     position: int
 
     @classmethod

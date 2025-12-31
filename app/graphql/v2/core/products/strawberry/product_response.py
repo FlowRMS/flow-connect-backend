@@ -24,7 +24,7 @@ class ProductLiteResponse(DTOMixin[Product]):
     id: UUID
     factory_part_number: str
     unit_price: Decimal
-    default_commission_rate: Decimal
+    default_commission_rate: Decimal | None
     published: bool
     approval_needed: bool | None
     description: str | None

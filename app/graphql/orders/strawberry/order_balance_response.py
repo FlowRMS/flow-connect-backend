@@ -14,12 +14,12 @@ class OrderBalanceResponse(DTOMixin[OrderBalance]):
     quantity: Decimal
     subtotal: Decimal
     total: Decimal
-    commission: Decimal
+    commission: Decimal | None
     discount: Decimal
     discount_rate: Decimal
-    commission_rate: Decimal
-    commission_discount: Decimal
-    commission_discount_rate: Decimal
+    commission_rate: Decimal | None
+    commission_discount: Decimal | None
+    commission_discount_rate: Decimal | None
     shipping_balance: Decimal
     cancelled_balance: Decimal
     freight_charge_balance: Decimal

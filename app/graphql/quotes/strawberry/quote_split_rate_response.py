@@ -16,7 +16,7 @@ class QuoteSplitRateResponse(DTOMixin[QuoteSplitRate]):
     created_at: datetime
     quote_detail_id: UUID
     user_id: UUID
-    split_rate: Decimal
+    split_rate: Decimal | None
     position: int
 
     @classmethod

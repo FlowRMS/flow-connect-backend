@@ -14,7 +14,7 @@ class CreditBalanceResponse(DTOMixin[CreditBalance]):
     quantity: Decimal
     subtotal: Decimal
     total: Decimal
-    commission: Decimal
+    commission: Decimal | None
 
     @classmethod
     def from_orm_model(cls, model: CreditBalance) -> Self:

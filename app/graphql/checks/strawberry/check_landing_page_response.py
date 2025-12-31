@@ -11,6 +11,6 @@ from app.core.db.adapters.dto import LandingPageInterfaceBase
 class CheckLandingPageResponse(LandingPageInterfaceBase):
     check_number: str
     status: CheckStatus
-    entered_commission_amount: Decimal
+    entered_commission_amount: Decimal | None
     commission_month: date | None
     factory_name: str

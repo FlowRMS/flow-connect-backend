@@ -28,11 +28,11 @@ class OrderDetailResponse(DTOMixin[OrderDetail]):
     unit_price: Decimal
     subtotal: Decimal
     total: Decimal
-    total_line_commission: Decimal
-    commission_rate: Decimal
-    commission: Decimal
-    commission_discount_rate: Decimal
-    commission_discount: Decimal
+    total_line_commission: Decimal | None
+    commission_rate: Decimal | None
+    commission: Decimal | None
+    commission_discount_rate: Decimal | None
+    commission_discount: Decimal | None
     discount_rate: Decimal
     discount: Decimal
     product_id: UUID | None

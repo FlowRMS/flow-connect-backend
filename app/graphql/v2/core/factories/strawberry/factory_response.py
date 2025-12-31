@@ -25,8 +25,8 @@ class FactoryLiteResponse(DTOMixin[Factory]):
     logo_id: UUID | None
     lead_time: int | None
     payment_terms: int | None
-    base_commission_rate: Decimal
-    commission_discount_rate: Decimal
+    base_commission_rate: Decimal | None
+    commission_discount_rate: Decimal | None
     overall_discount_rate: Decimal
     additional_information: str | None
     freight_terms: str | None

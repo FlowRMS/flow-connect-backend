@@ -15,7 +15,7 @@ class AdjustmentSplitRateResponse(DTOMixin[AdjustmentSplitRate]):
     id: UUID
     adjustment_id: UUID
     user_id: UUID
-    split_rate: Decimal
+    split_rate: Decimal | None
     position: int
 
     @classmethod

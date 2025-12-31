@@ -25,7 +25,7 @@ class CheckLiteResponse(DTOMixin[Check]):
     entity_date: date
     post_date: date | None
     commission_month: date | None
-    entered_commission_amount: Decimal
+    entered_commission_amount: Decimal | None
     factory_id: UUID
     status: CheckStatus
     creation_type: CreationType

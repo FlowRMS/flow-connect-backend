@@ -23,8 +23,8 @@ class CreditDetailResponse(DTOMixin[CreditDetail]):
     unit_price: Decimal
     subtotal: Decimal
     total: Decimal
-    commission_rate: Decimal
-    commission: Decimal
+    commission_rate: Decimal | None
+    commission: Decimal | None
     status: CreditStatus
 
     @classmethod
