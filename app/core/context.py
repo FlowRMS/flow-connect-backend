@@ -20,9 +20,13 @@ class Context(BaseContext):
         super().__init__()
         self.auth_info: AuthInfo = None  # type: ignore[assignment] # pyright: ignore[reportAttributeAccessIssue]
         self.aioinject_context: Any = None  # Added for aioinject extension
+        self.commission_visible: bool = True
 
-    def initialize(self, context: ContextModel) -> None:
+    def initialize(
+        self, context: ContextModel, *, commission_visible: bool = True
+    ) -> None:
         self.auth_info = context.auth_info
+        self.commission_visible = commission_visible
 
     @classmethod
     @asynccontextmanager

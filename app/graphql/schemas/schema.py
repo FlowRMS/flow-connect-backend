@@ -9,6 +9,7 @@ from strawberry.tools import merge_types
 
 import app.graphql
 from app.core.container import create_container
+from app.core.middleware.commission_masking_extension import CommissionMaskingExtension
 from app.core.middleware.graphql_middleware import GraphQLMiddleware
 from app.graphql.class_discovery import class_discovery
 from app.graphql.inject import context_setter
@@ -49,6 +50,7 @@ schema = strawberry.federation.Schema(  # pyright: ignore[reportArgumentType]
             context_setter=context_setter,
         ),
         GraphQLMiddleware,
+        CommissionMaskingExtension,
     ],
     scalar_overrides={
         strawberry.ID: IdScalar,
