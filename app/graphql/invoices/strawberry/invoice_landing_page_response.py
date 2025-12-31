@@ -14,6 +14,7 @@ class InvoiceLandingPageResponse(LandingPageInterfaceBase):
     entity_date: date
     due_date: date | None
     total: Decimal
+    commission: Decimal | None
     published: bool
     locked: bool
     order_id: str

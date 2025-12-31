@@ -79,6 +79,7 @@ class InvoicesRepository(BaseRepository[Invoice]):
                 Invoice.entity_date,
                 Invoice.due_date,
                 InvoiceBalance.total.label("total"),
+                InvoiceBalance.commission,
                 Invoice.published,
                 Invoice.locked,
                 Order.order_number,

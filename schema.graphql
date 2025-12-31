@@ -1065,6 +1065,7 @@ type InvoiceLandingPage implements LandingPageInterfaceBase {
   entityDate: Date!
   dueDate: Date
   total: Decimal!
+  commission: Decimal
   published: Boolean!
   locked: Boolean!
   orderId: String!
