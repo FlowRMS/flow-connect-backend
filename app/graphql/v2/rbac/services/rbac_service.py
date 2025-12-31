@@ -7,6 +7,7 @@ from commons.db.v6 import (
     RbacPrivilegeTypeEnum,
     RbacResourceEnum,
     RbacRoleEnum,
+    RbacRoleSetting,
 )
 
 from app.graphql.v2.rbac.repositories.rbac_repository import RbacRepository
@@ -117,3 +118,13 @@ class RbacService:
             self.auth_info.roles[0]
         )
         return UserRbac(privileges=privileges, commission=role_setting.commission)
+
+    async def update_commission_visibility(
+        self,
+        role: RbacRoleEnum,
+        commission: bool,
+    ) -> RbacRoleSetting:
+        return await self.repository.update_role_setting_commission(role, commission)
+
+    async def get_all_role_settings(self) -> list[RbacRoleSetting]:
+        return await self.repository.get_all_role_settings()

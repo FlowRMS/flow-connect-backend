@@ -76,6 +76,7 @@ async def migrate_invoices(source: asyncpg.Connection, dest: asyncpg.Connection)
         SELECT
             i.id,
             i.invoice_number,
+            i.factory_id,
             i.order_id,
             i.entity_date,
             i.due_date,
@@ -101,8 +102,8 @@ async def migrate_invoices(source: asyncpg.Connection, dest: asyncpg.Connection)
         INSERT INTO pycommission.invoices (
             id, invoice_number, order_id, entity_date, due_date,
             published, locked, creation_type, status, balance_id,
-            created_by_id, created_at
-        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
+            created_by_id, created_at, factory_id
+        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)
         ON CONFLICT (id) DO UPDATE SET
             invoice_number = EXCLUDED.invoice_number,
             order_id = EXCLUDED.order_id,
@@ -126,6 +127,7 @@ async def migrate_invoices(source: asyncpg.Connection, dest: asyncpg.Connection)
             inv["balance_id"],
             inv["created_by_id"],
             inv["created_at"],
+            inv["factory_id"],
         ) for inv in invoices],
     )
 

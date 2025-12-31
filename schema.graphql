@@ -1323,6 +1323,7 @@ type Mutation {
   archiveFile(fileId: UUID!): Boolean!
   deleteFile(fileId: UUID!): Boolean!
   updateRbacGrid(rbacGrid: [RbacGridInput!]!): [RbacGridResponse!]!
+  updateCommissionVisibility(input: UpdateCommissionVisibilityInput!): RbacRoleSettingResponse!
 }
 
 input NoteConversationInput {
@@ -2068,6 +2069,7 @@ type Query {
   filesByLinkedEntity(entityType: EntityType!, entityId: UUID!): [FileResponse!]!
   getRbacGrid: [RbacGridResponse!]!
   getUserRbac(resource: RbacResourceEnum!): UserRbac!
+  getRoleSettings: [RbacRoleSettingResponse!]!
 }
 
 type QuoteBalanceResponse {
@@ -2346,6 +2348,11 @@ type RbacRolePermissionResponse {
   privileges: [RbacPrivilegeResponse!]!
 }
 
+type RbacRoleSettingResponse {
+  role: RbacRoleEnum!
+  commission: Boolean!
+}
+
 enum RecipientListType {
   STATIC
   CRITERIA_BASED
@@ -2503,6 +2510,11 @@ type TaskType {
 }
 
 scalar UUID
+
+input UpdateCommissionVisibilityInput {
+  role: RbacRoleEnum!
+  commission: Boolean!
+}
 
 input UpdateHighlightRegionsInput {
   versionId: UUID!

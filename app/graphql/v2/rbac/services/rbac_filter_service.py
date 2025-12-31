@@ -1,6 +1,7 @@
 from typing import TypeVar
 from uuid import UUID
 
+from commons.auth import AuthInfo
 from commons.db.v6 import (
     BaseModel,
     RbacPermission,
@@ -20,16 +21,10 @@ PermissionCacheKey = tuple[int, int, int]
 
 
 class RbacFilterService:
-    """
-    Service for applying RBAC-based query filtering.
-
-    Resolves user permissions and applies appropriate filter strategies
-    to SQLAlchemy Select statements.
-    """
-
-    def __init__(self, repository: RbacRepository) -> None:
+    def __init__(self, repository: RbacRepository, auth_info: AuthInfo) -> None:
         super().__init__()
         self.repository = repository
+        self.auth_info = auth_info
 
     async def get_privilege_option(
         self,
@@ -61,6 +56,27 @@ class RbacFilterService:
             return RbacPrivilegeOptionEnum.OWN
 
         return None
+
+    async def get_permission_option(
+        self,
+        resource: RbacResourceEnum,
+        privilege: RbacPrivilegeTypeEnum,
+    ) -> RbacPrivilegeOptionEnum | None:
+        """
+        Get the permission option (ALL or OWN) for the current user's primary role.
+
+        Uses auth_info.roles[0] as the primary role for permission lookup.
+        Returns ALL if user has full access, OWN if restricted to owned entities,
+        or None if no permission.
+        """
+        return await self.get_privilege_option(
+            self.auth_info.roles,
+            resource,
+            privilege,
+        )
+
+    def requires_ownership_check(self, option: RbacPrivilegeOptionEnum | None) -> bool:
+        return option == RbacPrivilegeOptionEnum.OWN
 
     async def apply_filter(
         self,

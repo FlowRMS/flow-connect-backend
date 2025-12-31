@@ -110,11 +110,13 @@ class BaseRepository(Generic[T]):
         pk: uuid.UUID,
         options: list[ExecutableOption] | None = None,
         unique: bool = False,
+        privilege: RbacPrivilegeTypeEnum = RbacPrivilegeTypeEnum.WRITE,
     ) -> T:
         stmt = select(self.model_class).where(self.model_class.id == pk)
         if options:
             stmt = stmt.options(*options)
-        result = await self.session.execute(stmt)  # type: ignore[attr-defined]
+
+        result = await self.execute(stmt, privilege)
         if unique:
             entity = result.unique().scalar_one_or_none()
         else:
@@ -204,9 +206,12 @@ class BaseRepository(Generic[T]):
         return merged
 
     async def delete(self, entity_id: UUID | str) -> bool:
-        entity = await self.get_by_id(entity_id)
-        if not entity:
-            return False
+        if isinstance(entity_id, str):
+            entity_id = UUID(entity_id)
+
+        entity = await self.get_edit(
+            pk=entity_id, privilege=RbacPrivilegeTypeEnum.DELETE
+        )
 
         await self._run_processors(RepositoryEvent.PRE_DELETE, entity)
 

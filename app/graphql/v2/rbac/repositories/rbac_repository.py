@@ -63,3 +63,18 @@ class RbacRepository:
         stmt = select(RbacRoleSetting).where(RbacRoleSetting.role == role)
         result = await self.session.execute(stmt)
         return result.scalar_one()
+
+    async def update_role_setting_commission(
+        self,
+        role: RbacRoleEnum,
+        commission: bool,
+    ) -> RbacRoleSetting:
+        role_setting = await self.get_role_settings_by_roles(role)
+        role_setting.commission = commission
+        await self.session.flush()
+        return role_setting
+
+    async def get_all_role_settings(self) -> list[RbacRoleSetting]:
+        stmt = select(RbacRoleSetting).order_by(RbacRoleSetting.role)
+        result = await self.session.execute(stmt)
+        return list(result.scalars().all())

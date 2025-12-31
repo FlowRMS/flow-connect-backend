@@ -3,8 +3,14 @@ from aioinject import Injected
 
 from app.graphql.inject import inject
 from app.graphql.v2.rbac.services.rbac_service import RbacService
-from app.graphql.v2.rbac.strawberry.rbac_grid_input import RbacGridInput
-from app.graphql.v2.rbac.strawberry.rbac_grid_response import RbacGridResponse
+from app.graphql.v2.rbac.strawberry.rbac_grid_input import (
+    RbacGridInput,
+    UpdateCommissionVisibilityInput,
+)
+from app.graphql.v2.rbac.strawberry.rbac_grid_response import (
+    RbacGridResponse,
+    RbacRoleSettingResponse,
+)
 
 
 @strawberry.type
@@ -17,3 +23,18 @@ class RbacMutations:
         service: Injected[RbacService],
     ) -> list[RbacGridResponse]:
         return await service.update_rbac_grid(rbac_grid)
+
+    @strawberry.mutation
+    @inject
+    async def update_commission_visibility(
+        self,
+        input: UpdateCommissionVisibilityInput,
+        service: Injected[RbacService],
+    ) -> RbacRoleSettingResponse:
+        role_setting = await service.update_commission_visibility(
+            input.role, input.commission
+        )
+        return RbacRoleSettingResponse(
+            role=role_setting.role,
+            commission=role_setting.commission,
+        )
