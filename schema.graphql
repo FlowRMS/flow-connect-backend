@@ -248,6 +248,18 @@ input CheckInput {
   creationType: CreationType!
 }
 
+type CheckLandingPage implements LandingPageInterfaceBase {
+  id: UUID!
+  createdAt: datetime!
+  createdBy: String!
+  userIds: [UUID!]!
+  checkNumber: String!
+  status: CheckStatus!
+  enteredCommissionAmount: Decimal!
+  commissionMonth: Date
+  factoryName: String!
+}
+
 type CheckLiteResponse {
   id: UUID!
   createdAt: datetime!
@@ -1140,7 +1152,7 @@ interface LandingPageInterfaceBase {
   userIds: [UUID!]!
 }
 
-union LandingRecord = JobLandingPage | CompanyLandingPage | ContactLandingPage | PreOpportunityLandingPage | NoteLandingPage | TaskLandingPage | CampaignLandingPage | CustomerLandingPage | FactoryLandingPage | ProductLandingPage | QuoteLandingPage | OrderLandingPage | FileLandingPage | InvoiceLandingPage | CreditLandingPage | AdjustmentLandingPage
+union LandingRecord = JobLandingPage | CompanyLandingPage | ContactLandingPage | PreOpportunityLandingPage | NoteLandingPage | TaskLandingPage | CampaignLandingPage | CustomerLandingPage | FactoryLandingPage | ProductLandingPage | QuoteLandingPage | OrderLandingPage | FileLandingPage | InvoiceLandingPage | CreditLandingPage | AdjustmentLandingPage | CheckLandingPage
 
 enum LandingSourceType {
   JOBS
@@ -1159,6 +1171,7 @@ enum LandingSourceType {
   INVOICES
   CREDITS
   ADJUSTMENTS
+  CHECKS
 }
 
 input LinkRelationInput {

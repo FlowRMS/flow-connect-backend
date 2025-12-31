@@ -90,7 +90,9 @@ class InvoicesRepository(BaseRepository[Invoice]):
                 joinedload(Invoice.details),
                 joinedload(Invoice.details).joinedload(InvoiceDetail.product),
                 joinedload(Invoice.details).joinedload(InvoiceDetail.uom),
-                joinedload(Invoice.details).joinedload(InvoiceDetail.outside_split_rates),
+                joinedload(Invoice.details).joinedload(
+                    InvoiceDetail.outside_split_rates
+                ),
                 joinedload(Invoice.balance),
                 joinedload(Invoice.order),
                 joinedload(Invoice.created_by),

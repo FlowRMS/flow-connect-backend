@@ -25,3 +25,4 @@ class LandingSourceType(Enum):
     INVOICES = "invoices"
     CREDITS = "credits"
     ADJUSTMENTS = "adjustments"
+    CHECKS = "checks"

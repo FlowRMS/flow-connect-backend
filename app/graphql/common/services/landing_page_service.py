@@ -7,6 +7,7 @@ from app.graphql.adjustments.repositories.adjustments_repository import (
     AdjustmentsRepository,
 )
 from app.graphql.campaigns.repositories.campaigns_repository import CampaignsRepository
+from app.graphql.checks.repositories.checks_repository import ChecksRepository
 from app.graphql.common.landing_repository_protocol import LandingRepositoryProtocol
 from app.graphql.common.landing_source_type import LandingSourceType
 from app.graphql.common.paginated_landing_page import PaginatedLandingPageInterface
@@ -55,6 +56,7 @@ class LandingPageService:
         invoices_repository: InvoicesRepository,
         credits_repository: CreditsRepository,
         adjustments_repository: AdjustmentsRepository,
+        checks_repository: ChecksRepository,
         rbac_filter_service: RbacFilterService,
     ) -> None:
         super().__init__()
@@ -77,6 +79,7 @@ class LandingPageService:
             LandingSourceType.INVOICES: invoices_repository,
             LandingSourceType.CREDITS: credits_repository,
             LandingSourceType.ADJUSTMENTS: adjustments_repository,
+            LandingSourceType.CHECKS: checks_repository,
         }
 
     async def find_landing_pages(

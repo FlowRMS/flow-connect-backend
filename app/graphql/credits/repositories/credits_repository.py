@@ -2,7 +2,7 @@ from typing import Any
 from uuid import UUID
 
 from commons.db.v6 import RbacResourceEnum, User
-from commons.db.v6.commission import Credit, CreditBalance, Order, CreditDetail
+from commons.db.v6.commission import Credit, CreditBalance, CreditDetail, Order
 from commons.db.v6.crm.links.entity_type import EntityType
 from commons.db.v6.crm.links.link_relation_model import LinkRelation
 from sqlalchemy import Select, func, or_, select

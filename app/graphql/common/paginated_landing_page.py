@@ -15,6 +15,9 @@ from app.graphql.adjustments.strawberry.adjustment_landing_page_response import 
 from app.graphql.campaigns.strawberry.campaign_landing_page_response import (
     CampaignLandingPageResponse,
 )
+from app.graphql.checks.strawberry.check_landing_page_response import (
+    CheckLandingPageResponse,
+)
 from app.graphql.companies.strawberry.company_landing_page_response import (
     CompanyLandingPageResponse,
 )
@@ -75,6 +78,7 @@ LandingRecord = strawberry.union(
         InvoiceLandingPageResponse,
         CreditLandingPageResponse,
         AdjustmentLandingPageResponse,
+        CheckLandingPageResponse,
     ],
 )
 
