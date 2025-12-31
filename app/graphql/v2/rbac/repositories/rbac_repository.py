@@ -1,4 +1,9 @@
-from commons.db.v6 import RbacPermission, RbacResourceEnum, RbacRoleEnum
+from commons.db.v6 import (
+    RbacPermission,
+    RbacResourceEnum,
+    RbacRoleEnum,
+    RbacRoleSetting,
+)
 from sqlalchemy import delete, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -34,3 +39,27 @@ class RbacRepository:
             self.session.add(permission)
         await self.session.flush()
         return permissions
+
+    async def get_permissions_by_resource_and_roles(
+        self,
+        resource: RbacResourceEnum,
+        roles: list[RbacRoleEnum],
+    ) -> list[RbacPermission]:
+        stmt = (
+            select(RbacPermission)
+            .where(
+                RbacPermission.resource == resource,
+                RbacPermission.role.in_(roles),
+            )
+            .order_by(RbacPermission.privilege)
+        )
+        result = await self.session.execute(stmt)
+        return list(result.scalars().all())
+
+    async def get_role_settings_by_roles(
+        self,
+        role: RbacRoleEnum,
+    ) -> RbacRoleSetting:
+        stmt = select(RbacRoleSetting).where(RbacRoleSetting.role == role)
+        result = await self.session.execute(stmt)
+        return result.scalar_one()

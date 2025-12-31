@@ -1814,6 +1814,11 @@ enum PreOpportunityStatus {
   WON
 }
 
+type Privilege {
+  privilege: RbacPrivilegeTypeEnum!
+  option: RbacPrivilegeOptionEnum!
+}
+
 input ProductCategoryInput {
   title: String!
   commissionRate: Decimal!
@@ -2062,6 +2067,7 @@ type Query {
   filePresignedUrl(fileId: UUID!): String
   filesByLinkedEntity(entityType: EntityType!, entityId: UUID!): [FileResponse!]!
   getRbacGrid: [RbacGridResponse!]!
+  getUserRbac(resource: RbacResourceEnum!): UserRbac!
 }
 
 type QuoteBalanceResponse {
@@ -2529,6 +2535,11 @@ input UserInput {
   enabled: Boolean! = true
   inside: Boolean = null
   outside: Boolean = null
+}
+
+type UserRbac {
+  privileges: [Privilege!]!
+  commission: Boolean!
 }
 
 type UserResponse {
