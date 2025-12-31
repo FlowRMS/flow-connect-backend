@@ -1645,7 +1645,7 @@ input OrderInsideRepInput {
 type OrderInsideRepResponse {
   id: UUID!
   userId: UUID!
-  splitRate: Decimal!
+  splitRate: Decimal
   position: Int!
 }
 
@@ -2279,7 +2279,7 @@ input QuoteInsideRepInput {
 type QuoteInsideRepResponse {
   id: UUID!
   userId: UUID!
-  splitRate: Decimal!
+  splitRate: Decimal
   position: Int!
 }
 
