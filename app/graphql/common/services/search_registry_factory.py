@@ -8,7 +8,7 @@ from app.graphql.common.strategies.search import (
     CheckSearchStrategy,
     CompanySearchStrategy,
     ContactSearchStrategy,
-    # ContainerTypeSearchStrategy,
+    ContainerTypeSearchStrategy,
     CreditSearchStrategy,
     CustomerSearchStrategy,
     FactorySearchStrategy,
@@ -19,10 +19,10 @@ from app.graphql.common.strategies.search import (
     PreOpportunitySearchStrategy,
     ProductSearchStrategy,
     QuoteSearchStrategy,
-    # ShippingCarrierSearchStrategy,
+    ShippingCarrierSearchStrategy,
     SpecSheetSearchStrategy,
     TaskSearchStrategy,
-    # WarehouseSearchStrategy,
+    WarehouseSearchStrategy,
 )
 
 
@@ -48,9 +48,9 @@ def create_search_strategy_registry() -> SearchQueryStrategyRegistry:
         CheckSearchStrategy(),
         AdjustmentSearchStrategy(),
         AddressSearchStrategy(),
-        # ShippingCarrierSearchStrategy(),
-        # ContainerTypeSearchStrategy(),
-        # WarehouseSearchStrategy(),
+        ShippingCarrierSearchStrategy(),
+        ContainerTypeSearchStrategy(),
+        WarehouseSearchStrategy(),
     ]
 
     for strategy in strategies:
