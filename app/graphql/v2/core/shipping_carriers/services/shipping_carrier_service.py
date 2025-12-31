@@ -6,7 +6,9 @@ from commons.auth import AuthInfo
 from commons.db.v6 import ShippingCarrier
 
 from app.errors.common_errors import NotFoundError
-from app.graphql.v2.core.shipping_carriers.repositories import ShippingCarriersRepository
+from app.graphql.v2.core.shipping_carriers.repositories import (
+    ShippingCarriersRepository,
+)
 from app.graphql.v2.core.shipping_carriers.strawberry.shipping_carrier_input import (
     ShippingCarrierInput,
 )
@@ -20,6 +22,7 @@ class ShippingCarrierService:
         repository: ShippingCarriersRepository,
         auth_info: AuthInfo,
     ) -> None:
+        super().__init__()
         self.repository = repository
         self.auth_info = auth_info
 

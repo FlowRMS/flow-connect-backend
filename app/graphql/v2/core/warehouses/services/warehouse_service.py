@@ -9,14 +9,15 @@ from commons.db.v6 import (
     WarehouseMemberRole,
     WarehouseSettings,
     WarehouseStructure,
+    WarehouseStructureCode,
 )
 
 from app.errors.common_errors import NotFoundError
 from app.graphql.v2.core.warehouses.repositories import (
     WarehouseMembersRepository,
     WarehouseSettingsRepository,
-    WarehouseStructureRepository,
     WarehousesRepository,
+    WarehouseStructureRepository,
 )
 from app.graphql.v2.core.warehouses.strawberry.warehouse_input import (
     WarehouseInput,
@@ -36,6 +37,7 @@ class WarehouseService:
         structure_repository: WarehouseStructureRepository,
         auth_info: AuthInfo,
     ) -> None:
+        super().__init__()
         self.repository = repository
         self.members_repository = members_repository
         self.settings_repository = settings_repository
@@ -130,9 +132,7 @@ class WarehouseService:
         """Get settings for a warehouse."""
         return await self.settings_repository.get_by_warehouse(warehouse_id)
 
-    async def update_settings(
-        self, input: WarehouseSettingsInput
-    ) -> WarehouseSettings:
+    async def update_settings(self, input: WarehouseSettingsInput) -> WarehouseSettings:
         """Update or create warehouse settings."""
         existing = await self.settings_repository.get_by_warehouse(input.warehouse_id)
         if existing:
@@ -162,7 +162,7 @@ class WarehouseService:
         for level in levels:
             structure = WarehouseStructure(
                 warehouse_id=warehouse_id,
-                code=level.code,
+                code=WarehouseStructureCode(level.code.value),
                 level_order=level.level_order,
             )
             created = await self.structure_repository.create(structure)

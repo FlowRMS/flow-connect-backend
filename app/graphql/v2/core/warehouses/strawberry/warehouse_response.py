@@ -6,11 +6,9 @@ from typing import Self
 from uuid import UUID
 
 import strawberry
-
 from commons.db.v6 import (
     Warehouse,
     WarehouseMember,
-    WarehouseMemberRole,
     WarehouseSettings,
     WarehouseStructure,
 )
@@ -18,6 +16,7 @@ from commons.db.v6 import (
 from app.core.db.adapters.dto import DTOMixin
 from app.graphql.v2.core.warehouses.strawberry.warehouse_input import (
     WarehouseMemberRoleGQL,
+    WarehouseStructureCodeGQL,
 )
 
 
@@ -28,7 +27,7 @@ class WarehouseStructureResponse(DTOMixin[WarehouseStructure]):
     _instance: strawberry.Private[WarehouseStructure]
     id: UUID
     warehouse_id: UUID
-    code: str  # 'section', 'aisle', etc.
+    code: WarehouseStructureCodeGQL
     level_order: int
 
     @classmethod
@@ -37,7 +36,7 @@ class WarehouseStructureResponse(DTOMixin[WarehouseStructure]):
             _instance=model,
             id=model.id,
             warehouse_id=model.warehouse_id,
-            code=model.code,
+            code=WarehouseStructureCodeGQL(model.code.value),
             level_order=model.level_order,
         )
 

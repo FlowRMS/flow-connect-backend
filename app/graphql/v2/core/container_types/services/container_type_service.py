@@ -20,6 +20,7 @@ class ContainerTypeService:
         repository: ContainerTypesRepository,
         auth_info: AuthInfo,
     ) -> None:
+        super().__init__()
         self.repository = repository
         self.auth_info = auth_info
 

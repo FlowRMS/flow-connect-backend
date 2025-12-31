@@ -52,7 +52,7 @@ class ContainerTypesRepository(BaseRepository[ContainerType]):
                 .where(ContainerType.id == container_id)
                 .values(position=-(idx + 1))
             )
-            await self.session.execute(stmt)
+            _ = await self.session.execute(stmt)
 
         await self.session.flush()
 
@@ -63,7 +63,7 @@ class ContainerTypesRepository(BaseRepository[ContainerType]):
                 .where(ContainerType.id == container_id)
                 .values(position=idx + 1)
             )
-            await self.session.execute(stmt)
+            _ = await self.session.execute(stmt)
 
         await self.session.flush()
         return await self.list_all_ordered()

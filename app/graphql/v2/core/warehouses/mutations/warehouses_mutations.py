@@ -4,6 +4,7 @@ from uuid import UUID
 
 import strawberry
 from aioinject import Injected
+from commons.db.v6 import WarehouseMemberRole
 
 from app.graphql.inject import inject
 from app.graphql.v2.core.warehouses.services.warehouse_service import WarehouseService
@@ -66,11 +67,12 @@ class WarehousesMutations:
         warehouse_id: UUID,
         user_id: UUID,
         role: int,
-        role_name: str | None = None,
-        service: Injected[WarehouseService] = None,  # type: ignore[assignment]
+        service: Injected[WarehouseService],
     ) -> WarehouseMemberResponse:
         """Assign a worker to a warehouse. Role: 1=worker, 2=manager."""
-        member = await service.assign_worker(warehouse_id, user_id, role, role_name)
+        member = await service.assign_worker(
+            warehouse_id, user_id, WarehouseMemberRole(role)
+        )
         return WarehouseMemberResponse.from_orm_model(member)
 
     @strawberry.mutation
@@ -80,12 +82,11 @@ class WarehousesMutations:
         warehouse_id: UUID,
         user_id: UUID,
         role: int,
-        role_name: str | None = None,
-        service: Injected[WarehouseService] = None,  # type: ignore[assignment]
+        service: Injected[WarehouseService],
     ) -> WarehouseMemberResponse:
         """Update a worker's role. Role: 1=worker, 2=manager."""
         member = await service.update_worker_role(
-            warehouse_id, user_id, role, role_name
+            warehouse_id, user_id, WarehouseMemberRole(role)
         )
         return WarehouseMemberResponse.from_orm_model(member)
 

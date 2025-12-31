@@ -5,13 +5,13 @@ from enum import IntEnum
 from uuid import UUID
 
 import strawberry
-
 from commons.db.v6 import (
     Warehouse,
     WarehouseMember,
     WarehouseMemberRole,
     WarehouseSettings,
     WarehouseStructure,
+    WarehouseStructureCode,
 )
 
 from app.core.strawberry.inputs import BaseInputGQL
@@ -23,6 +23,18 @@ class WarehouseMemberRoleGQL(IntEnum):
 
     WORKER = 1
     MANAGER = 2
+
+
+@strawberry.enum
+class WarehouseStructureCodeGQL(IntEnum):
+    """GraphQL enum for warehouse structure codes."""
+
+    SECTION = 1
+    AISLE = 2
+    SHELF = 3
+    BAY = 4
+    ROW = 5
+    BIN = 6
 
 
 @strawberry.input
@@ -91,7 +103,7 @@ class WarehouseSettingsInput(BaseInputGQL[WarehouseSettings]):
 class WarehouseStructureLevelInput:
     """Input type for a single location level configuration."""
 
-    code: str  # 'section', 'aisle', 'shelf', 'bay', 'row', 'bin'
+    code: WarehouseStructureCodeGQL
     level_order: int
 
 
@@ -100,12 +112,12 @@ class WarehouseStructureInput(BaseInputGQL[WarehouseStructure]):
     """Input type for warehouse structure (location level configuration)."""
 
     warehouse_id: UUID
-    code: str
+    code: WarehouseStructureCodeGQL
     level_order: int
 
     def to_orm_model(self) -> WarehouseStructure:
         return WarehouseStructure(
             warehouse_id=self.warehouse_id,
-            code=self.code,
+            code=WarehouseStructureCode(self.code.value),
             level_order=self.level_order,
         )
