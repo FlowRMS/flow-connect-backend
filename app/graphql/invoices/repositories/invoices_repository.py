@@ -1,3 +1,4 @@
+from datetime import date
 from typing import Any
 from uuid import UUID
 
@@ -185,6 +186,25 @@ class InvoicesRepository(BaseRepository[Invoice]):
                     ),
                 ),
             )
+        )
+        result = await self.session.execute(stmt)
+        return list(result.scalars().all())
+
+    async def search_open_invoices(
+        self,
+        factory_id: UUID,
+        start_from: date,
+    ) -> list[Invoice]:
+        stmt = (
+            select(Invoice)
+            .options(lazyload("*"))
+            .where(
+                Invoice.factory_id == factory_id,
+                Invoice.entity_date >= start_from,
+                Invoice.status == InvoiceStatus.OPEN,
+                Invoice.locked.is_(False),
+            )
+            .order_by(Invoice.entity_date.asc())
         )
         result = await self.session.execute(stmt)
         return list(result.scalars().all())

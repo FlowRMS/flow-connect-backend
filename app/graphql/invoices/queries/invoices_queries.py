@@ -1,3 +1,4 @@
+from datetime import date
 from uuid import UUID
 
 import strawberry
@@ -37,4 +38,16 @@ class InvoicesQueries:
             await service.search_invoices(
                 search_term, limit, open_only=open_only, unlocked_only=unlocked_only
             )
+        )
+
+    @strawberry.field
+    @inject
+    async def search_open_invoices(
+        self,
+        service: Injected[InvoiceService],
+        factory_id: UUID,
+        start_from: date,
+    ) -> list[InvoiceLiteResponse]:
+        return InvoiceLiteResponse.from_orm_model_list(
+            await service.search_open_invoices(factory_id, start_from)
         )

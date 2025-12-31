@@ -1,3 +1,4 @@
+from datetime import date
 from uuid import UUID
 
 from commons.auth import AuthInfo
@@ -66,3 +67,10 @@ class InvoiceService:
         self, entity_type: EntityType, entity_id: UUID
     ) -> list[Invoice]:
         return await self.repository.find_by_entity(entity_type, entity_id)
+
+    async def search_open_invoices(
+        self,
+        factory_id: UUID,
+        start_from: date,
+    ) -> list[Invoice]:
+        return await self.repository.search_open_invoices(factory_id, start_from)
