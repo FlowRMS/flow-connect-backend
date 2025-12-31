@@ -160,7 +160,10 @@ async def migrate_invoice_details(source: asyncpg.Connection, dest: asyncpg.Conn
             CASE
                 WHEN id.uom_multiply AND id.uom_multiply_by > 0 THEN id.uom_multiply_by
                 ELSE NULL
-            END AS division_factor
+            END AS division_factor,
+            od.product_id,
+            od.end_user_id,
+            od.lead_time
         FROM commission.invoice_details id
         JOIN commission.invoices i ON i.id = id.invoice_id
         JOIN commission.orders o ON o.id = i.order_id
@@ -181,7 +184,7 @@ async def migrate_invoice_details(source: asyncpg.Connection, dest: asyncpg.Conn
             commission_discount, discount_rate, discount, order_detail_id, status,
             division_factor, invoiced_balance, product_id, product_name_adhoc,
             product_description_adhoc, uom_id, end_user_id, lead_time, note
-        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, 0, NULL, NULL, NULL, NULL, NULL, NULL, NULL)
+        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, 0, $18, NULL, NULL, NULL, $19, $20, NULL)
         ON CONFLICT (id) DO UPDATE SET
             invoice_id = EXCLUDED.invoice_id,
             item_number = EXCLUDED.item_number,
@@ -198,7 +201,10 @@ async def migrate_invoice_details(source: asyncpg.Connection, dest: asyncpg.Conn
             discount = EXCLUDED.discount,
             order_detail_id = EXCLUDED.order_detail_id,
             status = EXCLUDED.status,
-            division_factor = EXCLUDED.division_factor
+            division_factor = EXCLUDED.division_factor,
+            product_id = EXCLUDED.product_id,
+            end_user_id = EXCLUDED.end_user_id,
+            lead_time = EXCLUDED.lead_time
         """,
         [(
             d["id"],
@@ -218,6 +224,9 @@ async def migrate_invoice_details(source: asyncpg.Connection, dest: asyncpg.Conn
             d["order_detail_id"],
             d["status"],
             d["division_factor"],
+            d["product_id"],
+            d["end_user_id"],
+            d["lead_time"],
         ) for d in details],
     )
 
