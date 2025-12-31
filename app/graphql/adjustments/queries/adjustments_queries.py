@@ -30,7 +30,11 @@ class AdjustmentsQueries:
         service: Injected[AdjustmentService],
         search_term: str,
         limit: int = 20,
+        open_only: bool = False,
+        unlocked_only: bool = False,
     ) -> list[AdjustmentLiteResponse]:
         return AdjustmentLiteResponse.from_orm_model_list(
-            await service.search_adjustments(search_term, limit)
+            await service.search_adjustments(
+                search_term, limit, open_only=open_only, unlocked_only=unlocked_only
+            )
         )

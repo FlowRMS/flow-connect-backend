@@ -3,6 +3,7 @@ from uuid import UUID
 
 from commons.db.v6 import RbacResourceEnum, User
 from commons.db.v6.commission import Invoice, InvoiceBalance, InvoiceDetail, Order
+from commons.db.v6.commission.invoices.enums import InvoiceStatus
 from commons.db.v6.crm.links.entity_type import EntityType
 from commons.db.v6.crm.links.link_relation_model import LinkRelation
 from sqlalchemy import Select, func, or_, select
@@ -130,14 +131,23 @@ class InvoicesRepository(BaseRepository[Invoice]):
         return result.scalar_one() > 0
 
     async def search_by_invoice_number(
-        self, search_term: str, limit: int = 20
+        self,
+        search_term: str,
+        limit: int = 20,
+        *,
+        open_only: bool = False,
+        unlocked_only: bool = False,
     ) -> list[Invoice]:
         stmt = (
             select(Invoice)
             .options(lazyload("*"))
             .where(Invoice.invoice_number.ilike(f"%{search_term}%"))
-            .limit(limit)
         )
+        if open_only:
+            stmt = stmt.where(Invoice.status == InvoiceStatus.OPEN)
+        if unlocked_only:
+            stmt = stmt.where(Invoice.locked.is_(False))
+        stmt = stmt.limit(limit)
         result = await self.session.execute(stmt)
         return list(result.scalars().all())
 

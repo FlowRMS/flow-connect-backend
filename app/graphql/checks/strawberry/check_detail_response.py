@@ -41,7 +41,9 @@ class CheckDetailResponse(DTOMixin[CheckDetail]):
 
     @strawberry.field
     def adjustment(self) -> AdjustmentCheckResponse | None:
-        return AdjustmentCheckResponse.from_orm_model_optional(self._instance.adjustment)
+        return AdjustmentCheckResponse.from_orm_model_optional(
+            self._instance.adjustment
+        )
 
     @strawberry.field
     def credit(self) -> CreditCheckResponse | None:

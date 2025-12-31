@@ -2,7 +2,7 @@ from typing import Any, override
 from uuid import UUID
 
 from commons.db.v6 import RbacResourceEnum, User
-from commons.db.v6.commission import Check, CheckDetail, Invoice, Credit, Adjustment
+from commons.db.v6.commission import Adjustment, Check, CheckDetail, Credit, Invoice
 from commons.db.v6.core import Factory
 from commons.db.v6.crm.links.entity_type import EntityType
 from commons.db.v6.crm.links.link_relation_model import LinkRelation
@@ -82,17 +82,17 @@ class ChecksRepository(BaseRepository[Check]):
             options=[
                 joinedload(Check.details),
                 joinedload(Check.details).joinedload(CheckDetail.invoice),
-                joinedload(Check.details).joinedload(CheckDetail.invoice).joinedload(
-                    Invoice.order
-                ),
+                joinedload(Check.details)
+                .joinedload(CheckDetail.invoice)
+                .joinedload(Invoice.order),
                 joinedload(Check.details).joinedload(CheckDetail.credit),
-                joinedload(Check.details).joinedload(CheckDetail.credit).joinedload(
-                    Credit.order
-                ),
+                joinedload(Check.details)
+                .joinedload(CheckDetail.credit)
+                .joinedload(Credit.order),
                 joinedload(Check.details).joinedload(CheckDetail.adjustment),
-                joinedload(Check.details).joinedload(CheckDetail.adjustment).joinedload(
-                    Adjustment.customer
-                ),
+                joinedload(Check.details)
+                .joinedload(CheckDetail.adjustment)
+                .joinedload(Adjustment.customer),
                 joinedload(Check.factory),
                 lazyload("*"),
             ],

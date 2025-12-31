@@ -47,8 +47,17 @@ class InvoiceService:
             raise NotFoundError(str(invoice_id))
         return await self.repository.delete(invoice_id)
 
-    async def search_invoices(self, search_term: str, limit: int = 20) -> list[Invoice]:
-        return await self.repository.search_by_invoice_number(search_term, limit)
+    async def search_invoices(
+        self,
+        search_term: str,
+        limit: int = 20,
+        *,
+        open_only: bool = False,
+        unlocked_only: bool = False,
+    ) -> list[Invoice]:
+        return await self.repository.search_by_invoice_number(
+            search_term, limit, open_only=open_only, unlocked_only=unlocked_only
+        )
 
     async def find_invoices_by_job_id(self, job_id: UUID) -> list[Invoice]:
         return await self.repository.find_by_job_id(job_id)

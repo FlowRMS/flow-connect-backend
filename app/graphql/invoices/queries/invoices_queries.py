@@ -30,7 +30,11 @@ class InvoicesQueries:
         service: Injected[InvoiceService],
         search_term: str,
         limit: int = 20,
+        open_only: bool = False,
+        unlocked_only: bool = False,
     ) -> list[InvoiceLiteResponse]:
         return InvoiceLiteResponse.from_orm_model_list(
-            await service.search_invoices(search_term, limit)
+            await service.search_invoices(
+                search_term, limit, open_only=open_only, unlocked_only=unlocked_only
+            )
         )
