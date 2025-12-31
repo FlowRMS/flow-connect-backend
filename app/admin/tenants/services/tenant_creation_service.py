@@ -145,26 +145,39 @@ class TenantCreationService:
         )
         logger.info(f"Created owner user: {owner_email}")
 
-        support_email = self.admin_settings.support_user_email
-        support_users = await self.workos_service.list_users(support_email)
-
-        if support_users:
-            support_user = support_users[0]
-            _ = await self.workos_service.link_user_to_tenant(
-                user_id=support_user.id,
-                tenant_id=workos_org.id,
-                role="administrator",
+        emails = [
+            self.admin_settings.support_user_email,
+            "matias@flowrms.com",
+            "derrick@flowrms.com",
+            "mhr@flowrms.com",
+            "junaid@flowrms.com",
+            "kamal@flowrms.com",
+            "holly@flowrms.com",
+            "jamal@flowrms.com",
+        ]
+        emails = list(set(emails))
+        for email in emails:
+            support_user = await self.workos_service.create_user(
+                AuthUserInput(
+                    email=email,
+                    first_name=email.split("@")[0].capitalize(),
+                    last_name="Support",
+                    tenant_id=workos_org.id,
+                    role=RbacRoleEnum.ADMINISTRATOR,
+                    email_verified=True,
+                    external_id=uuid.uuid4(),
+                )
             )
+            if not support_user:
+                logger.warning(f"Failed to create support user: {email}")
+                continue
+
             _ = await self._create_user_in_tenant_db(
                 database_url=database_url,
-                email=support_email,
+                email=email,
                 workos_user_id=support_user.id,
                 role=RbacRoleEnum.ADMINISTRATOR,
             )
-            logger.info(f"Linked support user to tenant: {support_email}")
-        else:
-            logger.warning(f"Support user not found: {support_email}")
-
         return TenantCreationResult(
             tenant=tenant,
             owner_workos_id=owner_auth.id,
