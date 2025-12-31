@@ -16,7 +16,9 @@ def _mask_dict_recursive(data: dict[str, Any]) -> dict[str, Any]:
             or key.lower().endswith("commissions")
             or "commission" in key.lower()
         ):
-            if isinstance(value, (int, float)):
+            if isinstance(value, bool):
+                result[key] = False
+            elif isinstance(value, (int, float)):
                 result[key] = 0
             else:
                 result[key] = None
