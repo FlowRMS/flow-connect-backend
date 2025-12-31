@@ -39,12 +39,14 @@ class ProductService:
         return product
 
     async def create(self, product_input: ProductInput) -> Product:
-        return await self.repository.create(product_input.to_orm_model())
+        product = await self.repository.create(product_input.to_orm_model())
+        return await self.get_by_id(product.id)
 
     async def update(self, product_id: UUID, product_input: ProductInput) -> Product:
         product = product_input.to_orm_model()
         product.id = product_id
-        return await self.repository.update(product)
+        _ = await self.repository.update(product)
+        return await self.get_by_id(product.id)
 
     async def delete(self, product_id: UUID) -> bool:
         if not await self.repository.exists(product_id):
