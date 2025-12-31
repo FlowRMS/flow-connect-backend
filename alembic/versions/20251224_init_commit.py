@@ -98,6 +98,90 @@ def upgrade() -> None:
         sa.PrimaryKeyConstraint("id"),
         schema="pyuser",
     )
+
+    # Seed default RBAC permissions
+    # Roles: OWNER=1, ADMINISTRATOR=2, INSIDE_REP=3, OUTSIDE_REP=4
+    # Resources: ADMIN=1, FACTORY=2, CUSTOMER=3, PRODUCT=4, QUOTE=5, ORDER=6,
+    #            INVOICE=7, CHECK=8, CREDIT=9, EXPENSE=10, TASK=13
+    # Privileges: VIEW=1, WRITE=2, DELETE=3
+    # Options: OWN=1, ALL=2
+    op.execute(
+        """
+        INSERT INTO pyuser.rbac_permissions (id, role, resource, privilege, option) VALUES
+        -- OWNER permissions (full access to everything)
+        (gen_random_uuid(), 1, 1, 1, 2), (gen_random_uuid(), 1, 1, 2, 2), (gen_random_uuid(), 1, 1, 3, 2),
+        (gen_random_uuid(), 1, 2, 1, 2), (gen_random_uuid(), 1, 2, 2, 2), (gen_random_uuid(), 1, 2, 3, 2),
+        (gen_random_uuid(), 1, 3, 1, 2), (gen_random_uuid(), 1, 3, 2, 2), (gen_random_uuid(), 1, 3, 3, 2),
+        (gen_random_uuid(), 1, 4, 1, 2), (gen_random_uuid(), 1, 4, 2, 2), (gen_random_uuid(), 1, 4, 3, 2),
+        (gen_random_uuid(), 1, 5, 1, 2), (gen_random_uuid(), 1, 5, 2, 2), (gen_random_uuid(), 1, 5, 3, 2),
+        (gen_random_uuid(), 1, 6, 1, 2), (gen_random_uuid(), 1, 6, 2, 2), (gen_random_uuid(), 1, 6, 3, 2),
+        (gen_random_uuid(), 1, 7, 1, 2), (gen_random_uuid(), 1, 7, 2, 2), (gen_random_uuid(), 1, 7, 3, 2),
+        (gen_random_uuid(), 1, 8, 1, 2), (gen_random_uuid(), 1, 8, 2, 2), (gen_random_uuid(), 1, 8, 3, 2),
+        (gen_random_uuid(), 1, 9, 1, 2), (gen_random_uuid(), 1, 9, 2, 2), (gen_random_uuid(), 1, 9, 3, 2),
+        (gen_random_uuid(), 1, 10, 1, 2), (gen_random_uuid(), 1, 10, 2, 2), (gen_random_uuid(), 1, 10, 3, 2),
+        (gen_random_uuid(), 1, 13, 1, 2), (gen_random_uuid(), 1, 13, 2, 2), (gen_random_uuid(), 1, 13, 3, 2),
+
+        -- ADMINISTRATOR permissions (full access to everything)
+        (gen_random_uuid(), 2, 1, 1, 2), (gen_random_uuid(), 2, 1, 2, 2), (gen_random_uuid(), 2, 1, 3, 2),
+        (gen_random_uuid(), 2, 2, 1, 2), (gen_random_uuid(), 2, 2, 2, 2), (gen_random_uuid(), 2, 2, 3, 2),
+        (gen_random_uuid(), 2, 3, 1, 2), (gen_random_uuid(), 2, 3, 2, 2), (gen_random_uuid(), 2, 3, 3, 2),
+        (gen_random_uuid(), 2, 4, 1, 2), (gen_random_uuid(), 2, 4, 2, 2), (gen_random_uuid(), 2, 4, 3, 2),
+        (gen_random_uuid(), 2, 5, 1, 2), (gen_random_uuid(), 2, 5, 2, 2), (gen_random_uuid(), 2, 5, 3, 2),
+        (gen_random_uuid(), 2, 6, 1, 2), (gen_random_uuid(), 2, 6, 2, 2), (gen_random_uuid(), 2, 6, 3, 2),
+        (gen_random_uuid(), 2, 7, 1, 2), (gen_random_uuid(), 2, 7, 2, 2), (gen_random_uuid(), 2, 7, 3, 2),
+        (gen_random_uuid(), 2, 8, 1, 2), (gen_random_uuid(), 2, 8, 2, 2), (gen_random_uuid(), 2, 8, 3, 2),
+        (gen_random_uuid(), 2, 9, 1, 2), (gen_random_uuid(), 2, 9, 2, 2), (gen_random_uuid(), 2, 9, 3, 2),
+        (gen_random_uuid(), 2, 10, 1, 2), (gen_random_uuid(), 2, 10, 2, 2), (gen_random_uuid(), 2, 10, 3, 2),
+        (gen_random_uuid(), 2, 13, 1, 2), (gen_random_uuid(), 2, 13, 2, 2), (gen_random_uuid(), 2, 13, 3, 2),
+
+        -- INSIDE_REP permissions
+        (gen_random_uuid(), 3, 2, 1, 2), (gen_random_uuid(), 3, 2, 2, 1), (gen_random_uuid(), 3, 2, 3, 1),
+        (gen_random_uuid(), 3, 3, 1, 2), (gen_random_uuid(), 3, 3, 2, 1), (gen_random_uuid(), 3, 3, 3, 1),
+        (gen_random_uuid(), 3, 4, 1, 2), (gen_random_uuid(), 3, 4, 2, 1), (gen_random_uuid(), 3, 4, 3, 1),
+        (gen_random_uuid(), 3, 5, 1, 2), (gen_random_uuid(), 3, 5, 2, 2), (gen_random_uuid(), 3, 5, 3, 2),
+        (gen_random_uuid(), 3, 6, 1, 2), (gen_random_uuid(), 3, 6, 2, 2), (gen_random_uuid(), 3, 6, 3, 2),
+        (gen_random_uuid(), 3, 7, 1, 2), (gen_random_uuid(), 3, 7, 2, 2), (gen_random_uuid(), 3, 7, 3, 2),
+        (gen_random_uuid(), 3, 8, 1, 2), (gen_random_uuid(), 3, 8, 2, 2), (gen_random_uuid(), 3, 8, 3, 2),
+        (gen_random_uuid(), 3, 9, 1, 2), (gen_random_uuid(), 3, 9, 2, 2), (gen_random_uuid(), 3, 9, 3, 2),
+        (gen_random_uuid(), 3, 10, 1, 2), (gen_random_uuid(), 3, 10, 2, 2), (gen_random_uuid(), 3, 10, 3, 2),
+        (gen_random_uuid(), 3, 13, 1, 2), (gen_random_uuid(), 3, 13, 2, 2), (gen_random_uuid(), 3, 13, 3, 2),
+
+        -- OUTSIDE_REP permissions (read-only factories/customers/products, own for transactions)
+        (gen_random_uuid(), 4, 2, 1, 2),
+        (gen_random_uuid(), 4, 3, 1, 2),
+        (gen_random_uuid(), 4, 4, 1, 2),
+        (gen_random_uuid(), 4, 5, 1, 1), (gen_random_uuid(), 4, 5, 2, 1), (gen_random_uuid(), 4, 5, 3, 1),
+        (gen_random_uuid(), 4, 6, 1, 1), (gen_random_uuid(), 4, 6, 2, 1), (gen_random_uuid(), 4, 6, 3, 1),
+        (gen_random_uuid(), 4, 7, 1, 1), (gen_random_uuid(), 4, 7, 2, 1), (gen_random_uuid(), 4, 7, 3, 1),
+        (gen_random_uuid(), 4, 8, 1, 1), (gen_random_uuid(), 4, 8, 2, 1), (gen_random_uuid(), 4, 8, 3, 1),
+        (gen_random_uuid(), 4, 9, 1, 1), (gen_random_uuid(), 4, 9, 2, 1), (gen_random_uuid(), 4, 9, 3, 1),
+        (gen_random_uuid(), 4, 10, 1, 1), (gen_random_uuid(), 4, 10, 2, 1), (gen_random_uuid(), 4, 10, 3, 1),
+        (gen_random_uuid(), 4, 13, 1, 1), (gen_random_uuid(), 4, 13, 2, 1), (gen_random_uuid(), 4, 13, 3, 1);
+        """
+    )
+
+    _ = op.create_table(
+        "rbac_role_settings",
+        sa.Column("role", sa.SmallInteger(), nullable=False),
+        sa.Column("commission", sa.Boolean(), nullable=False),
+        sa.Column("id", sa.UUID(), nullable=False),
+        sa.PrimaryKeyConstraint("id"),
+        sa.UniqueConstraint("role"),
+        schema="pyuser",
+    )
+
+    # Seed default RBAC role settings
+    # Roles: OWNER=1, ADMINISTRATOR=2, INSIDE_REP=3, OUTSIDE_REP=4
+    op.execute(
+        """
+        INSERT INTO pyuser.rbac_role_settings (id, role, commission) VALUES
+        (gen_random_uuid(), 1, true),   -- OWNER: has commission
+        (gen_random_uuid(), 2, true),   -- ADMINISTRATOR: has commission
+        (gen_random_uuid(), 3, true),   -- INSIDE_REP: has commission
+        (gen_random_uuid(), 4, false);  -- OUTSIDE_REP: no commission
+        """
+    )
+
     _ = op.create_table(
         "users",
         sa.Column("username", sa.String(), nullable=False),
@@ -989,6 +1073,7 @@ def downgrade() -> None:
     op.drop_table("product_uoms", schema="pycore")
     op.drop_table("customers", schema="pycore")
     op.drop_table("users", schema="pyuser")
+    op.drop_table("rbac_role_settings", schema="pyuser")
     op.drop_table("rbac_permissions", schema="pyuser")
     op.drop_table("pre_opportunity_balances", schema="pycrm")
     op.drop_index(

@@ -47,6 +47,22 @@ enum AdjustmentAllocationMethod {
   CHECK
 }
 
+type AdjustmentCheckResponse {
+  id: UUID!
+  adjustmentNumber: String!
+  status: AdjustmentStatus!
+  locked: Boolean!
+  entityDate: Date!
+  createdAt: datetime!
+  createdById: UUID!
+  factoryId: UUID!
+  amount: Decimal!
+  reason: String
+  creationType: CreationType!
+  customer: CustomerLiteResponse
+  factory: FactoryLiteResponse!
+}
+
 input AdjustmentInput {
   adjustmentNumber: String!
   entityDate: Date!
@@ -99,9 +115,9 @@ type AdjustmentResponse {
   amount: Decimal!
   reason: String
   creationType: CreationType!
-  createdBy: UserResponse!
   customer: CustomerLiteResponse
   factory: FactoryLiteResponse!
+  createdBy: UserResponse!
   splitRates: [AdjustmentSplitRateResponse!]!
 }
 
@@ -230,9 +246,9 @@ type CheckDetailResponse {
   adjustmentId: UUID
   creditId: UUID
   appliedAmount: Decimal!
-  invoice: InvoiceLiteResponse
-  adjustment: AdjustmentLiteResponse
-  credit: CreditLiteResponse
+  invoice: InvoiceCheckResponse
+  adjustment: AdjustmentCheckResponse
+  credit: CreditCheckResponse
 }
 
 input CheckInput {
@@ -246,6 +262,18 @@ input CheckInput {
   commissionMonth: Date
   status: CheckStatus!
   creationType: CreationType!
+}
+
+type CheckLandingPage implements LandingPageInterfaceBase {
+  id: UUID!
+  createdAt: datetime!
+  createdBy: String!
+  userIds: [UUID!]!
+  checkNumber: String!
+  status: CheckStatus!
+  enteredCommissionAmount: Decimal!
+  commissionMonth: Date
+  factoryName: String!
 }
 
 type CheckLiteResponse {
@@ -401,6 +429,23 @@ type CreditBalanceResponse {
   subtotal: Decimal!
   total: Decimal!
   commission: Decimal!
+}
+
+type CreditCheckResponse {
+  id: UUID!
+  createdAt: datetime!
+  createdById: UUID!
+  creditNumber: String!
+  entityDate: Date!
+  reason: String
+  orderId: UUID!
+  status: CreditStatus!
+  creditType: CreditType!
+  locked: Boolean!
+  creationType: CreationType!
+  balanceId: UUID!
+  url: String!
+  order: OrderLiteResponse!
 }
 
 input CreditDetailInput {
@@ -911,6 +956,23 @@ type InvoiceBalanceResponse {
   paidBalance: Decimal!
 }
 
+type InvoiceCheckResponse {
+  id: UUID!
+  createdAt: datetime!
+  createdById: UUID!
+  invoiceNumber: String!
+  entityDate: Date!
+  dueDate: Date
+  orderId: UUID!
+  status: InvoiceStatus!
+  published: Boolean!
+  locked: Boolean!
+  creationType: CreationType!
+  balanceId: UUID!
+  url: String!
+  order: OrderLiteResponse!
+}
+
 input InvoiceDetailInput {
   itemNumber: Int!
   quantity: Decimal!
@@ -987,6 +1049,7 @@ type InvoiceLandingPage implements LandingPageInterfaceBase {
   locked: Boolean!
   orderId: String!
   orderNumber: String!
+  factoryName: String!
 }
 
 type InvoiceLiteResponse {
@@ -1019,9 +1082,9 @@ type InvoiceResponse {
   creationType: CreationType!
   balanceId: UUID!
   url: String!
+  order: OrderLiteResponse!
   factory: FactoryLiteResponse!
   createdBy: UserResponse!
-  order: OrderLiteResponse!
   balance: InvoiceBalanceResponse!
   details: [InvoiceDetailResponse!]!
 }
@@ -1140,7 +1203,7 @@ interface LandingPageInterfaceBase {
   userIds: [UUID!]!
 }
 
-union LandingRecord = JobLandingPage | CompanyLandingPage | ContactLandingPage | PreOpportunityLandingPage | NoteLandingPage | TaskLandingPage | CampaignLandingPage | CustomerLandingPage | FactoryLandingPage | ProductLandingPage | QuoteLandingPage | OrderLandingPage | FileLandingPage | InvoiceLandingPage | CreditLandingPage | AdjustmentLandingPage
+union LandingRecord = JobLandingPage | CompanyLandingPage | ContactLandingPage | PreOpportunityLandingPage | NoteLandingPage | TaskLandingPage | CampaignLandingPage | CustomerLandingPage | FactoryLandingPage | ProductLandingPage | QuoteLandingPage | OrderLandingPage | FileLandingPage | InvoiceLandingPage | CreditLandingPage | AdjustmentLandingPage | CheckLandingPage
 
 enum LandingSourceType {
   JOBS
@@ -1159,6 +1222,7 @@ enum LandingSourceType {
   INVOICES
   CREDITS
   ADJUSTMENTS
+  CHECKS
 }
 
 input LinkRelationInput {
@@ -1310,6 +1374,7 @@ type Mutation {
   archiveFile(fileId: UUID!): Boolean!
   deleteFile(fileId: UUID!): Boolean!
   updateRbacGrid(rbacGrid: [RbacGridInput!]!): [RbacGridResponse!]!
+  updateCommissionVisibility(input: UpdateCommissionVisibilityInput!): RbacRoleSettingResponse!
 }
 
 input NoteConversationInput {
@@ -1561,6 +1626,9 @@ type OrderLandingPage implements LandingPageInterfaceBase {
   dueDate: Date!
   total: Decimal!
   published: Boolean!
+  factoryName: String!
+  jobName: String
+  soldToCustomerName: String!
 }
 
 type OrderLiteResponse {
@@ -1801,6 +1869,11 @@ enum PreOpportunityStatus {
   WON
 }
 
+type Privilege {
+  privilege: RbacPrivilegeTypeEnum!
+  option: RbacPrivilegeOptionEnum!
+}
+
 input ProductCategoryInput {
   title: String!
   commissionRate: Decimal!
@@ -1966,7 +2039,7 @@ type Query {
   addressesBySource(sourceType: AddressSourceTypeEnum!, sourceId: UUID!): [AddressResponse!]!
   addressesBySourceId(sourceId: UUID!): [AddressResponse!]!
   adjustment(id: UUID!): AdjustmentResponse!
-  adjustmentSearch(searchTerm: String!, limit: Int! = 20): [AdjustmentLiteResponse!]!
+  adjustmentSearch(searchTerm: String!, limit: Int! = 20, openOnly: Boolean! = false, unlockedOnly: Boolean! = false): [AdjustmentLiteResponse!]!
   campaign(id: UUID!): CampaignResponse!
   campaignRecipients(campaignId: UUID!, limit: Int! = 100, offset: Int! = 0): [CampaignRecipientResponse!]!
   estimateRecipients(criteria: CampaignCriteriaInput!, sampleLimit: Int! = 10): EstimateRecipientsResponse!
@@ -1983,7 +2056,7 @@ type Query {
   contactSearch(searchTerm: String!, limit: Int! = 20): [ContactResponse!]!
   contactRelatedEntities(contactId: UUID!): ContactRelatedEntitiesResponse!
   credit(id: UUID!): CreditResponse!
-  creditSearch(searchTerm: String!, limit: Int! = 20): [CreditLiteResponse!]!
+  creditSearch(searchTerm: String!, limit: Int! = 20, openOnly: Boolean! = false, unlockedOnly: Boolean! = false): [CreditLiteResponse!]!
   gmailAuthUrl(state: String = null): String!
   gmailConnectionStatus: GmailConnectionStatusType!
   o365AuthUrl(state: String = null): String!
@@ -1991,7 +2064,7 @@ type Query {
   o365CalendarEvents(top: Int! = 50, skip: Int! = 0): O365CalendarEventsResultType!
   o365CalendarEventsInRange(startDate: datetime!, endDate: datetime!, top: Int! = 100): O365CalendarEventsResultType!
   invoice(id: UUID!): InvoiceResponse!
-  invoiceSearch(searchTerm: String!, limit: Int! = 20): [InvoiceLiteResponse!]!
+  invoiceSearch(searchTerm: String!, limit: Int! = 20, openOnly: Boolean! = false, unlockedOnly: Boolean! = false): [InvoiceLiteResponse!]!
   job(id: UUID!): JobType!
   jobStatuses: [JobStatusType!]!
   jobRelatedEntities(jobId: UUID!): JobRelatedEntitiesResponse!
@@ -2049,6 +2122,8 @@ type Query {
   filePresignedUrl(fileId: UUID!): String
   filesByLinkedEntity(entityType: EntityType!, entityId: UUID!): [FileResponse!]!
   getRbacGrid: [RbacGridResponse!]!
+  getUserRbac(resource: RbacResourceEnum!): UserRbac!
+  getRoleSettings: [RbacRoleSettingResponse!]!
 }
 
 type QuoteBalanceResponse {
@@ -2327,6 +2402,11 @@ type RbacRolePermissionResponse {
   privileges: [RbacPrivilegeResponse!]!
 }
 
+type RbacRoleSettingResponse {
+  role: RbacRoleEnum!
+  commission: Boolean!
+}
+
 enum RecipientListType {
   STATIC
   CRITERIA_BASED
@@ -2485,6 +2565,11 @@ type TaskType {
 
 scalar UUID
 
+input UpdateCommissionVisibilityInput {
+  role: RbacRoleEnum!
+  commission: Boolean!
+}
+
 input UpdateHighlightRegionsInput {
   versionId: UUID!
   regions: [HighlightRegionInput!]!
@@ -2516,6 +2601,11 @@ input UserInput {
   enabled: Boolean! = true
   inside: Boolean = null
   outside: Boolean = null
+}
+
+type UserRbac {
+  privileges: [Privilege!]!
+  commission: Boolean!
 }
 
 type UserResponse {

@@ -46,8 +46,17 @@ class CreditService:
             raise NotFoundError(str(credit_id))
         return await self.repository.delete(credit_id)
 
-    async def search_credits(self, search_term: str, limit: int = 20) -> list[Credit]:
-        return await self.repository.search_by_credit_number(search_term, limit)
+    async def search_credits(
+        self,
+        search_term: str,
+        limit: int = 20,
+        *,
+        open_only: bool = False,
+        unlocked_only: bool = False,
+    ) -> list[Credit]:
+        return await self.repository.search_by_credit_number(
+            search_term, limit, open_only=open_only, unlocked_only=unlocked_only
+        )
 
     async def find_credits_by_job_id(self, job_id: UUID) -> list[Credit]:
         return await self.repository.find_by_job_id(job_id)

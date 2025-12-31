@@ -3,6 +3,7 @@ from uuid import UUID
 
 from commons.db.v6 import User
 from commons.db.v6.commission import Adjustment, AdjustmentSplitRate
+from commons.db.v6.commission.checks.enums.adjustment_status import AdjustmentStatus
 from commons.db.v6.rbac.rbac_resource_enum import RbacResourceEnum
 from sqlalchemy import Select, select
 from sqlalchemy.dialects.postgresql import array
@@ -87,13 +88,22 @@ class AdjustmentsRepository(BaseRepository[Adjustment]):
         return list(result.scalars().all())
 
     async def search_by_reason(
-        self, search_term: str, limit: int = 20
+        self,
+        search_term: str,
+        limit: int = 20,
+        *,
+        open_only: bool = False,
+        unlocked_only: bool = False,
     ) -> list[Adjustment]:
         stmt = (
             select(Adjustment)
             .options(lazyload("*"))
             .where(Adjustment.reason.ilike(f"%{search_term}%"))
-            .limit(limit)
         )
+        if open_only:
+            stmt = stmt.where(Adjustment.status == AdjustmentStatus.PENDING)
+        if unlocked_only:
+            stmt = stmt.where(Adjustment.locked.is_(False))
+        stmt = stmt.limit(limit)
         result = await self.session.execute(stmt)
         return list(result.scalars().all())

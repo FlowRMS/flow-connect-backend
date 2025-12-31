@@ -15,7 +15,7 @@ from app.core.processors.base import BaseProcessor
 from app.core.processors.context import EntityContext
 from app.core.processors.events import RepositoryEvent
 from app.core.processors.executor import ProcessorExecutor
-from app.errors.common_errors import NotFoundError
+from app.errors.common_errors import UnauthorizedError
 from app.graphql.v2.rbac.services.rbac_filter_service import RbacFilterService
 from app.graphql.v2.rbac.strategies.base import RbacFilterStrategy
 
@@ -92,7 +92,6 @@ class BaseRepository(Generic[T]):
         Returns the original statement if no strategy is configured.
         """
         strategy = self.get_rbac_filter_strategy()
-        print(f"Strategy: {strategy}")
 
         if strategy and self._rbac_filter_service:
             stmt = await self._rbac_filter_service.apply_filter(
@@ -110,18 +109,22 @@ class BaseRepository(Generic[T]):
         pk: uuid.UUID,
         options: list[ExecutableOption] | None = None,
         unique: bool = False,
+        privilege: RbacPrivilegeTypeEnum = RbacPrivilegeTypeEnum.WRITE,
     ) -> T:
         stmt = select(self.model_class).where(self.model_class.id == pk)
         if options:
             stmt = stmt.options(*options)
-        result = await self.session.execute(stmt)  # type: ignore[attr-defined]
+
+        result = await self.execute(stmt, privilege)
         if unique:
             entity = result.unique().scalar_one_or_none()
         else:
             entity = result.scalars().one_or_none()
 
         if entity is None:
-            raise NotFoundError(f"{self.model_class.__name__} with id {pk} not found")
+            raise UnauthorizedError(
+                f"Access denied for {self.model_class.__name__} with id {pk}"
+            )
 
         return entity
 
@@ -204,9 +207,12 @@ class BaseRepository(Generic[T]):
         return merged
 
     async def delete(self, entity_id: UUID | str) -> bool:
-        entity = await self.get_by_id(entity_id)
-        if not entity:
-            return False
+        if isinstance(entity_id, str):
+            entity_id = UUID(entity_id)
+
+        entity = await self.get_edit(
+            pk=entity_id, privilege=RbacPrivilegeTypeEnum.DELETE
+        )
 
         await self._run_processors(RepositoryEvent.PRE_DELETE, entity)
 

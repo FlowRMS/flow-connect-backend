@@ -55,11 +55,7 @@ class AdjustmentLiteResponse(DTOMixin[Adjustment]):
 
 
 @strawberry.type
-class AdjustmentResponse(AdjustmentLiteResponse):
-    @strawberry.field
-    def created_by(self) -> UserResponse:
-        return UserResponse.from_orm_model(self._instance.created_by)
-
+class AdjustmentCheckResponse(AdjustmentLiteResponse):
     @strawberry.field
     def customer(self) -> CustomerLiteResponse | None:
         return CustomerLiteResponse.from_orm_model_optional(self._instance.customer)
@@ -67,6 +63,13 @@ class AdjustmentResponse(AdjustmentLiteResponse):
     @strawberry.field
     def factory(self) -> FactoryLiteResponse:
         return FactoryLiteResponse.from_orm_model(self._instance.factory)
+
+
+@strawberry.type
+class AdjustmentResponse(AdjustmentCheckResponse):
+    @strawberry.field
+    def created_by(self) -> UserResponse:
+        return UserResponse.from_orm_model(self._instance.created_by)
 
     @strawberry.field
     def split_rates(self) -> list[AdjustmentSplitRateResponse]:

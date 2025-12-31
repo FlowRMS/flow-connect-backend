@@ -23,3 +23,9 @@ class RbacGridRoleInput:
 class RbacGridInput:
     resource: RbacResourceEnum
     roles: list[RbacGridRoleInput]
+
+
+@strawberry.input
+class UpdateCommissionVisibilityInput:
+    role: RbacRoleEnum
+    commission: bool

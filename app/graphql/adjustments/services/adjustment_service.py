@@ -46,6 +46,13 @@ class AdjustmentService:
         return await self.repository.delete(adjustment_id)
 
     async def search_adjustments(
-        self, search_term: str, limit: int = 20
+        self,
+        search_term: str,
+        limit: int = 20,
+        *,
+        open_only: bool = False,
+        unlocked_only: bool = False,
     ) -> list[Adjustment]:
-        return await self.repository.search_by_reason(search_term, limit)
+        return await self.repository.search_by_reason(
+            search_term, limit, open_only=open_only, unlocked_only=unlocked_only
+        )

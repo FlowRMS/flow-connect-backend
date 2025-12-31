@@ -61,7 +61,14 @@ class InvoiceLiteResponse(DTOMixin[Invoice]):
 
 
 @strawberry.type
-class InvoiceResponse(InvoiceLiteResponse):
+class InvoiceCheckResponse(InvoiceLiteResponse):
+    @strawberry.field
+    def order(self) -> OrderLiteResponse:
+        return OrderLiteResponse.from_orm_model(self._instance.order)
+
+
+@strawberry.type
+class InvoiceResponse(InvoiceCheckResponse):
     @strawberry.field
     def factory(self) -> FactoryLiteResponse:
         return FactoryLiteResponse.from_orm_model(self._instance.factory)
@@ -69,10 +76,6 @@ class InvoiceResponse(InvoiceLiteResponse):
     @strawberry.field
     def created_by(self) -> UserResponse:
         return UserResponse.from_orm_model(self._instance.created_by)
-
-    @strawberry.field
-    def order(self) -> OrderLiteResponse:
-        return OrderLiteResponse.from_orm_model(self._instance.order)
 
     @strawberry.field
     def balance(self) -> InvoiceBalanceResponse:

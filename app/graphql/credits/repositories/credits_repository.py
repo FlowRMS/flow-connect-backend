@@ -2,7 +2,8 @@ from typing import Any
 from uuid import UUID
 
 from commons.db.v6 import RbacResourceEnum, User
-from commons.db.v6.commission import Credit, CreditBalance, Order, CreditDetail
+from commons.db.v6.commission import Credit, CreditBalance, CreditDetail, Order
+from commons.db.v6.commission.credits.enums import CreditStatus
 from commons.db.v6.crm.links.entity_type import EntityType
 from commons.db.v6.crm.links.link_relation_model import LinkRelation
 from sqlalchemy import Select, func, or_, select
@@ -125,14 +126,23 @@ class CreditsRepository(BaseRepository[Credit]):
         return result.scalar_one() > 0
 
     async def search_by_credit_number(
-        self, search_term: str, limit: int = 20
+        self,
+        search_term: str,
+        limit: int = 20,
+        *,
+        open_only: bool = False,
+        unlocked_only: bool = False,
     ) -> list[Credit]:
         stmt = (
             select(Credit)
             .options(lazyload("*"))
             .where(Credit.credit_number.ilike(f"%{search_term}%"))
-            .limit(limit)
         )
+        if open_only:
+            stmt = stmt.where(Credit.status == CreditStatus.PENDING)
+        if unlocked_only:
+            stmt = stmt.where(Credit.locked.is_(False))
+        stmt = stmt.limit(limit)
         result = await self.session.execute(stmt)
         return list(result.scalars().all())
 

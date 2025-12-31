@@ -30,7 +30,11 @@ class CreditsQueries:
         service: Injected[CreditService],
         search_term: str,
         limit: int = 20,
+        open_only: bool = False,
+        unlocked_only: bool = False,
     ) -> list[CreditLiteResponse]:
         return CreditLiteResponse.from_orm_model_list(
-            await service.search_credits(search_term, limit)
+            await service.search_credits(
+                search_term, limit, open_only=open_only, unlocked_only=unlocked_only
+            )
         )

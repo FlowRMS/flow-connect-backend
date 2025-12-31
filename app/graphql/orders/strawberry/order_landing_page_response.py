@@ -17,3 +17,6 @@ class OrderLandingPageResponse(LandingPageInterfaceBase):
     due_date: date
     total: Decimal
     published: bool
+    factory_name: str
+    job_name: str | None
+    sold_to_customer_name: str

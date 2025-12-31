@@ -92,6 +92,7 @@ def upgrade() -> None:
     _ = op.create_table(
         "invoices",
         sa.Column("invoice_number", sa.String(length=255), nullable=False),
+        sa.Column("factory_id", sa.UUID(), nullable=False),
         sa.Column("order_id", sa.UUID(), nullable=False),
         sa.Column("entity_date", sa.Date(), nullable=False),
         sa.Column("due_date", sa.Date(), nullable=True),
@@ -121,6 +122,10 @@ def upgrade() -> None:
         sa.ForeignKeyConstraint(
             ["order_id"],
             ["pycommission.orders.id"],
+        ),
+        sa.ForeignKeyConstraint(
+            ["factory_id"],
+            ["pycore.factories.id"],
         ),
         sa.PrimaryKeyConstraint("id"),
         sa.UniqueConstraint("balance_id"),

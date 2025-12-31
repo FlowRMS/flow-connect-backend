@@ -1,9 +1,13 @@
+from typing import Any, override
 from uuid import UUID
 
-from commons.db.v6.commission import Check, CheckDetail
+from commons.db.v6 import RbacResourceEnum, User
+from commons.db.v6.commission import Adjustment, Check, CheckDetail, Credit, Invoice
+from commons.db.v6.core import Factory
 from commons.db.v6.crm.links.entity_type import EntityType
 from commons.db.v6.crm.links.link_relation_model import LinkRelation
-from sqlalchemy import func, or_, select
+from sqlalchemy import Select, func, or_, select
+from sqlalchemy.dialects.postgresql import array
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import joinedload, lazyload
 
@@ -15,10 +19,18 @@ from app.graphql.checks.processors.post_check_processor import PostCheckProcesso
 from app.graphql.checks.processors.validate_check_status_processor import (
     ValidateCheckStatusProcessor,
 )
+from app.graphql.checks.strawberry.check_landing_page_response import (
+    CheckLandingPageResponse,
+)
+from app.graphql.v2.rbac.services.rbac_filter_service import RbacFilterService
+from app.graphql.v2.rbac.strategies.base import RbacFilterStrategy
+from app.graphql.v2.rbac.strategies.created_by_filter import CreatedByFilterStrategy
 
 
 class ChecksRepository(BaseRepository[Check]):
     entity_type = EntityType.CHECK
+    landing_model = CheckLandingPageResponse
+    rbac_resource: RbacResourceEnum | None = RbacResourceEnum.CHECK
 
     def __init__(
         self,
@@ -27,16 +39,41 @@ class ChecksRepository(BaseRepository[Check]):
         processor_executor: ProcessorExecutor,
         validate_status_processor: ValidateCheckStatusProcessor,
         post_check_processor: PostCheckProcessor,
+        rbac_filter_service: RbacFilterService,
     ) -> None:
         super().__init__(
             session,
             context_wrapper,
             Check,
+            rbac_filter_service,
             processor_executor=processor_executor,
             processor_executor_classes=[
                 validate_status_processor,
                 post_check_processor,
             ],
+        )
+
+    @override
+    def get_rbac_filter_strategy(self) -> RbacFilterStrategy | None:
+        return CreatedByFilterStrategy(RbacResourceEnum.CHECK, Check)
+
+    def paginated_stmt(self) -> Select[Any]:
+        return (
+            select(
+                Check.id,
+                Check.created_at,
+                User.full_name.label("created_by"),
+                Check.check_number,
+                Check.status,
+                Check.entered_commission_amount,
+                Check.commission_month,
+                Factory.title.label("factory_name"),
+                array([Check.created_by_id]).label("user_ids"),
+            )
+            .select_from(Check)
+            .options(lazyload("*"))
+            .join(User, User.id == Check.created_by_id)
+            .join(Factory, Factory.id == Check.factory_id)
         )
 
     async def find_check_by_id(self, check_id: UUID) -> Check:
@@ -45,8 +82,17 @@ class ChecksRepository(BaseRepository[Check]):
             options=[
                 joinedload(Check.details),
                 joinedload(Check.details).joinedload(CheckDetail.invoice),
+                joinedload(Check.details)
+                .joinedload(CheckDetail.invoice)
+                .joinedload(Invoice.order),
                 joinedload(Check.details).joinedload(CheckDetail.credit),
+                joinedload(Check.details)
+                .joinedload(CheckDetail.credit)
+                .joinedload(Credit.order),
                 joinedload(Check.details).joinedload(CheckDetail.adjustment),
+                joinedload(Check.details)
+                .joinedload(CheckDetail.adjustment)
+                .joinedload(Adjustment.customer),
                 joinedload(Check.factory),
                 lazyload("*"),
             ],
