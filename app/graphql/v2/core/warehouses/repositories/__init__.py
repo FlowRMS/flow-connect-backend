@@ -3,8 +3,8 @@
 from app.graphql.v2.core.warehouses.repositories.warehouses_repository import (
     WarehouseMembersRepository,
     WarehouseSettingsRepository,
-    WarehouseStructureRepository,
     WarehousesRepository,
+    WarehouseStructureRepository,
 )
 
 __all__ = [

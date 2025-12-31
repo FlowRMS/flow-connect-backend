@@ -9,17 +9,15 @@ import strawberry
 from aioinject import Injected
 from commons.db.v6 import ShippingCarrier
 from commons.db.v6.core.addresses.address import AddressSourceTypeEnum, AddressTypeEnum
+from commons.db.v6.crm.links.entity_type import EntityType
 from strawberry.scalars import JSON
 
 from app.core.db.adapters.dto import DTOMixin
 from app.graphql.addresses.services.address_service import AddressService
 from app.graphql.addresses.strawberry.address_response import AddressResponse
-from app.graphql.inject import inject
-
-from commons.db.v6.crm.links.entity_type import EntityType
-
 from app.graphql.contacts.services.contacts_service import ContactsService
 from app.graphql.contacts.strawberry.contact_response import ContactResponse
+from app.graphql.inject import inject
 from app.graphql.links.services.links_service import LinksService
 
 

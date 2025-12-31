@@ -3,9 +3,8 @@
 from decimal import Decimal
 
 import strawberry
-from strawberry.scalars import JSON
-
 from commons.db.v6 import ShippingCarrier
+from strawberry.scalars import JSON
 
 from app.core.strawberry.inputs import BaseInputGQL
 

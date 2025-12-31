@@ -3,7 +3,6 @@
 from decimal import Decimal
 
 import strawberry
-
 from commons.db.v6 import ContainerType
 
 from app.core.strawberry.inputs import BaseInputGQL
