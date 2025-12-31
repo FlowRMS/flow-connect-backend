@@ -21,3 +21,8 @@ class ConflictError(BaseException):
 class ValidationError(BaseException):
     def __init__(self, message: str) -> None:
         super().__init__(message)
+
+
+class UnauthorizedError(BaseException):
+    def __init__(self, message: str) -> None:
+        super().__init__(message)

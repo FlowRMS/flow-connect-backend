@@ -1,4 +1,4 @@
-from typing import Any
+from typing import Any, override
 from uuid import UUID
 
 from commons.db.v6 import RbacResourceEnum, User
@@ -22,12 +22,15 @@ from app.graphql.checks.processors.validate_check_status_processor import (
 from app.graphql.checks.strawberry.check_landing_page_response import (
     CheckLandingPageResponse,
 )
+from app.graphql.v2.rbac.services.rbac_filter_service import RbacFilterService
+from app.graphql.v2.rbac.strategies.base import RbacFilterStrategy
+from app.graphql.v2.rbac.strategies.created_by_filter import CreatedByFilterStrategy
 
 
 class ChecksRepository(BaseRepository[Check]):
     entity_type = EntityType.CHECK
     landing_model = CheckLandingPageResponse
-    rbac_resource: RbacResourceEnum | None = None
+    rbac_resource: RbacResourceEnum | None = RbacResourceEnum.CHECK
 
     def __init__(
         self,
@@ -36,17 +39,23 @@ class ChecksRepository(BaseRepository[Check]):
         processor_executor: ProcessorExecutor,
         validate_status_processor: ValidateCheckStatusProcessor,
         post_check_processor: PostCheckProcessor,
+        rbac_filter_service: RbacFilterService,
     ) -> None:
         super().__init__(
             session,
             context_wrapper,
             Check,
+            rbac_filter_service,
             processor_executor=processor_executor,
             processor_executor_classes=[
                 validate_status_processor,
                 post_check_processor,
             ],
         )
+
+    @override
+    def get_rbac_filter_strategy(self) -> RbacFilterStrategy | None:
+        return CreatedByFilterStrategy(RbacResourceEnum.CHECK, Check)
 
     def paginated_stmt(self) -> Select[Any]:
         return (

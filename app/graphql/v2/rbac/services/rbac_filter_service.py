@@ -100,7 +100,6 @@ class RbacFilterService:
             The filtered select statement (or empty result if no access)
         """
         option = await self.get_privilege_option(roles, strategy.resource, privilege)
-        print(f"Option: {option.name if option else 'None'}")
 
         if option is None:
             return stmt
