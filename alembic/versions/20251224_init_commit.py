@@ -170,15 +170,16 @@ def upgrade() -> None:
         schema="pyuser",
     )
 
-    # Seed default RBAC role settings
-    # Roles: OWNER=1, ADMINISTRATOR=2, INSIDE_REP=3, OUTSIDE_REP=4
     op.execute(
         """
         INSERT INTO pyuser.rbac_role_settings (id, role, commission) VALUES
         (gen_random_uuid(), 1, true),   -- OWNER: has commission
         (gen_random_uuid(), 2, true),   -- ADMINISTRATOR: has commission
         (gen_random_uuid(), 3, true),   -- INSIDE_REP: has commission
-        (gen_random_uuid(), 4, false);  -- OUTSIDE_REP: no commission
+        (gen_random_uuid(), 4, false),  -- OUTSIDE_REP: no commission
+        (gen_random_uuid(), 5, false),  -- WAREHOUSE_MANAGER: no commission
+        (gen_random_uuid(), 6, false),  -- WAREHOUSE_EMPLOYEE: no commission
+        (gen_random_uuid(), 7, false);  -- DRIVER: no commission
         """
     )
 
