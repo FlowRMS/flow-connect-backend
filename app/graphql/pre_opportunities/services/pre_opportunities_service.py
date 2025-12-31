@@ -51,8 +51,12 @@ class PreOpportunitiesService:
         ):
             raise NameAlreadyExistsError(pre_opportunity_input.entity_number)
 
-        pre_opportunity = pre_opportunity_input.to_orm_model()
-        return await self.repository.create_with_balance(pre_opportunity)
+        pre_opportunity = await self.repository.create_with_balance(
+            pre_opportunity_input.to_orm_model()
+        )
+        return await self.get_pre_opportunity(
+            pre_opportunity.id,
+        )
 
     async def update_pre_opportunity(
         self, pre_opportunity_input: PreOpportunityInput
@@ -71,7 +75,10 @@ class PreOpportunitiesService:
             raise ValueError("ID must be provided for update")
 
         pre_opportunity.id = pre_opportunity_input.id
-        return await self.repository.update_with_balance(pre_opportunity)
+        _ = await self.repository.update_with_balance(pre_opportunity)
+        return await self.get_pre_opportunity(
+            pre_opportunity.id,
+        )
 
     async def get_pre_opportunity(
         self, pre_opportunity_id: UUID | str
