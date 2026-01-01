@@ -51,3 +51,14 @@ class InvoicesQueries:
         return InvoiceLiteResponse.from_orm_model_list(
             await service.search_open_invoices(factory_id, start_from)
         )
+
+    @strawberry.field
+    @inject
+    async def invoices_by_order_id(
+        self,
+        service: Injected[InvoiceService],
+        order_id: UUID,
+    ) -> list[InvoiceLiteResponse]:
+        return InvoiceLiteResponse.from_orm_model_list(
+            await service.find_invoices_by_order_id(order_id)
+        )

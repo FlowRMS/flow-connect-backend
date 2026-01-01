@@ -209,3 +209,13 @@ class InvoicesRepository(BaseRepository[Invoice]):
         )
         result = await self.session.execute(stmt)
         return list(result.scalars().all())
+
+    async def find_by_order_id(self, order_id: UUID) -> list[Invoice]:
+        stmt = (
+            select(Invoice)
+            .options(lazyload("*"))
+            .where(Invoice.order_id == order_id)
+            .order_by(Invoice.entity_date.desc())
+        )
+        result = await self.session.execute(stmt)
+        return list(result.scalars().all())

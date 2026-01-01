@@ -1322,6 +1322,7 @@ type Mutation {
   createInvoice(input: InvoiceInput!): InvoiceResponse!
   updateInvoice(input: InvoiceInput!): InvoiceResponse!
   deleteInvoice(id: UUID!): Boolean!
+  createInvoiceFromOrder(orderId: UUID!, invoiceNumber: String!, factoryId: UUID!, orderDetailIds: [UUID!] = null, dueDate: Date = null): InvoiceResponse!
   createJob(input: JobInput!): JobType!
   updateJob(id: UUID!, input: JobInput!): JobType!
   deleteJob(id: UUID!): Boolean!
@@ -2102,6 +2103,7 @@ type Query {
   invoice(id: UUID!): InvoiceResponse!
   invoiceSearch(searchTerm: String!, limit: Int! = 20, openOnly: Boolean! = false, unlockedOnly: Boolean! = false): [InvoiceLiteResponse!]!
   searchOpenInvoices(factoryId: UUID!, startFrom: Date!): [InvoiceLiteResponse!]!
+  invoicesByOrderId(orderId: UUID!): [InvoiceLiteResponse!]!
   job(id: UUID!): JobType!
   jobStatuses: [JobStatusType!]!
   jobRelatedEntities(jobId: UUID!): JobRelatedEntitiesResponse!
