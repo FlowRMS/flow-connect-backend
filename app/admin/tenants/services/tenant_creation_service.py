@@ -177,6 +177,7 @@ class TenantCreationService:
                 email=email,
                 workos_user_id=support_user.id,
                 role=RbacRoleEnum.ADMINISTRATOR,
+                external_id=support_user.external_id,
             )
         return TenantCreationResult(
             tenant=tenant,
