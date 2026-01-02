@@ -16,6 +16,9 @@ from app.graphql.v2.core.shipment_requests.services.shipment_request_service imp
 from app.graphql.v2.core.shipment_requests.strawberry.shipment_request_response import (
     ShipmentRequestResponse,
 )
+from app.graphql.v2.core.shipment_requests.strawberry.shipment_request_input import (
+    CreateShipmentRequestInput,
+)
 
 
 @strawberry.type
@@ -35,3 +38,22 @@ class ShipmentRequestMutations:
             notes=notes,
         )
         return ShipmentRequestResponse.from_orm_model(updated_request)
+
+    @strawberry.mutation
+    @inject
+    async def create_shipment_request(
+        self,
+        service: Injected[ShipmentRequestService],
+        input: CreateShipmentRequestInput,
+    ) -> ShipmentRequestResponse:
+        request = await service.create(
+            warehouse_id=input.warehouse_id,
+            factory_id=input.factory_id,
+            request_date=input.request_date,
+            priority=input.priority,
+            method=input.method,
+            status=input.status,
+            notes=input.notes,
+            items=input.items,
+        )
+        return ShipmentRequestResponse.from_orm_model(request)

@@ -22,9 +22,10 @@ class BackorderQueries:
         limit: int = 100,
         offset: int = 0,
     ) -> list[BackorderResponse]:
-        return await service.get_backorders(
+        backorder_data = await service.get_backorders(
             customer_id=customer_id,
             product_id=product_id,
             limit=limit,
             offset=offset,
         )
+        return BackorderResponse.from_orm_model_list(backorder_data)

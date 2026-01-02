@@ -1,5 +1,7 @@
 from uuid import UUID
 
+from decimal import Decimal
+import strawberry
 from commons.db.v6.warehouse.inventory.inventory_item import InventoryItem
 
 from app.errors.common_errors import NotFoundError
@@ -61,3 +63,36 @@ class InventoryItemService:
             await self.inventory_repository.update(inventory)
 
         return await self.item_repository.delete(item_id)
+
+    async def update_item(
+        self,
+        item_id: UUID,
+        location_id: UUID | None | object = strawberry.UNSET,
+        quantity: Decimal | None | object = strawberry.UNSET,
+        status: object | None = strawberry.UNSET,  # Type hint object for UNSET
+    ) -> InventoryItem:
+        item = await self.get_by_id(item_id)
+        
+        # Calculate quantity diff if changing
+        quantity_diff = Decimal(0)
+        if quantity is not strawberry.UNSET and quantity is not None:
+             # Check type at runtime to be safe if strawberry allows it
+             qty_decimal = Decimal(quantity) # type: ignore
+             quantity_diff = qty_decimal - item.quantity
+             item.quantity = qty_decimal
+
+        if location_id is not strawberry.UNSET:
+            item.location_id = location_id # type: ignore
+
+        if status is not strawberry.UNSET:
+             item.status = status # type: ignore
+
+        # Update Inventory stats if quantity changed
+        if quantity_diff != 0:
+            inventory = await self.inventory_repository.get_by_id(item.inventory_id)
+            if inventory:
+                inventory.total_quantity += quantity_diff
+                inventory.available_quantity += quantity_diff
+                await self.inventory_repository.update(inventory)
+
+        return await self.item_repository.update(item)

@@ -3,6 +3,7 @@ from decimal import Decimal
 from uuid import UUID
 
 import strawberry
+
 from commons.db.v6.warehouse.inventory import InventoryItem, InventoryItemStatus
 
 
@@ -24,3 +25,13 @@ class AddInventoryItemInput:
             status=self.status,
             received_date=self.received_date,
         )
+
+
+@strawberry.input
+class UpdateInventoryItemInput:
+    id: UUID
+    location_id: UUID | None = strawberry.UNSET
+    quantity: Decimal | None = strawberry.UNSET
+    lot_number: str | None = strawberry.UNSET
+    status: InventoryItemStatus | None = strawberry.UNSET
+    received_date: datetime | None = strawberry.UNSET
