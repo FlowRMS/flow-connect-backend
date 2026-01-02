@@ -2355,6 +2355,7 @@ type QuoteLandingPage implements LandingPageInterfaceBase {
   entityDate: Date!
   expDate: Date
   total: Decimal!
+  commission: Decimal
   published: Boolean!
 }
 

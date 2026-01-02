@@ -116,6 +116,7 @@ class QuotesRepository(BaseRepository[Quote]):
                 Quote.entity_date,
                 Quote.exp_date,
                 QuoteBalance.total.label("total"),
+                QuoteBalance.commission.label("commission"),
                 Quote.published,
                 user_ids_expr,
             )
