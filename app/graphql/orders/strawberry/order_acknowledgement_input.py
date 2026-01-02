@@ -18,7 +18,6 @@ class OrderAcknowledgementInput(BaseInputGQL[OrderAcknowledgement]):
     quantity: Decimal
 
     id: UUID | None = strawberry.UNSET
-    ship_date: date | None = strawberry.UNSET
     creation_type: CreationType = strawberry.UNSET
 
     def to_orm_model(self) -> OrderAcknowledgement:
@@ -34,6 +33,5 @@ class OrderAcknowledgementInput(BaseInputGQL[OrderAcknowledgement]):
             order_acknowledgement_number=self.order_acknowledgement_number,
             entity_date=self.entity_date,
             quantity=self.quantity,
-            ship_date=self.optional_field(self.ship_date),
             creation_type=creation_type,
         )

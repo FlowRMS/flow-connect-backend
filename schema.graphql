@@ -1548,7 +1548,6 @@ input OrderAcknowledgementInput {
   entityDate: Date!
   quantity: Decimal!
   id: UUID
-  shipDate: Date
   creationType: CreationType!
 }
 
@@ -1558,7 +1557,6 @@ type OrderAcknowledgementLandingPage implements LandingPageInterfaceBase {
   createdBy: String!
   userIds: [UUID!]!
   orderAcknowledgementNumber: String!
-  entityDate: Date!
   quantity: Decimal!
   shipDate: Date
   creationType: CreationType!
@@ -1579,7 +1577,6 @@ type OrderAcknowledgementResponse {
   orderAcknowledgementNumber: String!
   entityDate: Date!
   quantity: Decimal!
-  shipDate: Date
   creationType: CreationType!
 }
 

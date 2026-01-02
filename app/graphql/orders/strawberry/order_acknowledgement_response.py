@@ -21,7 +21,6 @@ class OrderAcknowledgementResponse(DTOMixin[OrderAcknowledgement]):
     order_acknowledgement_number: str
     entity_date: date
     quantity: Decimal
-    ship_date: date | None
     creation_type: CreationType
 
     @classmethod
@@ -36,6 +35,5 @@ class OrderAcknowledgementResponse(DTOMixin[OrderAcknowledgement]):
             order_acknowledgement_number=model.order_acknowledgement_number,
             entity_date=model.entity_date,
             quantity=model.quantity,
-            ship_date=model.ship_date,
             creation_type=model.creation_type,
         )
