@@ -20,7 +20,6 @@ from app.graphql.v2.core.warehouses.strawberry.warehouse_location_input import (
     WarehouseLocationInput,
 )
 
-
 # Level hierarchy - each level can only have a parent of the previous level
 LEVEL_HIERARCHY = {
     WarehouseStructureCode.SECTION: None,  # Sections have no parent
@@ -54,27 +53,21 @@ class WarehouseLocationService:
             raise NotFoundError(f"Location with id {location_id} not found")
         return location
 
-    async def list_by_warehouse(
-        self, warehouse_id: UUID
-    ) -> list[WarehouseLocation]:
+    async def list_by_warehouse(self, warehouse_id: UUID) -> list[WarehouseLocation]:
         """Get all locations for a warehouse (flat list)."""
         # Verify warehouse exists
         if not await self.warehouse_repository.exists(warehouse_id):
             raise NotFoundError(f"Warehouse with id {warehouse_id} not found")
         return await self.location_repository.list_by_warehouse(warehouse_id)
 
-    async def get_location_tree(
-        self, warehouse_id: UUID
-    ) -> list[WarehouseLocation]:
+    async def get_location_tree(self, warehouse_id: UUID) -> list[WarehouseLocation]:
         """Get location tree for a warehouse (root locations with children loaded)."""
         # Verify warehouse exists
         if not await self.warehouse_repository.exists(warehouse_id):
             raise NotFoundError(f"Warehouse with id {warehouse_id} not found")
         return await self.location_repository.get_root_locations(warehouse_id)
 
-    async def create(
-        self, input: WarehouseLocationInput
-    ) -> WarehouseLocation:
+    async def create(self, input: WarehouseLocationInput) -> WarehouseLocation:
         """Create a new location."""
         # Verify warehouse exists
         if not await self.warehouse_repository.exists(input.warehouse_id):
@@ -98,7 +91,9 @@ class WarehouseLocationService:
             y=Decimal(str(input.y)) if input.y is not None else None,
             width=Decimal(str(input.width)) if input.width is not None else None,
             height=Decimal(str(input.height)) if input.height is not None else None,
-            rotation=Decimal(str(input.rotation)) if input.rotation is not None else None,
+            rotation=Decimal(str(input.rotation))
+            if input.rotation is not None
+            else None,
         )
         return await self.location_repository.create(location)
 
@@ -130,7 +125,9 @@ class WarehouseLocationService:
             y=Decimal(str(input.y)) if input.y is not None else None,
             width=Decimal(str(input.width)) if input.width is not None else None,
             height=Decimal(str(input.height)) if input.height is not None else None,
-            rotation=Decimal(str(input.rotation)) if input.rotation is not None else None,
+            rotation=Decimal(str(input.rotation))
+            if input.rotation is not None
+            else None,
         )
         location.id = location_id
         return await self.location_repository.update(location)
@@ -192,13 +189,23 @@ class WarehouseLocationService:
                     name=loc_input.name,
                     code=loc_input.code,
                     description=loc_input.description,
-                    is_active=loc_input.is_active if loc_input.is_active is not None else True,
-                    sort_order=loc_input.sort_order if loc_input.sort_order is not None else 0,
+                    is_active=loc_input.is_active
+                    if loc_input.is_active is not None
+                    else True,
+                    sort_order=loc_input.sort_order
+                    if loc_input.sort_order is not None
+                    else 0,
                     x=Decimal(str(loc_input.x)) if loc_input.x is not None else None,
                     y=Decimal(str(loc_input.y)) if loc_input.y is not None else None,
-                    width=Decimal(str(loc_input.width)) if loc_input.width is not None else None,
-                    height=Decimal(str(loc_input.height)) if loc_input.height is not None else None,
-                    rotation=Decimal(str(loc_input.rotation)) if loc_input.rotation is not None else None,
+                    width=Decimal(str(loc_input.width))
+                    if loc_input.width is not None
+                    else None,
+                    height=Decimal(str(loc_input.height))
+                    if loc_input.height is not None
+                    else None,
+                    rotation=Decimal(str(loc_input.rotation))
+                    if loc_input.rotation is not None
+                    else None,
                 )
                 location.id = loc_input.id
                 updated = await self.location_repository.update(location)
@@ -215,13 +222,23 @@ class WarehouseLocationService:
                     name=loc_input.name,
                     code=loc_input.code,
                     description=loc_input.description,
-                    is_active=loc_input.is_active if loc_input.is_active is not None else True,
-                    sort_order=loc_input.sort_order if loc_input.sort_order is not None else 0,
+                    is_active=loc_input.is_active
+                    if loc_input.is_active is not None
+                    else True,
+                    sort_order=loc_input.sort_order
+                    if loc_input.sort_order is not None
+                    else 0,
                     x=Decimal(str(loc_input.x)) if loc_input.x is not None else None,
                     y=Decimal(str(loc_input.y)) if loc_input.y is not None else None,
-                    width=Decimal(str(loc_input.width)) if loc_input.width is not None else None,
-                    height=Decimal(str(loc_input.height)) if loc_input.height is not None else None,
-                    rotation=Decimal(str(loc_input.rotation)) if loc_input.rotation is not None else None,
+                    width=Decimal(str(loc_input.width))
+                    if loc_input.width is not None
+                    else None,
+                    height=Decimal(str(loc_input.height))
+                    if loc_input.height is not None
+                    else None,
+                    rotation=Decimal(str(loc_input.rotation))
+                    if loc_input.rotation is not None
+                    else None,
                 )
                 created = await self.location_repository.create(location)
                 result.append(created)
@@ -232,7 +249,11 @@ class WarehouseLocationService:
         # Now process locations with temp_parent_id (children of newly created parents)
         for loc_input in locations_with_temp_parent:
             # Resolve temp_parent_id to real UUID
-            real_parent_id = temp_id_to_real_id.get(loc_input.temp_parent_id)
+            real_parent_id = (
+                temp_id_to_real_id.get(loc_input.temp_parent_id)
+                if loc_input.temp_parent_id
+                else None
+            )
             if not real_parent_id:
                 # Parent wasn't found - this shouldn't happen if frontend sends data correctly
                 # Fall back to null parent
@@ -248,13 +269,23 @@ class WarehouseLocationService:
                     name=loc_input.name,
                     code=loc_input.code,
                     description=loc_input.description,
-                    is_active=loc_input.is_active if loc_input.is_active is not None else True,
-                    sort_order=loc_input.sort_order if loc_input.sort_order is not None else 0,
+                    is_active=loc_input.is_active
+                    if loc_input.is_active is not None
+                    else True,
+                    sort_order=loc_input.sort_order
+                    if loc_input.sort_order is not None
+                    else 0,
                     x=Decimal(str(loc_input.x)) if loc_input.x is not None else None,
                     y=Decimal(str(loc_input.y)) if loc_input.y is not None else None,
-                    width=Decimal(str(loc_input.width)) if loc_input.width is not None else None,
-                    height=Decimal(str(loc_input.height)) if loc_input.height is not None else None,
-                    rotation=Decimal(str(loc_input.rotation)) if loc_input.rotation is not None else None,
+                    width=Decimal(str(loc_input.width))
+                    if loc_input.width is not None
+                    else None,
+                    height=Decimal(str(loc_input.height))
+                    if loc_input.height is not None
+                    else None,
+                    rotation=Decimal(str(loc_input.rotation))
+                    if loc_input.rotation is not None
+                    else None,
                 )
                 location.id = loc_input.id
                 updated = await self.location_repository.update(location)
@@ -270,13 +301,23 @@ class WarehouseLocationService:
                     name=loc_input.name,
                     code=loc_input.code,
                     description=loc_input.description,
-                    is_active=loc_input.is_active if loc_input.is_active is not None else True,
-                    sort_order=loc_input.sort_order if loc_input.sort_order is not None else 0,
+                    is_active=loc_input.is_active
+                    if loc_input.is_active is not None
+                    else True,
+                    sort_order=loc_input.sort_order
+                    if loc_input.sort_order is not None
+                    else 0,
                     x=Decimal(str(loc_input.x)) if loc_input.x is not None else None,
                     y=Decimal(str(loc_input.y)) if loc_input.y is not None else None,
-                    width=Decimal(str(loc_input.width)) if loc_input.width is not None else None,
-                    height=Decimal(str(loc_input.height)) if loc_input.height is not None else None,
-                    rotation=Decimal(str(loc_input.rotation)) if loc_input.rotation is not None else None,
+                    width=Decimal(str(loc_input.width))
+                    if loc_input.width is not None
+                    else None,
+                    height=Decimal(str(loc_input.height))
+                    if loc_input.height is not None
+                    else None,
+                    rotation=Decimal(str(loc_input.rotation))
+                    if loc_input.rotation is not None
+                    else None,
                 )
                 created = await self.location_repository.create(location)
                 result.append(created)
@@ -302,8 +343,7 @@ class WarehouseLocationService:
             # This is a section - should have no parent
             if parent_id is not None:
                 raise ValidationError(
-                    f"Sections cannot have a parent. "
-                    f"Got parent_id={parent_id}"
+                    f"Sections cannot have a parent. Got parent_id={parent_id}"
                 )
         else:
             # Non-section levels must have a parent
