@@ -1991,14 +1991,14 @@ type ProductCategoryLiteResponse {
   id: UUID!
   title: String!
   factoryId: UUID
-  commissionRate: Decimal!
+  commissionRate: Decimal
 }
 
 type ProductCategoryResponse {
   id: UUID!
   title: String!
   factoryId: UUID
-  commissionRate: Decimal!
+  commissionRate: Decimal
   parent: ProductCategoryLiteResponse
   grandparent: ProductCategoryLiteResponse
 }
@@ -2623,6 +2623,7 @@ enum SourceType {
   SHIPPING_CARRIER
   CONTAINER_TYPE
   WAREHOUSE
+  ORDER_ACKNOWLEDGEMENT
 }
 
 type SpecSheetResponse {
