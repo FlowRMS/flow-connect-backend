@@ -839,6 +839,18 @@ type FileLandingPage implements LandingPageInterfaceBase {
   folderId: UUID
 }
 
+type FileLiteResponse {
+  id: UUID!
+  createdAt: datetime!
+  fileName: String!
+  filePath: String!
+  fileSize: Int!
+  fileType: FileTypeEnum
+  fileSha: String
+  archived: Boolean!
+  folderId: UUID
+}
+
 type FileResponse {
   id: UUID!
   createdAt: datetime!
@@ -1423,7 +1435,7 @@ type Mutation {
   updateWarehouseSettings(input: WarehouseSettingsInput!): WarehouseSettingsResponse!
   updateWarehouseStructure(warehouseId: UUID!, levels: [WarehouseStructureLevelInput!]!): [WarehouseStructureResponse!]!
   uploadFile(input: FileUploadInput!): FileResponse!
-  uploadFiles(input: MultiFileUploadInput!): [FileResponse!]!
+  uploadFiles(input: MultiFileUploadInput!): [FileLiteResponse!]!
   archiveFile(fileId: UUID!): Boolean!
   deleteFile(fileId: UUID!): Boolean!
   updateRbacGrid(rbacGrid: [RbacGridInput!]!): [RbacGridResponse!]!

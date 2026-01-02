@@ -43,7 +43,7 @@ def file_type_to_enum(file_type: FileType | None) -> FileTypeEnum | None:
 
 
 @strawberry.type
-class FileResponse(DTOMixin[File]):
+class FileLiteResponse(DTOMixin[File]):
     _instance: strawberry.Private[File]
     id: UUID
     created_at: datetime
@@ -70,6 +70,9 @@ class FileResponse(DTOMixin[File]):
             folder_id=model.folder_id,
         )
 
+
+@strawberry.type
+class FileResponse(FileLiteResponse):
     @strawberry.field
     def created_by(self) -> UserResponse:
         return UserResponse.from_orm_model(self._instance.created_by)
