@@ -26,6 +26,7 @@ class ShipmentRequestService:
         self,
         repository: ShipmentRequestRepository,
     ) -> None:
+        super().__init__()
         self.repository = repository
 
     async def list_by_warehouse(
@@ -107,5 +108,5 @@ class ShipmentRequestService:
         # Format: SR-YYYY-XXXX (last 4 of UUID/Random) to avoid DB lock complexity for now
         # OR count existing requests.
         # Let's assume unique enough:
-        unique_suffix = str(UUID(int=uuid.uuid4().int))[:8].upper()
+        unique_suffix = uuid.uuid4().hex[:8].upper()
         return f"SR-{year}-{unique_suffix}"

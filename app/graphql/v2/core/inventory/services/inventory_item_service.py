@@ -19,6 +19,7 @@ class InventoryItemService:
         item_repository: InventoryItemRepository,
         inventory_repository: InventoryRepository,
     ) -> None:
+        super().__init__()
         self.item_repository = item_repository
         self.inventory_repository = inventory_repository
 
@@ -37,7 +38,7 @@ class InventoryItemService:
 
         inventory.total_quantity += item.quantity
         inventory.available_quantity += item.quantity
-        await self.inventory_repository.update(inventory)
+        _ = await self.inventory_repository.update(inventory)
 
         return created_item
 
@@ -60,7 +61,7 @@ class InventoryItemService:
         if inventory:
             inventory.total_quantity -= item.quantity
             inventory.available_quantity -= item.quantity
-            await self.inventory_repository.update(inventory)
+            _ = await self.inventory_repository.update(inventory)
 
         return await self.item_repository.delete(item_id)
 
@@ -93,6 +94,6 @@ class InventoryItemService:
             if inventory:
                 inventory.total_quantity += quantity_diff
                 inventory.available_quantity += quantity_diff
-                await self.inventory_repository.update(inventory)
+                _ = await self.inventory_repository.update(inventory)
 
         return await self.item_repository.update(item)

@@ -3,9 +3,6 @@ from uuid import UUID
 import strawberry
 from aioinject import Injected
 from commons.db.v6.warehouse.shipment_requests import (
-    ShipmentMethod,
-    ShipmentPriority,
-    ShipmentRequest,
     ShipmentRequestStatus,
 )
 
