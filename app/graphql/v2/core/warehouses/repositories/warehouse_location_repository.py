@@ -40,9 +40,7 @@ class WarehouseLocationRepository(BaseRepository[WarehouseLocation]):
         result = await self.session.execute(stmt)
         return result.scalar_one_or_none()
 
-    async def list_by_warehouse(
-        self, warehouse_id: UUID
-    ) -> list[WarehouseLocation]:
+    async def list_by_warehouse(self, warehouse_id: UUID) -> list[WarehouseLocation]:
         """Get all locations for a warehouse (flat list)."""
         stmt = (
             select(WarehouseLocation)
@@ -70,9 +68,7 @@ class WarehouseLocationRepository(BaseRepository[WarehouseLocation]):
         result = await self.session.execute(stmt)
         return list(result.scalars().all())
 
-    async def get_root_locations(
-        self, warehouse_id: UUID
-    ) -> list[WarehouseLocation]:
+    async def get_root_locations(self, warehouse_id: UUID) -> list[WarehouseLocation]:
         """Get top-level locations (sections) for a warehouse."""
         stmt = (
             select(WarehouseLocation)

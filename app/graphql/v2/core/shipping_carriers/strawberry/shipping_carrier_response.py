@@ -2,7 +2,7 @@
 
 from datetime import datetime
 from decimal import Decimal
-from typing import Self
+from typing import Self, cast
 from uuid import UUID
 
 import strawberry
@@ -64,7 +64,9 @@ class ShippingCarrierResponse(DTOMixin[ShippingCarrier]):
             api_key=model.api_key,
             api_endpoint=model.api_endpoint,
             tracking_url_template=model.tracking_url_template,
-            service_types=model.service_types,
+            service_types=cast(JSON, model.service_types)
+            if model.service_types
+            else None,
             default_service_type=model.default_service_type,
             max_weight=model.max_weight,
             max_dimensions=model.max_dimensions,
