@@ -332,8 +332,8 @@ async def migrate_product_uoms(source: asyncpg.Connection, dest: asyncpg.Connect
     await dest.executemany(
         """
         INSERT INTO pycore.product_uoms (
-            id, title, description, creation_type, created_by_id, created_at, division_factor
-        ) VALUES ($1, $2, $3, $4, $5, $6, $7)
+            id, title, description, creation_type, created_at, division_factor
+        ) VALUES ($1, $2, $3, $4, $5, $6)
         ON CONFLICT (id) DO UPDATE SET
             title = EXCLUDED.title,
             description = EXCLUDED.description,
@@ -345,7 +345,6 @@ async def migrate_product_uoms(source: asyncpg.Connection, dest: asyncpg.Connect
             u["title"],
             u["description"],
             u["creation_type"],
-            u["created_by_id"],
             u["created_at"],
             u["division_factor"],
         ) for u in uoms],
@@ -1028,7 +1027,7 @@ async def run_migration(config: MigrationConfig) -> dict[str, int]:
     logger.info("Connecting to databases...")
 
     # 10 minute timeout for connections
-    connection_timeout = 1_000
+    connection_timeout = 10_000
 
     source = await asyncpg.connect(config.source_dsn, timeout=connection_timeout)
     dest = await asyncpg.connect(config.dest_dsn, timeout=connection_timeout)
@@ -1036,7 +1035,7 @@ async def run_migration(config: MigrationConfig) -> dict[str, int]:
     results: dict[str, int] = {}
 
     try:
-        # # Order matters due to foreign key dependencies
+        # Order matters due to foreign key dependencies
         results["users"] = await migrate_users(source, dest)
         results["folders"] = await migrate_folders(source, dest)
         results["files"] = await migrate_files(source, dest)

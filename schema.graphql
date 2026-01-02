@@ -753,8 +753,8 @@ type FactoryLandingPage implements LandingPageInterfaceBase {
   phone: String
   leadTime: Int
   paymentTerms: Int
-  baseCommissionRate: Decimal!
-  commissionDiscountRate: Decimal!
+  baseCommissionRate: Decimal
+  commissionDiscountRate: Decimal
   overallDiscountRate: Decimal!
   splitRates: [String!]!
 }
@@ -1304,6 +1304,7 @@ type Mutation {
   createCheck(input: CheckInput!): CheckResponse!
   updateCheck(input: CheckInput!): CheckResponse!
   deleteCheck(id: UUID!): Boolean!
+  unpostCheck(checkId: UUID!): CheckResponse!
   createCompany(input: CompanyInput!): CompanyResponse!
   deleteCompany(id: UUID!): Boolean!
   updateCompany(id: UUID!, input: CompanyInput!): CompanyResponse!
