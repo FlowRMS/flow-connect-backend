@@ -14,7 +14,7 @@ class ProductCategoryLiteResponse(DTOMixin[ProductCategory]):
     id: UUID
     title: str
     factory_id: UUID | None
-    commission_rate: Decimal
+    commission_rate: Decimal | None
 
     @classmethod
     def from_orm_model(cls, model: ProductCategory) -> Self:

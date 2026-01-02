@@ -839,6 +839,18 @@ type FileLandingPage implements LandingPageInterfaceBase {
   folderId: UUID
 }
 
+type FileLiteResponse {
+  id: UUID!
+  createdAt: datetime!
+  fileName: String!
+  filePath: String!
+  fileSize: Int!
+  fileType: FileTypeEnum
+  fileSha: String
+  archived: Boolean!
+  folderId: UUID
+}
+
 type FileResponse {
   id: UUID!
   createdAt: datetime!
@@ -1423,7 +1435,7 @@ type Mutation {
   updateWarehouseSettings(input: WarehouseSettingsInput!): WarehouseSettingsResponse!
   updateWarehouseStructure(warehouseId: UUID!, levels: [WarehouseStructureLevelInput!]!): [WarehouseStructureResponse!]!
   uploadFile(input: FileUploadInput!): FileResponse!
-  uploadFiles(input: MultiFileUploadInput!): [FileResponse!]!
+  uploadFiles(input: MultiFileUploadInput!): [FileLiteResponse!]!
   archiveFile(fileId: UUID!): Boolean!
   deleteFile(fileId: UUID!): Boolean!
   updateRbacGrid(rbacGrid: [RbacGridInput!]!): [RbacGridResponse!]!
@@ -1548,7 +1560,6 @@ input OrderAcknowledgementInput {
   entityDate: Date!
   quantity: Decimal!
   id: UUID
-  shipDate: Date
   creationType: CreationType!
 }
 
@@ -1558,7 +1569,6 @@ type OrderAcknowledgementLandingPage implements LandingPageInterfaceBase {
   createdBy: String!
   userIds: [UUID!]!
   orderAcknowledgementNumber: String!
-  entityDate: Date!
   quantity: Decimal!
   shipDate: Date
   creationType: CreationType!
@@ -1579,7 +1589,6 @@ type OrderAcknowledgementResponse {
   orderAcknowledgementNumber: String!
   entityDate: Date!
   quantity: Decimal!
-  shipDate: Date
   creationType: CreationType!
 }
 
@@ -1787,6 +1796,7 @@ type OrderResponse {
   soldToCustomer: CustomerLiteResponse!
   billToCustomer: CustomerLiteResponse
   balance: OrderBalanceResponse!
+  factory: FactoryLiteResponse!
   details: [OrderDetailResponse!]!
   job: JobLiteType
 }
@@ -1982,14 +1992,14 @@ type ProductCategoryLiteResponse {
   id: UUID!
   title: String!
   factoryId: UUID
-  commissionRate: Decimal!
+  commissionRate: Decimal
 }
 
 type ProductCategoryResponse {
   id: UUID!
   title: String!
   factoryId: UUID
-  commissionRate: Decimal!
+  commissionRate: Decimal
   parent: ProductCategoryLiteResponse
   grandparent: ProductCategoryLiteResponse
 }
@@ -2050,7 +2060,7 @@ type ProductLandingPage implements LandingPageInterfaceBase {
   userIds: [UUID!]!
   factoryPartNumber: String!
   unitPrice: Decimal!
-  defaultCommissionRate: Decimal!
+  defaultCommissionRate: Decimal
   published: Boolean!
   approvalNeeded: Boolean!
   description: String
@@ -2358,6 +2368,7 @@ type QuoteLandingPage implements LandingPageInterfaceBase {
   entityDate: Date!
   expDate: Date
   total: Decimal!
+  commission: Decimal
   published: Boolean!
 }
 
@@ -2613,6 +2624,7 @@ enum SourceType {
   SHIPPING_CARRIER
   CONTAINER_TYPE
   WAREHOUSE
+  ORDER_ACKNOWLEDGEMENT
 }
 
 type SpecSheetResponse {

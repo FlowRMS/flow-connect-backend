@@ -71,7 +71,9 @@ class OrderService:
         if await self.repository.order_number_exists(order_number):
             raise NameAlreadyExistsError(order_number)
 
-        order = OrderFactory.from_quote(quote, order_number, factory_id, due_date)
+        order = OrderFactory.from_quote(
+            quote, order_number, factory_id, due_date, quote_detail_ids
+        )
         created_order = await self.repository.create_with_balance(order)
 
         if quote_detail_ids:

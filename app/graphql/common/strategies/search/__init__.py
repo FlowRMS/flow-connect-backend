@@ -33,6 +33,9 @@ from app.graphql.common.strategies.search.invoice_search_strategy import (
 )
 from app.graphql.common.strategies.search.job_search_strategy import JobSearchStrategy
 from app.graphql.common.strategies.search.note_search_strategy import NoteSearchStrategy
+from app.graphql.common.strategies.search.order_acknowledgement_search_strategy import (
+    OrderAcknowledgementSearchStrategy,
+)
 from app.graphql.common.strategies.search.order_search_strategy import (
     OrderSearchStrategy,
 )
@@ -70,6 +73,7 @@ __all__ = [
     "InvoiceSearchStrategy",
     "JobSearchStrategy",
     "NoteSearchStrategy",
+    "OrderAcknowledgementSearchStrategy",
     "OrderSearchStrategy",
     "PreOpportunitySearchStrategy",
     "ProductSearchStrategy",

@@ -10,7 +10,6 @@ from app.core.db.adapters.dto import LandingPageInterfaceBase
 @strawberry.type(name="OrderAcknowledgementLandingPage")
 class OrderAcknowledgementLandingPageResponse(LandingPageInterfaceBase):
     order_acknowledgement_number: str
-    entity_date: date
     quantity: Decimal
     ship_date: date | None
     creation_type: CreationType

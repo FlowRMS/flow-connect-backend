@@ -64,14 +64,18 @@ class FileService:
         self.upload_service = upload_service
         self.auth_info = auth_info
 
-    async def get_by_id(self, file_id: UUID) -> File | None:
-        return await self.repository.get_by_id(
+    async def get_by_id(self, file_id: UUID) -> File:
+        file = await self.repository.get_by_id(
             file_id,
             options=[
                 joinedload(File.created_by),
                 lazyload("*"),
             ],
         )
+        if not file:
+            raise ValueError(f"File with id {file_id} not found")
+
+        return file
 
     async def search_files(self, search_term: str, limit: int = 20) -> list[File]:
         return await self.repository.search_by_name(search_term, limit)
@@ -81,12 +85,12 @@ class FileService:
 
     async def upload_file(
         self,
-        file: Upload,
+        file_upload: Upload,
         file_name: str,
         folder_id: UUID | None = None,
         folder_path: str | None = None,
     ) -> File:
-        content = await file.read()
+        content = await file_upload.read()
         upload_result = await self.upload_service.upload_file(
             file_content=content,
             file_name=file_name,
@@ -101,7 +105,8 @@ class FileService:
             file_sha=upload_result.file_sha,
             folder_id=folder_id,
         )
-        return await self.repository.create(new_file)
+        file = await self.repository.create(new_file)
+        return await self.get_by_id(file.id)
 
     async def upload_files(
         self,

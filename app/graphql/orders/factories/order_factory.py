@@ -22,8 +22,14 @@ class OrderFactory:
         order_number: str,
         factory_id: UUID,
         due_date: date | None = None,
+        quote_detail_ids: list[UUID] | None = None,
     ) -> Order:
         today = date.today()
+        details_to_map = quote.details
+        if quote_detail_ids:
+            detail_ids_set = set(quote_detail_ids)
+            details_to_map = [d for d in quote.details if d.id in detail_ids_set]
+
         return Order(
             inside_per_line_item=quote.inside_per_line_item,
             outside_per_line_item=quote.outside_per_line_item,
@@ -41,7 +47,7 @@ class OrderFactory:
             creation_type=CreationType.API,
             published=False,
             quote_id=quote.id,
-            details=OrderFactory._map_quote_details(quote.details),
+            details=OrderFactory._map_quote_details(details_to_map),
         )
 
     @staticmethod
