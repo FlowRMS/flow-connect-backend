@@ -18,7 +18,7 @@ async def migrate_document_clusters(
             cluster_metadata,
             COALESCE(is_hidden, false) as is_hidden,
             COALESCE(created_at, now()) as created_at
-        FROM i.document_clusters
+        FROM ai.document_clusters
     """)
 
     if not clusters:
@@ -63,7 +63,7 @@ async def migrate_cluster_contexts(
             converted_text_content,
             file_type,
             COALESCE(created_at, now()) as created_at
-        FROM i.cluster_contexts
+        FROM ai.cluster_contexts
     """)
 
     if not contexts:
@@ -126,7 +126,7 @@ async def migrate_pending_documents(
             sha,
             COALESCE(is_archived, false) as is_archived,
             COALESCE(created_at, now()) as created_at
-        FROM i.pending_documents
+        FROM ai.pending_documents
     """)
 
     if not docs:
@@ -207,7 +207,7 @@ async def migrate_pending_document_pages(
             reasoning,
             number_of_detail_lines,
             COALESCE(created_at, now()) as created_at
-        FROM i.pending_document_pages
+        FROM ai.pending_document_pages
     """)
 
     if not pages:
@@ -263,7 +263,7 @@ async def migrate_pending_document_entities(
             entity_type,
             action,
             COALESCE(created_at, now()) as created_at
-        FROM i.pending_document_entities
+        FROM ai.pending_document_entities
     """)
 
     if not entities:
@@ -309,7 +309,7 @@ async def migrate_pending_document_correction_changes(
             old_value,
             new_value,
             COALESCE(created_at, now()) as created_at
-        FROM i.pending_document_correction_changes
+        FROM ai.pending_document_correction_changes
     """)
 
     if not changes:
