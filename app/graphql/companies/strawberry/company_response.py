@@ -39,6 +39,7 @@ class CompanyLiteResponse(DTOMixin[Company]):
             parent_company_id=model.parent_company_id,
         )
 
+
 @strawberry.type
 class CompanyResponse(CompanyLiteResponse):
     @strawberry.field
