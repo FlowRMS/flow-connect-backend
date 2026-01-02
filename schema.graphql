@@ -2059,7 +2059,7 @@ type ProductLandingPage implements LandingPageInterfaceBase {
   userIds: [UUID!]!
   factoryPartNumber: String!
   unitPrice: Decimal!
-  defaultCommissionRate: Decimal!
+  defaultCommissionRate: Decimal
   published: Boolean!
   approvalNeeded: Boolean!
   description: String
