@@ -1235,7 +1235,7 @@ interface LandingPageInterfaceBase {
   userIds: [UUID!]!
 }
 
-union LandingRecord = JobLandingPage | CompanyLandingPage | ContactLandingPage | PreOpportunityLandingPage | NoteLandingPage | TaskLandingPage | CampaignLandingPage | CustomerLandingPage | FactoryLandingPage | ProductLandingPage | QuoteLandingPage | OrderLandingPage | FileLandingPage | InvoiceLandingPage | CreditLandingPage | AdjustmentLandingPage | CheckLandingPage
+union LandingRecord = JobLandingPage | CompanyLandingPage | ContactLandingPage | PreOpportunityLandingPage | NoteLandingPage | TaskLandingPage | CampaignLandingPage | CustomerLandingPage | FactoryLandingPage | ProductLandingPage | QuoteLandingPage | OrderLandingPage | FileLandingPage | InvoiceLandingPage | CreditLandingPage | AdjustmentLandingPage | CheckLandingPage | OrderAcknowledgementLandingPage
 
 enum LandingSourceType {
   JOBS
@@ -1255,6 +1255,7 @@ enum LandingSourceType {
   CREDITS
   ADJUSTMENTS
   CHECKS
+  ORDER_ACKNOWLEDGEMENTS
 }
 
 input LinkRelationInput {
@@ -1348,6 +1349,9 @@ type Mutation {
   updateNoteConversation(noteConversationId: UUID!, input: NoteConversationInput!): NoteConversationType!
   deleteNoteConversation(conversationId: UUID!): Boolean!
   deleteNoteConversations(noteId: UUID!): Boolean!
+  createOrderAcknowledgement(input: OrderAcknowledgementInput!): OrderAcknowledgementResponse!
+  updateOrderAcknowledgement(input: OrderAcknowledgementInput!): OrderAcknowledgementResponse!
+  deleteOrderAcknowledgement(id: UUID!): Boolean!
   createOrder(input: OrderInput!): OrderResponse!
   updateOrder(input: OrderInput!): OrderResponse!
   deleteOrder(id: UUID!): Boolean!
@@ -1535,6 +1539,48 @@ type O365SendEmailResultType {
   success: Boolean!
   messageId: String
   error: String
+}
+
+input OrderAcknowledgementInput {
+  orderId: UUID!
+  orderDetailId: UUID!
+  orderAcknowledgementNumber: String!
+  entityDate: Date!
+  quantity: Decimal!
+  id: UUID
+  shipDate: Date
+  creationType: CreationType!
+}
+
+type OrderAcknowledgementLandingPage implements LandingPageInterfaceBase {
+  id: UUID!
+  createdAt: datetime!
+  createdBy: String!
+  userIds: [UUID!]!
+  orderAcknowledgementNumber: String!
+  entityDate: Date!
+  quantity: Decimal!
+  shipDate: Date
+  creationType: CreationType!
+  orderNumber: String!
+  orderEntityDate: Date!
+  soldToCustomerName: String!
+  factoryName: String!
+  productName: String
+  itemNumber: Int!
+}
+
+type OrderAcknowledgementResponse {
+  id: UUID!
+  createdAt: datetime!
+  createdById: UUID!
+  orderId: UUID!
+  orderDetailId: UUID!
+  orderAcknowledgementNumber: String!
+  entityDate: Date!
+  quantity: Decimal!
+  shipDate: Date
+  creationType: CreationType!
 }
 
 type OrderBalanceResponse {
@@ -2133,6 +2179,9 @@ type Query {
   noteConversations(noteId: UUID!): [NoteConversationType!]!
   noteSearch(searchTerm: String!, limit: Int! = 20): [NoteType!]!
   noteRelatedEntities(noteId: UUID!): NoteRelatedEntitiesResponse!
+  orderAcknowledgement(id: UUID!): OrderAcknowledgementResponse
+  orderAcknowledgementsByOrder(orderId: UUID!): [OrderAcknowledgementResponse!]!
+  orderAcknowledgementsByOrderDetail(orderDetailId: UUID!): [OrderAcknowledgementResponse!]!
   order(id: UUID!): OrderResponse!
   orderSearch(searchTerm: String!, limit: Int! = 20): [OrderLiteResponse!]!
   preOpportunity(id: UUID!): PreOpportunityResponse!

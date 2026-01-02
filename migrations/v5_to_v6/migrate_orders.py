@@ -361,3 +361,63 @@ async def migrate_order_split_rates(source: asyncpg.Connection, dest: asyncpg.Co
 
     logger.info(f"Migrated {len(split_rates)} order split rates")
     return len(split_rates)
+
+
+async def migrate_order_acknowledgements(
+    source: asyncpg.Connection, dest: asyncpg.Connection
+) -> int:
+    """Migrate order acknowledgements from v5 to v6."""
+    logger.info("Starting order acknowledgement migration...")
+
+    acknowledgements = await source.fetch("""
+        SELECT
+            oa.id,
+            od.order_id,
+            oa.order_detail_id,
+            oa.order_acknowledgement_number,
+            oa.entity_date, 
+            COALESCE(od.quantity, 0) as quantity,
+            oa.creation_type,
+            oa.created_by as created_by_id,
+            COALESCE(oa.entry_date, now()) as created_at
+        FROM commission.order_acknowledgements oa
+        JOIN commission.order_details od ON od.id = oa.order_detail_id
+        JOIN commission.orders o ON o.id = od.order_id
+        JOIN "user".users u ON u.id = oa.created_by
+        WHERE o.sold_to_customer_id IS NOT NULL
+        AND o.entry_date < now() - INTERVAL '2 days'
+    """)
+
+    if not acknowledgements:
+        logger.info("No order acknowledgements to migrate")
+        return 0
+
+    await dest.executemany(
+        """
+        INSERT INTO pycommission.order_acknowledgements (
+            id, order_id, order_detail_id, order_acknowledgement_number,
+            entity_date, quantity, creation_type, created_by_id, created_at
+        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+        ON CONFLICT (id) DO UPDATE SET
+            order_id = EXCLUDED.order_id,
+            order_detail_id = EXCLUDED.order_detail_id,
+            order_acknowledgement_number = EXCLUDED.order_acknowledgement_number,
+            entity_date = EXCLUDED.entity_date,
+            quantity = EXCLUDED.quantity,
+            creation_type = EXCLUDED.creation_type
+        """,
+        [(
+            a["id"],
+            a["order_id"],
+            a["order_detail_id"],
+            a["order_acknowledgement_number"],
+            a["entity_date"],
+            a["quantity"],
+            a["creation_type"],
+            a["created_by_id"],
+            a["created_at"],
+        ) for a in acknowledgements],
+    )
+
+    logger.info(f"Migrated {len(acknowledgements)} order acknowledgements")
+    return len(acknowledgements)

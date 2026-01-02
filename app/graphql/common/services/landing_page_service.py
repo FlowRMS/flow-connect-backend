@@ -17,6 +17,9 @@ from app.graphql.credits.repositories.credits_repository import CreditsRepositor
 from app.graphql.invoices.repositories.invoices_repository import InvoicesRepository
 from app.graphql.jobs.repositories.jobs_repository import JobsRepository
 from app.graphql.notes.repositories.notes_repository import NotesRepository
+from app.graphql.orders.repositories.order_acknowledgement_repository import (
+    OrderAcknowledgementRepository,
+)
 from app.graphql.orders.repositories.orders_repository import OrdersRepository
 from app.graphql.pre_opportunities.repositories.pre_opportunities_repository import (
     PreOpportunitiesRepository,
@@ -57,6 +60,7 @@ class LandingPageService:
         credits_repository: CreditsRepository,
         adjustments_repository: AdjustmentsRepository,
         checks_repository: ChecksRepository,
+        order_acknowledgement_repository: OrderAcknowledgementRepository,
         rbac_filter_service: RbacFilterService,
     ) -> None:
         super().__init__()
@@ -80,6 +84,7 @@ class LandingPageService:
             LandingSourceType.CREDITS: credits_repository,
             LandingSourceType.ADJUSTMENTS: adjustments_repository,
             LandingSourceType.CHECKS: checks_repository,
+            LandingSourceType.ORDER_ACKNOWLEDGEMENTS: order_acknowledgement_repository,
         }
 
     async def find_landing_pages(

@@ -26,3 +26,4 @@ class LandingSourceType(Enum):
     CREDITS = "credits"
     ADJUSTMENTS = "adjustments"
     CHECKS = "checks"
+    ORDER_ACKNOWLEDGEMENTS = "order_acknowledgements"
