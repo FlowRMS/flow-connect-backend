@@ -150,6 +150,7 @@ class OrdersRepository(BaseRepository[Order]):
                 joinedload(Order.bill_to_customer),
                 joinedload(Order.created_by),
                 joinedload(Order.job),
+                joinedload(Order.factory),
                 lazyload("*"),
             ],
         )

@@ -1796,6 +1796,7 @@ type OrderResponse {
   soldToCustomer: CustomerLiteResponse!
   billToCustomer: CustomerLiteResponse
   balance: OrderBalanceResponse!
+  factory: FactoryLiteResponse!
   details: [OrderDetailResponse!]!
   job: JobLiteType
 }
