@@ -112,6 +112,7 @@ class OrdersRepository(BaseRepository[Order]):
                 Order.entity_date,
                 Order.due_date,
                 OrderBalance.total.label("total"),
+                OrderBalance.commission.label("commission"),
                 Order.published,
                 Factory.title.label("factory_name"),
                 Job.job_name.label("job_name"),
