@@ -11,7 +11,7 @@ from app.graphql.v2.core.users.strawberry.user_response import UserResponse
 
 
 @strawberry.type
-class CompanyResponse(DTOMixin[Company]):
+class CompanyLiteResponse(DTOMixin[Company]):
     """GraphQL type for Company entity (output/query results)."""
 
     _instance: strawberry.Private[Company]
@@ -39,6 +39,8 @@ class CompanyResponse(DTOMixin[Company]):
             parent_company_id=model.parent_company_id,
         )
 
+@strawberry.type
+class CompanyResponse(CompanyLiteResponse):
     @strawberry.field
     def created_by(self) -> UserResponse:
         return UserResponse.from_orm_model(self._instance.created_by)

@@ -334,6 +334,17 @@ type CompanyLandingPage implements LandingPageInterfaceBase {
   tags: [String!]
 }
 
+type CompanyLiteResponse {
+  id: UUID!
+  createdAt: datetime!
+  name: String!
+  companySourceType: CompanyType!
+  website: String
+  phone: String
+  tags: [String!]
+  parentCompanyId: UUID
+}
+
 type CompanyResponse {
   id: UUID!
   createdAt: datetime!
@@ -1185,14 +1196,14 @@ type JobLiteType {
 type JobRelatedEntitiesResponse {
   preOpportunities: [PreOpportunityLiteResponse!]!
   contacts: [ContactResponse!]!
-  companies: [CompanyResponse!]!
-  quotes: [QuoteResponse!]!
-  orders: [OrderResponse!]!
+  companies: [CompanyLiteResponse!]!
+  quotes: [QuoteLiteResponse!]!
+  orders: [OrderLiteResponse!]!
   invoices: [InvoiceLiteResponse!]!
-  checks: [CheckResponse!]!
-  factories: [FactoryResponse!]!
-  products: [ProductResponse!]!
-  customers: [CustomerResponse!]!
+  checks: [CheckLiteResponse!]!
+  factories: [FactoryLiteResponse!]!
+  products: [ProductLiteResponse!]!
+  customers: [CustomerLiteResponse!]!
 }
 
 type JobStatusType {
