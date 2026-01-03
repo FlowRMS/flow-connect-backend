@@ -456,7 +456,7 @@ def upgrade() -> None:
         "spec_sheets",
         sa.Column("factory_id", sa.UUID(), nullable=False),
         sa.Column("file_name", sa.String(length=255), nullable=False),
-        sa.Column("display_name", sa.String(length=255), nullable=False),
+        sa.Column("display_name", sa.String(), nullable=False),
         sa.Column("upload_source", sa.String(length=50), nullable=False),
         sa.Column("source_url", sa.Text(), nullable=True),
         sa.Column("file_url", sa.Text(), nullable=False),

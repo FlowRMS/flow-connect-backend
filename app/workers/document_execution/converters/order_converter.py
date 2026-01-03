@@ -5,17 +5,21 @@ from uuid import UUID
 from commons.db.v6.ai.documents.enums import EntityType
 from commons.dtos.order.order_detail_dto import OrderDetailDTO
 from commons.dtos.order.order_dto import OrderDTO
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.graphql.orders.strawberry.order_detail_input import OrderDetailInput
 from app.graphql.orders.strawberry.order_input import OrderInput
 
 from .base import BaseEntityConverter
-from .registry import register_converter
 
 
-@register_converter(EntityType.ORDERS)
 class OrderConverter(BaseEntityConverter[OrderDTO, OrderInput]):
-    def to_input(
+    entity_type = EntityType.ORDERS
+
+    def __init__(self, session: AsyncSession) -> None:
+        super().__init__(session)
+
+    async def to_input(
         self,
         dto: OrderDTO,
         entity_mapping: dict[str, UUID],
@@ -30,12 +34,25 @@ class OrderConverter(BaseEntityConverter[OrderDTO, OrderInput]):
                 "Sold-to customer ID is required but not found in entity_mapping"
             )
 
+        default_commission_rate = await self.get_factory_commission_rate(factory_id)
+        default_commission_discount = await self.get_factory_commission_discount_rate(
+            factory_id
+        )
+        default_discount_rate = await self.get_factory_discount_rate(factory_id)
+
         order_number = dto.order_number or self._generate_order_number()
         entity_date = dto.order_date or date.today()
         due_date = dto.due_date or entity_date
 
         details = [
-            self._convert_detail(detail, entity_mapping, sold_to_id)
+            self._convert_detail(
+                detail=detail,
+                entity_mapping=entity_mapping,
+                fallback_end_user_id=sold_to_id,
+                default_commission_rate=default_commission_rate,
+                default_commission_discount=default_commission_discount,
+                default_discount_rate=default_discount_rate,
+            )
             for detail in dto.details
         ]
 
@@ -54,11 +71,14 @@ class OrderConverter(BaseEntityConverter[OrderDTO, OrderInput]):
 
     def _convert_detail(
         self,
-        dto_detail: OrderDetailDTO,
+        detail: OrderDetailDTO,
         entity_mapping: dict[str, UUID],
         fallback_end_user_id: UUID,
+        default_commission_rate: Decimal,
+        default_commission_discount: Decimal,
+        default_discount_rate: Decimal,
     ) -> OrderDetailInput:
-        flow_index = dto_detail.flow_index
+        flow_index = detail.flow_index
         product_key = f"product_{flow_index}" if flow_index is not None else None
         end_user_key = f"end_user_{flow_index}" if flow_index is not None else None
 
@@ -68,32 +88,43 @@ class OrderConverter(BaseEntityConverter[OrderDTO, OrderInput]):
         if not end_user_id:
             end_user_id = fallback_end_user_id
 
-        return OrderDetailInput(
-            item_number=dto_detail.item_number or 1,
-            quantity=Decimal(str(dto_detail.quantity or 1)),
-            unit_price=dto_detail.unit_price or Decimal("0"),
-            end_user_id=end_user_id,
-            product_id=product_id,
-            product_name_adhoc=self._get_adhoc_name(dto_detail)
-            if not product_id
-            else None,
-            product_description_adhoc=dto_detail.description
-            if not product_id
-            else None,
-            lead_time=dto_detail.lead_time,
-            discount_rate=dto_detail.discount_rate or Decimal("0"),
-            commission_rate=dto_detail.commission_rate or Decimal("0"),
-            commission_discount_rate=dto_detail.commission_discount_rate
-            or Decimal("0"),
+        commission_rate = (
+            detail.commission_rate
+            if detail.commission_rate is not None
+            else default_commission_rate
+        )
+        commission_discount_rate = (
+            detail.commission_discount_rate
+            if detail.commission_discount_rate is not None
+            else default_commission_discount
+        )
+        discount_rate = (
+            detail.discount_rate
+            if detail.discount_rate is not None
+            else default_discount_rate
         )
 
-    def _get_adhoc_name(self, dto_detail: OrderDetailDTO) -> str | None:
-        if dto_detail.factory_part_number:
-            return dto_detail.factory_part_number
-        if dto_detail.customer_part_number:
-            return dto_detail.customer_part_number
-        if dto_detail.description:
-            return dto_detail.description[:100]
+        return OrderDetailInput(
+            item_number=detail.item_number or 1,
+            quantity=Decimal(str(detail.quantity or 1)),
+            unit_price=detail.unit_price or Decimal("0"),
+            end_user_id=end_user_id,
+            product_id=product_id,
+            product_name_adhoc=self._get_adhoc_name(detail) if not product_id else None,
+            product_description_adhoc=detail.description if not product_id else None,
+            lead_time=detail.lead_time,
+            discount_rate=discount_rate,
+            commission_rate=commission_rate,
+            commission_discount_rate=commission_discount_rate,
+        )
+
+    def _get_adhoc_name(self, detail: OrderDetailDTO) -> str | None:
+        if detail.factory_part_number:
+            return detail.factory_part_number
+        if detail.customer_part_number:
+            return detail.customer_part_number
+        if detail.description:
+            return detail.description[:100]
         return None
 
     @staticmethod

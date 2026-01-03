@@ -38,7 +38,7 @@ class DocumentExecutorService:
         dtos = self._parse_dtos(pending_document)
         logger.info(f"Parsed {len(dtos)} DTOs from extracted_data_json")
 
-        converter = get_converter(pending_document.entity_type)
+        converter = get_converter(pending_document.entity_type, self.session)
         created_ids: list[UUID] = []
 
         for i, dto in enumerate(dtos):
@@ -108,7 +108,7 @@ class DocumentExecutorService:
         dto: Any,
         entity_mapping: dict[str, UUID],
     ) -> UUID:
-        input_obj = converter.to_input(dto, entity_mapping)
+        input_obj = await converter.to_input(dto, entity_mapping)
 
         match entity_type:
             case EntityType.ORDERS:
