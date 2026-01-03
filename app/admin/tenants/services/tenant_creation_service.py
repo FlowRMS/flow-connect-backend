@@ -122,7 +122,7 @@ class TenantCreationService:
             name=name,
             url=url_slug,
             database=db_host,
-            read_only_database=db_host,
+            read_only_database=self.settings.ro_pg_host,
             username=host["username"],
             alembic_version=alembic_version,
         )

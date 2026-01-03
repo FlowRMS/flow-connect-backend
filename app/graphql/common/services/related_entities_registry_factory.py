@@ -52,6 +52,8 @@ def create_related_entities_registry(
     strategies = [
         JobRelatedEntitiesStrategy(
             repository=jobs_repository,
+            notes_service=notes_service,
+            tasks_service=tasks_service,
             companies_service=companies_service,
             contacts_service=contacts_service,
             pre_opportunities_service=pre_opportunities_service,

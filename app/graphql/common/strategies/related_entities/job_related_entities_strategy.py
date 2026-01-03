@@ -20,6 +20,8 @@ from app.graphql.contacts.strawberry.contact_response import ContactResponse
 from app.graphql.invoices.services.invoice_service import InvoiceService
 from app.graphql.invoices.strawberry.invoice_response import InvoiceLiteResponse
 from app.graphql.jobs.repositories.jobs_repository import JobsRepository
+from app.graphql.notes.services.notes_service import NotesService
+from app.graphql.notes.strawberry.note_response import NoteType
 from app.graphql.orders.services.order_service import OrderService
 from app.graphql.orders.strawberry.order_lite_response import OrderLiteResponse
 from app.graphql.pre_opportunities.services.pre_opportunities_service import (
@@ -30,6 +32,8 @@ from app.graphql.pre_opportunities.strawberry.pre_opportunity_lite_response impo
 )
 from app.graphql.quotes.services.quote_service import QuoteService
 from app.graphql.quotes.strawberry.quote_lite_response import QuoteLiteResponse
+from app.graphql.tasks.services.tasks_service import TasksService
+from app.graphql.tasks.strawberry.task_response import TaskType
 from app.graphql.v2.core.customers.services.customer_service import CustomerService
 from app.graphql.v2.core.customers.strawberry.customer_response import (
     CustomerLiteResponse,
@@ -46,6 +50,8 @@ class JobRelatedEntitiesStrategy(RelatedEntitiesStrategy):
     def __init__(
         self,
         repository: JobsRepository,
+        notes_service: NotesService,
+        tasks_service: TasksService,
         companies_service: CompaniesService,
         contacts_service: ContactsService,
         pre_opportunities_service: PreOpportunitiesService,
@@ -59,6 +65,8 @@ class JobRelatedEntitiesStrategy(RelatedEntitiesStrategy):
     ) -> None:
         super().__init__()
         self.repository = repository
+        self.notes_service = notes_service
+        self.tasks_service = tasks_service
         self.companies_service = companies_service
         self.contacts_service = contacts_service
         self.pre_opportunities_service = pre_opportunities_service
@@ -79,6 +87,8 @@ class JobRelatedEntitiesStrategy(RelatedEntitiesStrategy):
         if not await self.repository.exists(entity_id):
             raise NotFoundError(str(entity_id))
 
+        notes = await self.notes_service.find_notes_by_entity(EntityType.JOB, entity_id)
+        tasks = await self.tasks_service.find_tasks_by_entity(EntityType.JOB, entity_id)
         pre_opportunities = await self.pre_opportunities_service.get_by_job_id(
             entity_id
         )
@@ -97,6 +107,8 @@ class JobRelatedEntitiesStrategy(RelatedEntitiesStrategy):
         return RelatedEntitiesResponse(
             source_type=LandingSourceType.JOBS,
             source_entity_id=entity_id,
+            notes=NoteType.from_orm_model_list(notes),
+            tasks=TaskType.from_orm_model_list(tasks),
             pre_opportunities=PreOpportunityLiteResponse.from_orm_model_list(
                 pre_opportunities
             ),
