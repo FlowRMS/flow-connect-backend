@@ -15,7 +15,8 @@ from app.graphql.common.strawberry.related_entities_response import (
 )
 from app.graphql.companies.services.companies_service import CompaniesService
 from app.graphql.companies.strawberry.company_response import CompanyLiteResponse
-from app.graphql.contacts.repositories.contacts_repository import ContactsRepository
+from app.graphql.contacts.services.contacts_service import ContactsService
+from app.graphql.contacts.strawberry.contact_response import ContactResponse
 from app.graphql.invoices.services.invoice_service import InvoiceService
 from app.graphql.invoices.strawberry.invoice_response import InvoiceLiteResponse
 from app.graphql.jobs.services.jobs_service import JobsService
@@ -24,11 +25,8 @@ from app.graphql.notes.services.notes_service import NotesService
 from app.graphql.notes.strawberry.note_response import NoteType
 from app.graphql.orders.services.order_service import OrderService
 from app.graphql.orders.strawberry.order_lite_response import OrderLiteResponse
-from app.graphql.pre_opportunities.services.pre_opportunities_service import (
-    PreOpportunitiesService,
-)
-from app.graphql.pre_opportunities.strawberry.pre_opportunity_lite_response import (
-    PreOpportunityLiteResponse,
+from app.graphql.pre_opportunities.repositories.pre_opportunities_repository import (
+    PreOpportunitiesRepository,
 )
 from app.graphql.quotes.services.quote_service import QuoteService
 from app.graphql.quotes.strawberry.quote_lite_response import QuoteLiteResponse
@@ -46,15 +44,15 @@ from app.graphql.v2.core.products.services.product_service import ProductService
 from app.graphql.v2.core.products.strawberry.product_response import ProductLiteResponse
 
 
-class ContactRelatedEntitiesStrategy(RelatedEntitiesStrategy):
+class PreOpportunityRelatedEntitiesStrategy(RelatedEntitiesStrategy):
     def __init__(
         self,
-        repository: ContactsRepository,
+        repository: PreOpportunitiesRepository,
         jobs_service: JobsService,
         notes_service: NotesService,
         tasks_service: TasksService,
+        contacts_service: ContactsService,
         companies_service: CompaniesService,
-        pre_opportunities_service: PreOpportunitiesService,
         quote_service: QuoteService,
         order_service: OrderService,
         invoice_service: InvoiceService,
@@ -68,8 +66,8 @@ class ContactRelatedEntitiesStrategy(RelatedEntitiesStrategy):
         self.jobs_service = jobs_service
         self.notes_service = notes_service
         self.tasks_service = tasks_service
+        self.contacts_service = contacts_service
         self.companies_service = companies_service
-        self.pre_opportunities_service = pre_opportunities_service
         self.quote_service = quote_service
         self.order_service = order_service
         self.invoice_service = invoice_service
@@ -80,22 +78,21 @@ class ContactRelatedEntitiesStrategy(RelatedEntitiesStrategy):
 
     @override
     def get_supported_source_type(self) -> LandingSourceType:
-        return LandingSourceType.CONTACTS
+        return LandingSourceType.PRE_OPPORTUNITIES
 
     @override
     async def get_related_entities(self, entity_id: UUID) -> RelatedEntitiesResponse:
-        if not await self.repository.exists(entity_id):
+        pre_opportunity = await self.repository.get_by_id(entity_id)
+        if not pre_opportunity:
             raise NotFoundError(str(entity_id))
 
-        entity_type = EntityType.CONTACT
+        entity_type = EntityType.PRE_OPPORTUNITY
 
         jobs = await self.jobs_service.find_by_entity(entity_type, entity_id)
         notes = await self.notes_service.find_notes_by_entity(entity_type, entity_id)
         tasks = await self.tasks_service.find_tasks_by_entity(entity_type, entity_id)
+        contacts = await self.contacts_service.find_by_entity(entity_type, entity_id)
         companies = await self.companies_service.find_by_entity(entity_type, entity_id)
-        pre_opportunities = await self.pre_opportunities_service.find_by_entity(
-            entity_type, entity_id
-        )
         quotes = await self.quote_service.find_by_entity(entity_type, entity_id)
         orders = await self.order_service.find_by_entity(entity_type, entity_id)
         invoices = await self.invoice_service.find_by_entity(entity_type, entity_id)
@@ -105,15 +102,13 @@ class ContactRelatedEntitiesStrategy(RelatedEntitiesStrategy):
         customers = await self.customer_service.find_by_entity(entity_type, entity_id)
 
         return RelatedEntitiesResponse(
-            source_type=LandingSourceType.CONTACTS,
+            source_type=LandingSourceType.PRE_OPPORTUNITIES,
             source_entity_id=entity_id,
             jobs=JobLiteType.from_orm_model_list(jobs),
             notes=NoteType.from_orm_model_list(notes),
             tasks=TaskType.from_orm_model_list(tasks),
+            contacts=ContactResponse.from_orm_model_list(contacts),
             companies=CompanyLiteResponse.from_orm_model_list(companies),
-            pre_opportunities=PreOpportunityLiteResponse.from_orm_model_list(
-                pre_opportunities
-            ),
             quotes=QuoteLiteResponse.from_orm_model_list(quotes),
             orders=OrderLiteResponse.from_orm_model_list(orders),
             invoices=InvoiceLiteResponse.from_orm_model_list(invoices),

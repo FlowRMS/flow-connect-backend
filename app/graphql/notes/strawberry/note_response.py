@@ -14,6 +14,7 @@ from app.graphql.v2.core.users.strawberry.user_response import UserResponse
 
 @strawberry.type
 class NoteConversationType(DTOMixin[NoteConversation]):
+    _instance: strawberry.Private[NoteConversation]
     id: UUID
     created_at: datetime
     note_id: UUID
@@ -22,11 +23,16 @@ class NoteConversationType(DTOMixin[NoteConversation]):
     @classmethod
     def from_orm_model(cls, model: NoteConversation) -> Self:
         return cls(
+            _instance=model,
             id=model.id,
             created_at=model.created_at,
             note_id=model.note_id,
             content=model.content,
         )
+
+    @strawberry.field
+    def created_by(self) -> UserResponse:
+        return UserResponse.from_orm_model(self._instance.created_by)
 
 
 @strawberry.type

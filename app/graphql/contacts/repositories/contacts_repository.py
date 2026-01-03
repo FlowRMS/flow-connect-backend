@@ -21,6 +21,7 @@ from app.graphql.contacts.strawberry.contact_landing_page_response import (
 class ContactsRepository(BaseRepository[Contact]):
     landing_model = ContactLandingPageResponse
     rbac_resource: RbacResourceEnum | None = None
+    entity_type = EntityType.CONTACT
 
     def __init__(self, context_wrapper: ContextWrapper, session: AsyncSession) -> None:
         super().__init__(session, context_wrapper, Contact)

@@ -1453,6 +1453,7 @@ type NoteConversationType {
   createdAt: datetime!
   noteId: UUID!
   content: String!
+  createdBy: UserResponse!
 }
 
 input NoteInput {
@@ -2678,6 +2679,7 @@ type TaskConversationType {
   createdAt: datetime!
   taskId: UUID!
   content: String!
+  createdBy: UserResponse!
 }
 
 input TaskInput {

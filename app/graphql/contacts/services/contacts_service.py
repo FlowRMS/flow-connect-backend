@@ -147,3 +147,8 @@ class ContactsService:
         return ContactRelatedEntitiesResponse(
             companies=CompanyResponse.from_orm_model_list(companies),
         )
+
+    async def find_by_entity(
+        self, entity_type: EntityType, entity_id: UUID
+    ) -> list[Contact]:
+        return await self.repository.find_by_entity(entity_type, entity_id)

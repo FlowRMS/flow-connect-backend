@@ -6,6 +6,7 @@ from app.graphql.common.strategies.related_entities import (
     ContactRelatedEntitiesStrategy,
     JobRelatedEntitiesStrategy,
     NoteRelatedEntitiesStrategy,
+    PreOpportunityRelatedEntitiesStrategy,
     TaskRelatedEntitiesStrategy,
 )
 from app.graphql.companies.services.companies_service import CompaniesService
@@ -17,6 +18,9 @@ from app.graphql.jobs.services.jobs_service import JobsService
 from app.graphql.notes.repositories.notes_repository import NotesRepository
 from app.graphql.notes.services.notes_service import NotesService
 from app.graphql.orders.services.order_service import OrderService
+from app.graphql.pre_opportunities.repositories.pre_opportunities_repository import (
+    PreOpportunitiesRepository,
+)
 from app.graphql.pre_opportunities.services.pre_opportunities_service import (
     PreOpportunitiesService,
 )
@@ -33,6 +37,7 @@ def create_related_entities_registry(
     contacts_repository: ContactsRepository,
     notes_repository: NotesRepository,
     tasks_repository: TasksRepository,
+    pre_opportunities_repository: PreOpportunitiesRepository,
     jobs_service: JobsService,
     notes_service: NotesService,
     tasks_service: TasksService,
@@ -67,7 +72,18 @@ def create_related_entities_registry(
         ),
         ContactRelatedEntitiesStrategy(
             repository=contacts_repository,
+            jobs_service=jobs_service,
+            notes_service=notes_service,
+            tasks_service=tasks_service,
             companies_service=companies_service,
+            pre_opportunities_service=pre_opportunities_service,
+            quote_service=quote_service,
+            order_service=order_service,
+            invoice_service=invoice_service,
+            check_service=check_service,
+            factory_service=factory_service,
+            product_service=product_service,
+            customer_service=customer_service,
         ),
         NoteRelatedEntitiesStrategy(
             repository=notes_repository,
@@ -91,6 +107,21 @@ def create_related_entities_registry(
             contacts_service=contacts_service,
             companies_service=companies_service,
             pre_opportunities_service=pre_opportunities_service,
+            quote_service=quote_service,
+            order_service=order_service,
+            invoice_service=invoice_service,
+            check_service=check_service,
+            factory_service=factory_service,
+            product_service=product_service,
+            customer_service=customer_service,
+        ),
+        PreOpportunityRelatedEntitiesStrategy(
+            repository=pre_opportunities_repository,
+            jobs_service=jobs_service,
+            notes_service=notes_service,
+            tasks_service=tasks_service,
+            contacts_service=contacts_service,
+            companies_service=companies_service,
             quote_service=quote_service,
             order_service=order_service,
             invoice_service=invoice_service,
