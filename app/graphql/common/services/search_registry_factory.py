@@ -12,6 +12,7 @@ from app.graphql.common.strategies.search import (
     CreditSearchStrategy,
     CustomerSearchStrategy,
     FactorySearchStrategy,
+    FolderSearchStrategy,
     InvoiceSearchStrategy,
     JobSearchStrategy,
     NoteSearchStrategy,
@@ -53,6 +54,7 @@ def create_search_strategy_registry() -> SearchQueryStrategyRegistry:
         ContainerTypeSearchStrategy(),
         WarehouseSearchStrategy(),
         OrderAcknowledgementSearchStrategy(),
+        FolderSearchStrategy(),
     ]
 
     for strategy in strategies:

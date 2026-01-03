@@ -426,6 +426,12 @@ type ContainerTypeResponse {
   createdAt: datetime!
 }
 
+input CreateFolderInput {
+  name: String!
+  description: String = null
+  parentId: UUID = null
+}
+
 input CreateHighlightVersionInput {
   specSheetId: UUID!
   name: String!
@@ -908,6 +914,38 @@ enum FilterOperator {
   IS_NOT_NULL
 }
 
+type FolderLiteResponse {
+  id: UUID!
+  createdAt: datetime!
+  name: String!
+  description: String
+  parentId: UUID
+  archived: Boolean!
+}
+
+type FolderResponse {
+  id: UUID!
+  createdAt: datetime!
+  name: String!
+  description: String
+  parentId: UUID
+  archived: Boolean!
+  createdBy: UserResponse!
+}
+
+type FolderWithChildrenResponse {
+  id: UUID!
+  createdAt: datetime!
+  name: String!
+  description: String
+  parentId: UUID
+  archived: Boolean!
+  createdBy: UserResponse!
+  children: [FolderLiteResponse!]!
+  files: [FileLiteResponse!]!
+  parent: FolderLiteResponse
+}
+
 type GenericLandingPage {
   records: [LandingRecord!]!
   total: Int!
@@ -1264,6 +1302,7 @@ enum LandingSourceType {
   QUOTES
   ORDERS
   FILES
+  FOLDERS
   INVOICES
   CREDITS
   ADJUSTMENTS
@@ -1439,6 +1478,10 @@ type Mutation {
   uploadFiles(input: MultiFileUploadInput!): [FileLiteResponse!]!
   archiveFile(fileId: UUID!): Boolean!
   deleteFile(fileId: UUID!): Boolean!
+  createFolder(input: CreateFolderInput!): FolderResponse!
+  updateFolder(input: UpdateFolderInput!): FolderResponse!
+  archiveFolder(folderId: UUID!): Boolean!
+  deleteFolder(folderId: UUID!): Boolean!
   updateRbacGrid(rbacGrid: [RbacGridInput!]!): [RbacGridResponse!]!
   updateCommissionVisibility(input: UpdateCommissionVisibilityInput!): RbacRoleSettingResponse!
 }
@@ -2245,6 +2288,11 @@ type Query {
   filesByFolder(folderId: UUID!): [FileResponse!]!
   filePresignedUrl(fileId: UUID!): String
   filesByLinkedEntity(entityType: EntityType!, entityId: UUID!): [FileResponse!]!
+  folder(folderId: UUID!): FolderResponse
+  folderWithContents(folderId: UUID!): FolderWithChildrenResponse
+  searchFolders(searchTerm: String!, limit: Int! = 20): [FolderResponse!]!
+  foldersByParent(parentId: UUID = null): [FolderResponse!]!
+  rootFolders: [FolderResponse!]!
   getRbacGrid: [RbacGridResponse!]!
   getUserRbac(resource: RbacResourceEnum!): UserRbac!
   getRoleSettings: [RbacRoleSettingResponse!]!
@@ -2646,6 +2694,7 @@ enum SourceType {
   CONTAINER_TYPE
   WAREHOUSE
   ORDER_ACKNOWLEDGEMENT
+  FOLDER
 }
 
 type SpecSheetResponse {
@@ -2757,6 +2806,13 @@ scalar UUID
 input UpdateCommissionVisibilityInput {
   role: RbacRoleEnum!
   commission: Boolean!
+}
+
+input UpdateFolderInput {
+  folderId: UUID!
+  name: String = null
+  description: String = null
+  parentId: UUID = null
 }
 
 input UpdateHighlightRegionsInput {

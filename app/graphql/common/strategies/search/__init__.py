@@ -28,6 +28,9 @@ from app.graphql.common.strategies.search.customer_search_strategy import (
 from app.graphql.common.strategies.search.factory_search_strategy import (
     FactorySearchStrategy,
 )
+from app.graphql.common.strategies.search.folder_search_strategy import (
+    FolderSearchStrategy,
+)
 from app.graphql.common.strategies.search.invoice_search_strategy import (
     InvoiceSearchStrategy,
 )
@@ -70,6 +73,7 @@ __all__ = [
     "CreditSearchStrategy",
     "CustomerSearchStrategy",
     "FactorySearchStrategy",
+    "FolderSearchStrategy",
     "InvoiceSearchStrategy",
     "JobSearchStrategy",
     "NoteSearchStrategy",

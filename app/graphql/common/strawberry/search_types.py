@@ -32,6 +32,7 @@ class SourceType(enum.IntEnum):
     CONTAINER_TYPE = auto()
     WAREHOUSE = auto()
     ORDER_ACKNOWLEDGEMENT = auto()
+    FOLDER = auto()
 
 
 @strawberry.type(name="SearchResult")
