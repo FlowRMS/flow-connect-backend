@@ -2155,13 +2155,14 @@ type Query {
   checkSearch(searchTerm: String!, limit: Int! = 20): [CheckLiteResponse!]!
   checksByFactory(factoryId: UUID!): [CheckLiteResponse!]!
   findLandingPages(sourceType: LandingSourceType!, filters: [Filter!] = null, orderBy: [OrderBy!] = null, limit: Int = 10, offset: Int = 0): GenericLandingPage!
+  relatedEntities(sourceType: LandingSourceType!, entityId: UUID!): RelatedEntitiesResponse!
   universalSearch(searchTerm: String!, limit: Int! = 20): [SearchResult!]!
   company(id: UUID!): CompanyResponse!
   companySearch(searchTerm: String!, limit: Int! = 20): [CompanyResponse!]!
   contact(id: UUID!): ContactResponse!
   contactsByCompany(companyId: UUID!): [ContactResponse!]!
   contactSearch(searchTerm: String!, limit: Int! = 20): [ContactResponse!]!
-  contactRelatedEntities(contactId: UUID!): ContactRelatedEntitiesResponse!
+  contactRelatedEntities(contactId: UUID!): ContactRelatedEntitiesResponse! @deprecated(reason: "Use related_entities(source_type: CONTACTS, entity_id: UUID)")
   credit(id: UUID!): CreditResponse!
   creditSearch(searchTerm: String!, limit: Int! = 20, openOnly: Boolean! = false, unlockedOnly: Boolean! = false): [CreditLiteResponse!]!
   gmailAuthUrl(state: String = null): String!
@@ -2176,7 +2177,7 @@ type Query {
   invoicesByOrderId(orderId: UUID!): [InvoiceLiteResponse!]!
   job(id: UUID!): JobType!
   jobStatuses: [JobStatusType!]!
-  jobRelatedEntities(jobId: UUID!): JobRelatedEntitiesResponse!
+  jobRelatedEntities(jobId: UUID!): JobRelatedEntitiesResponse! @deprecated(reason: "Use related_entities(source_type: JOBS, entity_id: UUID)")
   jobSearch(searchTerm: String!, limit: Int! = 20): [JobType!]!
   jobsByContact(contactId: UUID!): [JobType!]!
   jobsByCompany(companyId: UUID!): [JobType!]!
@@ -2189,7 +2190,7 @@ type Query {
   notesByEntity(entityType: EntityType!, entityId: UUID!): [NoteType!]!
   noteConversations(noteId: UUID!): [NoteConversationType!]!
   noteSearch(searchTerm: String!, limit: Int! = 20): [NoteType!]!
-  noteRelatedEntities(noteId: UUID!): NoteRelatedEntitiesResponse!
+  noteRelatedEntities(noteId: UUID!): NoteRelatedEntitiesResponse! @deprecated(reason: "Use related_entities(source_type: NOTES, entity_id: UUID)")
   orderAcknowledgement(id: UUID!): OrderAcknowledgementResponse
   orderAcknowledgementsByOrder(orderId: UUID!): [OrderAcknowledgementResponse!]!
   orderAcknowledgementsByOrderDetail(orderDetailId: UUID!): [OrderAcknowledgementResponse!]!
@@ -2207,7 +2208,7 @@ type Query {
   task(id: UUID!): TaskType!
   taskConversations(taskId: UUID!): [TaskConversationType!]!
   taskSearch(searchTerm: String!, limit: Int! = 20): [TaskType!]!
-  taskRelatedEntities(taskId: UUID!): TaskRelatedEntitiesResponse!
+  taskRelatedEntities(taskId: UUID!): TaskRelatedEntitiesResponse! @deprecated(reason: "Use related_entities(source_type: TASKS, entity_id: UUID)")
   tasksByEntity(entityType: EntityType!, entityId: UUID!): [TaskType!]!
   containerTypes: [ContainerTypeResponse!]!
   containerType(id: UUID!): ContainerTypeResponse!
@@ -2534,6 +2535,24 @@ enum RecipientListType {
   STATIC
   CRITERIA_BASED
   DYNAMIC
+}
+
+type RelatedEntitiesResponse {
+  sourceType: LandingSourceType!
+  sourceEntityId: UUID!
+  jobs: [JobLiteType!]
+  tasks: [TaskType!]
+  notes: [NoteType!]
+  contacts: [ContactResponse!]
+  companies: [CompanyLiteResponse!]
+  preOpportunities: [PreOpportunityLiteResponse!]
+  quotes: [QuoteLiteResponse!]
+  orders: [OrderLiteResponse!]
+  invoices: [InvoiceLiteResponse!]
+  checks: [CheckLiteResponse!]
+  factories: [FactoryLiteResponse!]
+  products: [ProductLiteResponse!]
+  customers: [CustomerLiteResponse!]
 }
 
 enum RepTypeEnum {

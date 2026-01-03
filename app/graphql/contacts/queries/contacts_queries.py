@@ -58,20 +58,13 @@ class ContactsQueries:
             await service.search_contacts(search_term, limit)
         )
 
-    @strawberry.field
+    @strawberry.field(
+        deprecation_reason="Use related_entities(source_type: CONTACTS, entity_id: UUID)"
+    )
     @inject
     async def contact_related_entities(
         self,
         contact_id: UUID,
         service: Injected[ContactsService],
     ) -> ContactRelatedEntitiesResponse:
-        """
-        Get all entities related to a contact.
-
-        Args:
-            contact_id: The contact ID to get related entities for
-
-        Returns:
-            ContactRelatedEntitiesResponse containing companies related to the contact
-        """
         return await service.get_contact_related_entities(contact_id)
