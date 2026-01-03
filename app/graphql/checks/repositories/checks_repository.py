@@ -7,7 +7,6 @@ from commons.db.v6.core import Factory
 from commons.db.v6.crm.links.entity_type import EntityType
 from commons.db.v6.crm.links.link_relation_model import LinkRelation
 from sqlalchemy import Select, func, or_, select
-from sqlalchemy.dialects.postgresql import array
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import joinedload, lazyload
 
@@ -68,10 +67,11 @@ class ChecksRepository(BaseRepository[Check]):
                 User.full_name.label("created_by"),
                 Check.check_number,
                 Check.status,
+                Check.post_date,
                 Check.entered_commission_amount,
                 Check.commission_month,
                 Factory.title.label("factory_name"),
-                array([Check.created_by_id]).label("user_ids"),
+                Check.user_ids,
             )
             .select_from(Check)
             .options(lazyload("*"))

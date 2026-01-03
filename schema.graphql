@@ -271,6 +271,7 @@ type CheckLandingPage implements LandingPageInterfaceBase {
   userIds: [UUID!]!
   checkNumber: String!
   status: CheckStatus!
+  postDate: Date
   enteredCommissionAmount: Decimal
   commissionMonth: Date
   factoryName: String!

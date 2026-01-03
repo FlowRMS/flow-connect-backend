@@ -30,6 +30,7 @@ class CheckService:
             raise NameAlreadyExistsError(check_input.check_number)
 
         check = check_input.to_orm_model()
+        check.user_ids = [check.created_by_id]
         created = await self.repository.create(check)
         return await self.repository.find_check_by_id(created.id)
 
@@ -39,6 +40,7 @@ class CheckService:
 
         check = check_input.to_orm_model()
         check.id = check_input.id
+        check.user_ids = [check.created_by_id]
         updated = await self.repository.update(check)
         return await self.repository.find_check_by_id(updated.id)
 

@@ -15,7 +15,6 @@ from commons.db.v6.core import Factory
 from commons.db.v6.crm.links.entity_type import EntityType
 from commons.db.v6.crm.links.link_relation_model import LinkRelation
 from sqlalchemy import Select, func, or_, select
-from sqlalchemy.dialects.postgresql import array
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import joinedload, lazyload
 
@@ -85,7 +84,7 @@ class InvoicesRepository(BaseRepository[Invoice]):
                 Order.order_number,
                 Order.id.label("order_id"),
                 Factory.title.label("factory_name"),
-                array([Invoice.created_by_id]).label("user_ids"),
+                Invoice.user_ids,
             )
             .select_from(Invoice)
             .options(lazyload("*"))
@@ -94,6 +93,13 @@ class InvoicesRepository(BaseRepository[Invoice]):
             .join(InvoiceBalance, InvoiceBalance.id == Invoice.balance_id)
             .join(Factory, Factory.id == Invoice.factory_id)
         )
+
+    def _compute_user_ids(self, invoice: Invoice) -> list[UUID]:
+        user_ids: set[UUID] = {invoice.created_by_id}
+        for detail in invoice.details:
+            for split_rate in detail.outside_split_rates:
+                user_ids.add(split_rate.user_id)
+        return list(user_ids)
 
     async def find_invoice_by_id(self, invoice_id: UUID) -> Invoice:
         invoice = await self.get_by_id(
@@ -122,10 +128,12 @@ class InvoicesRepository(BaseRepository[Invoice]):
     async def create_with_balance(self, invoice: Invoice) -> Invoice:
         balance = await self.balance_repository.create_from_details(invoice.details)
         invoice.balance_id = balance.id
+        invoice.user_ids = self._compute_user_ids(invoice)
         _ = await self.create(invoice)
         return await self.find_invoice_by_id(invoice.id)
 
     async def update_with_balance(self, invoice: Invoice) -> Invoice:
+        invoice.user_ids = self._compute_user_ids(invoice)
         updated = await self.update(invoice)
         _ = await self.balance_repository.recalculate_balance(
             updated.balance_id, updated.details

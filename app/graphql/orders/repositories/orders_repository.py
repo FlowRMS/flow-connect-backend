@@ -6,16 +6,12 @@ from commons.db.v6.commission.orders import (
     Order,
     OrderBalance,
     OrderDetail,
-    OrderInsideRep,
-    OrderSplitRate,
 )
 from commons.db.v6.core import Customer, Factory
 from commons.db.v6.crm.jobs.jobs_model import Job
 from commons.db.v6.crm.links.entity_type import EntityType
 from commons.db.v6.crm.links.link_relation_model import LinkRelation
-from sqlalchemy import Select, func, literal, or_, select
-from sqlalchemy.dialects.postgresql import ARRAY, array
-from sqlalchemy.dialects.postgresql import UUID as PG_UUID
+from sqlalchemy import Select, func, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import joinedload, lazyload
 
@@ -66,40 +62,6 @@ class OrdersRepository(BaseRepository[Order]):
         return OrderOwnerFilterStrategy(RbacResourceEnum.ORDER)
 
     def paginated_stmt(self) -> Select[Any]:
-        empty_array = literal([]).cast(ARRAY(PG_UUID))
-
-        inside_rep_user_ids_subq = (
-            select(
-                OrderDetail.order_id,
-                func.array_agg(OrderInsideRep.user_id).label("inside_rep_user_ids"),
-            )
-            .join(OrderInsideRep, OrderInsideRep.order_detail_id == OrderDetail.id)
-            .group_by(OrderDetail.order_id)
-            .subquery()
-        )
-
-        split_rate_user_ids_subq = (
-            select(
-                OrderDetail.order_id,
-                func.array_agg(OrderSplitRate.user_id.distinct()).label(
-                    "split_rate_user_ids"
-                ),
-            )
-            .join(OrderSplitRate, OrderSplitRate.order_detail_id == OrderDetail.id)
-            .group_by(OrderDetail.order_id)
-            .subquery()
-        )
-
-        user_ids_expr = func.array_cat(
-            func.array_cat(
-                array([Order.created_by_id]),
-                func.coalesce(
-                    inside_rep_user_ids_subq.c.inside_rep_user_ids, empty_array
-                ),
-            ),
-            func.coalesce(split_rate_user_ids_subq.c.split_rate_user_ids, empty_array),
-        ).label("user_ids")
-
         return (
             select(
                 Order.id,
@@ -117,7 +79,7 @@ class OrdersRepository(BaseRepository[Order]):
                 Factory.title.label("factory_name"),
                 Job.job_name.label("job_name"),
                 Customer.company_name.label("sold_to_customer_name"),
-                user_ids_expr,
+                Order.user_ids,
             )
             .select_from(Order)
             .options(lazyload("*"))
@@ -126,15 +88,16 @@ class OrdersRepository(BaseRepository[Order]):
             .join(Factory, Factory.id == Order.factory_id)
             .join(Customer, Customer.id == Order.sold_to_customer_id)
             .outerjoin(Job, Job.id == Order.job_id)
-            .outerjoin(
-                inside_rep_user_ids_subq,
-                inside_rep_user_ids_subq.c.order_id == Order.id,
-            )
-            .outerjoin(
-                split_rate_user_ids_subq,
-                split_rate_user_ids_subq.c.order_id == Order.id,
-            )
         )
+
+    def _compute_user_ids(self, order: Order) -> list[UUID]:
+        user_ids: set[UUID] = {order.created_by_id}
+        for detail in order.details:
+            for split_rate in detail.outside_split_rates:
+                user_ids.add(split_rate.user_id)
+            for inside_rep in detail.inside_split_rates:
+                user_ids.add(inside_rep.user_id)
+        return list(user_ids)
 
     async def find_order_by_id(self, order_id: UUID) -> Order:
         order = await self.get_by_id(
@@ -161,10 +124,12 @@ class OrdersRepository(BaseRepository[Order]):
     async def create_with_balance(self, order: Order) -> Order:
         balance = await self.balance_repository.create_from_details(order.details)
         order.balance_id = balance.id
+        order.user_ids = self._compute_user_ids(order)
         _ = await self.create(order)
         return await self.find_order_by_id(order.id)
 
     async def update_with_balance(self, order: Order) -> Order:
+        order.user_ids = self._compute_user_ids(order)
         updated = await self.update(order)
         _ = await self.balance_repository.recalculate_balance(
             updated.balance_id, updated.details
