@@ -1,6 +1,9 @@
 from app.graphql.common.strategies.related_entities.contact_related_entities_strategy import (
     ContactRelatedEntitiesStrategy,
 )
+from app.graphql.common.strategies.related_entities.factory_related_entities_strategy import (
+    FactoryRelatedEntitiesStrategy,
+)
 from app.graphql.common.strategies.related_entities.job_related_entities_strategy import (
     JobRelatedEntitiesStrategy,
 )
@@ -16,6 +19,7 @@ from app.graphql.common.strategies.related_entities.task_related_entities_strate
 
 __all__ = [
     "ContactRelatedEntitiesStrategy",
+    "FactoryRelatedEntitiesStrategy",
     "JobRelatedEntitiesStrategy",
     "NoteRelatedEntitiesStrategy",
     "PreOpportunityRelatedEntitiesStrategy",

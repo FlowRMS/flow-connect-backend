@@ -117,17 +117,6 @@ class ProductsRepository(BaseRepository[Product]):
     async def search_product_categories(
         self, search_term: str, factory_id: UUID | None, limit: int = 20
     ) -> list[ProductCategory]:
-        """
-        Search product categories by title using case-insensitive pattern matching.
-
-        Args:
-            search_term: The search term to match against category title
-            factory_id: The UUID of the factory to filter categories by (optional)
-            limit: Maximum number of categories to return (default: 20)
-
-        Returns:
-            List of ProductCategory objects matching the search criteria
-        """
         stmt = (
             select(ProductCategory)
             .where(ProductCategory.title.ilike(f"%{search_term}%"))
@@ -137,5 +126,17 @@ class ProductsRepository(BaseRepository[Product]):
         if factory_id is not None:
             stmt = stmt.where(ProductCategory.factory_id == factory_id)
 
+        result = await self.session.execute(stmt)
+        return list(result.scalars().all())
+
+    async def find_by_factory_id(
+        self, factory_id: UUID, limit: int = 25
+    ) -> list[Product]:
+        stmt = (
+            select(Product)
+            .options(lazyload("*"))
+            .where(Product.factory_id == factory_id)
+            .limit(limit)
+        )
         result = await self.session.execute(stmt)
         return list(result.scalars().all())

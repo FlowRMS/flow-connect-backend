@@ -182,3 +182,15 @@ class OrdersRepository(BaseRepository[Order]):
         )
         result = await self.session.execute(stmt)
         return list(result.scalars().all())
+
+    async def find_by_factory_id(
+        self, factory_id: UUID, limit: int = 25
+    ) -> list[Order]:
+        stmt = (
+            select(Order)
+            .options(lazyload("*"))
+            .where(Order.factory_id == factory_id)
+            .limit(limit)
+        )
+        result = await self.session.execute(stmt)
+        return list(result.scalars().all())

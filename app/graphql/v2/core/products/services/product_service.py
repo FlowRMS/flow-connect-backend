@@ -75,3 +75,8 @@ class ProductService:
         self, entity_type: EntityType, entity_id: UUID
     ) -> list[Product]:
         return await self.repository.find_by_entity(entity_type, entity_id)
+
+    async def find_by_factory_id(
+        self, factory_id: UUID, limit: int = 25
+    ) -> list[Product]:
+        return await self.repository.find_by_factory_id(factory_id, limit)

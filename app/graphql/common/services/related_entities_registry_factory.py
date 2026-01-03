@@ -4,6 +4,7 @@ from app.graphql.common.interfaces.related_entities_strategy import (
 )
 from app.graphql.common.strategies.related_entities import (
     ContactRelatedEntitiesStrategy,
+    FactoryRelatedEntitiesStrategy,
     JobRelatedEntitiesStrategy,
     NoteRelatedEntitiesStrategy,
     PreOpportunityRelatedEntitiesStrategy,
@@ -28,6 +29,9 @@ from app.graphql.quotes.services.quote_service import QuoteService
 from app.graphql.tasks.repositories.tasks_repository import TasksRepository
 from app.graphql.tasks.services.tasks_service import TasksService
 from app.graphql.v2.core.customers.services.customer_service import CustomerService
+from app.graphql.v2.core.factories.repositories.factories_repository import (
+    FactoriesRepository,
+)
 from app.graphql.v2.core.factories.services.factory_service import FactoryService
 from app.graphql.v2.core.products.services.product_service import ProductService
 
@@ -38,6 +42,7 @@ def create_related_entities_registry(
     notes_repository: NotesRepository,
     tasks_repository: TasksRepository,
     pre_opportunities_repository: PreOpportunitiesRepository,
+    factories_repository: FactoriesRepository,
     jobs_service: JobsService,
     notes_service: NotesService,
     tasks_service: TasksService,
@@ -129,6 +134,16 @@ def create_related_entities_registry(
             factory_service=factory_service,
             product_service=product_service,
             customer_service=customer_service,
+        ),
+        FactoryRelatedEntitiesStrategy(
+            repository=factories_repository,
+            notes_service=notes_service,
+            tasks_service=tasks_service,
+            contacts_service=contacts_service,
+            order_service=order_service,
+            invoice_service=invoice_service,
+            check_service=check_service,
+            product_service=product_service,
         ),
     ]
 
