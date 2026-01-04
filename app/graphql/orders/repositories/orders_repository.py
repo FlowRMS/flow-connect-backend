@@ -136,13 +136,19 @@ class OrdersRepository(BaseRepository[Order]):
         await self.session.flush()
         return await self.find_order_by_id(updated.id)
 
-    async def order_number_exists(self, order_number: str) -> bool:
-        result = await self.session.execute(
+    async def order_number_exists(
+        self, order_number: str, customer_id: UUID | None
+    ) -> bool:
+        stmt = (
             select(func.count())
             .select_from(Order)
             .options(lazyload("*"))
             .where(Order.order_number == order_number)
         )
+        if customer_id:
+            stmt = stmt.where(Order.sold_to_customer_id == customer_id)
+
+        result = await self.session.execute(stmt)
         return result.scalar_one() > 0
 
     async def search_by_order_number(

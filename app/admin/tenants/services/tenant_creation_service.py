@@ -125,6 +125,7 @@ class TenantCreationService:
             read_only_database=self.settings.ro_pg_host,
             username=host["username"],
             alembic_version=alembic_version,
+            org_id=workos_org.id,
         )
         _ = await self.repository.create(tenant)
         logger.info(f"Created tenant record: {tenant.id}")
