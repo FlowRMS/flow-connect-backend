@@ -695,8 +695,8 @@ wheels = [
 
 [[package]]
 name = "flow-py-commons"
-version = "1.12.10"
-source = { git = "ssh://git@github.com/FlowRMS/flowbot-commons.git?tag=1.12.010#9da2be8393af6875a33d45d07ea59d09d842e17a" }
+version = "1.12.11"
+source = { git = "ssh://git@github.com/FlowRMS/flowbot-commons.git?tag=1.12.011#db347d29c5a3a53f94dc78294e3dd5e748f3b52e" }
 dependencies = [
     { name = "aiobotocore" },
     { name = "aiohttp" },
@@ -784,7 +784,7 @@ requires-dist = [
     { name = "asyncpg", specifier = ">=0.30.0" },
     { name = "cryptography", specifier = ">=46.0.2" },
     { name = "fastapi", extras = ["standard"], specifier = ">=0.110.0" },
-    { name = "flow-py-commons", git = "ssh://git@github.com/FlowRMS/flowbot-commons.git?tag=1.12.010" },
+    { name = "flow-py-commons", git = "ssh://git@github.com/FlowRMS/flowbot-commons.git?tag=1.12.011" },
     { name = "greenlet", specifier = ">=3.2.4" },
     { name = "httpx", specifier = ">=0.27.0" },
     { name = "loguru", specifier = ">=0.7.2,<0.8" },
