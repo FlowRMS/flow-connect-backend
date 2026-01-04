@@ -6,8 +6,9 @@ from commons.db.v6.ai.documents.enums.entity_type import DocumentEntityType
 from commons.db.v6.ai.documents.pending_document import PendingDocument
 from commons.db.v6.ai.entities.enums import ConfirmationStatus, EntityPendingType
 from commons.db.v6.ai.entities.pending_entity import PendingEntity
+from commons.dtos import OrderDTO
+from commons.dtos.common.base_entity_dto import BaseDTOModel
 from commons.dtos.common.dto_loader_service import DTOLoaderService
-from commons.dtos.order.order_dto import OrderDTO
 from loguru import logger
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import joinedload
@@ -15,6 +16,7 @@ from sqlalchemy.orm import joinedload
 from app.workers.document_execution.converters.order_converter import OrderConverter
 
 from .converters.base import BaseEntityConverter
+from .converters.entity_mapping import EntityMapping
 
 CONFIRMED_STATUSES = frozenset(
     {
@@ -56,8 +58,8 @@ class DocumentExecutorService:
         if not pending_document.entity_type:
             raise ValueError("PendingDocument has no entity_type set")
 
-        entity_mapping = self._build_entity_mapping(pending_document.pending_entities)
-        logger.info(f"Built entity mapping with {len(entity_mapping)} entries")
+        entity_mappings = self._build_entity_mappings(pending_document.pending_entities)
+        logger.info(f"Built entity mapping: {entity_mappings}")
 
         converter = self.get_converter(pending_document.entity_type)
         dtos = await self._parse_dtos(converter, pending_document)
@@ -67,6 +69,7 @@ class DocumentExecutorService:
 
         for i, dto in enumerate(dtos):
             logger.info(f"Processing DTO {i + 1}/{len(dtos)}")
+            entity_mapping = entity_mappings.get(dto.id, EntityMapping())
             entity_id = await self._create_entity(
                 converter=converter,
                 dto=dto,
@@ -76,20 +79,17 @@ class DocumentExecutorService:
 
         return created_ids
 
-    def _build_entity_mapping(
+    def _build_entity_mappings(
         self,
         pending_entities: list[PendingEntity],
-    ) -> dict[str, UUID]:
-        mapping: dict[str, UUID] = {}
+    ) -> dict[UUID, EntityMapping]:
+        mappings: dict[UUID, EntityMapping] = {}
 
         logger.info(
             f"Building entity mapping from {len(pending_entities)} PendingEntities"
         )
 
         for pe in pending_entities:
-            print(
-                f"Processing PendingEntity {pe.id} of type {pe.entity_type}, status {pe.confirmation_status}"
-            )
             if pe.confirmation_status not in CONFIRMED_STATUSES:
                 continue
 
@@ -99,25 +99,46 @@ class DocumentExecutorService:
                 )
                 continue
 
+            mapping = EntityMapping()
+
             match pe.entity_type:
                 case EntityPendingType.FACTORIES:
-                    mapping["factory"] = pe.best_match_id
+                    mapping.factory_id = pe.best_match_id
                 case EntityPendingType.CUSTOMERS:
-                    mapping["sold_to_customer"] = pe.best_match_id
+                    mapping.sold_to_customer_id = pe.best_match_id
                 case EntityPendingType.BILL_TO_CUSTOMERS:
-                    mapping["bill_to_customer"] = pe.best_match_id
+                    mapping.bill_to_customer_id = pe.best_match_id
                 case EntityPendingType.PRODUCTS:
-                    key = f"product_{pe.flow_index_detail}"
-                    mapping[key] = pe.best_match_id
+                    if pe.flow_index_detail is not None:
+                        mapping.products[pe.flow_index_detail] = pe.best_match_id
                 case EntityPendingType.END_USERS:
-                    key = f"end_user_{pe.flow_index_detail}"
-                    mapping[key] = pe.best_match_id
+                    if pe.flow_index_detail is not None:
+                        mapping.end_users[pe.flow_index_detail] = pe.best_match_id
 
-        return mapping
+            for dto_id in pe.dto_ids or []:
+                existing_mapping = mappings.get(dto_id)
+                if existing_mapping:
+                    if mapping.factory_id:
+                        existing_mapping.factory_id = mapping.factory_id
+                    if mapping.sold_to_customer_id:
+                        existing_mapping.sold_to_customer_id = (
+                            mapping.sold_to_customer_id
+                        )
+                    if mapping.bill_to_customer_id:
+                        existing_mapping.bill_to_customer_id = (
+                            mapping.bill_to_customer_id
+                        )
+                    existing_mapping.products.update(mapping.products)
+                    existing_mapping.end_users.update(mapping.end_users)
+
+                else:
+                    mappings[dto_id] = mapping
+
+        return mappings
 
     async def _parse_dtos(
         self, converter: BaseEntityConverter, pending_document: PendingDocument
-    ) -> list[Any]:
+    ) -> list[BaseDTOModel]:
         if not pending_document.extracted_data_json:
             return []
 
@@ -135,7 +156,7 @@ class DocumentExecutorService:
         self,
         converter: BaseEntityConverter[Any, Any, Any],
         dto: Any,
-        entity_mapping: dict[str, UUID],
+        entity_mapping: EntityMapping,
     ) -> UUID:
         input_obj = await converter.to_input(dto, entity_mapping)
         entity = await converter.create_entity(input_obj)

@@ -1,7 +1,6 @@
 from datetime import date, datetime, timezone
 from decimal import Decimal
 from typing import override
-from uuid import UUID
 
 from commons.db.v6.ai.documents.enums.entity_type import DocumentEntityType
 from commons.db.v6.models import Order
@@ -15,6 +14,7 @@ from app.graphql.orders.strawberry.order_detail_input import OrderDetailInput
 from app.graphql.orders.strawberry.order_input import OrderInput
 
 from .base import BaseEntityConverter
+from .entity_mapping import EntityMapping
 
 
 class OrderConverter(BaseEntityConverter[OrderDTO, OrderInput, Order]):
@@ -36,13 +36,14 @@ class OrderConverter(BaseEntityConverter[OrderDTO, OrderInput, Order]):
     ) -> Order:
         return await self.order_service.create_order(input_data)
 
+    @override
     async def to_input(
         self,
         dto: OrderDTO,
-        entity_mapping: dict[str, UUID],
+        entity_mapping: EntityMapping,
     ) -> OrderInput:
-        factory_id = entity_mapping.get("factory")
-        sold_to_id = entity_mapping.get("sold_to_customer")
+        factory_id = entity_mapping.factory_id
+        sold_to_id = entity_mapping.sold_to_customer_id
 
         if not factory_id:
             raise ValueError("Factory ID is required but not found in entity_mapping")
@@ -65,7 +66,6 @@ class OrderConverter(BaseEntityConverter[OrderDTO, OrderInput, Order]):
             self._convert_detail(
                 detail=detail,
                 entity_mapping=entity_mapping,
-                fallback_end_user_id=sold_to_id,
                 default_commission_rate=default_commission_rate,
                 default_commission_discount=default_commission_discount,
                 default_discount_rate=default_discount_rate,
@@ -74,12 +74,12 @@ class OrderConverter(BaseEntityConverter[OrderDTO, OrderInput, Order]):
         ]
 
         return OrderInput(
-            order_number=f"{order_number}-TEST",
+            order_number=f"{order_number}-TEST-2",
             entity_date=entity_date,
             due_date=due_date,
             sold_to_customer_id=sold_to_id,
             factory_id=factory_id,
-            bill_to_customer_id=entity_mapping.get("bill_to_customer"),
+            bill_to_customer_id=entity_mapping.bill_to_customer_id,
             shipping_terms=dto.shipping_terms,
             ship_date=dto.ship_date,
             mark_number=dto.mark_number,
@@ -89,21 +89,19 @@ class OrderConverter(BaseEntityConverter[OrderDTO, OrderInput, Order]):
     def _convert_detail(
         self,
         detail: OrderDetailDTO,
-        entity_mapping: dict[str, UUID],
-        fallback_end_user_id: UUID,
+        entity_mapping: EntityMapping,
         default_commission_rate: Decimal,
         default_commission_discount: Decimal,
         default_discount_rate: Decimal,
     ) -> OrderDetailInput:
         flow_index = detail.flow_index
-        product_key = f"product_{flow_index}" if flow_index is not None else None
-        end_user_key = f"end_user_{flow_index}" if flow_index is not None else None
-
-        product_id = entity_mapping.get(product_key) if product_key else None
-        end_user_id = entity_mapping.get(end_user_key) if end_user_key else None
+        product_id = entity_mapping.get_product_id(flow_index)
+        end_user_id = entity_mapping.get_end_user_id(flow_index)
 
         if not end_user_id:
-            end_user_id = fallback_end_user_id
+            raise ValueError(
+                f"End user ID is required for detail at index {flow_index}"
+            )
 
         commission_rate = (
             detail.commission_rate
@@ -147,4 +145,4 @@ class OrderConverter(BaseEntityConverter[OrderDTO, OrderInput, Order]):
     @staticmethod
     def _generate_order_number() -> str:
         timestamp = datetime.now(timezone.utc).strftime("%Y%m%d%H%M%S")
-        return f"AUTO-{timestamp}"
+        return f"ORD-{timestamp}"

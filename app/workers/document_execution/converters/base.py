@@ -1,6 +1,6 @@
 from abc import ABC, abstractmethod
 from decimal import Decimal
-from typing import Generic, TypeVar
+from typing import TYPE_CHECKING, Generic, TypeVar
 from uuid import UUID
 
 from commons.db.v6.ai.documents import PendingDocument
@@ -9,6 +9,9 @@ from commons.db.v6.core.factories.factory import Factory
 from commons.dtos.common.dto_loader_service import DTOLoaderService, LoadedDTOs
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
+
+if TYPE_CHECKING:
+    from .entity_mapping import EntityMapping
 
 TDto = TypeVar("TDto")
 TInput = TypeVar("TInput")
@@ -45,24 +48,8 @@ class BaseEntityConverter(ABC, Generic[TDto, TInput, TOutput]):
     async def to_input(
         self,
         dto: TDto,
-        entity_mapping: dict[str, UUID],
-    ) -> TInput:
-        """
-        Convert a DTO from commons to a Strawberry input using confirmed entity IDs.
-
-        Args:
-            dto: The extracted DTO from PendingDocument.extracted_data_json
-            entity_mapping: Map of entity keys to confirmed UUIDs
-                - "factory": Factory UUID
-                - "sold_to_customer": Sold-to customer UUID
-                - "bill_to_customer": Bill-to customer UUID (optional)
-                - "product_{index}": Product UUID for line item at index
-                - "end_user_{index}": End user UUID for line item at index
-
-        Returns:
-            Strawberry input ready for service creation
-        """
-        ...
+        entity_mapping: "EntityMapping",
+    ) -> TInput: ...
 
     async def get_factory(self, factory_id: UUID) -> Factory | None:
         if factory_id in self._factory_cache:
