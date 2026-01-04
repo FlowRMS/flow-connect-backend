@@ -4,8 +4,9 @@ from collections.abc import Iterable
 from typing import Any
 
 import aioinject
-from commons.s3.service import S3Service
 from commons.auth import AuthInfo
+from commons.s3.service import S3Service
+
 from app.core.config.s3_settings import S3Settings
 
 

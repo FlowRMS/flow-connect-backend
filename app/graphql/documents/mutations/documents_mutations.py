@@ -10,7 +10,7 @@ from app.workers.document_execution.executor_service import (
     DocumentExecutorService,
     EntityProcessResponse,
 )
-from app.workers.document_execution.task import execute_pending_document_task
+from app.workers.document_execution.tasks import execute_pending_document_task
 
 
 @strawberry.type
