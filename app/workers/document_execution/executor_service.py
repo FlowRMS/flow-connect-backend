@@ -138,7 +138,8 @@ class DocumentExecutorService:
         entity_mapping: dict[str, UUID],
     ) -> UUID:
         input_obj = await converter.to_input(dto, entity_mapping)
-        return await converter.create_entity(input_obj)
+        entity = await converter.create_entity(input_obj)
+        return entity.id
 
     @staticmethod
     def _calc_rate(numerator: Decimal, denominator: Decimal) -> Decimal:
