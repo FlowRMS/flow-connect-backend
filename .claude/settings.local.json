@@ -39,7 +39,8 @@
       "Bash(python3:*)",
       "Bash(xargs:*)",
       "Bash(git tag:*)",
-      "Bash(mv:*)"
+      "Bash(mv:*)",
+      "Bash(task lints:*)"
     ]
   },
   "enableAllProjectMcpServers": true,

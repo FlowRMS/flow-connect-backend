@@ -88,8 +88,9 @@ class QuotesRepository(BaseRepository[Quote]):
             .join(QuoteBalance, QuoteBalance.id == Quote.balance_id)
         )
 
-    def _compute_user_ids(self, quote: Quote) -> list[UUID]:
-        user_ids: set[UUID] = {quote.created_by_id}
+    @override
+    def compute_user_ids(self, quote: Quote) -> list[UUID]:
+        user_ids: set[UUID] = {self.auth_info.flow_user_id}
         for detail in quote.details:
             for split_rate in detail.outside_split_rates:
                 user_ids.add(split_rate.user_id)
@@ -122,12 +123,10 @@ class QuotesRepository(BaseRepository[Quote]):
     async def create_with_balance(self, quote: Quote) -> Quote:
         balance = await self.balance_repository.create_from_details(quote.details)
         quote.balance_id = balance.id
-        quote.user_ids = self._compute_user_ids(quote)
         _ = await self.create(quote)
         return await self.find_quote_by_id(quote.id)
 
     async def update_with_balance(self, quote: Quote) -> Quote:
-        quote.user_ids = self._compute_user_ids(quote)
         updated = await self.update(quote)
         _ = await self.balance_repository.recalculate_balance(
             updated.balance_id, updated.details

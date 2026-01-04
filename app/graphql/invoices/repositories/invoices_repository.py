@@ -1,5 +1,5 @@
 from datetime import date
-from typing import Any
+from typing import Any, override
 from uuid import UUID
 
 from commons.db.v6 import RbacResourceEnum, User
@@ -94,8 +94,9 @@ class InvoicesRepository(BaseRepository[Invoice]):
             .join(Factory, Factory.id == Invoice.factory_id)
         )
 
-    def _compute_user_ids(self, invoice: Invoice) -> list[UUID]:
-        user_ids: set[UUID] = {invoice.created_by_id}
+    @override
+    def compute_user_ids(self, invoice: Invoice) -> list[UUID]:
+        user_ids: set[UUID] = {self.auth_info.flow_user_id}
         for detail in invoice.details:
             for split_rate in detail.outside_split_rates:
                 user_ids.add(split_rate.user_id)
@@ -128,12 +129,10 @@ class InvoicesRepository(BaseRepository[Invoice]):
     async def create_with_balance(self, invoice: Invoice) -> Invoice:
         balance = await self.balance_repository.create_from_details(invoice.details)
         invoice.balance_id = balance.id
-        invoice.user_ids = self._compute_user_ids(invoice)
         _ = await self.create(invoice)
         return await self.find_invoice_by_id(invoice.id)
 
     async def update_with_balance(self, invoice: Invoice) -> Invoice:
-        invoice.user_ids = self._compute_user_ids(invoice)
         updated = await self.update(invoice)
         _ = await self.balance_repository.recalculate_balance(
             updated.balance_id, updated.details

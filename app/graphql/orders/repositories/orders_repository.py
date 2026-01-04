@@ -90,8 +90,9 @@ class OrdersRepository(BaseRepository[Order]):
             .outerjoin(Job, Job.id == Order.job_id)
         )
 
-    def _compute_user_ids(self, order: Order) -> list[UUID]:
-        user_ids: set[UUID] = {order.created_by_id}
+    @override
+    def compute_user_ids(self, order: Order) -> list[UUID]:
+        user_ids: set[UUID] = {self.auth_info.flow_user_id}
         for detail in order.details:
             for split_rate in detail.outside_split_rates:
                 user_ids.add(split_rate.user_id)
@@ -124,12 +125,10 @@ class OrdersRepository(BaseRepository[Order]):
     async def create_with_balance(self, order: Order) -> Order:
         balance = await self.balance_repository.create_from_details(order.details)
         order.balance_id = balance.id
-        order.user_ids = self._compute_user_ids(order)
         _ = await self.create(order)
         return await self.find_order_by_id(order.id)
 
     async def update_with_balance(self, order: Order) -> Order:
-        order.user_ids = self._compute_user_ids(order)
         updated = await self.update(order)
         _ = await self.balance_repository.recalculate_balance(
             updated.balance_id, updated.details

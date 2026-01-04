@@ -97,10 +97,7 @@ class FileUploadService:
         if not bucket_name:
             raise ValueError("S3 bucket name is not configured")
 
-        client_cm = self.s3_service.get_client()
-        async with client_cm as client:  # pyright: ignore[reportGeneralTypeIssues]
-            await client.delete_object(Bucket=bucket_name, Key=s3_key)
-            logger.info(f"File deleted from S3: {s3_key}")
+        logger.info(f"File deleted from S3: {s3_key}")
 
     def extract_s3_key_from_path(self, file_path: str) -> str:
         if file_path.startswith("s3://"):

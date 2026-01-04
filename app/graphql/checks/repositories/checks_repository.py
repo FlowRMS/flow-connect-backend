@@ -63,6 +63,7 @@ class ChecksRepository(BaseRepository[Check]):
         return (
             select(
                 Check.id,
+                Check.entity_date.label("check_date"),
                 Check.created_at,
                 User.full_name.label("created_by"),
                 Check.check_number,

@@ -270,6 +270,7 @@ type CheckLandingPage implements LandingPageInterfaceBase {
   createdBy: String!
   userIds: [UUID!]!
   checkNumber: String!
+  checkDate: Date!
   status: CheckStatus!
   postDate: Date
   enteredCommissionAmount: Decimal

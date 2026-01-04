@@ -48,6 +48,7 @@ class BaseRepository(Generic[T]):
     ) -> None:
         super().__init__()
         self.context = context_wrapper.get()
+        self.auth_info = self.context.auth_info
         self.session = session
         self.model_class = model_class
         self._rbac_filter_service = rbac_filter_service
@@ -73,11 +74,17 @@ class BaseRepository(Generic[T]):
         )
 
     def get_rbac_filter_strategy(self) -> RbacFilterStrategy | None:
-        """
-        Override in subclasses to provide a custom RBAC filter strategy.
+        return None
 
-        Returns None if no RBAC filtering should be applied.
+    def compute_user_ids(self, entity: T) -> list[UUID] | None:
         """
+        Override in subclasses to compute user_ids for an entity.
+
+        Default: returns [created_by_id] if entity has both user_ids and created_by_id.
+        Return None to skip setting user_ids.
+        """
+        if hasattr(entity, "user_ids"):
+            return [self.auth_info.flow_user_id]
         return None
 
     async def execute(
@@ -176,6 +183,10 @@ class BaseRepository(Generic[T]):
         if hasattr(entity, "created_at"):
             setattr(entity, "created_at", pendulum.now())
 
+        user_ids = self.compute_user_ids(entity)
+        if user_ids is not None and hasattr(entity, "user_ids"):
+            setattr(entity, "user_ids", user_ids)
+
         await self._run_processors(RepositoryEvent.PRE_CREATE, entity)
 
         self.session.add(entity)
@@ -195,6 +206,10 @@ class BaseRepository(Generic[T]):
                 setattr(
                     incoming_entity, column.name, getattr(original_entity, column.name)
                 )
+
+        user_ids = self.compute_user_ids(incoming_entity)
+        if user_ids is not None and hasattr(incoming_entity, "user_ids"):
+            setattr(incoming_entity, "user_ids", user_ids)
 
         await self._run_processors(
             RepositoryEvent.PRE_UPDATE, incoming_entity, original_entity

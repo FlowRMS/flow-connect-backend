@@ -10,6 +10,7 @@ from app.core.db.adapters.dto import LandingPageInterfaceBase
 @strawberry.type(name="CheckLandingPage")
 class CheckLandingPageResponse(LandingPageInterfaceBase):
     check_number: str
+    check_date: date
     status: CheckStatus
     post_date: date | None
     entered_commission_amount: Decimal | None
