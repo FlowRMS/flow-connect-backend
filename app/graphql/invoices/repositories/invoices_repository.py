@@ -206,7 +206,10 @@ class InvoicesRepository(BaseRepository[Invoice]):
     ) -> list[Invoice]:
         stmt = (
             select(Invoice)
-            .options(lazyload("*"))
+            .options(
+                joinedload(Invoice.order),
+                lazyload("*"),
+            )
             .where(
                 Invoice.factory_id == factory_id,
                 Invoice.entity_date >= start_from,
