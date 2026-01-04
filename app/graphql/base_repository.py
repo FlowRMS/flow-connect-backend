@@ -137,7 +137,7 @@ class BaseRepository(Generic[T]):
 
     async def get_by_id(
         self, entity_id: UUID | str, options: list[ExecutableOption] | None = None
-    ) -> T | None:
+    ) -> T:
         """
         Get an entity by its ID.
 
@@ -156,7 +156,7 @@ class BaseRepository(Generic[T]):
         result = await self.execute(
             stmt,
         )
-        return result.unique().scalar_one_or_none()
+        return result.unique().scalar_one()
 
     async def list_all(self, limit: int | None = None, offset: int = 0) -> list[T]:
         """

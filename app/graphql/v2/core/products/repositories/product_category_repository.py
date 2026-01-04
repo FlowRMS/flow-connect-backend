@@ -3,6 +3,7 @@ from uuid import UUID
 from commons.db.v6.core.products.product_category import ProductCategory
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import joinedload
 
 from app.core.context_wrapper import ContextWrapper
 from app.graphql.base_repository import BaseRepository
@@ -30,5 +31,10 @@ class ProductCategoryRepository(BaseRepository[ProductCategory]):
             stmt = stmt.where(ProductCategory.parent_id == parent_id)
         if grandparent_id is not None:
             stmt = stmt.where(ProductCategory.grandparent_id == grandparent_id)
-        result = await self.session.execute(stmt)
+        result = await self.session.execute(
+            stmt.options(
+                joinedload(ProductCategory.parent),
+                joinedload(ProductCategory.grandparent),
+            )
+        )
         return list(result.scalars().all())

@@ -1542,6 +1542,7 @@ type NoteType {
   tags: [String!]
   mentions: [UUID!]
   createdBy: UserResponse!
+  mentionedUsers: [UserResponse!]!
 }
 
 type O365CalendarAttendeeType {

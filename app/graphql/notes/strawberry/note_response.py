@@ -61,6 +61,10 @@ class NoteType(DTOMixin[Note]):
     def created_by(self) -> UserResponse:
         return UserResponse.from_orm_model(self._instance.created_by)
 
+    @strawberry.field
+    def mentioned_users(self) -> list[UserResponse]:
+        return UserResponse.from_orm_model_list(self._instance.mentioned_users)
+
     # @strawberry.field
     # def conversations(self) -> list[NoteConversationType]:
     #     return NoteConversationType.from_orm_model_list(self._instance.conversations)

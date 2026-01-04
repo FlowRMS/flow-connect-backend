@@ -16,7 +16,7 @@ from commons.db.v6.user import User
 from sqlalchemy import Select, case, func, literal, or_, select
 from sqlalchemy.dialects.postgresql import JSONB, array
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.orm import lazyload
+from sqlalchemy.orm import joinedload, lazyload
 
 from app.core.context_wrapper import ContextWrapper
 from app.graphql.base_repository import BaseRepository
@@ -269,7 +269,12 @@ class NotesRepository(BaseRepository[Note]):
                     Note.content.ilike(f"%{search_term}%"),
                 )
             )
+            .options(
+                joinedload(Note.created_by),
+                joinedload(Note.mentioned_users),
+                lazyload("*"),
+            )
             .limit(limit)
         )
         result = await self.session.execute(stmt)
-        return list(result.scalars().all())
+        return list(result.unique().scalars().all())
