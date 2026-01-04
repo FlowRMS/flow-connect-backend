@@ -19,6 +19,7 @@ from .entity_mapping import EntityMapping
 
 class OrderConverter(BaseEntityConverter[OrderDTO, OrderInput, Order]):
     entity_type = DocumentEntityType.ORDERS
+    dto_class = OrderDTO
 
     def __init__(
         self,

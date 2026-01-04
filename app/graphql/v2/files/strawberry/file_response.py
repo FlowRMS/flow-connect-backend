@@ -4,6 +4,7 @@ from typing import Self
 from uuid import UUID
 
 import strawberry
+from commons.db.v6.enums import DocumentEntityType
 from commons.db.v6.files import File, FileType
 
 from app.core.db.adapters.dto import DTOMixin
@@ -51,6 +52,7 @@ class FileLiteResponse(DTOMixin[File]):
     file_path: str
     file_size: int
     file_type: FileTypeEnum | None
+    file_entity_type: DocumentEntityType | None
     file_sha: str | None
     archived: bool
     folder_id: UUID | None
@@ -68,6 +70,7 @@ class FileLiteResponse(DTOMixin[File]):
             file_sha=model.file_sha,
             archived=model.archived,
             folder_id=model.folder_id,
+            file_entity_type=model.file_entity_type,
         )
 
 

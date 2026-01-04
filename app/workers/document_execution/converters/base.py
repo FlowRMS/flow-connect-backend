@@ -7,19 +7,21 @@ from commons.db.v6.ai.documents import PendingDocument
 from commons.db.v6.ai.documents.enums.entity_type import DocumentEntityType
 from commons.db.v6.core.factories.factory import Factory
 from commons.dtos.common.dto_loader_service import DTOLoaderService, LoadedDTOs
+from pydantic import BaseModel
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 if TYPE_CHECKING:
     from .entity_mapping import EntityMapping
 
-TDto = TypeVar("TDto")
+TDto = TypeVar("TDto", bound=BaseModel)
 TInput = TypeVar("TInput")
 TOutput = TypeVar("TOutput")
 
 
 class BaseEntityConverter(ABC, Generic[TDto, TInput, TOutput]):
     entity_type: DocumentEntityType
+    dto_class: type[BaseModel]
 
     def __init__(
         self, session: AsyncSession, dto_loader_service: DTOLoaderService

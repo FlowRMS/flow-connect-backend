@@ -711,11 +711,30 @@ input DeleteLinkByEntitiesInput {
   targetEntityId: UUID!
 }
 
+enum DocumentEntityType {
+  QUOTES
+  ORDERS
+  INVOICES
+  CHECKS
+  UNDEFINED
+  ORDER_ACKNOWLEDGEMENTS
+  CUSTOMERS
+  FACTORIES
+  PRODUCTS
+  END_USERS
+}
+
 enum EmailStatus {
   PENDING
   SENT
   FAILED
   BOUNCED
+}
+
+type EntityProcessResponse {
+  entityId: UUID
+  dto: JSON!
+  error: String
 }
 
 enum EntityType {
@@ -738,6 +757,12 @@ enum EntityType {
 type EstimateRecipientsResponse {
   count: Int!
   sampleContacts: [ContactResponse!]!
+}
+
+type ExecuteWorkflowResponse {
+  success: Boolean!
+  taskId: String!
+  message: String!
 }
 
 input FactoryInput {
@@ -840,6 +865,7 @@ type FileLandingPage implements LandingPageInterfaceBase {
   fileName: String!
   filePath: String!
   fileSize: Int!
+  fileEntityType: DocumentEntityType
   fileType: String
   fileSha: String
   archived: Boolean!
@@ -853,6 +879,7 @@ type FileLiteResponse {
   filePath: String!
   fileSize: Int!
   fileType: FileTypeEnum
+  fileEntityType: DocumentEntityType
   fileSha: String
   archived: Boolean!
   folderId: UUID
@@ -865,6 +892,7 @@ type FileResponse {
   filePath: String!
   fileSize: Int!
   fileType: FileTypeEnum
+  fileEntityType: DocumentEntityType
   fileSha: String
   archived: Boolean!
   folderId: UUID
@@ -888,6 +916,7 @@ input FileUploadInput {
   fileName: String!
   folderId: UUID = null
   folderPath: String = null
+  fileEntityType: DocumentEntityType = null
 }
 
 input Filter {
@@ -1348,6 +1377,7 @@ input MultiFileUploadInput {
   fileNames: [String!]!
   folderId: UUID = null
   folderPath: String = null
+  fileEntityType: DocumentEntityType = null
 }
 
 type Mutation {
@@ -1378,6 +1408,8 @@ type Mutation {
   createCredit(input: CreditInput!): CreditResponse!
   updateCredit(input: CreditInput!): CreditResponse!
   deleteCredit(id: UUID!): Boolean!
+  executeWorkflow(pendingDocumentId: UUID!): ExecuteWorkflowResponse!
+  executeWorkflowNoWorker(pendingDocumentId: UUID!): [EntityProcessResponse!]!
   gmailConnect(code: String!): GmailConnectionResultType!
   gmailDisconnect: Boolean!
   gmailSendEmail(input: GmailSendEmailInput!): GmailSendEmailResultType!

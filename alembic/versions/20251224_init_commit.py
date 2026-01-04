@@ -763,6 +763,7 @@ def upgrade() -> None:
         sa.Column("file_name", sa.String(length=500), nullable=False),
         sa.Column("file_path", sa.String(length=2000), nullable=False),
         sa.Column("file_size", sa.Integer(), nullable=False),
+        sa.Column("file_entity_type", sa.SmallInteger(), nullable=True),
         sa.Column("file_type", sa.SmallInteger(), nullable=True),
         sa.Column("file_sha", sa.String(length=64), nullable=True),
         sa.Column("archived", sa.Boolean(), nullable=False),

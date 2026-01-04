@@ -2,6 +2,7 @@ from uuid import UUID
 
 from commons.auth import AuthInfo
 from commons.db.v6.crm.links.entity_type import EntityType
+from commons.db.v6.enums import DocumentEntityType
 from commons.db.v6.files import File, FileType
 from sqlalchemy.orm import joinedload, lazyload
 from strawberry.file_uploads import Upload
@@ -87,6 +88,7 @@ class FileService:
         self,
         file_upload: Upload,
         file_name: str,
+        file_entity_type: DocumentEntityType | None = None,
         folder_id: UUID | None = None,
         folder_path: str | None = None,
     ) -> File:
@@ -104,6 +106,7 @@ class FileService:
             file_type=file_type,
             file_sha=upload_result.file_sha,
             folder_id=folder_id,
+            file_entity_type=file_entity_type,
         )
         file = await self.repository.create(new_file)
         return await self.get_by_id(file.id)
@@ -113,10 +116,17 @@ class FileService:
         files: list[tuple[Upload, str]],
         folder_id: UUID | None = None,
         folder_path: str | None = None,
+        file_entity_type: DocumentEntityType | None = None,
     ) -> list[File]:
         results: list[File] = []
         for file, file_name in files:
-            result = await self.upload_file(file, file_name, folder_id, folder_path)
+            result = await self.upload_file(
+                file,
+                file_name,
+                file_entity_type=file_entity_type,
+                folder_id=folder_id,
+                folder_path=folder_path,
+            )
             results.append(result)
         return results
 

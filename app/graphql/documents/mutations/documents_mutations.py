@@ -1,4 +1,3 @@
-import uuid
 from uuid import UUID
 
 import strawberry
@@ -7,7 +6,10 @@ from strawberry import Info
 
 from app.core.context import Context
 from app.graphql.inject import inject
-from app.workers.document_execution.executor_service import DocumentExecutorService
+from app.workers.document_execution.executor_service import (
+    DocumentExecutorService,
+    EntityProcessResponse,
+)
 from app.workers.document_execution.task import execute_pending_document_task
 
 
@@ -54,5 +56,5 @@ class DocumentsMutations:
         self,
         pending_document_id: UUID,
         document_service: Injected[DocumentExecutorService],
-    ) -> list[uuid.UUID]:
+    ) -> list[EntityProcessResponse]:
         return await document_service.execute(pending_document_id)

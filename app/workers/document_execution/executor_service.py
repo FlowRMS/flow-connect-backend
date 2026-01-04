@@ -2,21 +2,34 @@ from decimal import Decimal
 from typing import Any
 from uuid import UUID
 
+import strawberry
 from commons.db.v6.ai.documents.enums.entity_type import DocumentEntityType
 from commons.db.v6.ai.documents.pending_document import PendingDocument
 from commons.db.v6.ai.entities.enums import ConfirmationStatus, EntityPendingType
 from commons.db.v6.ai.entities.pending_entity import PendingEntity
-from commons.dtos import OrderDTO
-from commons.dtos.common.base_entity_dto import BaseDTOModel
 from commons.dtos.common.dto_loader_service import DTOLoaderService
 from loguru import logger
+from pydantic import BaseModel
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import joinedload
 
+from app.workers.document_execution.converters.customer_converter import (
+    CustomerConverter,
+)
+from app.workers.document_execution.converters.factory_converter import FactoryConverter
 from app.workers.document_execution.converters.order_converter import OrderConverter
+from app.workers.document_execution.converters.product_converter import ProductConverter
 
 from .converters.base import BaseEntityConverter
 from .converters.entity_mapping import EntityMapping
+
+
+@strawberry.type
+class EntityProcessResponse:
+    entity_id: UUID | None
+    dto: strawberry.scalars.JSON
+    error: str | None
+
 
 CONFIRMED_STATUSES = frozenset(
     {
@@ -33,11 +46,17 @@ class DocumentExecutorService:
         session: AsyncSession,
         dto_loader_service: DTOLoaderService,
         order_converter: OrderConverter,
+        customer_converter: CustomerConverter,
+        factory_converter: FactoryConverter,
+        product_converter: ProductConverter,
     ) -> None:
         super().__init__()
         self.session = session
         self.dto_loader_service = dto_loader_service
         self.order_converter = order_converter
+        self.customer_converter = customer_converter
+        self.factory_converter = factory_converter
+        self.product_converter = product_converter
 
     def get_converter(
         self,
@@ -46,10 +65,16 @@ class DocumentExecutorService:
         match entity_type:
             case DocumentEntityType.ORDERS:
                 return self.order_converter
+            case DocumentEntityType.CUSTOMERS:
+                return self.customer_converter
+            case DocumentEntityType.FACTORIES:
+                return self.factory_converter
+            case DocumentEntityType.PRODUCTS:
+                return self.product_converter
             case _:
                 raise ValueError(f"Unsupported entity type: {entity_type}")
 
-    async def execute(self, pending_document_id: UUID) -> list[UUID]:
+    async def execute(self, pending_document_id: UUID) -> list[EntityProcessResponse]:
         pending_document = await self.session.get_one(
             PendingDocument,
             pending_document_id,
@@ -65,19 +90,19 @@ class DocumentExecutorService:
         dtos = await self._parse_dtos(converter, pending_document)
         logger.info(f"Parsed {len(dtos)} DTOs from extracted_data_json")
 
-        created_ids: list[UUID] = []
+        created_responses: list[EntityProcessResponse] = []
 
         for i, dto in enumerate(dtos):
             logger.info(f"Processing DTO {i + 1}/{len(dtos)}")
             entity_mapping = entity_mappings.get(dto.id, EntityMapping())
-            entity_id = await self._create_entity(
+            entity_response = await self._create_entity(
                 converter=converter,
                 dto=dto,
                 entity_mapping=entity_mapping,
             )
-            created_ids.append(entity_id)
+            created_responses.append(entity_response)
 
-        return created_ids
+        return created_responses
 
     def _build_entity_mappings(
         self,
@@ -137,30 +162,37 @@ class DocumentExecutorService:
         return mappings
 
     async def _parse_dtos(
-        self, converter: BaseEntityConverter, pending_document: PendingDocument
-    ) -> list[BaseDTOModel]:
+        self,
+        converter: BaseEntityConverter[Any, Any, Any],
+        pending_document: PendingDocument,
+    ) -> list[Any]:
         if not pending_document.extracted_data_json:
             return []
 
         loaded_dtos = await converter.parse_dtos_from_json(pending_document)
-
-        match pending_document.entity_type:
-            case DocumentEntityType.ORDERS:
-                return [OrderDTO.model_validate(d) for d in loaded_dtos.dtos]
-            case _:
-                raise ValueError(
-                    f"Unsupported entity type: {pending_document.entity_type}"
-                )
+        return [converter.dto_class.model_validate(d) for d in loaded_dtos.dtos]
 
     async def _create_entity(
         self,
         converter: BaseEntityConverter[Any, Any, Any],
-        dto: Any,
+        dto: BaseModel,
         entity_mapping: EntityMapping,
-    ) -> UUID:
-        input_obj = await converter.to_input(dto, entity_mapping)
-        entity = await converter.create_entity(input_obj)
-        return entity.id
+    ) -> EntityProcessResponse:
+        try:
+            input_obj = await converter.to_input(dto, entity_mapping)
+            entity = await converter.create_entity(input_obj)
+            return EntityProcessResponse(
+                entity_id=entity.id,
+                dto=dto.model_dump(),
+                error=None,
+            )
+        except Exception as e:
+            logger.error(f"Error creating entity for DTO: {e}")
+            return EntityProcessResponse(
+                entity_id=None,
+                dto=dto.model_dump(),
+                error=str(e),
+            )
 
     @staticmethod
     def _calc_rate(numerator: Decimal, denominator: Decimal) -> Decimal:
