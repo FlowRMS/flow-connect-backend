@@ -21,6 +21,7 @@ class QuoteFactory:
         quote_number: str,
     ) -> Quote:
         return Quote(
+            factory_per_line_item=False,
             inside_per_line_item=True,
             outside_per_line_item=True,
             end_user_per_line_item=False,
@@ -43,6 +44,7 @@ class QuoteFactory:
     @staticmethod
     def duplicate(source_quote: Quote, new_quote_number: str) -> Quote:
         return Quote(
+            factory_per_line_item=source_quote.factory_per_line_item,
             inside_per_line_item=source_quote.inside_per_line_item,
             outside_per_line_item=source_quote.outside_per_line_item,
             end_user_per_line_item=source_quote.end_user_per_line_item,

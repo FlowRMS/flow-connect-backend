@@ -2379,6 +2379,7 @@ input QuoteInput {
   pipelineStage: PipelineStage!
   details: [QuoteDetailInput!]!
   id: UUID
+  factoryPerLineItem: Boolean! = false
   jobId: UUID
   published: Boolean!
   creationType: CreationType!
@@ -2435,6 +2436,7 @@ type QuoteLiteResponse {
   published: Boolean!
   creationType: CreationType!
   soldToCustomerId: UUID!
+  factoryPerLineItem: Boolean!
   billToCustomerId: UUID
   paymentTerms: String
   customerRef: String
@@ -2463,6 +2465,7 @@ type QuoteResponse {
   published: Boolean!
   creationType: CreationType!
   soldToCustomerId: UUID!
+  factoryPerLineItem: Boolean!
   billToCustomerId: UUID
   paymentTerms: String
   customerRef: String
