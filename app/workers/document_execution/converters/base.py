@@ -1,24 +1,45 @@
 from abc import ABC, abstractmethod
 from decimal import Decimal
-from typing import Any, Generic, TypeVar
+from typing import Generic, TypeVar
 from uuid import UUID
 
-from commons.db.v6.ai.documents.enums import EntityType
+from commons.db.v6.ai.documents import PendingDocument
+from commons.db.v6.ai.documents.enums.entity_type import DocumentEntityType
 from commons.db.v6.core.factories.factory import Factory
+from commons.dtos.common.dto_loader_service import DTOLoaderService, LoadedDTOs
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 TDto = TypeVar("TDto")
 TInput = TypeVar("TInput")
+TOutput = TypeVar("TOutput")
 
 
-class BaseEntityConverter(ABC, Generic[TDto, TInput]):
-    entity_type: EntityType
+class BaseEntityConverter(ABC, Generic[TDto, TInput, TOutput]):
+    entity_type: DocumentEntityType
 
-    def __init__(self, session: AsyncSession) -> None:
+    def __init__(
+        self, session: AsyncSession, dto_loader_service: DTOLoaderService
+    ) -> None:
         super().__init__()
         self.session = session
+        self.dto_loader_service = dto_loader_service
         self._factory_cache: dict[UUID, Factory] = {}
+
+    @abstractmethod
+    async def create_entity(
+        self,
+        input_data: TInput,
+    ) -> TOutput:
+        """
+        Create the entity in the system using the provided input data.
+
+        Args:
+            input_data: The Strawberry input data for entity creation
+        Returns:
+            The created ORM entity
+        """
+        ...
 
     @abstractmethod
     async def to_input(
@@ -74,14 +95,8 @@ class BaseEntityConverter(ABC, Generic[TDto, TInput]):
             return factory.overall_discount_rate
         return Decimal("0")
 
-    @staticmethod
-    def parse_dtos_from_json(extracted_data: dict[str, Any]) -> list[dict[str, Any]]:
-        """
-        Parse raw DTOs from PendingDocument.extracted_data_json.
-
-        For PDFs: {"data": [{"order_number": "...", ...}]}
-        For Tabular: {"s3_key": "..."} - needs separate handling
-        """
-        if "data" in extracted_data:
-            return extracted_data["data"]
-        return []
+    async def parse_dtos_from_json(
+        self,
+        pending_document: PendingDocument,
+    ) -> LoadedDTOs:
+        return await self.dto_loader_service.load_dtos_from_pending(pending_document)

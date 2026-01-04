@@ -1,23 +1,40 @@
 from datetime import date, datetime, timezone
 from decimal import Decimal
+from typing import override
 from uuid import UUID
 
-from commons.db.v6.ai.documents.enums import EntityType
+from commons.db.v6.ai.documents.enums.entity_type import DocumentEntityType
+from commons.db.v6.models import Order
+from commons.dtos.common.dto_loader_service import DTOLoaderService
 from commons.dtos.order.order_detail_dto import OrderDetailDTO
 from commons.dtos.order.order_dto import OrderDTO
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.graphql.orders.services.order_service import OrderService
 from app.graphql.orders.strawberry.order_detail_input import OrderDetailInput
 from app.graphql.orders.strawberry.order_input import OrderInput
 
 from .base import BaseEntityConverter
 
 
-class OrderConverter(BaseEntityConverter[OrderDTO, OrderInput]):
-    entity_type = EntityType.ORDERS
+class OrderConverter(BaseEntityConverter[OrderDTO, OrderInput, Order]):
+    entity_type = DocumentEntityType.ORDERS
 
-    def __init__(self, session: AsyncSession) -> None:
-        super().__init__(session)
+    def __init__(
+        self,
+        session: AsyncSession,
+        dto_loader_service: DTOLoaderService,
+        order_service: OrderService,
+    ) -> None:
+        super().__init__(session, dto_loader_service)
+        self.order_service = order_service
+
+    @override
+    async def create_entity(
+        self,
+        input_data: OrderInput,
+    ) -> Order:
+        return await self.order_service.create_order(input_data)
 
     async def to_input(
         self,
@@ -57,7 +74,7 @@ class OrderConverter(BaseEntityConverter[OrderDTO, OrderInput]):
         ]
 
         return OrderInput(
-            order_number=order_number,
+            order_number=f"{order_number}-TEST",
             entity_date=entity_date,
             due_date=due_date,
             sold_to_customer_id=sold_to_id,

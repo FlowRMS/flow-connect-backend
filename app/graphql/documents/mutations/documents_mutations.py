@@ -1,9 +1,13 @@
+import uuid
 from uuid import UUID
 
 import strawberry
+from aioinject import Injected
 from strawberry import Info
 
 from app.core.context import Context
+from app.graphql.inject import inject
+from app.workers.document_execution.executor_service import DocumentExecutorService
 from app.workers.document_execution.task import execute_pending_document_task
 
 
@@ -43,3 +47,12 @@ class DocumentsMutations:
             task_id=str(task.task_id),
             message=f"Workflow execution started for document {pending_document_id}",
         )
+
+    @strawberry.mutation
+    @inject
+    async def execute_workflow_no_worker(
+        self,
+        pending_document_id: UUID,
+        document_service: Injected[DocumentExecutorService],
+    ) -> list[uuid.UUID]:
+        return await document_service.execute(pending_document_id)

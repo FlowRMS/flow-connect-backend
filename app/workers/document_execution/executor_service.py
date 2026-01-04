@@ -2,17 +2,19 @@ from decimal import Decimal
 from typing import Any
 from uuid import UUID
 
-from commons.db.v6.ai.documents.enums import EntityType
+from commons.db.v6.ai.documents.enums.entity_type import DocumentEntityType
 from commons.db.v6.ai.documents.pending_document import PendingDocument
 from commons.db.v6.ai.entities.enums import ConfirmationStatus, EntityPendingType
 from commons.db.v6.ai.entities.pending_entity import PendingEntity
-from commons.db.v6.commission.orders import Order, OrderBalance
+from commons.dtos.common.dto_loader_service import DTOLoaderService
 from commons.dtos.order.order_dto import OrderDTO
 from loguru import logger
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import joinedload
+
+from app.workers.document_execution.converters.order_converter import OrderConverter
 
 from .converters.base import BaseEntityConverter
-from .converters.registry import get_converter
 
 CONFIRMED_STATUSES = frozenset(
     {
@@ -24,27 +26,48 @@ CONFIRMED_STATUSES = frozenset(
 
 
 class DocumentExecutorService:
-    def __init__(self, session: AsyncSession) -> None:
+    def __init__(
+        self,
+        session: AsyncSession,
+        dto_loader_service: DTOLoaderService,
+        order_converter: OrderConverter,
+    ) -> None:
         super().__init__()
         self.session = session
+        self.dto_loader_service = dto_loader_service
+        self.order_converter = order_converter
 
-    async def execute(self, pending_document: PendingDocument) -> list[UUID]:
+    def get_converter(
+        self,
+        entity_type: DocumentEntityType,
+    ) -> BaseEntityConverter[Any, Any, Any]:
+        match entity_type:
+            case DocumentEntityType.ORDERS:
+                return self.order_converter
+            case _:
+                raise ValueError(f"Unsupported entity type: {entity_type}")
+
+    async def execute(self, pending_document_id: UUID) -> list[UUID]:
+        pending_document = await self.session.get_one(
+            PendingDocument,
+            pending_document_id,
+            options=[joinedload(PendingDocument.pending_entities)],
+        )
         if not pending_document.entity_type:
             raise ValueError("PendingDocument has no entity_type set")
 
         entity_mapping = self._build_entity_mapping(pending_document.pending_entities)
         logger.info(f"Built entity mapping with {len(entity_mapping)} entries")
 
-        dtos = self._parse_dtos(pending_document)
+        converter = self.get_converter(pending_document.entity_type)
+        dtos = await self._parse_dtos(converter, pending_document)
         logger.info(f"Parsed {len(dtos)} DTOs from extracted_data_json")
 
-        converter = get_converter(pending_document.entity_type, self.session)
         created_ids: list[UUID] = []
 
         for i, dto in enumerate(dtos):
             logger.info(f"Processing DTO {i + 1}/{len(dtos)}")
             entity_id = await self._create_entity(
-                entity_type=pending_document.entity_type,
                 converter=converter,
                 dto=dto,
                 entity_mapping=entity_mapping,
@@ -59,7 +82,14 @@ class DocumentExecutorService:
     ) -> dict[str, UUID]:
         mapping: dict[str, UUID] = {}
 
+        logger.info(
+            f"Building entity mapping from {len(pending_entities)} PendingEntities"
+        )
+
         for pe in pending_entities:
+            print(
+                f"Processing PendingEntity {pe.id} of type {pe.entity_type}, status {pe.confirmation_status}"
+            )
             if pe.confirmation_status not in CONFIRMED_STATUSES:
                 continue
 
@@ -85,17 +115,17 @@ class DocumentExecutorService:
 
         return mapping
 
-    def _parse_dtos(self, pending_document: PendingDocument) -> list[Any]:
+    async def _parse_dtos(
+        self, converter: BaseEntityConverter, pending_document: PendingDocument
+    ) -> list[Any]:
         if not pending_document.extracted_data_json:
             return []
 
-        raw_dtos = BaseEntityConverter.parse_dtos_from_json(
-            pending_document.extracted_data_json
-        )
+        loaded_dtos = await converter.parse_dtos_from_json(pending_document)
 
         match pending_document.entity_type:
-            case EntityType.ORDERS:
-                return [OrderDTO.model_validate(d) for d in raw_dtos]
+            case DocumentEntityType.ORDERS:
+                return [OrderDTO.model_validate(d) for d in loaded_dtos.dtos]
             case _:
                 raise ValueError(
                     f"Unsupported entity type: {pending_document.entity_type}"
@@ -103,54 +133,12 @@ class DocumentExecutorService:
 
     async def _create_entity(
         self,
-        entity_type: EntityType,
-        converter: BaseEntityConverter[Any, Any],
+        converter: BaseEntityConverter[Any, Any, Any],
         dto: Any,
         entity_mapping: dict[str, UUID],
     ) -> UUID:
         input_obj = await converter.to_input(dto, entity_mapping)
-
-        match entity_type:
-            case EntityType.ORDERS:
-                return await self._create_order(input_obj)
-            case _:
-                raise ValueError(f"Unsupported entity type for creation: {entity_type}")
-
-    async def _create_order(self, order_input: Any) -> UUID:
-        order: Order = order_input.to_orm_model()
-        balance = self._calculate_order_balance(order)
-        self.session.add(balance)
-        await self.session.flush([balance])
-
-        order.balance_id = balance.id
-        self.session.add(order)
-        await self.session.flush([order])
-
-        logger.info(f"Created order: {order.id} ({order.order_number})")
-        return order.id
-
-    def _calculate_order_balance(self, order: Order) -> OrderBalance:
-        details = order.details
-        quantity = sum((d.quantity for d in details), Decimal("0"))
-        subtotal = sum((d.subtotal for d in details), Decimal("0"))
-        discount = sum((d.discount for d in details), Decimal("0"))
-        total = subtotal - discount
-        commission = sum((d.commission for d in details), Decimal("0"))
-        commission_discount = sum(
-            (d.commission_discount for d in details), Decimal("0")
-        )
-
-        return OrderBalance(
-            quantity=quantity,
-            subtotal=subtotal,
-            total=total,
-            commission=commission,
-            discount=discount,
-            discount_rate=self._calc_rate(discount, subtotal),
-            commission_rate=self._calc_rate(commission, total),
-            commission_discount=commission_discount,
-            commission_discount_rate=self._calc_rate(commission_discount, commission),
-        )
+        return await converter.create_entity(input_obj)
 
     @staticmethod
     def _calc_rate(numerator: Decimal, denominator: Decimal) -> Decimal:
