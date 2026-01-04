@@ -214,39 +214,29 @@ class NotesRepository(BaseRepository[Note]):
         entity_id: UUID,
     ) -> list[Note]:
         """Find all notes linked to a specific entity via link relations."""
-        # First, get all link relations where:
-        # - Source is NOTE and target is the given entity, OR
-        # - Target is NOTE and source is the given entity
-        links_stmt = select(LinkRelation).where(
-            (
-                (LinkRelation.source_entity_type == EntityType.NOTE)
-                & (LinkRelation.target_entity_type == entity_type)
-                & (LinkRelation.target_entity_id == entity_id)
+        stmt = (
+            select(Note)
+            .join(
+                LinkRelation,
+                or_(
+                    (LinkRelation.source_entity_type == EntityType.NOTE)
+                    & (LinkRelation.source_entity_id == Note.id)
+                    & (LinkRelation.target_entity_type == entity_type)
+                    & (LinkRelation.target_entity_id == entity_id),
+                    (LinkRelation.target_entity_type == EntityType.NOTE)
+                    & (LinkRelation.target_entity_id == Note.id)
+                    & (LinkRelation.source_entity_type == entity_type)
+                    & (LinkRelation.source_entity_id == entity_id),
+                ),
             )
-            | (
-                (LinkRelation.target_entity_type == EntityType.NOTE)
-                & (LinkRelation.source_entity_type == entity_type)
-                & (LinkRelation.source_entity_id == entity_id)
+            .options(
+                joinedload(Note.created_by),
+                joinedload(Note.mentioned_users),
+                lazyload("*"),
             )
         )
-        links_result = await self.session.execute(links_stmt)
-        links = list(links_result.scalars().all())
-
-        if not links:
-            return []
-
-        # Extract note IDs from the links
-        note_ids: list[UUID] = []
-        for link in links:
-            if link.source_entity_type == EntityType.NOTE:
-                note_ids.append(link.source_entity_id)
-            elif link.target_entity_type == EntityType.NOTE:
-                note_ids.append(link.target_entity_id)
-
-        # Query notes with those IDs
-        notes_stmt = select(Note).where(Note.id.in_(note_ids))
-        notes_result = await self.session.execute(notes_stmt)
-        return list(notes_result.scalars().all())
+        result = await self.session.execute(stmt)
+        return list(result.scalars().all())
 
     async def search_by_title_or_content(
         self, search_term: str, limit: int = 20
