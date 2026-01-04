@@ -1872,8 +1872,9 @@ enum OrderStatus {
 
 enum OrderType {
   NORMAL
+  TAG
   BLANKET
-  RELEASE
+  STORM
 }
 
 input OutsideSplitRateInput {
