@@ -46,6 +46,12 @@ from migrations.v5_to_v6.migrate_orders import (
     migrate_order_split_rates,
     migrate_orders,
 )
+from migrations.v5_to_v6.migrate_pycrm_entities import (
+    migrate_companies,
+    migrate_link_relations,
+    migrate_notes,
+    migrate_tasks,
+)
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
 logger = logging.getLogger(__name__)
@@ -1066,6 +1072,10 @@ async def run_migration(config: MigrationConfig) -> dict[str, int]:
         results["addresses"] = await migrate_addresses(source, dest)
         results["contacts"] = await migrate_contacts(source, dest)
         results["contact_links"] = await migrate_contact_links(source, dest)
+        results["notes"] = await migrate_notes(source, dest)
+        results["tasks"] = await migrate_tasks(source, dest)
+        results["link_relations"] = await migrate_link_relations(source, dest)
+        results["companies"] = await migrate_companies(source, dest)
         results["order_balances"] = await migrate_order_balances(source, dest)
         results["orders"] = await migrate_orders(source, dest)
         results["order_details"] = await migrate_order_details(source, dest)

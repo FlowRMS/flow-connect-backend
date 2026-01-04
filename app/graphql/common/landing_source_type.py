@@ -22,6 +22,7 @@ class LandingSourceType(Enum):
     QUOTES = "quotes"
     ORDERS = "orders"
     FILES = "files"
+    FOLDERS = "folders"
     INVOICES = "invoices"
     CREDITS = "credits"
     ADJUSTMENTS = "adjustments"

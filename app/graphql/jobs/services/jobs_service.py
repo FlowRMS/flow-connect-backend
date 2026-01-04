@@ -263,3 +263,8 @@ class JobsService:
     async def get_jobs_by_note(self, note_id: UUID) -> list[Job]:
         """Find all jobs linked to the given note ID."""
         return await self.repository.find_by_note_id(note_id)
+
+    async def find_by_entity(
+        self, entity_type: EntityType, entity_id: UUID
+    ) -> list[Job]:
+        return await self.repository.find_by_entity(entity_type, entity_id)

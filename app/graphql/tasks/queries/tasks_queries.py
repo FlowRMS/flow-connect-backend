@@ -93,7 +93,9 @@ class TasksQueries:
             await service.search_tasks(search_term, limit)
         )
 
-    @strawberry.field
+    @strawberry.field(
+        deprecation_reason="Use related_entities(source_type: TASKS, entity_id: UUID)"
+    )
     @inject
     async def task_related_entities(
         self,
@@ -112,7 +114,6 @@ class TasksQueries:
         product_service: Injected[ProductService],
         customer_service: Injected[CustomerService],
     ) -> TaskRelatedEntitiesResponse:
-        """Get all entities related to a task."""
         # Verify task exists
         _ = await tasks_service.get_task(task_id)
 

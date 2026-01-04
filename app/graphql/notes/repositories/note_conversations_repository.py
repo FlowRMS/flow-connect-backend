@@ -5,6 +5,7 @@ from uuid import UUID
 from commons.db.v6.crm.notes.note_conversation_model import NoteConversation
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import joinedload
 
 from app.core.context_wrapper import ContextWrapper
 from app.graphql.base_repository import BaseRepository
@@ -18,7 +19,11 @@ class NoteConversationsRepository(BaseRepository[NoteConversation]):
 
     async def get_by_note_id(self, note_id: UUID) -> list[NoteConversation]:
         """Get all conversations for a specific note."""
-        stmt = select(NoteConversation).where(NoteConversation.note_id == note_id)
+        stmt = (
+            select(NoteConversation)
+            .options(joinedload(NoteConversation.created_by))
+            .where(NoteConversation.note_id == note_id)
+        )
         result = await self.session.execute(stmt)
         return list(result.scalars().all())
 

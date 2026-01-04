@@ -36,6 +36,7 @@ from app.graphql.v2.core.products.repositories.products_repository import (
     ProductsRepository,
 )
 from app.graphql.v2.files.repositories.file_repository import FileRepository
+from app.graphql.v2.files.repositories.folder_repository import FolderRepository
 from app.graphql.v2.rbac.services.rbac_filter_service import RbacFilterService
 
 
@@ -56,6 +57,7 @@ class LandingPageService:
         quotes_repository: QuotesRepository,
         orders_repository: OrdersRepository,
         file_repository: FileRepository,
+        folder_repository: FolderRepository,
         invoices_repository: InvoicesRepository,
         credits_repository: CreditsRepository,
         adjustments_repository: AdjustmentsRepository,
@@ -80,6 +82,7 @@ class LandingPageService:
             LandingSourceType.QUOTES: quotes_repository,
             LandingSourceType.ORDERS: orders_repository,
             LandingSourceType.FILES: file_repository,
+            LandingSourceType.FOLDERS: folder_repository,
             LandingSourceType.INVOICES: invoices_repository,
             LandingSourceType.CREDITS: credits_repository,
             LandingSourceType.ADJUSTMENTS: adjustments_repository,

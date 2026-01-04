@@ -246,7 +246,7 @@ type CheckDetailResponse {
   adjustmentId: UUID
   creditId: UUID
   appliedAmount: Decimal!
-  invoice: InvoiceCheckResponse
+  invoice: InvoiceLiteOrderResponse
   adjustment: AdjustmentCheckResponse
   credit: CreditCheckResponse
 }
@@ -271,6 +271,7 @@ type CheckLandingPage implements LandingPageInterfaceBase {
   userIds: [UUID!]!
   checkNumber: String!
   status: CheckStatus!
+  postDate: Date
   enteredCommissionAmount: Decimal
   commissionMonth: Date
   factoryName: String!
@@ -423,6 +424,12 @@ type ContainerTypeResponse {
   weight: Decimal!
   position: Int!
   createdAt: datetime!
+}
+
+input CreateFolderInput {
+  name: String!
+  description: String = null
+  parentId: UUID = null
 }
 
 input CreateHighlightVersionInput {
@@ -907,6 +914,38 @@ enum FilterOperator {
   IS_NOT_NULL
 }
 
+type FolderLiteResponse {
+  id: UUID!
+  createdAt: datetime!
+  name: String!
+  description: String
+  parentId: UUID
+  archived: Boolean!
+}
+
+type FolderResponse {
+  id: UUID!
+  createdAt: datetime!
+  name: String!
+  description: String
+  parentId: UUID
+  archived: Boolean!
+  createdBy: UserResponse!
+}
+
+type FolderWithChildrenResponse {
+  id: UUID!
+  createdAt: datetime!
+  name: String!
+  description: String
+  parentId: UUID
+  archived: Boolean!
+  createdBy: UserResponse!
+  children: [FolderLiteResponse!]!
+  files: [FileLiteResponse!]!
+  parent: FolderLiteResponse
+}
+
 type GenericLandingPage {
   records: [LandingRecord!]!
   total: Int!
@@ -999,23 +1038,6 @@ type InvoiceBalanceResponse {
   paidBalance: Decimal!
 }
 
-type InvoiceCheckResponse {
-  id: UUID!
-  createdAt: datetime!
-  createdById: UUID!
-  invoiceNumber: String!
-  entityDate: Date!
-  dueDate: Date
-  orderId: UUID!
-  status: InvoiceStatus!
-  published: Boolean!
-  locked: Boolean!
-  creationType: CreationType!
-  balanceId: UUID!
-  url: String!
-  order: OrderLiteResponse!
-}
-
 input InvoiceDetailInput {
   itemNumber: Int!
   quantity: Decimal!
@@ -1094,6 +1116,23 @@ type InvoiceLandingPage implements LandingPageInterfaceBase {
   orderId: String!
   orderNumber: String!
   factoryName: String!
+}
+
+type InvoiceLiteOrderResponse {
+  id: UUID!
+  createdAt: datetime!
+  createdById: UUID!
+  invoiceNumber: String!
+  entityDate: Date!
+  dueDate: Date
+  orderId: UUID!
+  status: InvoiceStatus!
+  published: Boolean!
+  locked: Boolean!
+  creationType: CreationType!
+  balanceId: UUID!
+  url: String!
+  order: OrderLiteResponse!
 }
 
 type InvoiceLiteResponse {
@@ -1263,6 +1302,7 @@ enum LandingSourceType {
   QUOTES
   ORDERS
   FILES
+  FOLDERS
   INVOICES
   CREDITS
   ADJUSTMENTS
@@ -1438,6 +1478,10 @@ type Mutation {
   uploadFiles(input: MultiFileUploadInput!): [FileLiteResponse!]!
   archiveFile(fileId: UUID!): Boolean!
   deleteFile(fileId: UUID!): Boolean!
+  createFolder(input: CreateFolderInput!): FolderResponse!
+  updateFolder(input: UpdateFolderInput!): FolderResponse!
+  archiveFolder(folderId: UUID!): Boolean!
+  deleteFolder(folderId: UUID!): Boolean!
   updateRbacGrid(rbacGrid: [RbacGridInput!]!): [RbacGridResponse!]!
   updateCommissionVisibility(input: UpdateCommissionVisibilityInput!): RbacRoleSettingResponse!
 }
@@ -1452,6 +1496,7 @@ type NoteConversationType {
   createdAt: datetime!
   noteId: UUID!
   content: String!
+  createdBy: UserResponse!
 }
 
 input NoteInput {
@@ -1827,8 +1872,9 @@ enum OrderStatus {
 
 enum OrderType {
   NORMAL
+  TAG
   BLANKET
-  RELEASE
+  STORM
 }
 
 input OutsideSplitRateInput {
@@ -2154,13 +2200,14 @@ type Query {
   checkSearch(searchTerm: String!, limit: Int! = 20): [CheckLiteResponse!]!
   checksByFactory(factoryId: UUID!): [CheckLiteResponse!]!
   findLandingPages(sourceType: LandingSourceType!, filters: [Filter!] = null, orderBy: [OrderBy!] = null, limit: Int = 10, offset: Int = 0): GenericLandingPage!
+  relatedEntities(sourceType: LandingSourceType!, entityId: UUID!): RelatedEntitiesResponse!
   universalSearch(searchTerm: String!, limit: Int! = 20): [SearchResult!]!
   company(id: UUID!): CompanyResponse!
   companySearch(searchTerm: String!, limit: Int! = 20): [CompanyResponse!]!
   contact(id: UUID!): ContactResponse!
   contactsByCompany(companyId: UUID!): [ContactResponse!]!
   contactSearch(searchTerm: String!, limit: Int! = 20): [ContactResponse!]!
-  contactRelatedEntities(contactId: UUID!): ContactRelatedEntitiesResponse!
+  contactRelatedEntities(contactId: UUID!): ContactRelatedEntitiesResponse! @deprecated(reason: "Use related_entities(source_type: CONTACTS, entity_id: UUID)")
   credit(id: UUID!): CreditResponse!
   creditSearch(searchTerm: String!, limit: Int! = 20, openOnly: Boolean! = false, unlockedOnly: Boolean! = false): [CreditLiteResponse!]!
   gmailAuthUrl(state: String = null): String!
@@ -2171,11 +2218,11 @@ type Query {
   o365CalendarEventsInRange(startDate: datetime!, endDate: datetime!, top: Int! = 100): O365CalendarEventsResultType!
   invoice(id: UUID!): InvoiceResponse!
   invoiceSearch(searchTerm: String!, limit: Int! = 20, openOnly: Boolean! = false, unlockedOnly: Boolean! = false): [InvoiceLiteResponse!]!
-  searchOpenInvoices(factoryId: UUID!, startFrom: Date!): [InvoiceLiteResponse!]!
+  searchOpenInvoices(factoryId: UUID!, startFrom: Date!): [InvoiceLiteOrderResponse!]!
   invoicesByOrderId(orderId: UUID!): [InvoiceLiteResponse!]!
   job(id: UUID!): JobType!
   jobStatuses: [JobStatusType!]!
-  jobRelatedEntities(jobId: UUID!): JobRelatedEntitiesResponse!
+  jobRelatedEntities(jobId: UUID!): JobRelatedEntitiesResponse! @deprecated(reason: "Use related_entities(source_type: JOBS, entity_id: UUID)")
   jobSearch(searchTerm: String!, limit: Int! = 20): [JobType!]!
   jobsByContact(contactId: UUID!): [JobType!]!
   jobsByCompany(companyId: UUID!): [JobType!]!
@@ -2188,7 +2235,7 @@ type Query {
   notesByEntity(entityType: EntityType!, entityId: UUID!): [NoteType!]!
   noteConversations(noteId: UUID!): [NoteConversationType!]!
   noteSearch(searchTerm: String!, limit: Int! = 20): [NoteType!]!
-  noteRelatedEntities(noteId: UUID!): NoteRelatedEntitiesResponse!
+  noteRelatedEntities(noteId: UUID!): NoteRelatedEntitiesResponse! @deprecated(reason: "Use related_entities(source_type: NOTES, entity_id: UUID)")
   orderAcknowledgement(id: UUID!): OrderAcknowledgementResponse
   orderAcknowledgementsByOrder(orderId: UUID!): [OrderAcknowledgementResponse!]!
   orderAcknowledgementsByOrderDetail(orderDetailId: UUID!): [OrderAcknowledgementResponse!]!
@@ -2206,7 +2253,7 @@ type Query {
   task(id: UUID!): TaskType!
   taskConversations(taskId: UUID!): [TaskConversationType!]!
   taskSearch(searchTerm: String!, limit: Int! = 20): [TaskType!]!
-  taskRelatedEntities(taskId: UUID!): TaskRelatedEntitiesResponse!
+  taskRelatedEntities(taskId: UUID!): TaskRelatedEntitiesResponse! @deprecated(reason: "Use related_entities(source_type: TASKS, entity_id: UUID)")
   tasksByEntity(entityType: EntityType!, entityId: UUID!): [TaskType!]!
   containerTypes: [ContainerTypeResponse!]!
   containerType(id: UUID!): ContainerTypeResponse!
@@ -2242,6 +2289,11 @@ type Query {
   filesByFolder(folderId: UUID!): [FileResponse!]!
   filePresignedUrl(fileId: UUID!): String
   filesByLinkedEntity(entityType: EntityType!, entityId: UUID!): [FileResponse!]!
+  folder(folderId: UUID!): FolderResponse
+  folderWithContents(folderId: UUID!): FolderWithChildrenResponse
+  searchFolders(searchTerm: String!, limit: Int! = 20): [FolderResponse!]!
+  foldersByParent(parentId: UUID = null): [FolderResponse!]!
+  rootFolders: [FolderResponse!]!
   getRbacGrid: [RbacGridResponse!]!
   getUserRbac(resource: RbacResourceEnum!): UserRbac!
   getRoleSettings: [RbacRoleSettingResponse!]!
@@ -2327,6 +2379,7 @@ input QuoteInput {
   pipelineStage: PipelineStage!
   details: [QuoteDetailInput!]!
   id: UUID
+  factoryPerLineItem: Boolean! = false
   jobId: UUID
   published: Boolean!
   creationType: CreationType!
@@ -2383,6 +2436,7 @@ type QuoteLiteResponse {
   published: Boolean!
   creationType: CreationType!
   soldToCustomerId: UUID!
+  factoryPerLineItem: Boolean!
   billToCustomerId: UUID
   paymentTerms: String
   customerRef: String
@@ -2411,6 +2465,7 @@ type QuoteResponse {
   published: Boolean!
   creationType: CreationType!
   soldToCustomerId: UUID!
+  factoryPerLineItem: Boolean!
   billToCustomerId: UUID
   paymentTerms: String
   customerRef: String
@@ -2535,6 +2590,24 @@ enum RecipientListType {
   DYNAMIC
 }
 
+type RelatedEntitiesResponse {
+  sourceType: LandingSourceType!
+  sourceEntityId: UUID!
+  jobs: [JobLiteType!]
+  tasks: [TaskType!]
+  notes: [NoteType!]
+  contacts: [ContactResponse!]
+  companies: [CompanyLiteResponse!]
+  preOpportunities: [PreOpportunityLiteResponse!]
+  quotes: [QuoteLiteResponse!]
+  orders: [OrderLiteResponse!]
+  invoices: [InvoiceLiteResponse!]
+  checks: [CheckLiteResponse!]
+  factories: [FactoryLiteResponse!]
+  products: [ProductLiteResponse!]
+  customers: [CustomerLiteResponse!]
+}
+
 enum RepTypeEnum {
   OUTSIDE
   INSIDE
@@ -2625,6 +2698,7 @@ enum SourceType {
   CONTAINER_TYPE
   WAREHOUSE
   ORDER_ACKNOWLEDGEMENT
+  FOLDER
 }
 
 type SpecSheetResponse {
@@ -2658,6 +2732,7 @@ type TaskConversationType {
   createdAt: datetime!
   taskId: UUID!
   content: String!
+  createdBy: UserResponse!
 }
 
 input TaskInput {
@@ -2735,6 +2810,13 @@ scalar UUID
 input UpdateCommissionVisibilityInput {
   role: RbacRoleEnum!
   commission: Boolean!
+}
+
+input UpdateFolderInput {
+  folderId: UUID!
+  name: String = null
+  description: String = null
+  parentId: UUID = null
 }
 
 input UpdateHighlightRegionsInput {

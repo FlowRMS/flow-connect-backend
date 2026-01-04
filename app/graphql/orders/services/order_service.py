@@ -58,6 +58,11 @@ class OrderService:
     ) -> list[Order]:
         return await self.repository.find_by_entity(entity_type, entity_id)
 
+    async def find_by_factory_id(
+        self, factory_id: UUID, limit: int = 25
+    ) -> list[Order]:
+        return await self.repository.find_by_factory_id(factory_id, limit)
+
     async def create_order_from_quote(
         self,
         quote_id: UUID,
