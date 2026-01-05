@@ -185,6 +185,21 @@ class FulfillmentOrderLineItemResponse(DTOMixin[FulfillmentOrderLineItem]):
         return product.factory_part_number if product else ""
 
     @strawberry.field
+    async def part_number(self) -> str:
+        """Get the product's factory part number."""
+        product = await self._instance.awaitable_attrs.product
+        return product.factory_part_number if product else ""
+
+    @strawberry.field
+    async def uom(self) -> str:
+        """Get the product's unit of measure."""
+        product = await self._instance.awaitable_attrs.product
+        if product:
+            uom_obj = await product.awaitable_attrs.uom
+            return uom_obj.title if uom_obj else "EA"
+        return "EA"
+
+    @strawberry.field
     async def packing_box_items(self) -> list[PackingBoxItemResponse]:
         items = await self._instance.awaitable_attrs.packing_box_items
         return PackingBoxItemResponse.from_orm_model_list(items)
@@ -265,6 +280,21 @@ class FulfillmentOrderResponse(DTOMixin[FulfillmentOrder]):
     async def carrier_name(self) -> str | None:
         carrier = await self._instance.awaitable_attrs.carrier
         return carrier.name if carrier else None
+
+    @strawberry.field
+    async def order_number(self) -> str:
+        """Get the sales order number from the related Order."""
+        order = await self._instance.awaitable_attrs.order
+        return order.order_number if order else ""
+
+    @strawberry.field
+    async def customer_name(self) -> str:
+        """Get the customer name from the related Order."""
+        order = await self._instance.awaitable_attrs.order
+        if order:
+            customer = await order.awaitable_attrs.sold_to_customer
+            return customer.company_name if customer else ""
+        return ""
 
     @strawberry.field
     async def ship_to_address(self) -> ShipToAddressResponse | None:

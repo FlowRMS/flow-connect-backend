@@ -1,3 +1,9 @@
+from app.graphql.v2.core.fulfillment.services.fulfillment_assignment_service import (
+    FulfillmentAssignmentService,
+)
+from app.graphql.v2.core.fulfillment.services.fulfillment_backorder_service import (
+    FulfillmentBackorderService,
+)
 from app.graphql.v2.core.fulfillment.services.fulfillment_order_service import (
     FulfillmentOrderService,
 )
@@ -12,6 +18,8 @@ from app.graphql.v2.core.fulfillment.services.fulfillment_shipping_service impor
 )
 
 __all__ = [
+    "FulfillmentAssignmentService",
+    "FulfillmentBackorderService",
     "FulfillmentOrderService",
     "FulfillmentPackingService",
     "FulfillmentPickingService",

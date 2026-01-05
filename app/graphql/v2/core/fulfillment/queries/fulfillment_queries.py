@@ -6,8 +6,12 @@ from aioinject import Injected
 from commons.db.v6.fulfillment import FulfillmentOrderStatus
 
 from app.graphql.inject import inject
-from app.graphql.v2.core.fulfillment.services import FulfillmentOrderService
+from app.graphql.v2.core.fulfillment.services import (
+    FulfillmentBackorderService,
+    FulfillmentOrderService,
+)
 from app.graphql.v2.core.fulfillment.strawberry import (
+    FulfillmentOrderLineItemResponse,
     FulfillmentOrderResponse,
     FulfillmentStatsResponse,
 )
@@ -59,3 +63,14 @@ class FulfillmentQueries:
             completed_count=stats["completed"],
             backorder_count=stats["backorder"],
         )
+
+    @strawberry.field
+    @inject
+    async def backorder_items(
+        self,
+        fulfillment_order_id: UUID,
+        service: Injected[FulfillmentBackorderService],
+    ) -> list[FulfillmentOrderLineItemResponse]:
+        """Get all line items with backorder quantities for a fulfillment order."""
+        items = await service.get_backorder_items(fulfillment_order_id)
+        return FulfillmentOrderLineItemResponse.from_orm_model_list(items)

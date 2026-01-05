@@ -145,3 +145,34 @@ class BulkAssignmentInput:
 class AssignUserInput:
     user_id: UUID
     role: FulfillmentAssignmentRole
+
+
+@strawberry.input
+class AddAssignmentInput:
+    """Input for adding an assignment to a fulfillment order."""
+    fulfillment_order_id: UUID
+    user_id: UUID
+    role: FulfillmentAssignmentRole
+
+
+@strawberry.input
+class MarkManufacturerFulfilledInput:
+    """Input for marking line items as manufacturer fulfilled."""
+    fulfillment_order_id: UUID
+    line_item_ids: list[UUID]
+
+
+@strawberry.input
+class SplitLineItemInput:
+    """Input for splitting a line item between warehouse and manufacturer."""
+    line_item_id: UUID
+    warehouse_qty: Decimal
+    manufacturer_qty: Decimal
+
+
+@strawberry.input
+class CancelBackorderInput:
+    """Input for cancelling backorder items."""
+    fulfillment_order_id: UUID
+    line_item_ids: list[UUID]
+    reason: str
