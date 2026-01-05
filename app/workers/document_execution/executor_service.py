@@ -21,6 +21,7 @@ from app.workers.document_execution.converters.customer_converter import (
 from app.workers.document_execution.converters.factory_converter import FactoryConverter
 from app.workers.document_execution.converters.order_converter import OrderConverter
 from app.workers.document_execution.converters.product_converter import ProductConverter
+from app.workers.document_execution.converters.quote_converter import QuoteConverter
 
 from .converters.base import BaseEntityConverter
 from .converters.entity_mapping import EntityMapping
@@ -55,6 +56,7 @@ class DocumentExecutorService:
         session: AsyncSession,
         dto_loader_service: DTOLoaderService,
         links_service: LinksService,
+        quote_converter: QuoteConverter,
         order_converter: OrderConverter,
         customer_converter: CustomerConverter,
         factory_converter: FactoryConverter,
@@ -64,6 +66,7 @@ class DocumentExecutorService:
         self.session = session
         self.dto_loader_service = dto_loader_service
         self.links_service = links_service
+        self.quote_converter = quote_converter
         self.order_converter = order_converter
         self.customer_converter = customer_converter
         self.factory_converter = factory_converter
@@ -74,6 +77,8 @@ class DocumentExecutorService:
         entity_type: DocumentEntityType,
     ) -> BaseEntityConverter[Any, Any, Any]:
         match entity_type:
+            case DocumentEntityType.QUOTES:
+                return self.quote_converter
             case DocumentEntityType.ORDERS:
                 return self.order_converter
             case DocumentEntityType.CUSTOMERS:
