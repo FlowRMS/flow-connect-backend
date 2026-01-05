@@ -7,6 +7,7 @@ class EntityMapping:
     factory_id: UUID | None = None
     sold_to_customer_id: UUID | None = None
     bill_to_customer_id: UUID | None = None
+    order_id: UUID | None = None
     products: dict[int, UUID] = field(default_factory=dict)
     end_users: dict[int, UUID] = field(default_factory=dict)
 

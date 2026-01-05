@@ -20,6 +20,7 @@ from app.workers.document_execution.converters.customer_converter import (
     CustomerConverter,
 )
 from app.workers.document_execution.converters.factory_converter import FactoryConverter
+from app.workers.document_execution.converters.invoice_converter import InvoiceConverter
 from app.workers.document_execution.converters.order_converter import OrderConverter
 from app.workers.document_execution.converters.product_converter import ProductConverter
 from app.workers.document_execution.converters.quote_converter import QuoteConverter
@@ -48,6 +49,7 @@ DOCUMENT_TO_LINK_ENTITY_TYPE: dict[DocumentEntityType, EntityType] = {
     DocumentEntityType.CUSTOMERS: EntityType.CUSTOMER,
     DocumentEntityType.FACTORIES: EntityType.FACTORY,
     DocumentEntityType.PRODUCTS: EntityType.PRODUCT,
+    DocumentEntityType.INVOICES: EntityType.INVOICE,
 }
 
 
@@ -62,6 +64,7 @@ class DocumentExecutorService:
         customer_converter: CustomerConverter,
         factory_converter: FactoryConverter,
         product_converter: ProductConverter,
+        invoice_converter: InvoiceConverter,
     ) -> None:
         super().__init__()
         self.session = session
@@ -72,6 +75,7 @@ class DocumentExecutorService:
         self.customer_converter = customer_converter
         self.factory_converter = factory_converter
         self.product_converter = product_converter
+        self.invoice_converter = invoice_converter
 
     def get_converter(
         self,
@@ -88,6 +92,8 @@ class DocumentExecutorService:
                 return self.factory_converter
             case DocumentEntityType.PRODUCTS:
                 return self.product_converter
+            case DocumentEntityType.INVOICES:
+                return self.invoice_converter
             case _:
                 raise ValueError(f"Unsupported entity type: {entity_type}")
 
@@ -163,6 +169,8 @@ class DocumentExecutorService:
                     mapping.sold_to_customer_id = pe.best_match_id
                 case EntityPendingType.BILL_TO_CUSTOMERS:
                     mapping.bill_to_customer_id = pe.best_match_id
+                case EntityPendingType.ORDERS:
+                    mapping.order_id = pe.best_match_id
                 case EntityPendingType.PRODUCTS:
                     if pe.flow_index_detail is not None:
                         mapping.products[pe.flow_index_detail] = pe.best_match_id
@@ -183,6 +191,8 @@ class DocumentExecutorService:
                         existing_mapping.bill_to_customer_id = (
                             mapping.bill_to_customer_id
                         )
+                    if mapping.order_id:
+                        existing_mapping.order_id = mapping.order_id
                     existing_mapping.products.update(mapping.products)
                     existing_mapping.end_users.update(mapping.end_users)
 
