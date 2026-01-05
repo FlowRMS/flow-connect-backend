@@ -7,12 +7,14 @@ from commons.db.v6.ai.documents.enums.entity_type import DocumentEntityType
 from commons.db.v6.ai.documents.pending_document import PendingDocument
 from commons.db.v6.ai.entities.enums import ConfirmationStatus, EntityPendingType
 from commons.db.v6.ai.entities.pending_entity import PendingEntity
+from commons.db.v6.crm.links.entity_type import EntityType
 from commons.dtos.common.dto_loader_service import DTOLoaderService
 from loguru import logger
 from pydantic import BaseModel
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import joinedload
 
+from app.graphql.links.services.links_service import LinksService
 from app.workers.document_execution.converters.customer_converter import (
     CustomerConverter,
 )
@@ -39,12 +41,20 @@ CONFIRMED_STATUSES = frozenset(
     }
 )
 
+DOCUMENT_TO_LINK_ENTITY_TYPE: dict[DocumentEntityType, EntityType] = {
+    DocumentEntityType.ORDERS: EntityType.ORDER,
+    DocumentEntityType.CUSTOMERS: EntityType.CUSTOMER,
+    DocumentEntityType.FACTORIES: EntityType.FACTORY,
+    DocumentEntityType.PRODUCTS: EntityType.PRODUCT,
+}
+
 
 class DocumentExecutorService:
     def __init__(
         self,
         session: AsyncSession,
         dto_loader_service: DTOLoaderService,
+        links_service: LinksService,
         order_converter: OrderConverter,
         customer_converter: CustomerConverter,
         factory_converter: FactoryConverter,
@@ -53,6 +63,7 @@ class DocumentExecutorService:
         super().__init__()
         self.session = session
         self.dto_loader_service = dto_loader_service
+        self.links_service = links_service
         self.order_converter = order_converter
         self.customer_converter = customer_converter
         self.factory_converter = factory_converter
@@ -99,6 +110,7 @@ class DocumentExecutorService:
                 converter=converter,
                 dto=dto,
                 entity_mapping=entity_mapping,
+                pending_document=pending_document,
             )
             created_responses.append(entity_response)
 
@@ -177,10 +189,12 @@ class DocumentExecutorService:
         converter: BaseEntityConverter[Any, Any, Any],
         dto: BaseModel,
         entity_mapping: EntityMapping,
+        pending_document: PendingDocument,
     ) -> EntityProcessResponse:
         try:
             input_obj = await converter.to_input(dto, entity_mapping)
             entity = await converter.create_entity(input_obj)
+            await self._link_file_to_entity(pending_document, entity.id)
             return EntityProcessResponse(
                 entity_id=entity.id,
                 dto=dto.model_dump(),
@@ -193,6 +207,36 @@ class DocumentExecutorService:
                 dto=dto.model_dump(),
                 error=str(e),
             )
+
+    async def _link_file_to_entity(
+        self,
+        pending_document: PendingDocument,
+        entity_id: UUID,
+    ) -> None:
+        if not pending_document.entity_type:
+            return
+
+        link_entity_type = DOCUMENT_TO_LINK_ENTITY_TYPE.get(
+            pending_document.entity_type
+        )
+        if not link_entity_type:
+            logger.warning(
+                f"No link entity type mapping for {pending_document.entity_type}"
+            )
+            return
+
+        try:
+            _ = await self.links_service.create_link(
+                source_type=EntityType.FILE,
+                source_id=pending_document.file_id,
+                target_type=link_entity_type,
+                target_id=entity_id,
+            )
+            logger.info(
+                f"Linked file {pending_document.file_id} to {link_entity_type.name} {entity_id}"
+            )
+        except Exception as e:
+            logger.warning(f"Failed to link file to entity: {e}")
 
     @staticmethod
     def _calc_rate(numerator: Decimal, denominator: Decimal) -> Decimal:
