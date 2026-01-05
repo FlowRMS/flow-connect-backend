@@ -97,6 +97,9 @@ class ChecksRepository(BaseRepository[Check]):
                 joinedload(Check.details)
                 .joinedload(CheckDetail.adjustment)
                 .joinedload(Adjustment.customer),
+                joinedload(Check.details)
+                .joinedload(CheckDetail.adjustment)
+                .joinedload(Adjustment.factory),
                 joinedload(Check.factory),
                 lazyload("*"),
             ],
