@@ -48,4 +48,4 @@ dev = [
 ]
 
 [tool.uv.sources]
-flow-py-commons = { git = "ssh://git@github.com/FlowRMS/flowbot-commons.git", tag = "1.13.002" }
+flow-py-commons = { git = "ssh://git@github.com/FlowRMS/flowbot-commons.git", tag = "1.13.005" }
