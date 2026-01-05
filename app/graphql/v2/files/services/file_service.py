@@ -98,10 +98,11 @@ class FileService:
             file_name=file_name,
             folder_path=folder_path,
         )
+        file_path = folder_path or None
         file_type = detect_file_type(file_name)
         new_file = File(
             file_name=file_name,
-            file_path=upload_result.file_path,
+            file_path=file_path,
             file_size=upload_result.file_size,
             file_type=file_type,
             file_sha=upload_result.file_sha,
@@ -137,17 +138,14 @@ class FileService:
         file = await self.repository.get_by_id(file_id)
         if not file:
             return False
-        s3_key = self.upload_service.extract_s3_key_from_path(file.file_path)
-        if s3_key:
-            await self.upload_service.delete_file(s3_key)
+        await self.upload_service.delete_file(file.full_path)
         return await self.repository.delete(file_id)
 
     async def get_presigned_url(self, file_id: UUID) -> str | None:
         file = await self.repository.get_by_id(file_id)
         if not file:
             return None
-        s3_key = self.upload_service.extract_s3_key_from_path(file.file_path)
-        return await self.upload_service.get_presigned_url(s3_key)
+        return await self.upload_service.get_presigned_url(file.full_path)
 
     async def find_by_linked_entity(
         self,

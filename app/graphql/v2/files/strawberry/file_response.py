@@ -49,7 +49,7 @@ class FileLiteResponse(DTOMixin[File]):
     id: UUID
     created_at: datetime
     file_name: str
-    file_path: str
+    file_path: str | None
     file_size: int
     file_type: FileTypeEnum | None
     file_entity_type: DocumentEntityType | None
