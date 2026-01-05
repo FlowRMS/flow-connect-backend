@@ -1960,10 +1960,10 @@ input PreOpportunityDetailInput {
   itemNumber: Int!
   unitPrice: Decimal!
   discountRate: Decimal!
-  productId: UUID!
+  productId: UUID
+  factoryId: UUID
   endUserId: UUID!
   id: UUID = null
-  productCpnId: UUID = null
   leadTime: String = null
 }
 
@@ -1977,11 +1977,12 @@ type PreOpportunityDetailResponse {
   discountRate: Decimal!
   discount: Decimal!
   total: Decimal!
-  productId: UUID!
-  productCpnId: UUID
+  productId: UUID
+  factoryId: UUID
   endUserId: UUID!
   leadTime: String
-  product: ProductLiteResponse!
+  product: ProductLiteResponse
+  factory: FactoryLiteResponse
   quote: QuoteLiteResponse
 }
 

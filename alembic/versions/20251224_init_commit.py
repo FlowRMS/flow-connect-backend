@@ -1001,8 +1001,8 @@ def upgrade() -> None:
             server_default="0",
             nullable=False,
         ),
-        sa.Column("product_id", sa.UUID(), nullable=False),
-        sa.Column("product_cpn_id", sa.UUID(), nullable=True),
+        sa.Column("product_id", sa.UUID(), nullable=True),
+        sa.Column("factory_id", sa.UUID(), nullable=True),
         sa.Column("end_user_id", sa.UUID(), nullable=False),
         sa.Column("lead_time", sa.String(length=255), nullable=True),
         sa.Column("id", sa.UUID(), nullable=False),
@@ -1017,6 +1017,10 @@ def upgrade() -> None:
         sa.ForeignKeyConstraint(
             ["product_id"],
             ["pycore.products.id"],
+        ),
+        sa.ForeignKeyConstraint(
+            ["factory_id"],
+            ["pycore.factories.id"],
         ),
         sa.PrimaryKeyConstraint("id"),
         schema="pycrm",

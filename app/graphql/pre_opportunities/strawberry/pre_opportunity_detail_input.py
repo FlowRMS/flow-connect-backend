@@ -19,11 +19,11 @@ class PreOpportunityDetailInput(BaseInputGQL[PreOpportunityDetail]):
     item_number: int
     unit_price: Decimal
     discount_rate: Decimal
-    product_id: UUID
+    product_id: UUID | None
+    factory_id: UUID | None
     end_user_id: UUID
 
     id: UUID | None = None
-    product_cpn_id: UUID | None = None
     lead_time: str | None = None
 
     def to_orm_model(self) -> PreOpportunityDetail:
@@ -37,12 +37,12 @@ class PreOpportunityDetailInput(BaseInputGQL[PreOpportunityDetail]):
             item_number=self.item_number,
             unit_price=unit_price,
             product_id=self.product_id,
+            factory_id=self.factory_id,
             end_user_id=self.end_user_id,
             subtotal=subtotal,
             discount_rate=self.discount_rate,
             discount=discount,
             total=total,
-            product_cpn_id=self.optional_field(self.product_cpn_id),
             lead_time=self.optional_field(self.lead_time),
         )
         return detail
