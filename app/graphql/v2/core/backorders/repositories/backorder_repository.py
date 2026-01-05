@@ -1,0 +1,81 @@
+from decimal import Decimal
+from uuid import UUID
+
+from commons.db.v6.commission.invoices.invoice_detail import InvoiceDetail
+from commons.db.v6.commission.orders.enums import OrderStatus
+from commons.db.v6.commission.orders.order import Order
+from commons.db.v6.commission.orders.order_detail import OrderDetail
+from sqlalchemy import func, select
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import selectinload
+
+from app.core.context_wrapper import ContextWrapper
+from app.graphql.base_repository import BaseRepository
+
+
+class BackorderRepository(BaseRepository[OrderDetail]):
+    def __init__(
+        self,
+        context_wrapper: ContextWrapper,
+        session: AsyncSession,
+    ) -> None:
+        super().__init__(
+            session,
+            context_wrapper,
+            OrderDetail,
+        )
+
+    async def get_backorders(
+        self,
+        customer_id: UUID | None = None,
+        product_id: UUID | None = None,
+        limit: int = 100,
+        offset: int = 0,
+    ) -> list[OrderDetail]:
+        # Subquery to calculate shipped quantity
+        shipped_subquery = (
+            select(
+                InvoiceDetail.order_detail_id,
+                func.coalesce(func.sum(InvoiceDetail.quantity), 0).label("shipped_qty"),
+            )
+            .group_by(InvoiceDetail.order_detail_id)
+            .subquery()
+        )
+
+        stmt = (
+            select(OrderDetail)
+            .options(
+                selectinload(OrderDetail.order).selectinload(Order.sold_to_customer),
+                selectinload(OrderDetail.product),
+            )
+            .join(Order, OrderDetail.order_id == Order.id)
+            .outerjoin(
+                shipped_subquery, OrderDetail.id == shipped_subquery.c.order_detail_id
+            )
+            .where(
+                Order.status.in_([OrderStatus.OPEN, OrderStatus.PARTIAL_SHIPPED])
+            )
+        )
+
+        if customer_id:
+            stmt = stmt.where(Order.sold_to_customer_id == customer_id)
+
+        if product_id:
+            stmt = stmt.where(OrderDetail.product_id == product_id)
+
+        # Filter where ordered > shipped
+        stmt = stmt.where(
+            OrderDetail.quantity > func.coalesce(shipped_subquery.c.shipped_qty, 0)
+        )
+
+        stmt = stmt.limit(limit).offset(offset)
+
+        result = await self.session.execute(stmt)
+        return list(result.scalars().all())
+
+    async def get_shipped_qty(self, order_detail_id: UUID) -> Decimal:
+        stmt = select(func.sum(InvoiceDetail.quantity)).where(
+            InvoiceDetail.order_detail_id == order_detail_id
+        )
+        result = await self.session.execute(stmt)
+        return result.scalar() or Decimal("0")
