@@ -8,6 +8,7 @@ from commons.db.v6.ai.documents.pending_document import PendingDocument
 from commons.db.v6.ai.entities.enums import ConfirmationStatus, EntityPendingType
 from commons.db.v6.ai.entities.pending_entity import PendingEntity
 from commons.db.v6.crm.links.entity_type import EntityType
+from commons.db.v6.enums import WorkflowStatus
 from commons.dtos.common.dto_loader_service import DTOLoaderService
 from loguru import logger
 from pydantic import BaseModel
@@ -96,30 +97,42 @@ class DocumentExecutorService:
             pending_document_id,
             options=[joinedload(PendingDocument.pending_entities)],
         )
-        if not pending_document.entity_type:
-            raise ValueError("PendingDocument has no entity_type set")
+        try:
+            if not pending_document.entity_type:
+                raise ValueError("PendingDocument has no entity_type set")
 
-        entity_mappings = self._build_entity_mappings(pending_document.pending_entities)
-        logger.info(f"Built entity mapping: {entity_mappings}")
-
-        converter = self.get_converter(pending_document.entity_type)
-        dtos = await self._parse_dtos(converter, pending_document)
-        logger.info(f"Parsed {len(dtos)} DTOs from extracted_data_json")
-
-        created_responses: list[EntityProcessResponse] = []
-
-        for i, dto in enumerate(dtos):
-            logger.info(f"Processing DTO {i + 1}/{len(dtos)}")
-            entity_mapping = entity_mappings.get(dto.id, EntityMapping())
-            entity_response = await self._create_entity(
-                converter=converter,
-                dto=dto,
-                entity_mapping=entity_mapping,
-                pending_document=pending_document,
+            entity_mappings = self._build_entity_mappings(
+                pending_document.pending_entities
             )
-            created_responses.append(entity_response)
+            logger.info(f"Built entity mapping: {entity_mappings}")
 
-        return created_responses
+            converter = self.get_converter(pending_document.entity_type)
+            dtos = await self._parse_dtos(converter, pending_document)
+            logger.info(f"Parsed {len(dtos)} DTOs from extracted_data_json")
+
+            created_responses: list[EntityProcessResponse] = []
+
+            for i, dto in enumerate(dtos):
+                logger.info(f"Processing DTO {i + 1}/{len(dtos)}")
+                dto_id = getattr(dto, "id", None)
+                if dto_id:
+                    entity_mapping = entity_mappings.get(dto.id, EntityMapping())
+                else:
+                    entity_mapping = EntityMapping()
+                entity_response = await self._create_entity(
+                    converter=converter,
+                    dto=dto,
+                    entity_mapping=entity_mapping,
+                    pending_document=pending_document,
+                )
+                created_responses.append(entity_response)
+
+            pending_document.workflow_status = WorkflowStatus.COMPLETED
+            return created_responses
+        except Exception as e:
+            pending_document.workflow_status = WorkflowStatus.FAILED
+            logger.exception(f"Error executing document {pending_document_id}: {e}")
+            raise
 
     def _build_entity_mappings(
         self,

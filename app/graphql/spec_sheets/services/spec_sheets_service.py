@@ -63,15 +63,7 @@ class SpecSheetsService:
             content = await input_data.file.read()
             file_size = len(content)
 
-            bucket_name = self.s3_service.bucket_name
-            if not bucket_name:
-                raise ValueError("S3 bucket name is not configured")
-
-            logger.info(f"Uploading to S3: bucket={bucket_name}, key={s3_key}")
-
-            # Upload to S3
             await self.s3_service.upload(
-                bucket=bucket_name,
                 key=s3_key,
                 file_obj=io.BytesIO(content),
                 ContentType="application/pdf",
@@ -79,7 +71,6 @@ class SpecSheetsService:
 
             # Generate presigned URL for access
             file_url = await self.s3_service.generate_presigned_url(
-                bucket=bucket_name,
                 key=s3_key,
             )
 
@@ -99,17 +90,8 @@ class SpecSheetsService:
             unique_filename = f"{uuid4()}{file_extension}"
             s3_key = f"{SPEC_SHEETS_S3_PREFIX}/{unique_filename}"
 
-            bucket_name = self.s3_service.bucket_name
-            if not bucket_name:
-                raise ValueError("S3 bucket name is not configured")
-
-            logger.info(
-                f"Uploading downloaded PDF to S3: bucket={bucket_name}, key={s3_key}"
-            )
-
             # Upload to S3
             await self.s3_service.upload(
-                bucket=bucket_name,
                 key=s3_key,
                 file_obj=io.BytesIO(content),
                 ContentType="application/pdf",
@@ -117,7 +99,6 @@ class SpecSheetsService:
 
             # Generate presigned URL for access
             file_url = await self.s3_service.generate_presigned_url(
-                bucket=bucket_name,
                 key=s3_key,
             )
 
