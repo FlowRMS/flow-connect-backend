@@ -46,6 +46,22 @@ class InventoryService:
     async def get_stats(self, warehouse_id: UUID) -> InventoryStatsResponse:
         return await self.repository.get_stats_by_warehouse(warehouse_id)
 
+    async def get_by_product(
+        self,
+        product_id: UUID,
+        warehouse_id: UUID | None = None,
+    ) -> Inventory | None:
+        """Get inventory for a specific product, optionally in a specific warehouse."""
+        return await self.repository.find_by_product(product_id, warehouse_id)
+
+    async def get_by_products(
+        self,
+        product_ids: list[UUID],
+        warehouse_id: UUID,
+    ) -> list[Inventory]:
+        """Get inventory for multiple products in a warehouse."""
+        return await self.repository.find_by_products(product_ids, warehouse_id)
+
     async def create(self, inventory: Inventory) -> Inventory:
         return await self.repository.create(inventory)
 

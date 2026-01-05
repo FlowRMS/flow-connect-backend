@@ -56,6 +56,40 @@ class InventoryRepository(BaseRepository[Inventory]):
         result = await self.session.execute(stmt)
         return list(result.unique().scalars().all())
 
+    async def find_by_product(
+        self,
+        product_id: UUID,
+        warehouse_id: UUID | None = None,
+    ) -> Inventory | None:
+        """Get inventory record for a product, optionally filtered by warehouse."""
+        stmt = (
+            select(Inventory)
+            .where(Inventory.product_id == product_id)
+            .options(selectinload(Inventory.items))
+        )
+
+        if warehouse_id:
+            stmt = stmt.where(Inventory.warehouse_id == warehouse_id)
+
+        result = await self.session.execute(stmt)
+        return result.unique().scalars().first()
+
+    async def find_by_products(
+        self,
+        product_ids: list[UUID],
+        warehouse_id: UUID,
+    ) -> list[Inventory]:
+        """Get inventory records for multiple products in a warehouse."""
+        stmt = (
+            select(Inventory)
+            .where(Inventory.product_id.in_(product_ids))
+            .where(Inventory.warehouse_id == warehouse_id)
+            .options(selectinload(Inventory.items))
+        )
+
+        result = await self.session.execute(stmt)
+        return list(result.unique().scalars().all())
+
     async def get_stats_by_warehouse(
         self, warehouse_id: UUID
     ) -> InventoryStatsResponse:
