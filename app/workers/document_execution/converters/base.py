@@ -6,9 +6,10 @@ from uuid import UUID
 from commons.db.v6.ai.documents import PendingDocument
 from commons.db.v6.ai.documents.enums.entity_type import DocumentEntityType
 from commons.db.v6.core.factories.factory import Factory
+from commons.db.v6.user import User
 from commons.dtos.common.dto_loader_service import DTOLoaderService, LoadedDTOs
 from pydantic import BaseModel
-from sqlalchemy import select
+from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 if TYPE_CHECKING:
@@ -30,6 +31,7 @@ class BaseEntityConverter(ABC, Generic[TDto, TInput, TOutput]):
         self.session = session
         self.dto_loader_service = dto_loader_service
         self._factory_cache: dict[UUID, Factory] = {}
+        self._user_cache: dict[str, User | None] = {}
 
     @abstractmethod
     async def create_entity(
@@ -83,6 +85,22 @@ class BaseEntityConverter(ABC, Generic[TDto, TInput, TOutput]):
         if factory:
             return factory.overall_discount_rate
         return Decimal("0")
+
+    async def get_user_by_full_name(self, full_name: str) -> User | None:
+        cache_key = full_name.lower().strip()
+        if cache_key in self._user_cache:
+            return self._user_cache[cache_key]
+
+        stmt = select(User).where(
+            (func.lower(func.concat(User.first_name, " ", User.last_name)) == cache_key)
+            | (func.lower(User.first_name) == cache_key)
+            | (func.lower(User.last_name) == cache_key)
+        )
+        result = await self.session.execute(stmt)
+        user = result.scalars().first()
+
+        self._user_cache[cache_key] = user
+        return user
 
     async def parse_dtos_from_json(
         self,
