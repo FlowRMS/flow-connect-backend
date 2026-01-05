@@ -30,3 +30,10 @@ class InventoryItemResponse(DTOMixin[InventoryItem]):
             status=model.status,
             received_date=model.received_date,
         )
+
+    @strawberry.field
+    async def location_name(self) -> str | None:
+        location = await self._instance.awaitable_attrs.location
+        if location:
+            return location.full_path or location.name
+        return None

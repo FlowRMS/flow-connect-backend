@@ -10,6 +10,7 @@ from app.core.db.adapters.dto import DTOMixin
 from app.graphql.v2.core.inventory.strawberry.inventory_item_response import (
     InventoryItemResponse,
 )
+from app.graphql.v2.core.products.strawberry.product_response import ProductResponse
 
 
 @strawberry.type
@@ -68,3 +69,9 @@ class InventoryResponse(InventoryLiteResponse):
     async def items(self) -> list[InventoryItemResponse]:
         items = await self._instance.awaitable_attrs.items
         return InventoryItemResponse.from_orm_model_list(items)
+
+    @strawberry.field
+    async def product(self) -> ProductResponse:
+        return ProductResponse.from_orm_model(
+            await self._instance.awaitable_attrs.product
+        )

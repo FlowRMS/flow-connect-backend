@@ -14,6 +14,9 @@ from app.core.db.adapters.dto import DTOMixin
 from app.graphql.v2.core.shipment_requests.strawberry.shipment_request_item_response import (
     ShipmentRequestItemResponse,
 )
+from app.graphql.v2.core.factories.strawberry.factory_response import (
+    FactoryLiteResponse,
+)
 
 
 @strawberry.type
@@ -54,3 +57,10 @@ class ShipmentRequestResponse(DTOMixin[ShipmentRequest]):
     async def items(self) -> list[ShipmentRequestItemResponse]:
         items = await self._instance.awaitable_attrs.items
         return ShipmentRequestItemResponse.from_orm_model_list(items)
+
+    @strawberry.field
+    async def factory(self) -> FactoryLiteResponse | None:
+        factory = await self._instance.awaitable_attrs.factory
+        if not factory:
+            return None
+        return FactoryLiteResponse.from_orm_model(factory)
