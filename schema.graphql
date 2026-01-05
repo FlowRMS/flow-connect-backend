@@ -753,6 +753,7 @@ enum EntityType {
   CUSTOMER
   PRODUCT
   FILE
+  SHIPPING_CARRIER
 }
 
 type EstimateRecipientsResponse {
