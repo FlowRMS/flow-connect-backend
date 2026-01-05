@@ -3,10 +3,20 @@
 from app.graphql.v2.core.warehouses.strawberry.warehouse_input import (
     WarehouseInput,
     WarehouseMemberInput,
-    WarehouseMemberRole,
+    WarehouseMemberRoleGQL,
     WarehouseSettingsInput,
+    WarehouseStructureCodeGQL,
     WarehouseStructureInput,
     WarehouseStructureLevelInput,
+)
+from app.graphql.v2.core.warehouses.strawberry.warehouse_location_input import (
+    BulkWarehouseLocationInput,
+    LocationProductAssignmentInput,
+    WarehouseLocationInput,
+)
+from app.graphql.v2.core.warehouses.strawberry.warehouse_location_response import (
+    LocationProductAssignmentResponse,
+    WarehouseLocationResponse,
 )
 from app.graphql.v2.core.warehouses.strawberry.warehouse_response import (
     WarehouseMemberResponse,
@@ -16,14 +26,20 @@ from app.graphql.v2.core.warehouses.strawberry.warehouse_response import (
 )
 
 __all__ = [
-    "WarehouseResponse",
-    "WarehouseMemberResponse",
-    "WarehouseMemberRole",
-    "WarehouseSettingsResponse",
-    "WarehouseStructureResponse",
+    "BulkWarehouseLocationInput",
+    "LocationProductAssignmentInput",
+    "LocationProductAssignmentResponse",
     "WarehouseInput",
+    "WarehouseLocationInput",
+    "WarehouseLocationResponse",
     "WarehouseMemberInput",
+    "WarehouseMemberResponse",
+    "WarehouseMemberRoleGQL",
+    "WarehouseResponse",
     "WarehouseSettingsInput",
+    "WarehouseSettingsResponse",
+    "WarehouseStructureCodeGQL",
     "WarehouseStructureInput",
     "WarehouseStructureLevelInput",
+    "WarehouseStructureResponse",
 ]
