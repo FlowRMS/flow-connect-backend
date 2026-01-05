@@ -877,7 +877,7 @@ type FileLiteResponse {
   id: UUID!
   createdAt: datetime!
   fileName: String!
-  filePath: String!
+  filePath: String
   fileSize: Int!
   fileType: FileTypeEnum
   fileEntityType: DocumentEntityType
@@ -890,7 +890,7 @@ type FileResponse {
   id: UUID!
   createdAt: datetime!
   fileName: String!
-  filePath: String!
+  filePath: String
   fileSize: Int!
   fileType: FileTypeEnum
   fileEntityType: DocumentEntityType
