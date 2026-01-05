@@ -39,7 +39,10 @@
       "Bash(python3:*)",
       "Bash(xargs:*)",
       "Bash(git tag:*)",
-      "Bash(mv:*)"
+      "Bash(mv:*)",
+      "Bash(task lints:*)",
+      "Bash(timeout 10 uv run:*)",
+      "Bash(gtimeout 10 uv run:*)"
     ]
   },
   "enableAllProjectMcpServers": true,

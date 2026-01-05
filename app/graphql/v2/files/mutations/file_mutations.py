@@ -9,7 +9,7 @@ from app.graphql.v2.files.strawberry.file_input import (
     FileUploadInput,
     MultiFileUploadInput,
 )
-from app.graphql.v2.files.strawberry.file_response import FileResponse
+from app.graphql.v2.files.strawberry.file_response import FileLiteResponse, FileResponse
 
 
 @strawberry.type
@@ -22,10 +22,11 @@ class FileMutations:
         service: Injected[FileService],
     ) -> FileResponse:
         file = await service.upload_file(
-            file=input.file,
+            file_upload=input.file,
             file_name=input.file_name,
             folder_id=input.folder_id,
             folder_path=input.folder_path,
+            file_entity_type=input.file_entity_type,
         )
         return FileResponse.from_orm_model(file)
 
@@ -35,7 +36,7 @@ class FileMutations:
         self,
         input: MultiFileUploadInput,
         service: Injected[FileService],
-    ) -> list[FileResponse]:
+    ) -> list[FileLiteResponse]:
         if len(input.files) != len(input.file_names):
             raise ValueError("Number of files must match number of file names")
         files_with_names = list(zip(input.files, input.file_names, strict=True))
@@ -44,7 +45,7 @@ class FileMutations:
             folder_id=input.folder_id,
             folder_path=input.folder_path,
         )
-        return FileResponse.from_orm_model_list(files)
+        return FileLiteResponse.from_orm_model_list(files)
 
     @strawberry.mutation
     @inject

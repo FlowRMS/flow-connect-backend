@@ -4,6 +4,7 @@ from typing import Self
 from uuid import UUID
 
 import strawberry
+from commons.db.v6.enums import DocumentEntityType
 from commons.db.v6.files import File, FileType
 
 from app.core.db.adapters.dto import DTOMixin
@@ -43,14 +44,15 @@ def file_type_to_enum(file_type: FileType | None) -> FileTypeEnum | None:
 
 
 @strawberry.type
-class FileResponse(DTOMixin[File]):
+class FileLiteResponse(DTOMixin[File]):
     _instance: strawberry.Private[File]
     id: UUID
     created_at: datetime
     file_name: str
-    file_path: str
+    file_path: str | None
     file_size: int
     file_type: FileTypeEnum | None
+    file_entity_type: DocumentEntityType | None
     file_sha: str | None
     archived: bool
     folder_id: UUID | None
@@ -68,8 +70,12 @@ class FileResponse(DTOMixin[File]):
             file_sha=model.file_sha,
             archived=model.archived,
             folder_id=model.folder_id,
+            file_entity_type=model.file_entity_type,
         )
 
+
+@strawberry.type
+class FileResponse(FileLiteResponse):
     @strawberry.field
     def created_by(self) -> UserResponse:
         return UserResponse.from_orm_model(self._instance.created_by)

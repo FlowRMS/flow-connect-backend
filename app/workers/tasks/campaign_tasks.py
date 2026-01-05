@@ -19,7 +19,8 @@ from app.core.config.settings import Settings
 from app.core.container import create_container
 from app.integrations.gmail.config import GmailSettings
 from app.integrations.microsoft_o365.config import O365Settings
-from app.workers.broker import broker
+
+# from app.workers.broker import broker
 from app.workers.services.worker_email_service import WorkerEmailService
 
 # Emails per hour for each pace
@@ -195,8 +196,8 @@ async def process_campaign_batch(
     }
 
 
-@broker.task(schedule=[{"cron": CAMPAIGN_PROCESSING_CRON}])
-async def check_and_process_campaigns_task() -> dict[str, object]:
+# @broker.task(schedule=[{"cron": CAMPAIGN_PROCESSING_CRON}])
+async def inner_check_and_process_campaigns_task() -> dict[str, object]:
     """
     TaskIQ task: Check for campaigns that need processing and process them.
 

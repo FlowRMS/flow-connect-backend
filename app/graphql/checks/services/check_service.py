@@ -2,6 +2,7 @@ from uuid import UUID
 
 from commons.auth import AuthInfo
 from commons.db.v6.commission import Check
+from commons.db.v6.commission.checks.enums import CheckStatus
 from commons.db.v6.crm.links.entity_type import EntityType
 
 from app.errors.common_errors import NameAlreadyExistsError, NotFoundError
@@ -59,3 +60,12 @@ class CheckService:
         self, entity_type: EntityType, entity_id: UUID
     ) -> list[Check]:
         return await self.repository.find_by_entity(entity_type, entity_id)
+
+    async def unpost_check(self, check_id: UUID) -> Check:
+        check = await self.repository.find_check_by_id(check_id)
+        if check.status != CheckStatus.POSTED:
+            raise ValueError("Check must be in POSTED status to unpost")
+
+        check.status = CheckStatus.OPEN
+        _ = await self.repository.update(check)
+        return await self.repository.find_check_by_id(check_id)

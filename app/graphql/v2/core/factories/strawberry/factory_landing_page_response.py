@@ -15,7 +15,7 @@ class FactoryLandingPageResponse(LandingPageInterfaceBase):
     phone: str | None
     lead_time: int | None
     payment_terms: int | None
-    base_commission_rate: Decimal
-    commission_discount_rate: Decimal
+    base_commission_rate: Decimal | None
+    commission_discount_rate: Decimal | None
     overall_discount_rate: Decimal
     split_rates: list[str]

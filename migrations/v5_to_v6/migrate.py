@@ -17,9 +17,14 @@ from migrations.v5_to_v6.migrate_adjustments import (
     migrate_adjustment_split_rates,
     migrate_adjustments,
 )
+from migrations.v5_to_v6.migrate_ai import AI_TABLES, migrate_ai_table
 from migrations.v5_to_v6.migrate_checks import (
     migrate_check_details,
     migrate_checks,
+)
+from migrations.v5_to_v6.migrate_files import (
+    migrate_files,
+    migrate_folders,
 )
 from migrations.v5_to_v6.migrate_credits import (
     migrate_credit_balances,
@@ -34,11 +39,18 @@ from migrations.v5_to_v6.migrate_invoices import (
     migrate_invoices,
 )
 from migrations.v5_to_v6.migrate_orders import (
+    migrate_order_acknowledgements,
     migrate_order_balances,
     migrate_order_details,
     migrate_order_inside_reps,
     migrate_order_split_rates,
     migrate_orders,
+)
+from migrations.v5_to_v6.migrate_pycrm_entities import (
+    migrate_companies,
+    migrate_link_relations,
+    migrate_notes,
+    migrate_tasks,
 )
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
@@ -315,8 +327,8 @@ async def migrate_product_uoms(source: asyncpg.Connection, dest: asyncpg.Connect
     await dest.executemany(
         """
         INSERT INTO pycore.product_uoms (
-            id, title, description, creation_type, created_by_id, created_at, division_factor
-        ) VALUES ($1, $2, $3, $4, $5, $6, $7)
+            id, title, description, creation_type, created_at, division_factor
+        ) VALUES ($1, $2, $3, $4, $5, $6)
         ON CONFLICT (id) DO UPDATE SET
             title = EXCLUDED.title,
             description = EXCLUDED.description,
@@ -328,7 +340,6 @@ async def migrate_product_uoms(source: asyncpg.Connection, dest: asyncpg.Connect
             u["title"],
             u["description"],
             u["creation_type"],
-            u["created_by_id"],
             u["created_at"],
             u["division_factor"],
         ) for u in uoms],
@@ -1010,17 +1021,36 @@ async def run_migration(config: MigrationConfig) -> dict[str, int]:
     """Run full migration from v5 to v6."""
     logger.info("Connecting to databases...")
 
-    # 10 minute timeout for connections
-    connection_timeout = 1_000
+    # Connection settings to prevent timeouts during long migrations
+    connection_timeout = 60
+    command_timeout = 600.0  # 10 minutes for individual commands
 
-    source = await asyncpg.connect(config.source_dsn, timeout=connection_timeout)
-    dest = await asyncpg.connect(config.dest_dsn, timeout=connection_timeout)
+    # Server settings to keep connection alive
+    server_settings = {
+        "statement_timeout": "0",  # No statement timeout
+        "idle_in_transaction_session_timeout": "0",  # No idle timeout
+    }
+
+    source = await asyncpg.connect(
+        config.source_dsn,
+        timeout=connection_timeout,
+        command_timeout=command_timeout,
+        server_settings=server_settings,
+    )
+    dest = await asyncpg.connect(
+        config.dest_dsn,
+        timeout=connection_timeout,
+        command_timeout=command_timeout,
+        server_settings=server_settings,
+    )
 
     results: dict[str, int] = {}
 
     try:
-        # # Order matters due to foreign key dependencies
+        # Order matters due to foreign key dependencies
         results["users"] = await migrate_users(source, dest)
+        results["folders"] = await migrate_folders(source, dest)
+        results["files"] = await migrate_files(source, dest)
         results["customers"] = await migrate_customers(source, dest)
         results["factories"] = await migrate_factories(source, dest)
         results["product_uoms"] = await migrate_product_uoms(source, dest)
@@ -1042,11 +1072,16 @@ async def run_migration(config: MigrationConfig) -> dict[str, int]:
         results["addresses"] = await migrate_addresses(source, dest)
         results["contacts"] = await migrate_contacts(source, dest)
         results["contact_links"] = await migrate_contact_links(source, dest)
+        results["notes"] = await migrate_notes(source, dest)
+        results["tasks"] = await migrate_tasks(source, dest)
+        results["link_relations"] = await migrate_link_relations(source, dest)
+        results["companies"] = await migrate_companies(source, dest)
         results["order_balances"] = await migrate_order_balances(source, dest)
         results["orders"] = await migrate_orders(source, dest)
         results["order_details"] = await migrate_order_details(source, dest)
         results["order_inside_reps"] = await migrate_order_inside_reps(source, dest)
         results["order_split_rates"] = await migrate_order_split_rates(source, dest)
+        results["order_acknowledgements"] = await migrate_order_acknowledgements(source, dest)
         results["invoice_balances"] = await migrate_invoice_balances(source, dest)
         results["invoices"] = await migrate_invoices(source, dest)
         results["invoice_details"] = await migrate_invoice_details(source, dest)
@@ -1059,6 +1094,10 @@ async def run_migration(config: MigrationConfig) -> dict[str, int]:
         results["adjustment_split_rates"] = await migrate_adjustment_split_rates(source, dest)
         results["checks"] = await migrate_checks(source, dest)
         results["check_details"] = await migrate_check_details(source, dest)
+
+        # AI tables (same schema in both source and dest)
+        for table in AI_TABLES:
+            results[table] = await migrate_ai_table(source, dest, table)
 
         logger.info("Migration completed successfully!")
         logger.info(f"Results: {results}")

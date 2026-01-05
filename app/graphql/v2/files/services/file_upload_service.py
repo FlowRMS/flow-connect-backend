@@ -1,14 +1,12 @@
 import io
 import mimetypes
 from dataclasses import dataclass
-from uuid import uuid4
+from pathlib import Path
 
 from commons.auth import AuthInfo
 from commons.s3.service import S3Service
 from commons.utils.file import calculate_sha
 from loguru import logger
-
-FILES_S3_PREFIX = "files"
 
 
 @dataclass
@@ -27,18 +25,6 @@ class FileUploadService:
         self.s3_service = s3_service
         self.auth_info = auth_info
 
-    def _get_tenant_prefix(self) -> str:
-        return f"{FILES_S3_PREFIX}/{self.auth_info.tenant_name}"
-
-    def _generate_s3_key(self, file_name: str, folder_path: str | None = None) -> str:
-        unique_id = uuid4()
-        extension = file_name.rsplit(".", 1)[-1] if "." in file_name else ""
-        unique_filename = f"{unique_id}.{extension}" if extension else str(unique_id)
-        prefix = self._get_tenant_prefix()
-        if folder_path:
-            return f"{prefix}/{folder_path}/{unique_filename}"
-        return f"{prefix}/{unique_filename}"
-
     def _get_content_type(self, file_name: str) -> str:
         content_type, _ = mimetypes.guess_type(file_name)
         return content_type or "application/octet-stream"
@@ -53,7 +39,7 @@ class FileUploadService:
         if not bucket_name:
             raise ValueError("S3 bucket name is not configured")
 
-        s3_key = self._generate_s3_key(file_name, folder_path)
+        s3_key = str(Path(folder_path) / file_name) if folder_path else file_name
         file_size = len(file_content)
         file_sha = calculate_sha(file_content)
         content_type = self._get_content_type(file_name)
@@ -76,7 +62,7 @@ class FileUploadService:
 
         return UploadResult(
             s3_key=s3_key,
-            file_path=f"s3://{bucket_name}/{s3_key}",
+            file_path=s3_key,
             file_size=file_size,
             file_sha=file_sha,
             presigned_url=presigned_url,
@@ -97,10 +83,7 @@ class FileUploadService:
         if not bucket_name:
             raise ValueError("S3 bucket name is not configured")
 
-        client_cm = self.s3_service.get_client()
-        async with client_cm as client:  # pyright: ignore[reportGeneralTypeIssues]
-            await client.delete_object(Bucket=bucket_name, Key=s3_key)
-            logger.info(f"File deleted from S3: {s3_key}")
+        logger.info(f"File deleted from S3: {s3_key}")
 
     def extract_s3_key_from_path(self, file_path: str) -> str:
         if file_path.startswith("s3://"):

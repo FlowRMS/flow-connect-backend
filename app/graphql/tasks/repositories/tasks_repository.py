@@ -15,7 +15,7 @@ from commons.db.v6.user import User
 from sqlalchemy import Select, case, func, literal, or_, select
 from sqlalchemy.dialects.postgresql import JSONB, array
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.orm import aliased, lazyload
+from sqlalchemy.orm import aliased, joinedload, lazyload
 
 from app.core.context_wrapper import ContextWrapper
 from app.graphql.base_repository import BaseRepository
@@ -238,24 +238,28 @@ class TasksRepository(BaseRepository[Task]):
         entity_id: UUID,
     ) -> list[Task]:
         """Find all tasks linked to a specific entity via link relations."""
-        stmt = select(Task).join(
-            LinkRelation,
-            or_(
-                # Tasks as source, entity as target
-                (
-                    (LinkRelation.source_entity_type == EntityType.TASK)
-                    & (LinkRelation.target_entity_type == entity_type)
-                    & (LinkRelation.target_entity_id == entity_id)
-                    & (LinkRelation.source_entity_id == Task.id)
+        stmt = (
+            select(Task)
+            .options(joinedload(Task.created_by), lazyload("*"))
+            .join(
+                LinkRelation,
+                or_(
+                    # Tasks as source, entity as target
+                    (
+                        (LinkRelation.source_entity_type == EntityType.TASK)
+                        & (LinkRelation.target_entity_type == entity_type)
+                        & (LinkRelation.target_entity_id == entity_id)
+                        & (LinkRelation.source_entity_id == Task.id)
+                    ),
+                    # Entity as source, Tasks as target
+                    (
+                        (LinkRelation.source_entity_type == entity_type)
+                        & (LinkRelation.target_entity_type == EntityType.TASK)
+                        & (LinkRelation.source_entity_id == entity_id)
+                        & (LinkRelation.target_entity_id == Task.id)
+                    ),
                 ),
-                # Entity as source, Tasks as target
-                (
-                    (LinkRelation.source_entity_type == entity_type)
-                    & (LinkRelation.target_entity_type == EntityType.TASK)
-                    & (LinkRelation.source_entity_id == entity_id)
-                    & (LinkRelation.target_entity_id == Task.id)
-                ),
-            ),
+            )
         )
         result = await self.session.execute(stmt)
         return list(result.scalars().all())

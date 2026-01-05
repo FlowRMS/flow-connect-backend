@@ -119,7 +119,9 @@ class NotesQueries:
             await service.search_notes(search_term, limit)
         )
 
-    @strawberry.field
+    @strawberry.field(
+        deprecation_reason="Use related_entities(source_type: NOTES, entity_id: UUID)"
+    )
     @inject
     async def note_related_entities(
         self,
@@ -138,7 +140,6 @@ class NotesQueries:
         product_service: Injected[ProductService],
         customer_service: Injected[CustomerService],
     ) -> NoteRelatedEntitiesResponse:
-        """Get all entities related to a note."""
         # Verify note exists
         _ = await notes_service.get_note(note_id)
 

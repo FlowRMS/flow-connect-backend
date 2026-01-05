@@ -7,7 +7,6 @@ from commons.db.v6.core import Factory
 from commons.db.v6.crm.links.entity_type import EntityType
 from commons.db.v6.crm.links.link_relation_model import LinkRelation
 from sqlalchemy import Select, func, or_, select
-from sqlalchemy.dialects.postgresql import array
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import joinedload, lazyload
 
@@ -16,6 +15,7 @@ from app.core.exceptions import NotFoundError
 from app.core.processors import ProcessorExecutor
 from app.graphql.base_repository import BaseRepository
 from app.graphql.checks.processors.post_check_processor import PostCheckProcessor
+from app.graphql.checks.processors.unpost_check_processor import UnpostCheckProcessor
 from app.graphql.checks.processors.validate_check_status_processor import (
     ValidateCheckStatusProcessor,
 )
@@ -39,6 +39,7 @@ class ChecksRepository(BaseRepository[Check]):
         processor_executor: ProcessorExecutor,
         validate_status_processor: ValidateCheckStatusProcessor,
         post_check_processor: PostCheckProcessor,
+        unpost_check_processor: UnpostCheckProcessor,
         rbac_filter_service: RbacFilterService,
     ) -> None:
         super().__init__(
@@ -50,6 +51,7 @@ class ChecksRepository(BaseRepository[Check]):
             processor_executor_classes=[
                 validate_status_processor,
                 post_check_processor,
+                unpost_check_processor,
             ],
         )
 
@@ -61,14 +63,16 @@ class ChecksRepository(BaseRepository[Check]):
         return (
             select(
                 Check.id,
+                Check.entity_date.label("check_date"),
                 Check.created_at,
                 User.full_name.label("created_by"),
                 Check.check_number,
                 Check.status,
+                Check.post_date,
                 Check.entered_commission_amount,
                 Check.commission_month,
                 Factory.title.label("factory_name"),
-                array([Check.created_by_id]).label("user_ids"),
+                Check.user_ids,
             )
             .select_from(Check)
             .options(lazyload("*"))
@@ -93,6 +97,9 @@ class ChecksRepository(BaseRepository[Check]):
                 joinedload(Check.details)
                 .joinedload(CheckDetail.adjustment)
                 .joinedload(Adjustment.customer),
+                joinedload(Check.details)
+                .joinedload(CheckDetail.adjustment)
+                .joinedload(Adjustment.factory),
                 joinedload(Check.factory),
                 lazyload("*"),
             ],

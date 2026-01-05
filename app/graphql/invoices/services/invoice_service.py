@@ -82,6 +82,11 @@ class InvoiceService:
     async def find_invoices_by_order_id(self, order_id: UUID) -> list[Invoice]:
         return await self.repository.find_by_order_id(order_id)
 
+    async def find_by_factory_id(
+        self, factory_id: UUID, limit: int = 25
+    ) -> list[Invoice]:
+        return await self.repository.find_by_factory_id(factory_id, limit)
+
     async def create_invoice_from_order(
         self,
         order_id: UUID,

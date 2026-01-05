@@ -76,8 +76,15 @@ class TasksService:
         """Add a conversation entry to a task."""
         if not await self.repository.exists(conversation_input.task_id):
             raise NotFoundError(str(conversation_input.task_id))
-        return await self.conversations_repository.create(
+        task_conversation = await self.conversations_repository.create(
             conversation_input.to_orm_model()
+        )
+        return await self.conversations_repository.get_by_id(
+            task_conversation.id,
+            options=[
+                joinedload(TaskConversation.created_by),
+                lazyload("*"),
+            ],
         )
 
     async def update_conversation(
@@ -88,7 +95,14 @@ class TasksService:
             raise NotFoundError(str(conversation_id))
         conversation = conversation_input.to_orm_model()
         conversation.id = conversation_id
-        return await self.conversations_repository.update(conversation)
+        _ = await self.conversations_repository.update(conversation)
+        return await self.conversations_repository.get_by_id(
+            conversation.id,
+            options=[
+                joinedload(TaskConversation.created_by),
+                lazyload("*"),
+            ],
+        )
 
     async def delete_conversation(self, conversation_id: UUID | str) -> bool:
         """Delete a conversation entry by ID."""

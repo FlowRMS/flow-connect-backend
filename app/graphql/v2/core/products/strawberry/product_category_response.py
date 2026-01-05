@@ -14,7 +14,7 @@ class ProductCategoryLiteResponse(DTOMixin[ProductCategory]):
     id: UUID
     title: str
     factory_id: UUID | None
-    commission_rate: Decimal
+    commission_rate: Decimal | None
 
     @classmethod
     def from_orm_model(cls, model: ProductCategory) -> Self:
@@ -30,23 +30,19 @@ class ProductCategoryLiteResponse(DTOMixin[ProductCategory]):
 @strawberry.type
 class ProductCategoryResponse(ProductCategoryLiteResponse):
     @strawberry.field
-    async def parent(
+    def parent(
         self,
     ) -> ProductCategoryLiteResponse | None:
         if self._instance.parent is None:
             return None
 
-        return ProductCategoryLiteResponse.from_orm_model(
-            await self._instance.awaitable_attrs.parent
-        )
+        return ProductCategoryLiteResponse.from_orm_model(self._instance.parent)
 
     @strawberry.field
-    async def grandparent(
+    def grandparent(
         self,
     ) -> ProductCategoryLiteResponse | None:
-        if self._instance.grandparent_id is None:
+        if self._instance.grandparent is None:
             return None
 
-        return ProductCategoryLiteResponse.from_orm_model(
-            await self._instance.awaitable_attrs.grandparent
-        )
+        return ProductCategoryLiteResponse.from_orm_model(self._instance.grandparent)

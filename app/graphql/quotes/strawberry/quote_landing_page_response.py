@@ -18,4 +18,5 @@ class QuoteLandingPageResponse(LandingPageInterfaceBase):
     entity_date: date
     exp_date: date | None
     total: Decimal
+    commission: Decimal | None
     published: bool

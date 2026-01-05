@@ -16,6 +16,7 @@ class OrderLandingPageResponse(LandingPageInterfaceBase):
     entity_date: date
     due_date: date
     total: Decimal
+    commission: Decimal | None
     published: bool
     factory_name: str
     job_name: str | None
