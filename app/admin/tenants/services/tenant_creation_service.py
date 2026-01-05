@@ -158,7 +158,7 @@ class TenantCreationService:
         emails = [
             self.admin_settings.support_user_email,
             "matias@flowrms.com",
-            "derrick@flowrms.com",
+            "derrick.smith@flowrms.com",
             "mhr@flowrms.com",
             "junaid@flowrms.com",
             "kamal@flowrms.com",
