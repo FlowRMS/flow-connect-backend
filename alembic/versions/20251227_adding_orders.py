@@ -266,10 +266,6 @@ def upgrade() -> None:
             ["pycore.customers.id"],
         ),
         sa.ForeignKeyConstraint(
-            ["factory_id"],
-            ["pycore.factories.id"],
-        ),
-        sa.ForeignKeyConstraint(
             ["product_id"],
             ["pycore.products.id"],
         ),
