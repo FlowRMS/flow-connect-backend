@@ -32,7 +32,8 @@ DEFAULT_UOMS = [
 
 
 def upgrade() -> None:
-    _ = op.drop_column("product_uoms", "created_by_id", schema="pycore")
+    # Drop column if it exists (may already be removed in some environments)
+    op.execute("ALTER TABLE pycore.product_uoms DROP COLUMN IF EXISTS created_by_id")
     for title, division_factor in DEFAULT_UOMS:
         op.execute(f"""
             INSERT INTO pycore.product_uoms (id, title, division_factor, creation_type, created_at)
