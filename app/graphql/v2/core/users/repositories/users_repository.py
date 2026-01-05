@@ -46,10 +46,10 @@ class UsersRepository(BaseRepository[User]):
         if enabled is not None:
             stmt = stmt.where(User.enabled == enabled)
 
-        if is_inside is not None:
+        if is_inside is not None and is_inside:
             stmt = stmt.where(User.inside == is_inside)
 
-        if is_outside is not None:
+        if is_outside is not None and is_outside:
             stmt = stmt.where(User.outside == is_outside)
 
         result = await self.session.execute(stmt)
