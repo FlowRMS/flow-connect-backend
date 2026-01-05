@@ -236,7 +236,7 @@ class NotesRepository(BaseRepository[Note]):
             )
         )
         result = await self.session.execute(stmt)
-        return list(result.scalars().all())
+        return list(result.unique().scalars().all())
 
     async def search_by_title_or_content(
         self, search_term: str, limit: int = 20
