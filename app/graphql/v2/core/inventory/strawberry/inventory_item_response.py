@@ -35,5 +35,5 @@ class InventoryItemResponse(DTOMixin[InventoryItem]):
     async def location_name(self) -> str | None:
         location = await self._instance.awaitable_attrs.location
         if location:
-            return location.full_path or location.name
+            return location.name
         return None
