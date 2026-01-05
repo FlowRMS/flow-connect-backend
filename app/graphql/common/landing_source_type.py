@@ -28,3 +28,4 @@ class LandingSourceType(Enum):
     ADJUSTMENTS = "adjustments"
     CHECKS = "checks"
     ORDER_ACKNOWLEDGEMENTS = "order_acknowledgements"
+    PENDING_DOCUMENTS = "pending_documents"

@@ -1316,7 +1316,7 @@ interface LandingPageInterfaceBase {
   userIds: [UUID!]!
 }
 
-union LandingRecord = JobLandingPage | CompanyLandingPage | ContactLandingPage | PreOpportunityLandingPage | NoteLandingPage | TaskLandingPage | CampaignLandingPage | CustomerLandingPage | FactoryLandingPage | ProductLandingPage | QuoteLandingPage | OrderLandingPage | FileLandingPage | InvoiceLandingPage | CreditLandingPage | AdjustmentLandingPage | CheckLandingPage | OrderAcknowledgementLandingPage
+union LandingRecord = JobLandingPage | CompanyLandingPage | ContactLandingPage | PreOpportunityLandingPage | NoteLandingPage | TaskLandingPage | CampaignLandingPage | CustomerLandingPage | FactoryLandingPage | ProductLandingPage | QuoteLandingPage | OrderLandingPage | FileLandingPage | InvoiceLandingPage | CreditLandingPage | AdjustmentLandingPage | CheckLandingPage | OrderAcknowledgementLandingPage | PendingDocumentLandingPage
 
 enum LandingSourceType {
   JOBS
@@ -1338,6 +1338,7 @@ enum LandingSourceType {
   ADJUSTMENTS
   CHECKS
   ORDER_ACKNOWLEDGEMENTS
+  PENDING_DOCUMENTS
 }
 
 input LinkRelationInput {
@@ -1916,6 +1917,22 @@ input OutsideSplitRateInput {
   splitRate: Decimal!
   position: Int!
   id: UUID = null
+}
+
+type PendingDocumentLandingPage {
+  id: UUID!
+  createdAt: datetime!
+  createdBy: String!
+  createdById: UUID!
+  clusterId: UUID
+  clusterName: String
+  fileId: UUID!
+  fileName: String!
+  documentType: String!
+  entityType: String
+  status: String!
+  workflowStatus: String
+  isNew: Boolean!
 }
 
 enum PipelineStage {

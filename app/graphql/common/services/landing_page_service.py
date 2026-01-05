@@ -14,6 +14,9 @@ from app.graphql.common.paginated_landing_page import PaginatedLandingPageInterf
 from app.graphql.companies.repositories.companies_repository import CompaniesRepository
 from app.graphql.contacts.repositories.contacts_repository import ContactsRepository
 from app.graphql.credits.repositories.credits_repository import CreditsRepository
+from app.graphql.documents.repositories.pending_document_repository import (
+    PendingDocumentRepository,
+)
 from app.graphql.invoices.repositories.invoices_repository import InvoicesRepository
 from app.graphql.jobs.repositories.jobs_repository import JobsRepository
 from app.graphql.notes.repositories.notes_repository import NotesRepository
@@ -63,6 +66,7 @@ class LandingPageService:
         adjustments_repository: AdjustmentsRepository,
         checks_repository: ChecksRepository,
         order_acknowledgement_repository: OrderAcknowledgementRepository,
+        pending_document_repository: PendingDocumentRepository,
         rbac_filter_service: RbacFilterService,
     ) -> None:
         super().__init__()
@@ -88,6 +92,7 @@ class LandingPageService:
             LandingSourceType.ADJUSTMENTS: adjustments_repository,
             LandingSourceType.CHECKS: checks_repository,
             LandingSourceType.ORDER_ACKNOWLEDGEMENTS: order_acknowledgement_repository,
+            LandingSourceType.PENDING_DOCUMENTS: pending_document_repository,
         }
 
     async def find_landing_pages(

@@ -27,6 +27,9 @@ from app.graphql.contacts.strawberry.contact_landing_page_response import (
 from app.graphql.credits.strawberry.credit_landing_page_response import (
     CreditLandingPageResponse,
 )
+from app.graphql.documents.strawberry.pending_document_landing_page_response import (
+    PendingDocumentLandingPageResponse,
+)
 from app.graphql.invoices.strawberry.invoice_landing_page_response import (
     InvoiceLandingPageResponse,
 )
@@ -83,6 +86,7 @@ LandingRecord = strawberry.union(
         AdjustmentLandingPageResponse,
         CheckLandingPageResponse,
         OrderAcknowledgementLandingPageResponse,
+        PendingDocumentLandingPageResponse,
     ],
 )
 
