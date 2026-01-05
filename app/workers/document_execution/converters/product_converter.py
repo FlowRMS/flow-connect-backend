@@ -11,6 +11,9 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.graphql.v2.core.products.services.product_service import ProductService
+from app.graphql.v2.core.products.strawberry.product_cpn_input import (
+    ProductCpnLiteInput,
+)
 from app.graphql.v2.core.products.strawberry.product_input import ProductInput
 
 from .base import BaseEntityConverter
@@ -37,7 +40,8 @@ class ProductConverter(BaseEntityConverter[ProductDTO, ProductInput, Product]):
         self,
         input_data: ProductInput,
     ) -> Product:
-        return await self.product_service.create(input_data)
+        product = await self.product_service.create(input_data)
+        return product
 
     @override
     async def to_input(
@@ -51,7 +55,7 @@ class ProductConverter(BaseEntityConverter[ProductDTO, ProductInput, Product]):
 
         uom_id = await self._get_or_create_uom_id(dto.unit_of_measure)
 
-        return ProductInput(
+        product_input = ProductInput(
             factory_part_number=dto.factory_part_number,
             factory_id=factory_id,
             product_uom_id=uom_id,
@@ -68,6 +72,22 @@ class ProductConverter(BaseEntityConverter[ProductDTO, ProductInput, Product]):
             approval_date=dto.approval_date,
             approval_comments=dto.approval_comments,
         )
+
+        if (
+            dto.cpn
+            and dto.cpn.customer_part_number
+            and entity_mapping.sold_to_customer_id
+        ):
+            product_input.cpns = [
+                ProductCpnLiteInput(
+                    customer_id=entity_mapping.sold_to_customer_id,
+                    customer_part_number=dto.cpn.customer_part_number,
+                    unit_price=dto.cpn.unit_price or Decimal("0"),
+                    commission_rate=dto.cpn.commission_rate or Decimal("0"),
+                )
+            ]
+
+        return product_input
 
     async def _get_or_create_uom_id(self, uom_title: str) -> UUID:
         title_upper = uom_title.upper()

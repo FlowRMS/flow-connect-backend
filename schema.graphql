@@ -2109,6 +2109,13 @@ input ProductCpnInput {
   commissionRate: Decimal!
 }
 
+input ProductCpnLiteInput {
+  customerId: UUID!
+  customerPartNumber: String!
+  unitPrice: Decimal!
+  commissionRate: Decimal!
+}
+
 type ProductCpnLiteResponse {
   id: UUID!
   productId: UUID!
@@ -2148,6 +2155,7 @@ input ProductInput {
   approvalDate: Date = null
   approvalComments: String = null
   tags: [String!] = null
+  cpns: [ProductCpnLiteInput!] = null
 }
 
 type ProductLandingPage implements LandingPageInterfaceBase {
