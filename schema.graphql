@@ -1409,7 +1409,7 @@ type Mutation {
   createCredit(input: CreditInput!): CreditResponse!
   updateCredit(input: CreditInput!): CreditResponse!
   deleteCredit(id: UUID!): Boolean!
-  executeWorkflow(pendingDocumentId: UUID!): ExecuteWorkflowResponse!
+  executeDocumentWorkflow(pendingDocumentId: UUID!): ExecuteWorkflowResponse!
   executeWorkflowNoWorker(pendingDocumentId: UUID!): [EntityProcessResponse!]!
   gmailConnect(code: String!): GmailConnectionResultType!
   gmailDisconnect: Boolean!

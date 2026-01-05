@@ -23,7 +23,7 @@ class ExecuteWorkflowResponse:
 @strawberry.type
 class DocumentsMutations:
     @strawberry.mutation
-    async def execute_workflow(
+    async def execute_document_workflow(
         self,
         pending_document_id: UUID,
         info: Info[Context, None],
