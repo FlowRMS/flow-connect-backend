@@ -1960,9 +1960,9 @@ input PreOpportunityDetailInput {
   itemNumber: Int!
   unitPrice: Decimal!
   discountRate: Decimal!
-  productId: UUID
-  factoryId: UUID
   endUserId: UUID!
+  productId: UUID = null
+  factoryId: UUID = null
   id: UUID = null
   leadTime: String = null
 }

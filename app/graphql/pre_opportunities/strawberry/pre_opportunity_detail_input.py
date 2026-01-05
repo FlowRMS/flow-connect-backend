@@ -19,10 +19,9 @@ class PreOpportunityDetailInput(BaseInputGQL[PreOpportunityDetail]):
     item_number: int
     unit_price: Decimal
     discount_rate: Decimal
-    product_id: UUID | None
-    factory_id: UUID | None
     end_user_id: UUID
-
+    product_id: UUID | None = None
+    factory_id: UUID | None = None
     id: UUID | None = None
     lead_time: str | None = None
 
