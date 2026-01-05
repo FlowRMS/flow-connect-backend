@@ -41,4 +41,4 @@ COPY models.py ./
 ENV PATH="/app/.venv/bin:$PATH"
 ENV PYTHONPATH="${PYTHONPATH}:${PWD}"
 
-CMD taskiq worker app.workers.broker:broker --fs-discover
+CMD taskiq worker app.workers.broker:broker
