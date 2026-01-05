@@ -26,6 +26,7 @@ class FileMutations:
             file_name=input.file_name,
             folder_id=input.folder_id,
             folder_path=input.folder_path,
+            file_entity_type=input.file_entity_type,
         )
         return FileResponse.from_orm_model(file)
 
