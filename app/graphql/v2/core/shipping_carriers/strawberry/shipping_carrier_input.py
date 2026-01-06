@@ -5,9 +5,24 @@ from typing import Any, cast
 
 import strawberry
 from commons.db.v6 import ShippingCarrier
+from commons.db.v6.crm.shipping_carriers.shipping_carrier_model import CarrierType
 from strawberry.scalars import JSON
 
 from app.core.strawberry.inputs import BaseInputGQL
+from app.graphql.v2.core.shipping_carriers.strawberry.shipping_carrier_response import (
+    CarrierTypeEnum,
+)
+
+
+def carrier_type_from_enum(carrier_type: CarrierTypeEnum | None) -> CarrierType | None:
+    """Convert GraphQL enum to CarrierType IntEnum."""
+    if carrier_type is None:
+        return None
+    if carrier_type == CarrierTypeEnum.PARCEL:
+        return CarrierType.PARCEL
+    if carrier_type == CarrierTypeEnum.FREIGHT:
+        return CarrierType.FREIGHT
+    return None
 
 
 @strawberry.input
@@ -15,6 +30,7 @@ class ShippingCarrierInput(BaseInputGQL[ShippingCarrier]):
     """Input type for creating/updating shipping carriers."""
 
     name: str
+    carrier_type: CarrierTypeEnum | None = None
     code: str | None = None  # SCAC code
     account_number: str | None = None
     is_active: bool = True
@@ -51,6 +67,7 @@ class ShippingCarrierInput(BaseInputGQL[ShippingCarrier]):
     def to_orm_model(self) -> ShippingCarrier:
         return ShippingCarrier(
             name=self.name,
+            carrier_type=carrier_type_from_enum(self.carrier_type),
             code=self.code,
             account_number=self.account_number,
             is_active=self.is_active,

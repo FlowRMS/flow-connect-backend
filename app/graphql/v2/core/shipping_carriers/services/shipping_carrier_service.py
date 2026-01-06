@@ -65,3 +65,9 @@ class ShippingCarrierService:
     async def search(self, search_term: str, limit: int = 20) -> list[ShippingCarrier]:
         """Search carriers by name."""
         return await self.repository.search_by_name(search_term, limit)
+
+    async def list_by_type(
+        self, carrier_type: str, active_only: bool = True
+    ) -> list[ShippingCarrier]:
+        """Get carriers filtered by type (PARCEL or FREIGHT)."""
+        return await self.repository.list_by_type(carrier_type, active_only)

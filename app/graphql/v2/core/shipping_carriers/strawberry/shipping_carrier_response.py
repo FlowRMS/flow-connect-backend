@@ -2,14 +2,35 @@
 
 from datetime import datetime
 from decimal import Decimal
+from enum import Enum
 from typing import Self, cast
 from uuid import UUID
 
 import strawberry
 from commons.db.v6 import ShippingCarrier
+from commons.db.v6.crm.shipping_carriers.shipping_carrier_model import CarrierType
 from strawberry.scalars import JSON
 
 from app.core.db.adapters.dto import DTOMixin
+
+
+@strawberry.enum
+class CarrierTypeEnum(Enum):
+    """Carrier type enum for GraphQL."""
+
+    PARCEL = "PARCEL"
+    FREIGHT = "FREIGHT"
+
+
+def carrier_type_to_enum(carrier_type: CarrierType | None) -> CarrierTypeEnum | None:
+    """Convert CarrierType IntEnum to GraphQL enum."""
+    if carrier_type is None:
+        return None
+    if carrier_type == CarrierType.PARCEL:
+        return CarrierTypeEnum.PARCEL
+    if carrier_type == CarrierType.FREIGHT:
+        return CarrierTypeEnum.FREIGHT
+    return None
 
 
 @strawberry.type
@@ -19,6 +40,7 @@ class ShippingCarrierResponse(DTOMixin[ShippingCarrier]):
     _instance: strawberry.Private[ShippingCarrier]
     id: UUID
     name: str
+    carrier_type: CarrierTypeEnum | None
     code: str | None  # SCAC code
     account_number: str | None
     is_active: bool | None
@@ -56,6 +78,7 @@ class ShippingCarrierResponse(DTOMixin[ShippingCarrier]):
             _instance=model,
             id=model.id,
             name=model.name,
+            carrier_type=carrier_type_to_enum(model.carrier_type),
             code=model.code,
             account_number=model.account_number,
             is_active=model.is_active,
