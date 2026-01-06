@@ -5,7 +5,7 @@ from uuid import UUID
 from commons.db.v6 import LocationProductAssignment, WarehouseLocation
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.orm import selectinload
+from sqlalchemy.orm import joinedload
 
 from app.core.context_wrapper import ContextWrapper
 from app.graphql.base_repository import BaseRepository
@@ -32,8 +32,8 @@ class WarehouseLocationRepository(BaseRepository[WarehouseLocation]):
         stmt = (
             select(WarehouseLocation)
             .options(
-                selectinload(WarehouseLocation.children),
-                selectinload(WarehouseLocation.product_assignments),
+                joinedload(WarehouseLocation.children),
+                joinedload(WarehouseLocation.product_assignments),
             )
             .where(WarehouseLocation.id == location_id)
         )
@@ -57,8 +57,8 @@ class WarehouseLocationRepository(BaseRepository[WarehouseLocation]):
         stmt = (
             select(WarehouseLocation)
             .options(
-                selectinload(WarehouseLocation.children),
-                selectinload(WarehouseLocation.product_assignments).selectinload(
+                joinedload(WarehouseLocation.children),
+                joinedload(WarehouseLocation.product_assignments).joinedload(
                     LocationProductAssignment.product
                 ),
             )
@@ -73,8 +73,8 @@ class WarehouseLocationRepository(BaseRepository[WarehouseLocation]):
         stmt = (
             select(WarehouseLocation)
             .options(
-                selectinload(WarehouseLocation.children),
-                selectinload(WarehouseLocation.product_assignments),
+                joinedload(WarehouseLocation.children),
+                joinedload(WarehouseLocation.product_assignments),
             )
             .where(
                 WarehouseLocation.warehouse_id == warehouse_id,
@@ -90,8 +90,8 @@ class WarehouseLocationRepository(BaseRepository[WarehouseLocation]):
         stmt = (
             select(WarehouseLocation)
             .options(
-                selectinload(WarehouseLocation.children),
-                selectinload(WarehouseLocation.product_assignments),
+                joinedload(WarehouseLocation.children),
+                joinedload(WarehouseLocation.product_assignments),
             )
             .where(WarehouseLocation.parent_id == parent_id)
             .order_by(WarehouseLocation.sort_order)
@@ -143,7 +143,7 @@ class LocationProductAssignmentRepository(BaseRepository[LocationProductAssignme
         """Get all product assignments for a location."""
         stmt = (
             select(LocationProductAssignment)
-            .options(selectinload(LocationProductAssignment.product))
+            .options(joinedload(LocationProductAssignment.product))
             .where(LocationProductAssignment.location_id == location_id)
         )
         result = await self.session.execute(stmt)
@@ -155,7 +155,7 @@ class LocationProductAssignmentRepository(BaseRepository[LocationProductAssignme
         """Get all location assignments for a product."""
         stmt = (
             select(LocationProductAssignment)
-            .options(selectinload(LocationProductAssignment.location))
+            .options(joinedload(LocationProductAssignment.location))
             .where(LocationProductAssignment.product_id == product_id)
         )
         result = await self.session.execute(stmt)

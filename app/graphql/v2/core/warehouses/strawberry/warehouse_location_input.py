@@ -1,12 +1,10 @@
 """Strawberry input types for warehouse locations."""
 
+from decimal import Decimal
 from uuid import UUID
 
 import strawberry
-
-from app.graphql.v2.core.warehouses.strawberry.warehouse_input import (
-    WarehouseStructureCodeGQL,
-)
+from commons.db.v6 import WarehouseStructureCode
 
 
 @strawberry.input
@@ -14,7 +12,7 @@ class WarehouseLocationInput:
     """Input type for creating/updating warehouse locations."""
 
     warehouse_id: UUID
-    level: WarehouseStructureCodeGQL
+    level: WarehouseStructureCode
     name: str
     parent_id: UUID | None = None
     code: str | None = None
@@ -23,11 +21,11 @@ class WarehouseLocationInput:
     sort_order: int | None = 0
 
     # Visual properties for layout builder
-    x: float | None = None
-    y: float | None = None
-    width: float | None = None
-    height: float | None = None
-    rotation: float | None = None
+    x: Decimal | None = None
+    y: Decimal | None = None
+    width: Decimal | None = None
+    height: Decimal | None = None
+    rotation: Decimal | None = None
 
 
 @strawberry.input
@@ -38,7 +36,7 @@ class BulkWarehouseLocationInput:
     Supports temp_id and temp_parent_id for newly created hierarchical locations.
     """
 
-    level: WarehouseStructureCodeGQL
+    level: WarehouseStructureCode
     name: str
     id: UUID | None = None  # For existing locations being updated
     parent_id: UUID | None = None  # Real UUID parent (for existing parents)
@@ -50,11 +48,11 @@ class BulkWarehouseLocationInput:
     sort_order: int | None = 0
 
     # Visual properties for layout builder
-    x: float | None = None
-    y: float | None = None
-    width: float | None = None
-    height: float | None = None
-    rotation: float | None = None
+    x: Decimal | None = None
+    y: Decimal | None = None
+    width: Decimal | None = None
+    height: Decimal | None = None
+    rotation: Decimal | None = None
 
 
 @strawberry.input
@@ -63,4 +61,4 @@ class LocationProductAssignmentInput:
 
     location_id: UUID
     product_id: UUID
-    quantity: int = 0
+    quantity: Decimal = Decimal(0)

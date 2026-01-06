@@ -366,7 +366,7 @@ class WarehouseLocationService:
 
     # Product assignment operations
     async def assign_product(
-        self, location_id: UUID, product_id: UUID, quantity: int
+        self, location_id: UUID, product_id: UUID, quantity: Decimal
     ) -> LocationProductAssignment:
         """Assign a product to a location."""
         # Verify location exists
@@ -392,7 +392,7 @@ class WarehouseLocationService:
         return await self.assignment_repository.create(assignment)
 
     async def update_product_quantity(
-        self, location_id: UUID, product_id: UUID, quantity: int
+        self, location_id: UUID, product_id: UUID, quantity: Decimal
     ) -> LocationProductAssignment:
         """Update product quantity at a location."""
         assignment = await self.assignment_repository.get_by_location_and_product(
