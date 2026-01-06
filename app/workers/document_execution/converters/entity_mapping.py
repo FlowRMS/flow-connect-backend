@@ -8,8 +8,12 @@ class EntityMapping:
     sold_to_customer_id: UUID | None = None
     bill_to_customer_id: UUID | None = None
     order_id: UUID | None = None
+    invoice_id: UUID | None = None
     products: dict[int, UUID] = field(default_factory=dict)
     end_users: dict[int, UUID] = field(default_factory=dict)
+    skipped_product_indices: set[int] = field(default_factory=set)
+    skipped_order_indices: set[int] = field(default_factory=set)
+    skipped_invoice_indices: set[int] = field(default_factory=set)
 
     def get_product_id(self, flow_index: int | None) -> UUID | None:
         if flow_index is None:

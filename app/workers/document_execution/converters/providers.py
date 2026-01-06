@@ -8,6 +8,7 @@ from .invoice_converter import InvoiceConverter
 from .order_converter import OrderConverter
 from .product_converter import ProductConverter
 from .quote_converter import QuoteConverter
+from .set_for_creation_service import SetForCreationService
 
 converter_providers = [
     aioinject.Scoped(OrderConverter),
@@ -17,4 +18,5 @@ converter_providers = [
     aioinject.Scoped(QuoteConverter),
     aioinject.Scoped(InvoiceConverter),
     aioinject.Scoped(OrderDetailMatcherService),
+    aioinject.Scoped(SetForCreationService),
 ]

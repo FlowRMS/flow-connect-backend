@@ -76,6 +76,7 @@ class InvoiceConverter(BaseEntityConverter[InvoiceDTO, InvoiceInput, Invoice]):
                 default_discount_rate=default_discount_rate,
             )
             for detail in dto.details
+            if detail.flow_index not in entity_mapping.skipped_product_indices
         ]
 
         return InvoiceInput(
