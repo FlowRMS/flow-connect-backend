@@ -46,6 +46,27 @@ class ProductService:
         product = await self.repository.create(product_input.to_orm_model())
         return await self.get_by_id(product.id)
 
+    async def bulk_create(self, product_inputs: list[ProductInput]) -> list[Product]:
+        if not product_inputs:
+            return []
+
+        fpn_pairs = [
+            (inp.factory_part_number, inp.factory_id) for inp in product_inputs
+        ]
+        existing = await self.repository.get_existing_factory_part_numbers(fpn_pairs)
+
+        valid_inputs = [
+            inp
+            for inp in product_inputs
+            if (inp.factory_part_number, inp.factory_id) not in existing
+        ]
+        if not valid_inputs:
+            return []
+
+        entities = [inp.to_orm_model() for inp in valid_inputs]
+        created = await self.repository.bulk_create(entities)
+        return created
+
     async def update(self, product_id: UUID, product_input: ProductInput) -> Product:
         product = product_input.to_orm_model()
         product.id = product_id

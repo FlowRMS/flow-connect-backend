@@ -2,12 +2,12 @@ from decimal import Decimal
 from typing import override
 from uuid import UUID
 
-from commons.graphql.models.enums.common_enums import CreationTypeEnum
 from commons.db.v6.ai.documents.enums.entity_type import DocumentEntityType
 from commons.db.v6.core.products.product import Product
 from commons.db.v6.core.products.product_uom import ProductUom
 from commons.dtos.common.dto_loader_service import DTOLoaderService
 from commons.dtos.core.product_dto import ProductDTO
+from commons.graphql.models.enums.common_enums import CreationTypeEnum
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -17,7 +17,7 @@ from app.graphql.v2.core.products.strawberry.product_cpn_input import (
 )
 from app.graphql.v2.core.products.strawberry.product_input import ProductInput
 
-from .base import BaseEntityConverter
+from .base import BaseEntityConverter, BulkCreateResult
 from .entity_mapping import EntityMapping
 
 
@@ -43,6 +43,20 @@ class ProductConverter(BaseEntityConverter[ProductDTO, ProductInput, Product]):
     ) -> Product:
         product = await self.product_service.create(input_data)
         return product
+
+    @override
+    async def create_entities_bulk(
+        self,
+        inputs: list[ProductInput],
+    ) -> BulkCreateResult[Product]:
+        created = await self.product_service.bulk_create(inputs)
+        created_keys = {(p.factory_part_number, p.factory_id) for p in created}
+        skipped = [
+            i
+            for i, inp in enumerate(inputs)
+            if (inp.factory_part_number, inp.factory_id) not in created_keys
+        ]
+        return BulkCreateResult(created=created, skipped_indices=skipped)
 
     @override
     async def to_input(
@@ -103,7 +117,11 @@ class ProductConverter(BaseEntityConverter[ProductDTO, ProductInput, Product]):
             self._uom_cache[title_upper] = uom.id
             return uom.id
 
-        new_uom = ProductUom(title=title_upper, division_factor=Decimal("1"), creation_type=CreationTypeEnum.FLOW_BOT)
+        new_uom = ProductUom(
+            title=title_upper,
+            division_factor=Decimal("1"),
+            creation_type=CreationTypeEnum.FLOW_BOT,
+        )
         self.session.add(new_uom)
         await self.session.flush([new_uom])
         self._uom_cache[title_upper] = new_uom.id

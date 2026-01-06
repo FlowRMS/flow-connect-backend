@@ -732,12 +732,6 @@ enum EmailStatus {
   BOUNCED
 }
 
-type EntityProcessResponse {
-  entityId: UUID
-  dto: JSON!
-  error: String
-}
-
 enum EntityType {
   JOB
   TASK
@@ -1412,7 +1406,9 @@ type Mutation {
   updateCredit(input: CreditInput!): CreditResponse!
   deleteCredit(id: UUID!): Boolean!
   executeDocumentWorkflow(pendingDocumentId: UUID!): ExecuteWorkflowResponse!
-  executeWorkflowNoWorker(pendingDocumentId: UUID!): [EntityProcessResponse!]!
+  executeWorkflowNoWorker(pendingDocumentId: UUID!): [PendingDocumentProcessingType!]!
+  updatePendingDocumentProcessing(id: UUID!, input: PendingDocumentProcessingInput!): PendingDocumentProcessingType!
+  deletePendingDocumentProcessing(id: UUID!): Boolean!
   gmailConnect(code: String!): GmailConnectionResultType!
   gmailDisconnect: Boolean!
   gmailSendEmail(input: GmailSendEmailInput!): GmailSendEmailResultType!
@@ -1936,6 +1932,23 @@ type PendingDocumentLandingPage {
   isNew: Boolean!
 }
 
+input PendingDocumentProcessingInput {
+  pendingDocumentId: UUID!
+  entityId: UUID = null
+  status: ProcessingResultStatus!
+  dtoJson: JSON = null
+  errorMessage: String = null
+}
+
+type PendingDocumentProcessingType {
+  id: UUID!
+  pendingDocumentId: UUID!
+  entityId: UUID
+  status: ProcessingResultStatus!
+  dtoJson: JSON
+  errorMessage: String
+}
+
 enum PipelineStage {
   DISCOVERY
   PROSPECT
@@ -2077,6 +2090,12 @@ enum PreOpportunityStatus {
 type Privilege {
   privilege: RbacPrivilegeTypeEnum!
   option: RbacPrivilegeOptionEnum!
+}
+
+enum ProcessingResultStatus {
+  CREATED
+  ERROR
+  SKIPPED
 }
 
 input ProductCategoryInput {
@@ -2271,6 +2290,7 @@ type Query {
   contactRelatedEntities(contactId: UUID!): ContactRelatedEntitiesResponse! @deprecated(reason: "Use related_entities(source_type: CONTACTS, entity_id: UUID)")
   credit(id: UUID!): CreditResponse!
   creditSearch(searchTerm: String!, limit: Int! = 20, openOnly: Boolean! = false, unlockedOnly: Boolean! = false): [CreditLiteResponse!]!
+  pendingDocumentProcessings(pendingDocumentId: UUID!): [PendingDocumentProcessingType!]!
   gmailAuthUrl(state: String = null): String!
   gmailConnectionStatus: GmailConnectionStatusType!
   o365AuthUrl(state: String = null): String!

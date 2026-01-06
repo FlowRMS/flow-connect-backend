@@ -58,6 +58,15 @@ class CustomersRepository(BaseRepository[Customer]):
         count = result.scalar_one()
         return count > 0
 
+    async def get_existing_company_names(self, company_names: list[str]) -> set[str]:
+        if not company_names:
+            return set()
+        stmt = select(Customer.company_name).where(
+            Customer.company_name.in_(company_names)
+        )
+        result = await self.session.execute(stmt)
+        return set(result.scalars().all())
+
     def paginated_stmt(self) -> Select[Any]:
         inside_user = aliased(User)
         outside_user = aliased(User)

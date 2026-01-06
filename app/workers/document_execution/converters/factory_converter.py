@@ -47,7 +47,7 @@ class FactoryConverter(BaseEntityConverter[FactoryDTO, FactoryInput, Factory]):
 
         return FactoryInput(
             title=dto.factory_name,
-            published=False,
+            published=True,
             email=dto.email,
             phone=dto.phone,
             lead_time=self._parse_lead_time(dto.lead_time),

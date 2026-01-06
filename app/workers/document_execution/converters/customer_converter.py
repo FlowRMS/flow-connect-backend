@@ -9,7 +9,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.graphql.v2.core.customers.services.customer_service import CustomerService
 from app.graphql.v2.core.customers.strawberry.customer_input import CustomerInput
 
-from .base import BaseEntityConverter
+from .base import BaseEntityConverter, BulkCreateResult
 from .entity_mapping import EntityMapping
 
 
@@ -32,6 +32,18 @@ class CustomerConverter(BaseEntityConverter[CustomerDTO, CustomerInput, Customer
         input_data: CustomerInput,
     ) -> Customer:
         return await self.customer_service.create(input_data)
+
+    @override
+    async def create_entities_bulk(
+        self,
+        inputs: list[CustomerInput],
+    ) -> BulkCreateResult[Customer]:
+        created = await self.customer_service.bulk_create(inputs)
+        created_names = {c.company_name for c in created}
+        skipped = [
+            i for i, inp in enumerate(inputs) if inp.company_name not in created_names
+        ]
+        return BulkCreateResult(created=created, skipped_indices=skipped)
 
     @override
     async def to_input(

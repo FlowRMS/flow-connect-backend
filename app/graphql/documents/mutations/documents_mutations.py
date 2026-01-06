@@ -8,12 +8,18 @@ from commons.db.v6.enums import WorkflowStatus
 from app.graphql.documents.repositories.pending_document_repository import (
     PendingDocumentRepository,
 )
+from app.graphql.documents.services.pending_document_processing_service import (
+    PendingDocumentProcessingService,
+)
+from app.graphql.documents.strawberry.pending_document_processing_input import (
+    PendingDocumentProcessingInput,
+)
+from app.graphql.documents.strawberry.pending_document_processing_type import (
+    PendingDocumentProcessingType,
+)
 from app.graphql.inject import inject
 from app.workers.broker import execute_pending_document_task
-from app.workers.document_execution.executor_service import (
-    DocumentExecutorService,
-    EntityProcessResponse,
-)
+from app.workers.document_execution.executor_service import DocumentExecutorService
 
 
 @strawberry.type
@@ -63,5 +69,26 @@ class DocumentsMutations:
         self,
         pending_document_id: UUID,
         document_service: Injected[DocumentExecutorService],
-    ) -> list[EntityProcessResponse]:
-        return await document_service.execute(pending_document_id)
+    ) -> list[PendingDocumentProcessingType]:
+        results = await document_service.execute(pending_document_id)
+        return [PendingDocumentProcessingType.from_model(r) for r in results]
+
+    @strawberry.mutation
+    @inject
+    async def update_pending_document_processing(
+        self,
+        id: UUID,
+        input: PendingDocumentProcessingInput,
+        service: Injected[PendingDocumentProcessingService],
+    ) -> PendingDocumentProcessingType:
+        processing = await service.update(id, input)
+        return PendingDocumentProcessingType.from_model(processing)
+
+    @strawberry.mutation
+    @inject
+    async def delete_pending_document_processing(
+        self,
+        id: UUID,
+        service: Injected[PendingDocumentProcessingService],
+    ) -> bool:
+        return await service.delete(id)

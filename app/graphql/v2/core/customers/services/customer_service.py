@@ -39,6 +39,23 @@ class CustomerService:
         customer = await self.repository.create(customer_input.to_orm_model())
         return await self.get_by_id(customer.id)
 
+    async def bulk_create(self, customer_inputs: list[CustomerInput]) -> list[Customer]:
+        if not customer_inputs:
+            return []
+
+        company_names = [inp.company_name for inp in customer_inputs]
+        existing = await self.repository.get_existing_company_names(company_names)
+
+        valid_inputs = [
+            inp for inp in customer_inputs if inp.company_name not in existing
+        ]
+        if not valid_inputs:
+            return []
+
+        entities = [inp.to_orm_model() for inp in valid_inputs]
+        created = await self.repository.bulk_create(entities)
+        return created
+
     async def update(
         self, customer_id: UUID, customer_input: CustomerInput
     ) -> Customer:

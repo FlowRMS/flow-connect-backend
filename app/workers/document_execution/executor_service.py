@@ -2,16 +2,20 @@ from decimal import Decimal
 from typing import Any
 from uuid import UUID
 
-import strawberry
 from commons.db.v6.ai.documents.enums.entity_type import DocumentEntityType
+from commons.db.v6.ai.documents.enums.processing_result_status import (
+    ProcessingResultStatus,
+)
 from commons.db.v6.ai.documents.pending_document import PendingDocument
+from commons.db.v6.ai.documents.pending_document_processing import (
+    PendingDocumentProcessing,
+)
 from commons.db.v6.ai.entities.enums import ConfirmationStatus, EntityPendingType
 from commons.db.v6.ai.entities.pending_entity import PendingEntity
 from commons.db.v6.crm.links.entity_type import EntityType
 from commons.db.v6.enums import WorkflowStatus
 from commons.dtos.common.dto_loader_service import DTOLoaderService
 from loguru import logger
-from pydantic import BaseModel
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import joinedload
 
@@ -25,16 +29,8 @@ from app.workers.document_execution.converters.order_converter import OrderConve
 from app.workers.document_execution.converters.product_converter import ProductConverter
 from app.workers.document_execution.converters.quote_converter import QuoteConverter
 
-from .converters.base import BaseEntityConverter
+from .converters.base import DEFAULT_BATCH_SIZE, BaseEntityConverter
 from .converters.entity_mapping import EntityMapping
-
-
-@strawberry.type
-class EntityProcessResponse:
-    entity_id: UUID | None
-    dto: strawberry.scalars.JSON
-    error: str | None
-
 
 CONFIRMED_STATUSES = frozenset(
     {
@@ -97,7 +93,11 @@ class DocumentExecutorService:
             case _:
                 raise ValueError(f"Unsupported entity type: {entity_type}")
 
-    async def execute(self, pending_document_id: UUID) -> list[EntityProcessResponse]:
+    async def execute(
+        self,
+        pending_document_id: UUID,
+        batch_size: int = DEFAULT_BATCH_SIZE,
+    ) -> list[PendingDocumentProcessing]:
         pending_document = await self.session.get_one(
             PendingDocument,
             pending_document_id,
@@ -116,29 +116,120 @@ class DocumentExecutorService:
             dtos = await self._parse_dtos(converter, pending_document)
             logger.info(f"Parsed {len(dtos)} DTOs from extracted_data_json")
 
-            created_responses: list[EntityProcessResponse] = []
+            processing_records = await self._execute_bulk(
+                converter=converter,
+                dtos=dtos,
+                entity_mappings=entity_mappings,
+                pending_document=pending_document,
+                batch_size=batch_size,
+            )
 
-            for i, dto in enumerate(dtos):
-                logger.info(f"Processing DTO {i + 1}/{len(dtos)} dto.id={dto.internal_uuid}")
-                # dto_id = getattr(dto, "id", None)
-                # if dto_id:
-                entity_mapping = entity_mappings.get(dto.internal_uuid, EntityMapping())
-                # else:
-                    # entity_mapping = EntityMapping()
-                entity_response = await self._create_entity(
-                    converter=converter,
-                    dto=dto,
-                    entity_mapping=entity_mapping,
-                    pending_document=pending_document,
-                )
-                created_responses.append(entity_response)
+            self.session.add_all(processing_records)
+            await self.session.flush()
 
             pending_document.workflow_status = WorkflowStatus.COMPLETED
-            return created_responses
+            return processing_records
         except Exception as e:
             pending_document.workflow_status = WorkflowStatus.FAILED
             logger.exception(f"Error executing document {pending_document_id}: {e}")
             raise
+
+    async def _execute_bulk(
+        self,
+        converter: BaseEntityConverter[Any, Any, Any],
+        dtos: list[Any],
+        entity_mappings: dict[UUID, EntityMapping],
+        pending_document: PendingDocument,
+        batch_size: int,
+    ) -> list[PendingDocumentProcessing]:
+        processing_records: list[PendingDocumentProcessing] = []
+
+        for batch_start in range(0, len(dtos), batch_size):
+            batch_end = min(batch_start + batch_size, len(dtos))
+            batch_dtos = dtos[batch_start:batch_end]
+            logger.info(
+                f"Processing batch {batch_start + 1}-{batch_end} of {len(dtos)} DTOs"
+            )
+
+            batch_mappings = [
+                entity_mappings.get(dto.internal_uuid, EntityMapping())
+                for dto in batch_dtos
+            ]
+
+            batch_records = await self._process_batch(
+                converter=converter,
+                dtos=batch_dtos,
+                mappings=batch_mappings,
+                pending_document=pending_document,
+            )
+            processing_records.extend(batch_records)
+
+        return processing_records
+
+    async def _process_batch(
+        self,
+        converter: BaseEntityConverter[Any, Any, Any],
+        dtos: list[Any],
+        mappings: list[EntityMapping],
+        pending_document: PendingDocument,
+    ) -> list[PendingDocumentProcessing]:
+        records: list[PendingDocumentProcessing] = []
+        conversion_errors: dict[int, str] = {}
+        valid_inputs: list[Any] = []
+        valid_indices: list[int] = []
+
+        for i, (dto, mapping) in enumerate(zip(dtos, mappings, strict=True)):
+            try:
+                inp = await converter.to_input(dto, mapping)
+                valid_inputs.append(inp)
+                valid_indices.append(i)
+            except Exception as e:
+                logger.error(f"Error converting DTO {i}: {e}")
+                conversion_errors[i] = str(e)
+
+        if valid_inputs:
+            bulk_result = await converter.create_entities_bulk(valid_inputs)
+
+            skipped_set = set(bulk_result.skipped_indices)
+            created_idx = 0
+            for list_pos, original_idx in enumerate(valid_indices):
+                dto = dtos[original_idx]
+                if list_pos in skipped_set:
+                    records.append(
+                        PendingDocumentProcessing(
+                            pending_document_id=pending_document.id,
+                            entity_id=None,
+                            status=ProcessingResultStatus.SKIPPED,
+                            dto_json=dto.model_dump(),
+                            error_message="Skipped: duplicate or validation error",
+                        )
+                    )
+                else:
+                    entity = bulk_result.created[created_idx]
+                    created_idx += 1
+                    await self._link_file_to_entity(pending_document, entity.id)
+                    records.append(
+                        PendingDocumentProcessing(
+                            pending_document_id=pending_document.id,
+                            entity_id=entity.id,
+                            status=ProcessingResultStatus.CREATED,
+                            dto_json=dto.model_dump(),
+                            error_message=None,
+                        )
+                    )
+
+        for i, error in conversion_errors.items():
+            records.append(
+                PendingDocumentProcessing(
+                    pending_document_id=pending_document.id,
+                    entity_id=None,
+                    status=ProcessingResultStatus.ERROR,
+                    dto_json=dtos[i].model_dump(),
+                    error_message=error,
+                )
+            )
+
+        return records
 
     def _build_entity_mappings(
         self,
@@ -211,30 +302,6 @@ class DocumentExecutorService:
 
         loaded_dtos = await converter.parse_dtos_from_json(pending_document)
         return [converter.dto_class.model_validate(d) for d in loaded_dtos.dtos]
-
-    async def _create_entity(
-        self,
-        converter: BaseEntityConverter[Any, Any, Any],
-        dto: BaseModel,
-        entity_mapping: EntityMapping,
-        pending_document: PendingDocument,
-    ) -> EntityProcessResponse:
-        try:
-            input_obj = await converter.to_input(dto, entity_mapping)
-            entity = await converter.create_entity(input_obj)
-            await self._link_file_to_entity(pending_document, entity.id)
-            return EntityProcessResponse(
-                entity_id=entity.id,
-                dto=dto.model_dump(),
-                error=None,
-            )
-        except Exception as e:
-            logger.error(f"Error creating entity for DTO: {e}")
-            return EntityProcessResponse(
-                entity_id=None,
-                dto=dto.model_dump(),
-                error=str(e),
-            )
 
     async def _link_file_to_entity(
         self,

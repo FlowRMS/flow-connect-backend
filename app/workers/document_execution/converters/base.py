@@ -1,4 +1,5 @@
 from abc import ABC, abstractmethod
+from dataclasses import dataclass
 from decimal import Decimal
 from typing import TYPE_CHECKING, Generic, TypeVar
 from uuid import UUID
@@ -18,6 +19,14 @@ if TYPE_CHECKING:
 TDto = TypeVar("TDto", bound=BaseModel)
 TInput = TypeVar("TInput")
 TOutput = TypeVar("TOutput")
+
+DEFAULT_BATCH_SIZE = 500
+
+
+@dataclass
+class BulkCreateResult(Generic[TOutput]):
+    created: list[TOutput]
+    skipped_indices: list[int]
 
 
 class BaseEntityConverter(ABC, Generic[TDto, TInput, TOutput]):
@@ -54,6 +63,30 @@ class BaseEntityConverter(ABC, Generic[TDto, TInput, TOutput]):
         dto: TDto,
         entity_mapping: "EntityMapping",
     ) -> TInput: ...
+
+    async def to_inputs_bulk(
+        self,
+        dtos: list[TDto],
+        entity_mappings: list["EntityMapping"],
+    ) -> list[TInput]:
+        return [
+            await self.to_input(dto, mapping)
+            for dto, mapping in zip(dtos, entity_mappings, strict=True)
+        ]
+
+    async def create_entities_bulk(
+        self,
+        inputs: list[TInput],
+    ) -> BulkCreateResult[TOutput]:
+        created: list[TOutput] = []
+        skipped: list[int] = []
+        for i, inp in enumerate(inputs):
+            try:
+                entity = await self.create_entity(inp)
+                created.append(entity)
+            except Exception:
+                skipped.append(i)
+        return BulkCreateResult(created=created, skipped_indices=skipped)
 
     async def get_factory(self, factory_id: UUID) -> Factory | None:
         if factory_id in self._factory_cache:
