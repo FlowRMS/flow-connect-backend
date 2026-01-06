@@ -17,7 +17,11 @@ class UpdateOrderOnInvoiceProcessor(BaseProcessor[Invoice]):
 
     @property
     def events(self) -> list[RepositoryEvent]:
-        return [RepositoryEvent.POST_CREATE, RepositoryEvent.POST_UPDATE]
+        return [
+            RepositoryEvent.POST_CREATE,
+            RepositoryEvent.POST_UPDATE,
+            RepositoryEvent.POST_DELETE,
+        ]
 
     async def process(self, context: EntityContext[Invoice]) -> None:
         invoice = context.entity
@@ -26,7 +30,7 @@ class UpdateOrderOnInvoiceProcessor(BaseProcessor[Invoice]):
         if order is None:
             return
 
-        await self._update_order_detail_statuses(order)
+        await self._update_order_detail_statuses(order, context.event)
         self._update_order_status(order)
         await self.session.flush()
 
@@ -44,22 +48,29 @@ class UpdateOrderOnInvoiceProcessor(BaseProcessor[Invoice]):
         )
         return result.scalar_one()
 
-    async def _update_order_detail_statuses(self, order: Order) -> None:
+    async def _update_order_detail_statuses(
+        self, order: Order, event: RepositoryEvent
+    ) -> None:
         for detail in order.details:
             invoiced_amount = await self._get_invoiced_amount_for_detail(detail.id)
-            new_status = self._calculate_detail_status(detail.total, invoiced_amount)
-            detail.status = new_status
+            if event == RepositoryEvent.POST_DELETE:
+                detail.shipping_balance = detail.shipping_balance + invoiced_amount
+            else:
+                detail.shipping_balance = detail.shipping_balance - invoiced_amount
 
-    def _calculate_detail_status(
-        self, order_total: Decimal, invoiced_total: Decimal
-    ) -> OrderStatus:
-        if invoiced_total <= Decimal("0"):
-            return OrderStatus.OPEN
-        if invoiced_total < order_total:
-            return OrderStatus.PARTIAL_SHIPPED
-        if invoiced_total == order_total:
+            detail.status = self._calculate_detail_status(detail.shipping_balance)
+
+    def _calculate_detail_status(self, shipping_balance: Decimal) -> OrderStatus:
+        if shipping_balance < Decimal("0.00"):
+            return OrderStatus.OVER_SHIPPED
+        elif shipping_balance.quantize(Decimal("0.01")) <= Decimal("0.00").quantize(
+            Decimal("0.01")
+        ):
             return OrderStatus.SHIPPED_COMPLETE
-        return OrderStatus.OVER_SHIPPED
+        elif shipping_balance < shipping_balance:
+            return OrderStatus.PARTIAL_SHIPPED
+        else:
+            return OrderStatus.OPEN
 
     def _update_order_status(self, order: Order) -> None:
         if not order.details:
