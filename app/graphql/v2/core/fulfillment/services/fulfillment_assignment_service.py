@@ -80,7 +80,7 @@ class FulfillmentAssignmentService:
         assignment_id: UUID,
     ) -> FulfillmentOrder:
         """Remove an assignment from a fulfillment order."""
-        assignment = await self.assignment_repository.get(assignment_id)
+        assignment = await self.assignment_repository.get_by_id(assignment_id)
         if not assignment:
             raise NotFoundError(f"Assignment {assignment_id} not found")
 
