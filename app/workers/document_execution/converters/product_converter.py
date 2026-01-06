@@ -2,12 +2,12 @@ from decimal import Decimal
 from typing import override
 from uuid import UUID
 
-from commons.graphql.models.enums.common_enums import CreationTypeEnum
 from commons.db.v6.ai.documents.enums.entity_type import DocumentEntityType
 from commons.db.v6.core.products.product import Product
 from commons.db.v6.core.products.product_uom import ProductUom
 from commons.dtos.common.dto_loader_service import DTOLoaderService
 from commons.dtos.core.product_dto import ProductDTO
+from commons.graphql.models.enums.common_enums import CreationTypeEnum
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -62,7 +62,7 @@ class ProductConverter(BaseEntityConverter[ProductDTO, ProductInput, Product]):
             product_uom_id=uom_id,
             unit_price=dto.unit_price or Decimal("0"),
             default_commission_rate=dto.commission_rate or Decimal("0"),
-            published=dto.published or False,
+            published=dto.published or True,
             description=dto.description,
             upc=dto.upc,
             min_order_qty=Decimal(dto.min_order_qty) if dto.min_order_qty else None,
@@ -103,7 +103,11 @@ class ProductConverter(BaseEntityConverter[ProductDTO, ProductInput, Product]):
             self._uom_cache[title_upper] = uom.id
             return uom.id
 
-        new_uom = ProductUom(title=title_upper, division_factor=Decimal("1"), creation_type=CreationTypeEnum.FLOW_BOT)
+        new_uom = ProductUom(
+            title=title_upper,
+            division_factor=Decimal("1"),
+            creation_type=CreationTypeEnum.FLOW_BOT,
+        )
         self.session.add(new_uom)
         await self.session.flush([new_uom])
         self._uom_cache[title_upper] = new_uom.id

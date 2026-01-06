@@ -119,12 +119,14 @@ class DocumentExecutorService:
             created_responses: list[EntityProcessResponse] = []
 
             for i, dto in enumerate(dtos):
-                logger.info(f"Processing DTO {i + 1}/{len(dtos)} dto.id={dto.internal_uuid}")
+                logger.info(
+                    f"Processing DTO {i + 1}/{len(dtos)} dto.id={dto.internal_uuid}"
+                )
                 # dto_id = getattr(dto, "id", None)
                 # if dto_id:
                 entity_mapping = entity_mappings.get(dto.internal_uuid, EntityMapping())
                 # else:
-                    # entity_mapping = EntityMapping()
+                # entity_mapping = EntityMapping()
                 entity_response = await self._create_entity(
                     converter=converter,
                     dto=dto,
