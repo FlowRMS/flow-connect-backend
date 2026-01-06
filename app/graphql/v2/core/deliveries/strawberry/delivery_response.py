@@ -14,6 +14,12 @@ from .delivery_enums import DeliveryStatusGQL
 from .delivery_issue_response import DeliveryIssueResponse
 from .delivery_item_response import DeliveryItemResponse
 from .delivery_status_history_response import DeliveryStatusHistoryResponse
+from app.graphql.v2.core.factories.strawberry.factory_response import (
+    FactoryLiteResponse,
+)
+from app.graphql.v2.core.shipping_carriers.strawberry.shipping_carrier_response import (
+    ShippingCarrierResponse,
+)
 
 
 @strawberry.type
@@ -94,3 +100,13 @@ class DeliveryResponse(DTOMixin[Delivery]):
     async def documents(self) -> list[DeliveryDocumentResponse]:
         documents = await self._instance.awaitable_attrs.documents
         return DeliveryDocumentResponse.from_orm_model_list(documents)
+
+    @strawberry.field
+    async def vendor(self) -> FactoryLiteResponse:
+        vendor = await self._instance.awaitable_attrs.vendor
+        return FactoryLiteResponse.from_orm_model(vendor)
+
+    @strawberry.field
+    async def carrier(self) -> ShippingCarrierResponse | None:
+        carrier = await self._instance.awaitable_attrs.carrier
+        return ShippingCarrierResponse.from_orm_model_optional(carrier)

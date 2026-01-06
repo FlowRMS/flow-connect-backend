@@ -10,6 +10,9 @@ from app.core.db.adapters.dto import DTOMixin
 from .delivery_enums import DeliveryItemStatusGQL
 from .delivery_issue_response import DeliveryIssueResponse
 from .delivery_item_receipt_response import DeliveryItemReceiptResponse
+from app.graphql.v2.core.products.strawberry.product_response import (
+    ProductLiteResponse,
+)
 
 
 @strawberry.type
@@ -49,3 +52,8 @@ class DeliveryItemResponse(DTOMixin[DeliveryItem]):
     async def issues(self) -> list[DeliveryIssueResponse]:
         issues = await self._instance.awaitable_attrs.issues
         return DeliveryIssueResponse.from_orm_model_list(issues)
+
+    @strawberry.field
+    async def product(self) -> ProductLiteResponse:
+        product = await self._instance.awaitable_attrs.product
+        return ProductLiteResponse.from_orm_model(product)
