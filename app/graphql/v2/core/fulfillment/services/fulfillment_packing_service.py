@@ -1,4 +1,4 @@
-from datetime import datetime, timezone
+from datetime import datetime
 from decimal import Decimal
 from uuid import UUID
 
@@ -131,7 +131,7 @@ class FulfillmentPackingService:
             raise ValueError("Order must be in PACKING status to complete")
 
         order.status = FulfillmentOrderStatus.SHIPPING
-        order.pack_completed_at = datetime.now(timezone.utc)
+        order.pack_completed_at = datetime.utcnow()
 
         order = await self.order_repository.update(order)
         await self._log_activity(

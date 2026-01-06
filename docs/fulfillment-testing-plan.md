@@ -280,14 +280,22 @@ When you find an issue in the other dev's area:
 ## Checklist Summary
 
 ### Dev A Checklist
-- [ ] A1: Inventory shows real locations
-- [ ] A2: Split pick allocation works
-- [ ] A3: Shortage detection shows alert
-- [ ] A4: Report Backorder changes status
-- [ ] A5: BACKORDER_REVIEW UI displays correctly
-- [ ] A6: Complete picking transitions to PACKING
-- [ ] A7: Tracking number saves
-- [ ] A8: Ship confirmation modal works
+- [x] A1: Inventory shows real locations ✅ 2026-01-06
+- [x] A2: Split pick allocation works ✅ 2026-01-06
+- [x] A3: Shortage detection shows alert ✅ 2026-01-06
+- [x] A4: Report Backorder changes status ✅ 2026-01-06
+- [x] A5: BACKORDER_REVIEW UI displays correctly ✅ 2026-01-06
+- [x] A6: Complete picking transitions to PACKING ✅ 2026-01-06
+- [x] A7: Tracking number saves ✅ 2026-01-06
+- [x] A8: Ship confirmation modal works ✅ 2026-01-06
+- [x] A9: Packing interface (add to pallet, custom weight) ✅ 2026-01-06
+- [x] A10: Complete packing transitions to SHIPPING ✅ 2026-01-06
+- [x] A11: Shipping interface (carrier selection, tracking) ✅ 2026-01-06
+- [x] A12: Signature capture for pickup/handoff ✅ 2026-01-06
+- [x] A13: Bill of Lading modal (placeholder) ✅ 2026-01-06
+- [x] A14: Order reaches SHIPPED status with full timeline ✅ 2026-01-06
+- [x] A15: Send Confirmation modal opens ✅ 2026-01-06
+- [x] A16: Send Confirmation transitions to COMMUNICATED ✅ 2026-01-06
 
 ### Dev B Checklist
 - [ ] B1: Status filters work
@@ -312,6 +320,10 @@ When you find an issue in the other dev's area:
 | 2026-01-06 | Joel | B3: BackorderNotice | ✅ Pass | Displays correctly with shortage info |
 | 2026-01-06 | Joel | B4: Manufacturer Direct | ✅ Pass | Items marked, shows in "Fulfilled by Manufacturer" section |
 | 2026-01-06 | Joel | B5: Request Inventory | ⚠️ Partial | Sets hold_reason correctly, but uses mock data for shipment request creation. See TODO in implementation doc. |
+| 2026-01-06 | Joel | A1-A6: Picking Flow | ✅ Pass | Full picking flow tested with real inventory locations and split picks |
+| 2026-01-06 | Joel | A9-A10: Packing Flow | ✅ Pass | Add items to pallets, custom weight, complete packing |
+| 2026-01-06 | Joel | A11-A14: Shipping Flow | ✅ Pass | Carrier selection, tracking number, signature capture, confirm shipment |
+| 2026-01-06 | Joel | A15-A16: Shipped Status | ✅ Pass | Full SHIPPED interface with timeline, reprint documents, send confirmation modal |
 
 ### Bugs Fixed During Testing
 
@@ -322,6 +334,10 @@ When you find an issue in the other dev's area:
 | 2026-01-06 | SQLAlchemy reserved `metadata` field name | Kept field as `activity_metadata`, updated all 6 services |
 | 2026-01-06 | `updateFulfillmentOrder is not defined` | Changed to `updateOrderMutation.mutate()` |
 | 2026-01-06 | Mutation not saving to database | Fixed parameter format from `{ id, holdReason }` to `{ id, input: { holdReason } }` |
+| 2026-01-06 | "can't subtract offset-naive and offset-aware datetimes" on Complete Packing | Changed `datetime.now(timezone.utc)` to `datetime.utcnow()` in `fulfillment_packing_service.py`, `fulfillment_shipping_service.py`, and `fulfillment_order_service.py` |
+| 2026-01-06 | Items count showing "010.00005.0000" (decimal string concatenation) | Added `Number()` wrapper in `ShippingInterface.tsx` |
+| 2026-01-06 | "Cannot read properties of undefined (reading 'name')" on Send Confirmation | Added optional chaining (`?.`) to all `shipTo` references in `ShipmentConfirmationModal.tsx` |
+| 2026-01-06 | Send Confirmation not changing status to COMMUNICATED | Added `mark_communicated` mutation to backend and frontend, wired up in `handleSendShipmentConfirmation` |
 
 ---
 

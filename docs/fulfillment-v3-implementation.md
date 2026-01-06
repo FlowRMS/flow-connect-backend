@@ -140,14 +140,14 @@ Order Detail Page
 ### 3. Fulfillment Order Status Lifecycle
 
 ```
-┌──────────┐    ┌──────────┐    ┌─────────┐    ┌─────────┐    ┌─────────┐    ┌───────────┐
-│ PENDING  │ ─▶ │ RELEASED │ ─▶ │ PICKING │ ─▶ │ PACKING │ ─▶ │ SHIPPED │ ─▶ │ DELIVERED │
-└──────────┘    └──────────┘    └─────────┘    └─────────┘    └─────────┘    └───────────┘
-     │               │               │              │              │               │
-     ▼               ▼               ▼              ▼              ▼               ▼
-  Created        Released        Worker         Worker        Carrier         Customer
-  awaiting       to warehouse    picks items    packs box     in transit      received
-  approval       floor           from locations and labels
+┌──────────┐    ┌──────────┐    ┌─────────┐    ┌─────────┐    ┌──────────┐    ┌─────────┐    ┌─────────────┐    ┌───────────┐
+│ PENDING  │ ─▶ │ RELEASED │ ─▶ │ PICKING │ ─▶ │ PACKING │ ─▶ │ SHIPPING │ ─▶ │ SHIPPED │ ─▶ │ COMMUNICATED│ ─▶ │ DELIVERED │
+└──────────┘    └──────────┘    └─────────┘    └─────────┘    └──────────┘    └─────────┘    └─────────────┘    └───────────┘
+     │               │               │              │              │              │               │               │
+     ▼               ▼               ▼              ▼              ▼              ▼               ▼               ▼
+  Created        Released        Worker         Worker        Ready for      Shipment       Confirmation     Customer
+  awaiting       to warehouse    picks items    packs box     shipment      confirmed       email sent       received
+  approval       floor           from locations and labels    confirmation                 to customer
 ```
 
 **Status Definitions**:
@@ -158,7 +158,9 @@ Order Detail Page
 | `RELEASED` | Ready for picking | Warehouse Worker | Start picking |
 | `PICKING` | Worker collecting items | Warehouse Worker | Complete picking |
 | `PACKING` | Items being boxed | Warehouse Worker | Complete packing |
-| `SHIPPED` | Handed to carrier | System/Carrier | Track delivery |
+| `SHIPPING` | Ready for shipment confirmation | Warehouse Worker | Confirm shipment (signature + carrier) |
+| `SHIPPED` | Handed to carrier | Manager/System | Send confirmation email |
+| `COMMUNICATED` | Customer notified of shipment | System/Carrier | Track delivery |
 | `DELIVERED` | Customer received | N/A | Complete |
 
 ### 4. Warehouse Processing (✅ WORKING)
@@ -709,8 +711,76 @@ const handleGenerateFulfillmentRequest = async (selectedWarehouseId: string) => 
 
 | Date | Changes |
 |------|---------|
+| 2026-01-06 | **Full PENDING → SHIPPED → COMMUNICATED flow tested and working** |
+| 2026-01-06 | Added `mark_communicated` mutation for SHIPPED → COMMUNICATED transition |
+| 2026-01-06 | Fixed datetime timezone issues in packing/shipping/order services (use `datetime.utcnow()` not `datetime.now(timezone.utc)`) |
+| 2026-01-06 | Fixed decimal display bug in ShippingInterface.tsx (Items count) |
+| 2026-01-06 | Fixed null reference in ShipmentConfirmationModal.tsx (shipTo optional chaining) |
+| 2026-01-06 | Added signature capture for pickup/handoff confirmation |
 | 2026-01-06 | Added Request Inventory → Inventory integration requirements, updated test results |
 | 2026-01-05 | Initial implementation - inventory API, picking integration |
+
+---
+
+## Files Modified During Testing (2026-01-06)
+
+### Backend Files (flow-py-backend)
+
+| File | Changes |
+|------|---------|
+| `app/graphql/v2/core/fulfillment/services/fulfillment_packing_service.py` | Fixed `datetime.now(timezone.utc)` → `datetime.utcnow()` for `pack_completed_at` |
+| `app/graphql/v2/core/fulfillment/services/fulfillment_shipping_service.py` | Fixed datetime timezone for `pickup_timestamp`, `ship_confirmed_at`, `delivered_at` |
+| `app/graphql/v2/core/fulfillment/services/fulfillment_order_service.py` | Fixed datetime timezone for `released_at` |
+| `app/graphql/v2/core/fulfillment/mutations/fulfillment_mutations.py` | Added `mark_communicated` mutation |
+
+### Frontend Files (flow-crm)
+
+| File | Changes |
+|------|---------|
+| `components/warehouse/fulfillment-detail/ShippingInterface.tsx` | Fixed Items count decimal display with `Number()` wrapper |
+| `components/warehouse/fulfillment-detail/modals/ShipmentConfirmationModal.tsx` | Added optional chaining (`?.`) for all `shipTo` references |
+| `components/warehouse/api/fulfillmentApi.ts` | Added `MARK_COMMUNICATED` query and `markCommunicated` function |
+| `components/warehouse/api/useFulfillmentApi.ts` | Added `useMarkCommunicated` hook |
+| `components/warehouse/FulfillmentOrderDetailContent.tsx` | Wired up `handleSendShipmentConfirmation` to call `markCommunicated` mutation |
+
+### New Mutations Added
+
+#### `markCommunicated`
+
+Transitions order from SHIPPED → COMMUNICATED after sending confirmation email.
+
+**Backend** (`fulfillment_mutations.py`):
+```python
+@strawberry.mutation
+@inject
+async def mark_communicated(
+    self,
+    id: UUID,
+    service: Injected[FulfillmentShippingService],
+) -> FulfillmentOrderResponse:
+    order = await service.mark_communicated(id)
+    return FulfillmentOrderResponse.from_orm_model(order)
+```
+
+**Frontend** (`fulfillmentApi.ts`):
+```typescript
+const MARK_COMMUNICATED = `
+  ${FULFILLMENT_ORDER_FRAGMENT}
+  mutation MarkCommunicated($id: UUID!) {
+    markCommunicated(id: $id) {
+      ...FulfillmentOrderFields
+    }
+  }
+`;
+
+export async function markCommunicated(id: string): Promise<FulfillmentOrder> {
+  const response = await crmGraphQLRequest<{ markCommunicated: FulfillmentOrder }>({
+    query: MARK_COMMUNICATED,
+    variables: { id },
+  });
+  return response.data!.markCommunicated;
+}
+```
 
 ---
 

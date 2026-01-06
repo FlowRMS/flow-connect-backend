@@ -11,6 +11,7 @@ from app.core.db.adapters.dto import DTOMixin
 
 @strawberry.type
 class InventoryItemResponse(DTOMixin[InventoryItem]):
+    _instance: strawberry.Private[InventoryItem]
     id: UUID
     inventory_id: UUID
     location_id: UUID | None
@@ -22,6 +23,7 @@ class InventoryItemResponse(DTOMixin[InventoryItem]):
     @classmethod
     def from_orm_model(cls, model: InventoryItem) -> Self:
         return cls(
+            _instance=model,
             id=model.id,
             inventory_id=model.inventory_id,
             location_id=model.location_id,

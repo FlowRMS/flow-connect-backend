@@ -1,4 +1,4 @@
-from datetime import datetime, timezone
+from datetime import datetime
 from uuid import UUID
 
 import strawberry
@@ -97,7 +97,7 @@ class FulfillmentOrderService:
             raise ValueError("Order must be in PENDING status to release")
 
         order.status = FulfillmentOrderStatus.RELEASED
-        order.released_at = datetime.now(timezone.utc)
+        order.released_at = datetime.utcnow()
 
         # Auto-assign current user as manager
         assignment = FulfillmentAssignment(

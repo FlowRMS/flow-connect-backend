@@ -1,4 +1,4 @@
-from datetime import datetime, timezone
+from datetime import datetime
 from uuid import UUID
 
 from commons.auth import AuthInfo
@@ -52,14 +52,14 @@ class FulfillmentShippingService:
         # Capture signature if provided
         if input.signature:
             order.pickup_signature = input.signature
-            order.pickup_timestamp = datetime.now(timezone.utc)
+            order.pickup_timestamp = datetime.utcnow()
         if input.driver_name:
             order.driver_name = input.driver_name
         if input.pickup_customer_name:
             order.pickup_customer_name = input.pickup_customer_name
 
         order.status = FulfillmentOrderStatus.SHIPPED
-        order.ship_confirmed_at = datetime.now(timezone.utc)
+        order.ship_confirmed_at = datetime.utcnow()
 
         # Update shipped quantities
         for line_item in order.line_items:
@@ -89,7 +89,7 @@ class FulfillmentShippingService:
             raise ValueError("Order must be SHIPPED or COMMUNICATED to mark delivered")
 
         order.status = FulfillmentOrderStatus.DELIVERED
-        order.delivered_at = datetime.now(timezone.utc)
+        order.delivered_at = datetime.utcnow()
 
         order = await self.order_repository.update(order)
         await self._log_activity(

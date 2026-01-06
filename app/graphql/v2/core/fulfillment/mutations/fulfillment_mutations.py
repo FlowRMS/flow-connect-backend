@@ -257,6 +257,16 @@ class FulfillmentMutations:
 
     @strawberry.mutation
     @inject
+    async def mark_communicated(
+        self,
+        id: UUID,
+        service: Injected[FulfillmentShippingService],
+    ) -> FulfillmentOrderResponse:
+        order = await service.mark_communicated(id)
+        return FulfillmentOrderResponse.from_orm_model(order)
+
+    @strawberry.mutation
+    @inject
     async def mark_delivered(
         self,
         id: UUID,
