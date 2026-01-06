@@ -2,7 +2,10 @@ from uuid import UUID
 
 import strawberry
 from aioinject import Injected
+from commons.db.v6.rbac.rbac_role_enum import RbacRoleEnum
+from strawberry.permission import PermissionExtension
 
+from app.core.middleware.route_extension import RolePermissionAccess
 from app.graphql.inject import inject
 from app.graphql.v2.core.users.services.user_service import UserService
 from app.graphql.v2.core.users.strawberry.user_input import UserInput
@@ -11,7 +14,13 @@ from app.graphql.v2.core.users.strawberry.user_response import UserResponse
 
 @strawberry.type
 class UsersMutations:
-    @strawberry.mutation
+    @strawberry.mutation(
+        extensions=[
+            PermissionExtension(
+                permissions=[RolePermissionAccess(RbacRoleEnum.ADMINISTRATOR)]
+            )
+        ]
+    )
     @inject
     async def create_user(
         self,
@@ -21,7 +30,13 @@ class UsersMutations:
         user = await service.create(input)
         return UserResponse.from_orm_model(user)
 
-    @strawberry.mutation
+    @strawberry.mutation(
+        extensions=[
+            PermissionExtension(
+                permissions=[RolePermissionAccess(RbacRoleEnum.ADMINISTRATOR)]
+            )
+        ]
+    )
     @inject
     async def update_user(
         self,
@@ -32,7 +47,13 @@ class UsersMutations:
         user = await service.update(id, input)
         return UserResponse.from_orm_model(user)
 
-    @strawberry.mutation
+    @strawberry.mutation(
+        extensions=[
+            PermissionExtension(
+                permissions=[RolePermissionAccess(RbacRoleEnum.ADMINISTRATOR)]
+            )
+        ]
+    )
     @inject
     async def delete_user(
         self,

@@ -1,3 +1,5 @@
+directive @rolePermissionAccess on FIELD_DEFINITION
+
 input AddressInput {
   sourceId: UUID!
   sourceType: AddressSourceTypeEnum!
@@ -1495,9 +1497,9 @@ type Mutation {
   createShippingCarrier(input: ShippingCarrierInput!): ShippingCarrierResponse!
   updateShippingCarrier(id: UUID!, input: ShippingCarrierInput!): ShippingCarrierResponse!
   deleteShippingCarrier(id: UUID!): Boolean!
-  createUser(input: UserInput!): UserResponse!
-  updateUser(id: UUID!, input: UserInput!): UserResponse!
-  deleteUser(id: UUID!): Boolean!
+  createUser(input: UserInput!): UserResponse! @rolePermissionAccess
+  updateUser(id: UUID!, input: UserInput!): UserResponse! @rolePermissionAccess
+  deleteUser(id: UUID!): Boolean! @rolePermissionAccess
   createWarehouse(input: WarehouseInput!): WarehouseResponse!
   updateWarehouse(id: UUID!, input: WarehouseInput!): WarehouseResponse!
   deleteWarehouse(id: UUID!): Boolean!
