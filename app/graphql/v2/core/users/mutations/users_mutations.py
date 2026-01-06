@@ -17,7 +17,11 @@ class UsersMutations:
     @strawberry.mutation(
         extensions=[
             PermissionExtension(
-                permissions=[RolePermissionAccess(RbacRoleEnum.ADMINISTRATOR)]
+                permissions=[
+                    RolePermissionAccess(
+                        [RbacRoleEnum.ADMINISTRATOR, RbacRoleEnum.OWNER]
+                    )
+                ]
             )
         ]
     )
@@ -33,7 +37,11 @@ class UsersMutations:
     @strawberry.mutation(
         extensions=[
             PermissionExtension(
-                permissions=[RolePermissionAccess(RbacRoleEnum.ADMINISTRATOR)]
+                permissions=[
+                    RolePermissionAccess(
+                        [RbacRoleEnum.ADMINISTRATOR, RbacRoleEnum.OWNER]
+                    )
+                ]
             )
         ]
     )
@@ -50,7 +58,11 @@ class UsersMutations:
     @strawberry.mutation(
         extensions=[
             PermissionExtension(
-                permissions=[RolePermissionAccess(RbacRoleEnum.ADMINISTRATOR)]
+                permissions=[
+                    RolePermissionAccess(
+                        [RbacRoleEnum.ADMINISTRATOR, RbacRoleEnum.OWNER]
+                    )
+                ]
             )
         ]
     )

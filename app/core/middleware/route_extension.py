@@ -1,36 +1,33 @@
-from typing import Annotated, Any, override
+from typing import Any, override
 
 import strawberry
-from aioinject import Inject
-from aioinject.ext.strawberry import inject
 from commons.db.v6.rbac.rbac_role_enum import RbacRoleEnum
 from strawberry import BasePermission
 
-from app.core.context_wrapper import ContextWrapper
+from app.core.context import Context
 
 
 class RolePermissionAccess(BasePermission):
-    role: RbacRoleEnum = RbacRoleEnum.ADMINISTRATOR
     message = "You do not have permission to access this resource."
 
-    def __init__(self, role: RbacRoleEnum) -> None:
+    def __init__(self, roles: list[RbacRoleEnum]) -> None:
         super().__init__()
-        self.role = role
+        self.roles = roles
 
-    @inject
-    async def has_permission(  # pyright: ignore[reportIncompatibleMethodOverride]
+    async def has_permission(
         self,
-        source: Any,
-        info: strawberry.Info,
-        context_wrapper: Annotated[ContextWrapper, Inject],
-        **kwargs: Any,
+        _source: Any,
+        info: strawberry.Info[Context, Any],
+        **_kwargs: Any,
     ) -> bool:
-        context = context_wrapper.get()
-        return self.role in context.auth_info.roles
+        for role in self.roles:
+            if role in info.context.auth_info.roles:
+                return True
+        return False
 
     @override
     def on_unauthorized(self) -> None:
         raise self.error_class(
-            message=f"You do not have permission to access this resource with role {self.role.name.title()} role is required.",
+            message=f"You do not have permission to access this resource with role {', '.join(role.name.title() for role in self.roles)} role is required.",
             extensions={"statusCode": 403, "type": "RolePermissionError"},
         )
