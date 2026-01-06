@@ -211,7 +211,7 @@ class JobDuplicateDetectionService:
 
         if jobs_needing_embeddings:
             logger.info(f"[3/4] Generating {len(jobs_needing_embeddings)} embeddings...")
-            await self.embedding_service.upsert_job_embeddings_batch(jobs_needing_embeddings)
+            _ = await self.embedding_service.upsert_job_embeddings_batch(jobs_needing_embeddings)
             logger.info("[3/4] Embedding generation complete")
         else:
             logger.info("[3/4] Skipped (all cached)")
