@@ -109,6 +109,7 @@ class JobEmbeddingService:
             payload={
                 "job_id": str(job.id),
                 "tenant_id": self.auth_info.tenant_id,
+                "embedding_version": EMBEDDING_VERSION,
             },
         )
         _ = await self.vector_service.client.upsert(
@@ -149,6 +150,7 @@ class JobEmbeddingService:
                     payload={
                         "job_id": str(job.id),
                         "tenant_id": self.auth_info.tenant_id,
+                        "embedding_version": EMBEDDING_VERSION,
                     },
                 )
                 for job, embedding in zip(batch, embeddings, strict=True)
