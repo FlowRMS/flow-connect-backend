@@ -1,5 +1,6 @@
 """GraphQL mutations for warehouse locations."""
 
+from decimal import Decimal
 from uuid import UUID
 
 import strawberry
@@ -80,7 +81,7 @@ class WarehouseLocationMutations:
         self,
         location_id: UUID,
         product_id: UUID,
-        quantity: int,
+        quantity: Decimal,
         service: Injected[WarehouseLocationService],
     ) -> LocationProductAssignmentResponse:
         """Assign a product to a location."""
@@ -93,7 +94,7 @@ class WarehouseLocationMutations:
         self,
         location_id: UUID,
         product_id: UUID,
-        quantity: int,
+        quantity: Decimal,
         service: Injected[WarehouseLocationService],
     ) -> LocationProductAssignmentResponse:
         """Update product quantity at a location."""
