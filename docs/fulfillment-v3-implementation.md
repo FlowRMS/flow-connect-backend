@@ -709,4 +709,91 @@ const handleGenerateFulfillmentRequest = async (selectedWarehouseId: string) => 
 
 | Date | Changes |
 |------|---------|
+| 2026-01-06 | Added Request Inventory → Inventory integration requirements, updated test results |
 | 2026-01-05 | Initial implementation - inventory API, picking integration |
+
+---
+
+## TODO: Request Inventory → Inventory Integration
+
+### Current State
+
+When a warehouse worker reports a shortage and the manager selects "Request Inventory" in the backorder review modal, it currently:
+- Sets a `hold_reason` on the fulfillment order
+- Uses **mock data** to simulate creating a shipment request
+
+### Required Integration Flow
+
+```
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                    BACKORDER → INVENTORY FLOW                               │
+├─────────────────────────────────────────────────────────────────────────────┤
+│                                                                             │
+│  FULFILLMENT (Worker reports shortage)                                      │
+│         │                                                                   │
+│         ▼                                                                   │
+│  ┌─────────────────────────────────────────┐                               │
+│  │   BACKORDER_REVIEW Status               │                               │
+│  │   Manager sees 4 options:               │                               │
+│  │   1. Manufacturer Direct                │ ✅ Working                    │
+│  │   2. Request Inventory ◄────────────────┼─── Needs integration          │
+│  │   3. Split Order                        │ ❌ Not tested                 │
+│  │   4. Cancel Backorder                   │ ❌ Not tested                 │
+│  └─────────────────────────────────────────┘                               │
+│         │                                                                   │
+│         │ "Request Inventory" clicked                                       │
+│         ▼                                                                   │
+│  ┌─────────────────────────────────────────┐                               │
+│  │   CREATE:                               │                               │
+│  │   1. Shipment Request (shipment_requests│                               │
+│  │      table) with items                  │                               │
+│  │   2. Link to fulfillment_order_line_item│                               │
+│  └─────────────────────────────────────────┘                               │
+│         │                                                                   │
+│         ▼                                                                   │
+│  ┌─────────────────────────────────────────────────────────────────────┐   │
+│  │                    INVENTORY PAGE (/warehouse/inventory)             │   │
+│  │  ┌────────────┐  ┌──────────────────┐  ┌─────────────┐              │   │
+│  │  │ Inventory  │  │ Shipment Requests│  │ Backorders  │              │   │
+│  │  │ (products) │  │ (to vendors)     │  │ (orders)    │              │   │
+│  │  └────────────┘  └──────────────────┘  └─────────────┘              │   │
+│  │                          │                    │                      │   │
+│  │                          ▼                    ▼                      │   │
+│  │                  Shows pending        Shows fulfillment              │   │
+│  │                  requests to          orders waiting                 │   │
+│  │                  vendors/factories    for inventory                  │   │
+│  └─────────────────────────────────────────────────────────────────────┘   │
+│         │                                                                   │
+│         │ When inventory arrives (shipment request fulfilled)               │
+│         ▼                                                                   │
+│  ┌─────────────────────────────────────────┐                               │
+│  │   Fulfillment Order moves from          │                               │
+│  │   Backorders tab → Ready to fulfill     │                               │
+│  │   (back to RELEASED or PICKING)         │                               │
+│  └─────────────────────────────────────────┘                               │
+│                                                                             │
+└─────────────────────────────────────────────────────────────────────────────┘
+```
+
+### Implementation Tasks
+
+| # | Layer | Task | Priority |
+|---|-------|------|----------|
+| 1 | Backend | Create `shipment_requests` and `shipment_request_items` migrations | HIGH |
+| 2 | Backend | Create GraphQL mutations for creating shipment requests from backorder review | HIGH |
+| 3 | Backend | Link `FulfillmentOrderLineItem.linked_shipment_request_id` to actual shipment request | HIGH |
+| 4 | Frontend | Update `RequestInventoryModal` to call real API instead of mock | HIGH |
+| 5 | Frontend | Inventory Backorders tab should query fulfillment orders with `BACKORDER_REVIEW` status | MEDIUM |
+| 6 | Frontend | When shipment request is fulfilled, trigger notification to release blocked fulfillment order | MEDIUM |
+
+### Shipment Request Status Flow
+
+```
+DRAFT → SENT → CONFIRMED → IN_TRANSIT → RECEIVED → STOCKED
+
+Methods:
+- Email: Send purchase request via email
+- Phone Call: Manual phone order
+- EDI: Electronic data interchange
+- Portal: Vendor portal submission
+```

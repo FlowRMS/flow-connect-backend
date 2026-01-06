@@ -292,9 +292,9 @@ When you find an issue in the other dev's area:
 ### Dev B Checklist
 - [ ] B1: Status filters work
 - [ ] B2: Warehouse selector updates list
-- [ ] B3: BackorderNotice displays
-- [ ] B4: Manufacturer Direct action works
-- [ ] B5: Request Inventory action works
+- [x] B3: BackorderNotice displays ✅ 2026-01-06
+- [x] B4: Manufacturer Direct action works ✅ 2026-01-06
+- [x] B5: Request Inventory action works (partial - sets hold_reason, mock shipment request) ✅ 2026-01-06
 - [ ] B6: Split Order action works
 - [ ] B7: Cancel Backorder action works
 - [ ] B8: Release to warehouse works
@@ -302,6 +302,26 @@ When you find an issue in the other dev's area:
 - [ ] B10: Pack items saves quantities
 - [ ] B11: Complete packing transitions to SHIPPED
 - [ ] B12: Delivered view shows all info
+
+---
+
+## Test Results Log
+
+| Date | Tester | Test Case | Result | Notes |
+|------|--------|-----------|--------|-------|
+| 2026-01-06 | Joel | B3: BackorderNotice | ✅ Pass | Displays correctly with shortage info |
+| 2026-01-06 | Joel | B4: Manufacturer Direct | ✅ Pass | Items marked, shows in "Fulfilled by Manufacturer" section |
+| 2026-01-06 | Joel | B5: Request Inventory | ⚠️ Partial | Sets hold_reason correctly, but uses mock data for shipment request creation. See TODO in implementation doc. |
+
+### Bugs Fixed During Testing
+
+| Date | Issue | Fix |
+|------|-------|-----|
+| 2026-01-06 | `shipTo` undefined crash in ManufacturerDirectModal | Added null check with fallback "No shipping address provided" |
+| 2026-01-06 | `activity_type` unexpected keyword argument | Removed `init=False` from FulfillmentActivity.activity_type field |
+| 2026-01-06 | SQLAlchemy reserved `metadata` field name | Kept field as `activity_metadata`, updated all 6 services |
+| 2026-01-06 | `updateFulfillmentOrder is not defined` | Changed to `updateOrderMutation.mutate()` |
+| 2026-01-06 | Mutation not saving to database | Fixed parameter format from `{ id, holdReason }` to `{ id, input: { holdReason } }` |
 
 ---
 
