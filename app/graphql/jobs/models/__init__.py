@@ -1,5 +1,4 @@
-from app.graphql.jobs.models.confirmed_different_job import ConfirmedDifferentJob
-from app.graphql.jobs.models.job_embedding import JobEmbedding
+from commons.db.v6.crm.jobs import ConfirmedDifferentJob, JobEmbedding
 
 __all__ = [
     "ConfirmedDifferentJob",

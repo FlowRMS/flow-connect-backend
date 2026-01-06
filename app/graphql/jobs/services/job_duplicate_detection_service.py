@@ -1,12 +1,12 @@
-import logging
 import uuid
 from dataclasses import dataclass, field
 from datetime import datetime, timedelta, timezone
 from decimal import Decimal
 
 from commons.auth import AuthInfo
-from commons.db.v6.crm.jobs.jobs_model import Job
+from commons.db.v6.crm.jobs import Job
 from commons.db.v6.crm.links.entity_type import EntityType
+from loguru import logger
 
 from app.core.config.vector_settings import VectorSettings
 from app.graphql.jobs.repositories.confirmed_different_repository import (
@@ -15,8 +15,6 @@ from app.graphql.jobs.repositories.confirmed_different_repository import (
 from app.graphql.jobs.repositories.jobs_repository import JobsRepository
 from app.graphql.jobs.services.job_embedding_service import JobEmbeddingService
 from app.graphql.links.services.links_service import LinksService
-
-logger = logging.getLogger(__name__)
 
 
 @dataclass
@@ -198,36 +196,38 @@ class JobDuplicateDetectionService:
                 ]
 
         total_jobs = len(jobs_to_scan)
-        logger.info(f"Starting duplicate scan for {total_jobs} jobs")
+        logger.info(f"[1/4] Scan initialized | {total_jobs} jobs to process")
 
+        logger.info(f"[2/4] Checking embeddings for {total_jobs} jobs...")
         jobs_needing_embeddings: list[Job] = []
-        for job in jobs_to_scan:
+        for i, job in enumerate(jobs_to_scan):
             if await self.embedding_service.needs_update(job):
                 jobs_needing_embeddings.append(job)
+            if (i + 1) % 500 == 0:
+                logger.info(f"[2/4] Progress: {i + 1}/{total_jobs}")
+
+        cached = total_jobs - len(jobs_needing_embeddings)
+        logger.info(f"[2/4] Done | Cached: {cached}, New: {len(jobs_needing_embeddings)}")
 
         if jobs_needing_embeddings:
-            logger.info(f"Generating embeddings for {len(jobs_needing_embeddings)} jobs (batch mode)...")
-            _ = await self.embedding_service.upsert_job_embeddings_batch(jobs_needing_embeddings)
+            logger.info(f"[3/4] Generating {len(jobs_needing_embeddings)} embeddings...")
+            await self.embedding_service.upsert_job_embeddings_batch(jobs_needing_embeddings)
+            logger.info("[3/4] Embedding generation complete")
+        else:
+            logger.info("[3/4] Skipped (all cached)")
 
-        logger.info(f"Embeddings complete: {len(jobs_needing_embeddings)} new, {total_jobs - len(jobs_needing_embeddings)} cached")
-        logger.info("Starting similarity search phase...")
-
+        logger.info(f"[4/4] Similarity search | {total_jobs} jobs...")
         pairs: list[tuple[uuid.UUID, uuid.UUID, float, list[str]]] = []
         for i, job in enumerate(jobs_to_scan):
-            similar_results = await self.find_similar_jobs(job)
-            for result in similar_results:
-                id1, id2 = (
-                    (job.id, result.job.id)
-                    if job.id < result.job.id
-                    else (result.job.id, job.id)
-                )
+            for result in await self.find_similar_jobs(job):
+                id1, id2 = (job.id, result.job.id) if job.id < result.job.id else (result.job.id, job.id)
                 pairs.append((id1, id2, float(result.confidence), result.match_reasons))
             if (i + 1) % 100 == 0 or i == total_jobs - 1:
-                logger.info(f"Search progress: {i + 1}/{total_jobs} jobs, {len(pairs)} pairs found")
+                logger.info(f"[4/4] {i + 1}/{total_jobs} ({(i + 1) * 100 // total_jobs}%) | {len(pairs)} pairs")
 
-        logger.info(f"Clustering {len(pairs)} duplicate pairs...")
+        logger.info(f"[Clustering] {len(pairs)} pairs...")
         groups = self._cluster_duplicates(pairs, jobs_to_scan)
-        logger.info(f"Scan complete: {len(groups)} duplicate groups found")
+        logger.info(f"[Done] {total_jobs} scanned, {len(groups)} groups found")
 
         self._clear_cache()
         return DuplicateScanResult(groups=groups, total_jobs_scanned=len(jobs_to_scan))

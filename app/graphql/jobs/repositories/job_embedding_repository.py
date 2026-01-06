@@ -1,9 +1,8 @@
 import uuid
 
+from commons.db.v6.crm.jobs import JobEmbedding
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
-
-from app.graphql.jobs.models.job_embedding import JobEmbedding
 
 
 class JobEmbeddingRepository:

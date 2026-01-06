@@ -1,8 +1,7 @@
 import uuid
 
 from commons.auth import AuthInfo
-
-from app.graphql.jobs.models.confirmed_different_job import ConfirmedDifferentJob
+from commons.db.v6.crm.jobs import ConfirmedDifferentJob
 from app.graphql.jobs.repositories.confirmed_different_repository import (
     ConfirmedDifferentJobRepository,
 )

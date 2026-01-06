@@ -1,9 +1,8 @@
 import uuid
 
+from commons.db.v6.crm.jobs import ConfirmedDifferentJob
 from sqlalchemy import or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
-
-from app.graphql.jobs.models.confirmed_different_job import ConfirmedDifferentJob
 
 
 class ConfirmedDifferentJobRepository:

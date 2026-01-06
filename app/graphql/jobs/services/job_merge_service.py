@@ -3,11 +3,12 @@ from dataclasses import dataclass
 from typing import Any, cast
 
 from commons.auth import AuthInfo
-from commons.db.v6.crm.jobs.jobs_model import Job
+from commons.db.v6.crm.jobs import Job
 from commons.db.v6.crm.links.entity_type import EntityType
 from commons.db.v6.crm.links.link_relation_model import LinkRelation
 from sqlalchemy import CursorResult, text
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import Mapper
 
 from app.errors.common_errors import NotFoundError
 from app.graphql.jobs.repositories.jobs_repository import JobsRepository
@@ -28,20 +29,13 @@ class MergeResult:
     entities_transferred_count: int
 
 
-MERGEABLE_FIELDS = [
-    "job_name",
-    "description",
-    "structural_details",
-    "structural_information",
-    "additional_information",
-    "job_type",
-    "start_date",
-    "end_date",
-    "requester_id",
-    "job_owner_id",
-    "tags",
-    "status_id",
-]
+def _get_mergeable_fields() -> list[str]:
+    mapper: Mapper[Job] = Job.__mapper__
+    return [
+        col.key
+        for col in mapper.columns
+        if col.info.get("mergeable", False)
+    ]
 
 
 class JobMergeService:
@@ -125,8 +119,9 @@ class JobMergeService:
         all_jobs: dict[uuid.UUID, Job],
         selections: list[FieldSelection],
     ) -> Job:
+        mergeable_fields = _get_mergeable_fields()
         for selection in selections:
-            if selection.field_name not in MERGEABLE_FIELDS:
+            if selection.field_name not in mergeable_fields:
                 continue
             if selection.source_job_id not in all_jobs:
                 continue

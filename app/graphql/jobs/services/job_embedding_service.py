@@ -1,21 +1,19 @@
 import hashlib
-import logging
 import uuid
 
 from commons.auth import AuthInfo
-from commons.db.v6.crm.jobs.jobs_model import Job
+from commons.db.v6.crm.jobs import Job, JobEmbedding
 from commons.vector.vector_embedding_service import VectorEmbeddingService
 from commons.vector.vector_service import VectorService
+from loguru import logger
 from qdrant_client.models import PointStruct
 
 from app.core.config.vector_settings import VectorSettings
-from app.graphql.jobs.models.job_embedding import JobEmbedding
 from app.graphql.jobs.repositories.job_embedding_repository import (
     JobEmbeddingRepository,
 )
 
 EMBEDDING_VERSION = "voyage-3-v1"
-logger = logging.getLogger(__name__)
 
 
 class JobEmbeddingService:
