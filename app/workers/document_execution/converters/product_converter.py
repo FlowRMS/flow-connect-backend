@@ -76,7 +76,7 @@ class ProductConverter(BaseEntityConverter[ProductDTO, ProductInput, Product]):
             product_uom_id=uom_id,
             unit_price=dto.unit_price or Decimal("0"),
             default_commission_rate=dto.commission_rate or Decimal("0"),
-            published=dto.published or False,
+            published=dto.published or True,
             description=dto.description,
             upc=dto.upc,
             min_order_qty=Decimal(dto.min_order_qty) if dto.min_order_qty else None,

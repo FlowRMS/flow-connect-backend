@@ -53,7 +53,7 @@ class CustomerConverter(BaseEntityConverter[CustomerDTO, CustomerInput, Customer
     ) -> CustomerInput:
         return CustomerInput(
             company_name=dto.company_name,
-            published=False,
+            published=True,
             is_parent=False,
             parent_id=None,
         )
