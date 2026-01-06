@@ -1439,6 +1439,7 @@ type Mutation {
   updateOrder(input: OrderInput!): OrderResponse!
   deleteOrder(id: UUID!): Boolean!
   createOrderFromQuote(quoteId: UUID!, orderNumber: String!, factoryId: UUID!, dueDate: Date = null, quoteDetailIds: [UUID!] = null): OrderResponse!
+  duplicateOrder(orderId: UUID!, newOrderNumber: String!, newSoldToCustomerId: UUID!): OrderResponse!
   createPreOpportunity(input: PreOpportunityInput!): PreOpportunityResponse!
   updatePreOpportunity(input: PreOpportunityInput!): PreOpportunityResponse!
   deletePreOpportunity(id: UUID!): Boolean!

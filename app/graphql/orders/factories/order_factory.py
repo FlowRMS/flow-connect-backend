@@ -17,6 +17,77 @@ from commons.db.v6.crm.quotes import Quote, QuoteDetail
 
 class OrderFactory:
     @staticmethod
+    def from_order(
+        order: Order,
+        new_order_number: str,
+        new_sold_to_customer_id: UUID,
+    ) -> Order:
+        today = date.today()
+        return Order(
+            inside_per_line_item=order.inside_per_line_item,
+            outside_per_line_item=order.outside_per_line_item,
+            end_user_per_line_item=order.end_user_per_line_item,
+            order_number=new_order_number,
+            entity_date=today,
+            due_date=order.due_date or today,
+            factory_id=order.factory_id,
+            sold_to_customer_id=new_sold_to_customer_id,
+            bill_to_customer_id=order.bill_to_customer_id,
+            freight_terms=order.freight_terms,
+            status=OrderStatus.OPEN,
+            header_status=OrderHeaderStatus.OPEN,
+            order_type=order.order_type,
+            creation_type=CreationType.API,
+            published=False,
+            job_id=order.job_id,
+            details=OrderFactory._map_order_details(order.details),
+        )
+
+    @staticmethod
+    def _map_order_details(order_details: list[OrderDetail]) -> list[OrderDetail]:
+        return [
+            OrderDetail(
+                item_number=detail.item_number,
+                quantity=detail.quantity,
+                unit_price=detail.unit_price,
+                subtotal=detail.subtotal,
+                discount_rate=detail.discount_rate,
+                discount=detail.discount,
+                total=detail.total,
+                product_id=detail.product_id,
+                product_name_adhoc=detail.product_name_adhoc,
+                product_description_adhoc=detail.product_description_adhoc,
+                uom_id=detail.uom_id,
+                end_user_id=detail.end_user_id,
+                lead_time=detail.lead_time,
+                note=detail.note,
+                commission_rate=detail.commission_rate,
+                commission=detail.commission,
+                commission_discount_rate=detail.commission_discount_rate,
+                commission_discount=detail.commission_discount,
+                total_line_commission=detail.total_line_commission,
+                freight_charge=detail.freight_charge,
+                outside_split_rates=[
+                    OrderSplitRate(
+                        user_id=sr.user_id,
+                        split_rate=sr.split_rate,
+                        position=sr.position,
+                    )
+                    for sr in detail.outside_split_rates
+                ],
+                inside_split_rates=[
+                    OrderInsideRep(
+                        user_id=ir.user_id,
+                        split_rate=ir.split_rate,
+                        position=ir.position,
+                    )
+                    for ir in detail.inside_split_rates
+                ],
+            )
+            for detail in order_details
+        ]
+
+    @staticmethod
     def from_quote(
         quote: Quote,
         order_number: str,

@@ -70,6 +70,24 @@ class OrderService:
     ) -> list[Order]:
         return await self.repository.find_by_factory_id(factory_id, limit)
 
+    async def duplicate_order(
+        self,
+        order_id: UUID,
+        new_order_number: str,
+        new_sold_to_customer_id: UUID,
+    ) -> Order:
+        existing_order = await self.repository.find_order_by_id(order_id)
+
+        if await self.repository.order_number_exists(
+            new_order_number, new_sold_to_customer_id
+        ):
+            raise NameAlreadyExistsError(new_order_number)
+
+        new_order = OrderFactory.from_order(
+            existing_order, new_order_number, new_sold_to_customer_id
+        )
+        return await self.repository.create_with_balance(new_order)
+
     async def create_order_from_quote(
         self,
         quote_id: UUID,
