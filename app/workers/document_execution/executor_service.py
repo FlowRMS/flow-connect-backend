@@ -200,7 +200,7 @@ class DocumentExecutorService:
                             pending_document_id=pending_document.id,
                             entity_id=None,
                             status=ProcessingResultStatus.SKIPPED,
-                            dto_json=dto.model_dump(),
+                            dto_json=dto.model_dump(mode="json"),
                             error_message="Skipped: duplicate or validation error",
                         )
                     )
@@ -213,7 +213,7 @@ class DocumentExecutorService:
                             pending_document_id=pending_document.id,
                             entity_id=entity.id,
                             status=ProcessingResultStatus.CREATED,
-                            dto_json=dto.model_dump(),
+                            dto_json=dto.model_dump(mode="json"),
                             error_message=None,
                         )
                     )
@@ -224,7 +224,7 @@ class DocumentExecutorService:
                     pending_document_id=pending_document.id,
                     entity_id=None,
                     status=ProcessingResultStatus.ERROR,
-                    dto_json=dtos[i].model_dump(),
+                    dto_json=dtos[i].model_dump(mode="json"),
                     error_message=error,
                 )
             )
