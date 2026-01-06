@@ -30,11 +30,12 @@ class InvoiceConverter(BaseEntityConverter[InvoiceDTO, InvoiceInput, Invoice]):
         dto_loader_service: DTOLoaderService,
         invoice_service: InvoiceService,
         orders_repository: OrdersRepository,
+        order_detail_matcher: OrderDetailMatcherService,
     ) -> None:
         super().__init__(session, dto_loader_service)
         self.invoice_service = invoice_service
         self.orders_repository = orders_repository
-        self.order_detail_matcher = OrderDetailMatcherService(session=session)
+        self.order_detail_matcher = order_detail_matcher
 
     @override
     async def create_entity(self, input_data: InvoiceInput) -> Invoice:

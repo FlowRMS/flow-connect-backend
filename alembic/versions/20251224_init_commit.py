@@ -234,7 +234,7 @@ def upgrade() -> None:
     _ = op.create_table(
         "product_uoms",
         sa.Column("title", sa.String(), nullable=False),
-        sa.Column("division_factor", sa.Numeric(precision=10, scale=2), nullable=False),
+        sa.Column("division_factor", sa.Numeric(precision=10, scale=2), nullable=True),
         sa.Column("creation_type", sa.SmallInteger(), nullable=False),
         sa.Column("description", sa.String(), nullable=True),
         sa.Column("id", sa.UUID(), nullable=False),
