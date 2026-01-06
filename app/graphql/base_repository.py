@@ -15,7 +15,7 @@ from app.core.processors.base import BaseProcessor
 from app.core.processors.context import EntityContext
 from app.core.processors.events import RepositoryEvent
 from app.core.processors.executor import ProcessorExecutor
-from app.errors.common_errors import UnauthorizedError
+from app.errors.common_errors import DeletionError, UnauthorizedError
 from app.graphql.v2.rbac.services.rbac_filter_service import RbacFilterService
 from app.graphql.v2.rbac.strategies.base import RbacFilterStrategy
 
@@ -222,21 +222,26 @@ class BaseRepository(Generic[T]):
         return merged
 
     async def delete(self, entity_id: UUID | str) -> bool:
-        if isinstance(entity_id, str):
-            entity_id = UUID(entity_id)
+        try:
+            if isinstance(entity_id, str):
+                entity_id = UUID(entity_id)
 
-        entity = await self.get_edit(
-            pk=entity_id, privilege=RbacPrivilegeTypeEnum.DELETE
-        )
+            entity = await self.get_edit(
+                pk=entity_id, privilege=RbacPrivilegeTypeEnum.DELETE
+            )
 
-        await self._run_processors(RepositoryEvent.PRE_DELETE, entity)
+            await self._run_processors(RepositoryEvent.PRE_DELETE, entity)
 
-        await self.session.delete(entity)
-        await self.session.flush()
+            await self.session.delete(entity)
+            await self.session.flush()
 
-        await self._run_processors(RepositoryEvent.POST_DELETE, entity)
+            await self._run_processors(RepositoryEvent.POST_DELETE, entity)
 
-        return True
+            return True
+        except Exception:
+            raise DeletionError(
+                f"Can not delete {self.model_class.__name__} as it is linked to other records"
+            )
 
     async def exists(self, entity_id: UUID | str) -> bool:
         """

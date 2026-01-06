@@ -9,6 +9,9 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.graphql.v2.core.factories.services.factory_service import FactoryService
 from app.graphql.v2.core.factories.strawberry.factory_input import FactoryInput
+from app.graphql.v2.core.factories.strawberry.factory_split_rate_input import (
+    FactorySplitRateInput,
+)
 
 from .base import BaseEntityConverter
 from .entity_mapping import EntityMapping
@@ -40,6 +43,8 @@ class FactoryConverter(BaseEntityConverter[FactoryDTO, FactoryInput, Factory]):
         dto: FactoryDTO,
         entity_mapping: EntityMapping,
     ) -> FactoryInput:
+        split_rates = await self._build_split_rates(dto.inside_sales_rep_name)
+
         return FactoryInput(
             title=dto.factory_name,
             published=False,
@@ -49,7 +54,27 @@ class FactoryConverter(BaseEntityConverter[FactoryDTO, FactoryInput, Factory]):
             payment_terms=dto.payment_terms,
             base_commission_rate=dto.base_commission or Decimal("0"),
             freight_terms=dto.freight_terms,
+            split_rates=split_rates,
         )
+
+    async def _build_split_rates(
+        self,
+        inside_sales_rep_name: str | None,
+    ) -> list[FactorySplitRateInput]:
+        if not inside_sales_rep_name:
+            return []
+
+        user = await self.get_user_by_full_name(inside_sales_rep_name)
+        if not user:
+            return []
+
+        return [
+            FactorySplitRateInput(
+                user_id=user.id,
+                split_rate=Decimal("100"),
+                position=1,
+            )
+        ]
 
     @staticmethod
     def _parse_lead_time(lead_time: str | None) -> int | None:

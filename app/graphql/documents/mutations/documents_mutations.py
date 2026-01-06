@@ -3,7 +3,11 @@ from uuid import UUID
 import strawberry
 from aioinject import Injected
 from commons.auth import AuthInfo
+from commons.db.v6.enums import WorkflowStatus
 
+from app.graphql.documents.repositories.pending_document_repository import (
+    PendingDocumentRepository,
+)
 from app.graphql.inject import inject
 from app.workers.broker import execute_pending_document_task
 from app.workers.document_execution.executor_service import (
@@ -27,6 +31,7 @@ class DocumentsMutations:
         self,
         pending_document_id: UUID,
         auth_info: Injected[AuthInfo],
+        pending_document_repository: Injected[PendingDocumentRepository],
     ) -> ExecuteWorkflowResponse:
         """
         Execute the workflow to create domain entities from an approved PendingDocument.
@@ -37,6 +42,10 @@ class DocumentsMutations:
         3. Converts DTOs to Strawberry inputs using confirmed entity mappings
         4. Creates the domain entities (Order, Quote, etc.) via services
         """
+        pending_document = await pending_document_repository.get_by_id(
+            pending_document_id
+        )
+        pending_document.workflow_status = WorkflowStatus.IN_PROGRESS
         task = await execute_pending_document_task.kiq(
             pending_document_id=pending_document_id,
             auth_info=auth_info.model_dump(),

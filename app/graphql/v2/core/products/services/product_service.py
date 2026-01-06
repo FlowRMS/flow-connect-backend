@@ -5,7 +5,7 @@ from commons.db.v6.core.products.product import Product, ProductCategory
 from commons.db.v6.crm.links.entity_type import EntityType
 from sqlalchemy.orm import joinedload, lazyload
 
-from app.errors.common_errors import NotFoundError
+from app.errors.common_errors import NameAlreadyExistsError, NotFoundError
 from app.graphql.v2.core.products.repositories.products_repository import (
     ProductsRepository,
 )
@@ -39,6 +39,10 @@ class ProductService:
         return product
 
     async def create(self, product_input: ProductInput) -> Product:
+        if await self.repository.factory_part_number_exists(
+            product_input.factory_part_number, product_input.factory_id
+        ):
+            raise NameAlreadyExistsError(product_input.factory_part_number)
         product = await self.repository.create(product_input.to_orm_model())
         return await self.get_by_id(product.id)
 

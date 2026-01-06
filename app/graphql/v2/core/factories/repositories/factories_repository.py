@@ -42,6 +42,12 @@ class FactoriesRepository(BaseRepository[Factory]):
             processor_executor_classes=[validate_factory_split_rates_processor],
         )
 
+    async def title_exists(self, title: str) -> bool:
+        stmt = select(func.count()).where(Factory.title == title)
+        result = await self.session.execute(stmt)
+        count = result.scalar_one()
+        return count > 0
+
     def paginated_stmt(self) -> Select[Any]:
         split_rate_user = aliased(User)
         empty_array = literal([]).cast(ARRAY(String))

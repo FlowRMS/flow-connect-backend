@@ -256,12 +256,33 @@ async def migrate_order_details(source: asyncpg.Connection, dest: asyncpg.Connec
     await dest.executemany(
         """
         INSERT INTO pycommission.order_details (
-            id, order_id, item_number, quantity, unit_price, subtotal, total,
-            total_line_commission, commission_rate, commission, commission_discount_rate,
-            commission_discount, discount_rate, discount, division_factor, product_id,
-            product_name_adhoc, product_description_adhoc, factory_id, end_user_id,
-            uom_id, lead_time, note, status, freight_charge, shipping_balance, cancelled_balance
-        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, NULL, NULL, NULL, $17, NULL, $18, NULL, $19, $20, $21, 0)
+            id, 
+            order_id, 
+            item_number, 
+            quantity, 
+            unit_price, 
+            subtotal, 
+            total,
+            total_line_commission, 
+            commission_rate, 
+            commission, 
+            commission_discount_rate,
+            commission_discount, 
+            discount_rate, 
+            discount, 
+            division_factor, 
+            product_id,
+            product_name_adhoc, 
+            product_description_adhoc, 
+            end_user_id,
+            uom_id, 
+            lead_time, 
+            note, 
+            status, 
+            freight_charge, 
+            shipping_balance, 
+            cancelled_balance
+        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, NULL, NULL, $17, NULL, $18, NULL, $19, $20, $21, 0)
         ON CONFLICT (id) DO UPDATE SET
             order_id = EXCLUDED.order_id,
             item_number = EXCLUDED.item_number,
@@ -285,25 +306,25 @@ async def migrate_order_details(source: asyncpg.Connection, dest: asyncpg.Connec
             shipping_balance = EXCLUDED.shipping_balance
         """,
         [(
-            d["id"],
-            d["order_id"],
-            d["item_number"],
-            d["quantity"],
-            d["unit_price"],
-            d["subtotal"],
-            d["total"],
-            d["total_line_commission"],
-            d["commission_rate"],
-            d["commission"],
-            d["commission_discount_rate"],
-            d["commission_discount"],
-            d["discount_rate"],
-            d["discount"],
-            d["division_factor"],
-            d["product_id"],
-            d["end_user_id"],
-            d["lead_time"],
-            d["status"],
+            d["id"], # 1
+            d["order_id"], # 2
+            d["item_number"], # 3
+            d["quantity"], # 4
+            d["unit_price"], # 5
+            d["subtotal"], # 6
+            d["total"], # 7
+            d["total_line_commission"], # 8
+            d["commission_rate"], # 9
+            d["commission"], # 10
+            d["commission_discount_rate"], # 11
+            d["commission_discount"], # 12
+            d["discount_rate"], # 13
+            d["discount"], # 14
+            d["division_factor"], # 15
+            d["product_id"], # 16
+            d["end_user_id"], # 17
+            d["lead_time"], # 18
+            d["status"], 
             d["freight_charge"],
             d["shipping_balance"],
         ) for d in details],

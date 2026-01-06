@@ -114,7 +114,7 @@ def upgrade() -> None:
         sa.Column(
             "header_status", sa.SmallInteger(), nullable=False, server_default="1"
         ),
-        sa.Column("factory_id", sa.UUID(), nullable=True),
+        sa.Column("factory_id", sa.UUID(), nullable=False),
         sa.Column("shipping_terms", sa.String(length=255), nullable=True),
         sa.Column("freight_terms", sa.String(length=255), nullable=True),
         sa.Column("mark_number", sa.String(length=255), nullable=True),
@@ -237,7 +237,6 @@ def upgrade() -> None:
         sa.Column("product_id", sa.UUID(), nullable=True),
         sa.Column("product_name_adhoc", sa.String(length=255), nullable=True),
         sa.Column("product_description_adhoc", sa.Text(), nullable=True),
-        sa.Column("factory_id", sa.UUID(), nullable=True),
         sa.Column("end_user_id", sa.UUID(), nullable=True),
         sa.Column("uom_id", sa.UUID(), nullable=True),
         sa.Column("lead_time", sa.String(length=255), nullable=True),
@@ -265,10 +264,6 @@ def upgrade() -> None:
         sa.ForeignKeyConstraint(
             ["end_user_id"],
             ["pycore.customers.id"],
-        ),
-        sa.ForeignKeyConstraint(
-            ["factory_id"],
-            ["pycore.factories.id"],
         ),
         sa.ForeignKeyConstraint(
             ["product_id"],

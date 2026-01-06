@@ -4,7 +4,7 @@ from commons.db.v6 import Customer
 from commons.db.v6.crm.links.entity_type import EntityType
 from sqlalchemy.orm import joinedload
 
-from app.errors.common_errors import NotFoundError
+from app.errors.common_errors import NameAlreadyExistsError, NotFoundError
 from app.graphql.v2.core.customers.repositories.customers_repository import (
     CustomersRepository,
 )
@@ -33,6 +33,9 @@ class CustomerService:
         return customer
 
     async def create(self, customer_input: CustomerInput) -> Customer:
+        if await self.repository.company_name_exists(customer_input.company_name):
+            raise NameAlreadyExistsError(customer_input.company_name)
+
         customer = await self.repository.create(customer_input.to_orm_model())
         return await self.get_by_id(customer.id)
 

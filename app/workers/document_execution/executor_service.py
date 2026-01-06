@@ -8,6 +8,7 @@ from commons.db.v6.ai.documents.pending_document import PendingDocument
 from commons.db.v6.ai.entities.enums import ConfirmationStatus, EntityPendingType
 from commons.db.v6.ai.entities.pending_entity import PendingEntity
 from commons.db.v6.crm.links.entity_type import EntityType
+from commons.db.v6.enums import WorkflowStatus
 from commons.dtos.common.dto_loader_service import DTOLoaderService
 from loguru import logger
 from pydantic import BaseModel
@@ -19,6 +20,7 @@ from app.workers.document_execution.converters.customer_converter import (
     CustomerConverter,
 )
 from app.workers.document_execution.converters.factory_converter import FactoryConverter
+from app.workers.document_execution.converters.invoice_converter import InvoiceConverter
 from app.workers.document_execution.converters.order_converter import OrderConverter
 from app.workers.document_execution.converters.product_converter import ProductConverter
 from app.workers.document_execution.converters.quote_converter import QuoteConverter
@@ -47,6 +49,7 @@ DOCUMENT_TO_LINK_ENTITY_TYPE: dict[DocumentEntityType, EntityType] = {
     DocumentEntityType.CUSTOMERS: EntityType.CUSTOMER,
     DocumentEntityType.FACTORIES: EntityType.FACTORY,
     DocumentEntityType.PRODUCTS: EntityType.PRODUCT,
+    DocumentEntityType.INVOICES: EntityType.INVOICE,
 }
 
 
@@ -61,6 +64,7 @@ class DocumentExecutorService:
         customer_converter: CustomerConverter,
         factory_converter: FactoryConverter,
         product_converter: ProductConverter,
+        invoice_converter: InvoiceConverter,
     ) -> None:
         super().__init__()
         self.session = session
@@ -71,6 +75,7 @@ class DocumentExecutorService:
         self.customer_converter = customer_converter
         self.factory_converter = factory_converter
         self.product_converter = product_converter
+        self.invoice_converter = invoice_converter
 
     def get_converter(
         self,
@@ -87,6 +92,8 @@ class DocumentExecutorService:
                 return self.factory_converter
             case DocumentEntityType.PRODUCTS:
                 return self.product_converter
+            case DocumentEntityType.INVOICES:
+                return self.invoice_converter
             case _:
                 raise ValueError(f"Unsupported entity type: {entity_type}")
 
@@ -96,30 +103,42 @@ class DocumentExecutorService:
             pending_document_id,
             options=[joinedload(PendingDocument.pending_entities)],
         )
-        if not pending_document.entity_type:
-            raise ValueError("PendingDocument has no entity_type set")
+        try:
+            if not pending_document.entity_type:
+                raise ValueError("PendingDocument has no entity_type set")
 
-        entity_mappings = self._build_entity_mappings(pending_document.pending_entities)
-        logger.info(f"Built entity mapping: {entity_mappings}")
-
-        converter = self.get_converter(pending_document.entity_type)
-        dtos = await self._parse_dtos(converter, pending_document)
-        logger.info(f"Parsed {len(dtos)} DTOs from extracted_data_json")
-
-        created_responses: list[EntityProcessResponse] = []
-
-        for i, dto in enumerate(dtos):
-            logger.info(f"Processing DTO {i + 1}/{len(dtos)}")
-            entity_mapping = entity_mappings.get(dto.id, EntityMapping())
-            entity_response = await self._create_entity(
-                converter=converter,
-                dto=dto,
-                entity_mapping=entity_mapping,
-                pending_document=pending_document,
+            entity_mappings = self._build_entity_mappings(
+                pending_document.pending_entities
             )
-            created_responses.append(entity_response)
+            logger.info(f"Built entity mapping: {entity_mappings}")
 
-        return created_responses
+            converter = self.get_converter(pending_document.entity_type)
+            dtos = await self._parse_dtos(converter, pending_document)
+            logger.info(f"Parsed {len(dtos)} DTOs from extracted_data_json")
+
+            created_responses: list[EntityProcessResponse] = []
+
+            for i, dto in enumerate(dtos):
+                logger.info(f"Processing DTO {i + 1}/{len(dtos)} dto.id={dto.internal_uuid}")
+                # dto_id = getattr(dto, "id", None)
+                # if dto_id:
+                entity_mapping = entity_mappings.get(dto.internal_uuid, EntityMapping())
+                # else:
+                    # entity_mapping = EntityMapping()
+                entity_response = await self._create_entity(
+                    converter=converter,
+                    dto=dto,
+                    entity_mapping=entity_mapping,
+                    pending_document=pending_document,
+                )
+                created_responses.append(entity_response)
+
+            pending_document.workflow_status = WorkflowStatus.COMPLETED
+            return created_responses
+        except Exception as e:
+            pending_document.workflow_status = WorkflowStatus.FAILED
+            logger.exception(f"Error executing document {pending_document_id}: {e}")
+            raise
 
     def _build_entity_mappings(
         self,
@@ -150,6 +169,8 @@ class DocumentExecutorService:
                     mapping.sold_to_customer_id = pe.best_match_id
                 case EntityPendingType.BILL_TO_CUSTOMERS:
                     mapping.bill_to_customer_id = pe.best_match_id
+                case EntityPendingType.ORDERS:
+                    mapping.order_id = pe.best_match_id
                 case EntityPendingType.PRODUCTS:
                     if pe.flow_index_detail is not None:
                         mapping.products[pe.flow_index_detail] = pe.best_match_id
@@ -170,6 +191,8 @@ class DocumentExecutorService:
                         existing_mapping.bill_to_customer_id = (
                             mapping.bill_to_customer_id
                         )
+                    if mapping.order_id:
+                        existing_mapping.order_id = mapping.order_id
                     existing_mapping.products.update(mapping.products)
                     existing_mapping.end_users.update(mapping.end_users)
 

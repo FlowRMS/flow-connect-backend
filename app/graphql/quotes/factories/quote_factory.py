@@ -2,6 +2,9 @@ from datetime import date
 from decimal import Decimal
 
 from commons.db.v6.common.creation_type import CreationType
+from commons.db.v6.crm.pre_opportunities.pre_opportunity_detail_model import (
+    PreOpportunityDetail,
+)
 from commons.db.v6.crm.pre_opportunities.pre_opportunity_model import PreOpportunity
 from commons.db.v6.crm.quotes import (
     PipelineStage,
@@ -65,7 +68,9 @@ class QuoteFactory:
         )
 
     @staticmethod
-    def _map_pre_opp_details(pre_opp_details: list) -> list[QuoteDetail]:
+    def _map_pre_opp_details(
+        pre_opp_details: list[PreOpportunityDetail],
+    ) -> list[QuoteDetail]:
         return [
             QuoteDetail(
                 item_number=detail.item_number,
@@ -76,6 +81,7 @@ class QuoteFactory:
                 discount=detail.discount,
                 total=detail.total,
                 product_id=detail.product_id,
+                factory_id=detail.factory_id,
                 end_user_id=detail.end_user_id,
                 lead_time=detail.lead_time,
                 status=QuoteDetailStatus.OPEN,

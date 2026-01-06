@@ -43,6 +43,17 @@ class ProductsRepository(BaseRepository[Product]):
             processor_executor_classes=[validate_product_category_processor],
         )
 
+    async def factory_part_number_exists(
+        self, factory_part_number: str, factory_id: UUID
+    ) -> bool:
+        stmt = select(func.count()).where(
+            Product.factory_part_number == factory_part_number,
+            Product.factory_id == factory_id,
+        )
+        result = await self.session.execute(stmt)
+        count = result.scalar_one()
+        return count > 0
+
     def paginated_stmt(self) -> Select[Any]:
         return (
             select(
