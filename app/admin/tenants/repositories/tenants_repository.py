@@ -50,3 +50,7 @@ class TenantsRepository:
         _ = await self.session.merge(tenant)
         await self.session.flush([tenant])
         return tenant
+
+    async def delete(self, tenant: Tenant) -> None:
+        await self.session.delete(tenant)
+        await self.session.flush()

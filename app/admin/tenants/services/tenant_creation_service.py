@@ -202,3 +202,25 @@ class TenantCreationService:
 
     async def get_tenant(self, tenant_id: uuid.UUID) -> Tenant | None:
         return await self.repository.get_by_id(tenant_id)
+
+    async def delete_tenant(self, tenant_id: uuid.UUID) -> bool:
+        tenant = await self.repository.get_by_id(tenant_id)
+        if not tenant:
+            raise ValueError(f"Tenant with ID '{tenant_id}' not found")
+
+        logger.info(f"Deleting tenant: {tenant.name} (id: {tenant_id})")
+
+        await self.database_service.drop_database(tenant.url)
+        logger.info(f"Dropped database: {tenant.url}")
+
+        if tenant.org_id:
+            deleted = await self.workos_service.delete_tenant(tenant.org_id)
+            if deleted:
+                logger.info(f"Deleted WorkOS organization: {tenant.org_id}")
+            else:
+                logger.warning(f"Failed to delete WorkOS organization: {tenant.org_id}")
+
+        await self.repository.delete(tenant)
+        logger.info(f"Deleted tenant record: {tenant_id}")
+
+        return True
