@@ -31,7 +31,6 @@ async def inner_execute_pending_document_task(
             logger.info(f"Created {len(created_ids)} entities")
             return {
                 "status": "success",
-                "created_entity_ids": [str(id) for id in created_ids],
                 "count": len(created_ids),
             }
 
