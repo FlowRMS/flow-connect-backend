@@ -134,8 +134,6 @@ def upgrade() -> None:
         sa.Column("id", postgresql.UUID(as_uuid=True), nullable=False),
         sa.Column("delivery_id", postgresql.UUID(as_uuid=True), nullable=False),
         sa.Column("product_id", postgresql.UUID(as_uuid=True), nullable=False),
-        sa.Column("product_name_snapshot", sa.String(255), nullable=False),
-        sa.Column("part_number_snapshot", sa.String(255), nullable=True),
         sa.Column("expected_qty", sa.Integer(), nullable=False, default=0),
         sa.Column("received_qty", sa.Integer(), nullable=False, default=0),
         sa.Column("damaged_qty", sa.Integer(), nullable=False, default=0),

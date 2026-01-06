@@ -20,8 +20,6 @@ class DeliveryItemResponse(DTOMixin[DeliveryItem]):
     id: UUID
     delivery_id: UUID
     product_id: UUID
-    product_name_snapshot: str
-    part_number_snapshot: str | None
     expected_qty: int
     received_qty: int
     damaged_qty: int
@@ -35,8 +33,6 @@ class DeliveryItemResponse(DTOMixin[DeliveryItem]):
             id=model.id,
             delivery_id=model.delivery_id,
             product_id=model.product_id,
-            product_name_snapshot=model.product_name_snapshot,
-            part_number_snapshot=model.part_number_snapshot,
             expected_qty=model.expected_qty,
             received_qty=model.received_qty,
             damaged_qty=model.damaged_qty,

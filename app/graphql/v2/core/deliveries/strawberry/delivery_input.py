@@ -88,8 +88,6 @@ class DeliveryItemInput(BaseInputGQL[DeliveryItem]):
 
     delivery_id: UUID
     product_id: UUID
-    product_name_snapshot: str
-    part_number_snapshot: str | None = None
     expected_qty: int = 0
     received_qty: int = 0
     damaged_qty: int = 0
@@ -100,8 +98,6 @@ class DeliveryItemInput(BaseInputGQL[DeliveryItem]):
         return DeliveryItem(
             delivery_id=self.delivery_id,
             product_id=self.product_id,
-            product_name_snapshot=self.product_name_snapshot,
-            part_number_snapshot=self.part_number_snapshot,
             expected_qty=self.expected_qty,
             received_qty=self.received_qty,
             damaged_qty=self.damaged_qty,
