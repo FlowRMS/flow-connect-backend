@@ -6,7 +6,7 @@ from commons.db.v6.warehouse.shipment_requests import (
 )
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.orm import selectinload
+from sqlalchemy.orm import joinedload
 
 from app.core.context_wrapper import ContextWrapper
 from app.graphql.base_repository import BaseRepository
@@ -34,7 +34,10 @@ class ShipmentRequestRepository(BaseRepository[ShipmentRequest]):
         stmt = (
             select(ShipmentRequest)
             .where(ShipmentRequest.warehouse_id == warehouse_id)
-            .options(selectinload(ShipmentRequest.items))
+            .options(
+                joinedload(ShipmentRequest.items),
+                joinedload(ShipmentRequest.factory),
+            )
             .limit(limit)
             .offset(offset)
         )

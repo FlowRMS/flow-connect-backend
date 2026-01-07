@@ -106,10 +106,20 @@ class WarehouseLocationRepository(BaseRepository[WarehouseLocation]):
             WarehouseLocation.warehouse_id == warehouse_id,
             WarehouseLocation.parent_id.is_(None),
         )
-        result = await self.session.execute(stmt)
         for item in result.scalars().all():
             await self.session.delete(item)
         await self.session.flush()
+
+    async def find_by_name(
+        self, warehouse_id: UUID, name: str
+    ) -> WarehouseLocation | None:
+        """Find a location by name within a warehouse."""
+        stmt = select(WarehouseLocation).where(
+            WarehouseLocation.warehouse_id == warehouse_id,
+            WarehouseLocation.name == name
+        )
+        result = await self.session.execute(stmt)
+        return result.scalar_one_or_none()
 
 
 class LocationProductAssignmentRepository(BaseRepository[LocationProductAssignment]):

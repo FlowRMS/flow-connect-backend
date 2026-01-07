@@ -14,7 +14,20 @@ from app.graphql.v2.core.shipment_requests.strawberry.shipment_request_response 
 
 
 @strawberry.type
+class ShipmentRequestStatusOption:
+    label: str
+    value: str
+
+
+@strawberry.type
 class ShipmentRequestQueries:
+    @strawberry.field
+    def shipment_request_statuses(self) -> list[ShipmentRequestStatusOption]:
+        return [
+            ShipmentRequestStatusOption(label=status.name.replace("_", " ").title(), value=status.name)
+            for status in ShipmentRequestStatus
+        ]
+
     @strawberry.field
     @inject
     async def shipment_requests(

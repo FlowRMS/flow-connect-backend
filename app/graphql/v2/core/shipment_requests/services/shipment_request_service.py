@@ -59,6 +59,45 @@ class ShipmentRequestService:
 
         return await self.repository.update(request)
 
+    async def update(
+        self,
+        request_id: UUID,
+        factory_id: UUID | None = None,
+        priority: ShipmentPriority | None = None,
+        method: ShipmentMethod | None = None,
+        status: ShipmentRequestStatus | None = None,
+        notes: str | None = None,
+        items: list[ShipmentRequestItemInput] | None = None,
+    ) -> ShipmentRequest:
+        request = await self.repository.get_by_id(request_id)
+        if not request:
+            raise NotFoundError(f"ShipmentRequest with id {request_id} not found")
+
+        if factory_id is not None:
+            request.factory_id = factory_id
+        if priority is not None:
+            request.priority = priority
+        if method is not None:
+            request.method = method
+        if status is not None:
+            request.status = status
+        if notes is not None:
+            request.notes = notes
+
+        if items is not None:
+            # Clear existing items and add new ones
+            request.items.clear()
+            for item_input in items:
+                request.items.append(
+                    ShipmentRequestItem(
+                        request_id=request.id,
+                        product_id=item_input.product_id,
+                        quantity=item_input.quantity,
+                    )
+                )
+
+        return await self.repository.update(request)
+
     async def create(
         self,
         warehouse_id: UUID,
@@ -71,6 +110,10 @@ class ShipmentRequestService:
         items: list[ShipmentRequestItemInput],
     ) -> ShipmentRequest:
         request_number = await self.generate_request_number()
+        
+        # Ensure request_date is naive (no timezone) for DateTime(timezone=False) column
+        if request_date and request_date.tzinfo:
+            request_date = request_date.replace(tzinfo=None)
         
         request = ShipmentRequest(
             request_number=request_number,

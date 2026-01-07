@@ -11,10 +11,24 @@ from app.graphql.v2.core.inventory.strawberry.inventory_response import (
 from app.graphql.v2.core.inventory.strawberry.inventory_stats_response import (
     InventoryStatsResponse,
 )
+from commons.db.v6.warehouse.inventory.inventory_item import InventoryItemStatus
+
+
+@strawberry.type
+class InventoryStatusOption:
+    label: str
+    value: str
 
 
 @strawberry.type
 class InventoryQueries:
+    @strawberry.field
+    def inventory_statuses(self) -> list[InventoryStatusOption]:
+        return [
+            InventoryStatusOption(label=status.name.replace("_", " ").title(), value=status.name)
+            for status in InventoryItemStatus
+        ]
+
     @strawberry.field
     @inject
     async def inventories(

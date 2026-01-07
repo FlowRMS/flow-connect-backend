@@ -5,6 +5,7 @@ from commons.db.v6.commission.invoices.invoice_detail import InvoiceDetail
 from commons.db.v6.commission.orders.enums import OrderStatus
 from commons.db.v6.commission.orders.order import Order
 from commons.db.v6.commission.orders.order_detail import OrderDetail
+from commons.db.v6.warehouse.inventory.inventory import Inventory
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
@@ -42,6 +43,18 @@ class BackorderRepository(BaseRepository[OrderDetail]):
             .subquery()
         )
 
+        # Subquery for total available inventory per product (across all warehouses)
+        inventory_subquery = (
+            select(
+                Inventory.product_id,
+                func.coalesce(func.sum(Inventory.available_quantity), 0).label(
+                    "total_available"
+                ),
+            )
+            .group_by(Inventory.product_id)
+            .subquery()
+        )
+
         stmt = (
             select(OrderDetail)
             .options(
@@ -51,6 +64,10 @@ class BackorderRepository(BaseRepository[OrderDetail]):
             .join(Order, OrderDetail.order_id == Order.id)
             .outerjoin(
                 shipped_subquery, OrderDetail.id == shipped_subquery.c.order_detail_id
+            )
+            .outerjoin(
+                inventory_subquery,
+                OrderDetail.product_id == inventory_subquery.c.product_id,
             )
             .where(
                 Order.status.in_([OrderStatus.OPEN, OrderStatus.PARTIAL_SHIPPED])
@@ -66,6 +83,12 @@ class BackorderRepository(BaseRepository[OrderDetail]):
         # Filter where ordered > shipped
         stmt = stmt.where(
             OrderDetail.quantity > func.coalesce(shipped_subquery.c.shipped_qty, 0)
+        )
+
+        # Filter where needed quantity > available inventory (true backorder)
+        stmt = stmt.where(
+            (OrderDetail.quantity - func.coalesce(shipped_subquery.c.shipped_qty, 0))
+            > func.coalesce(inventory_subquery.c.total_available, 0)
         )
 
         stmt = stmt.limit(limit).offset(offset)

@@ -4,7 +4,7 @@ from commons.db.v6.core.products.product import Product
 from commons.db.v6.warehouse.inventory.inventory import Inventory
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.orm import selectinload
+from sqlalchemy.orm import contains_eager, joinedload
 
 from app.core.context_wrapper import ContextWrapper
 from app.graphql.base_repository import BaseRepository
@@ -38,7 +38,10 @@ class InventoryRepository(BaseRepository[Inventory]):
             select(Inventory)
             .join(Inventory.product)
             .where(Inventory.warehouse_id == warehouse_id)
-            .options(selectinload(Inventory.items))
+            .options(
+                joinedload(Inventory.items),
+                contains_eager(Inventory.product),
+            )
             .limit(limit)
             .offset(offset)
         )
@@ -55,6 +58,24 @@ class InventoryRepository(BaseRepository[Inventory]):
 
         result = await self.session.execute(stmt)
         return list(result.unique().scalars().all())
+
+    async def find_by_product_id(
+        self, warehouse_id: UUID, product_id: UUID
+    ) -> Inventory | None:
+        stmt = (
+            select(Inventory)
+            .where(
+                Inventory.warehouse_id == warehouse_id,
+                Inventory.product_id == product_id
+            )
+            .options(
+                joinedload(Inventory.items),
+                contains_eager(Inventory.product),
+            )
+            .join(Inventory.product)
+        )
+        result = await self.session.execute(stmt)
+        return result.unique().scalar_one_or_none()
 
     async def get_stats_by_warehouse(
         self, warehouse_id: UUID
@@ -88,6 +109,28 @@ class InventoryRepository(BaseRepository[Inventory]):
         low_stock_result = await self.session.execute(low_stock_stmt)
         low_stock_count = low_stock_result.scalar_one()
 
+        # Out of stock count
+        out_of_stock_stmt = (
+            select(func.count(Inventory.id))
+            .where(Inventory.warehouse_id == warehouse_id)
+            .where(Inventory.available_quantity <= 0)
+        )
+        out_of_stock_result = await self.session.execute(out_of_stock_stmt)
+        out_of_stock_count = out_of_stock_result.scalar_one()
+
+        # Total value (sum of total_quantity * product.unit_price)
+        total_value_stmt = (
+            select(
+                func.coalesce(
+                    func.sum(Inventory.total_quantity * Product.unit_price), 0
+                )
+            )
+            .join(Inventory.product)
+            .where(Inventory.warehouse_id == warehouse_id)
+        )
+        total_value_result = await self.session.execute(total_value_stmt)
+        total_value = total_value_result.scalar_one()
+
         return InventoryStatsResponse(
             total_products=row.total_products,
             total_quantity=row.total_quantity,
@@ -95,4 +138,6 @@ class InventoryRepository(BaseRepository[Inventory]):
             reserved_quantity=row.reserved_quantity,
             picking_quantity=row.picking_quantity,
             low_stock_count=low_stock_count,
+            out_of_stock_count=out_of_stock_count,
+            total_value=total_value,
         )
