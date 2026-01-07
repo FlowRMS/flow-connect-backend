@@ -1,5 +1,5 @@
 from datetime import date
-from typing import Any
+from typing import Any, override
 from uuid import UUID
 
 from commons.db.v6 import RbacResourceEnum, User
@@ -15,7 +15,6 @@ from commons.db.v6.core import Factory
 from commons.db.v6.crm.links.entity_type import EntityType
 from commons.db.v6.crm.links.link_relation_model import LinkRelation
 from sqlalchemy import Select, func, or_, select
-from sqlalchemy.dialects.postgresql import array
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import joinedload, lazyload
 
@@ -85,7 +84,7 @@ class InvoicesRepository(BaseRepository[Invoice]):
                 Order.order_number,
                 Order.id.label("order_id"),
                 Factory.title.label("factory_name"),
-                array([Invoice.created_by_id]).label("user_ids"),
+                Invoice.user_ids,
             )
             .select_from(Invoice)
             .options(lazyload("*"))
@@ -94,6 +93,14 @@ class InvoicesRepository(BaseRepository[Invoice]):
             .join(InvoiceBalance, InvoiceBalance.id == Invoice.balance_id)
             .join(Factory, Factory.id == Invoice.factory_id)
         )
+
+    @override
+    def compute_user_ids(self, invoice: Invoice) -> list[UUID]:
+        user_ids: set[UUID] = {self.auth_info.flow_user_id}
+        for detail in invoice.details:
+            for split_rate in detail.outside_split_rates:
+                user_ids.add(split_rate.user_id)
+        return list(user_ids)
 
     async def find_invoice_by_id(self, invoice_id: UUID) -> Invoice:
         invoice = await self.get_by_id(
@@ -198,7 +205,10 @@ class InvoicesRepository(BaseRepository[Invoice]):
     ) -> list[Invoice]:
         stmt = (
             select(Invoice)
-            .options(lazyload("*"))
+            .options(
+                joinedload(Invoice.order),
+                lazyload("*"),
+            )
             .where(
                 Invoice.factory_id == factory_id,
                 Invoice.entity_date >= start_from,
@@ -216,6 +226,18 @@ class InvoicesRepository(BaseRepository[Invoice]):
             .options(lazyload("*"))
             .where(Invoice.order_id == order_id)
             .order_by(Invoice.entity_date.desc())
+        )
+        result = await self.session.execute(stmt)
+        return list(result.scalars().all())
+
+    async def find_by_factory_id(
+        self, factory_id: UUID, limit: int = 25
+    ) -> list[Invoice]:
+        stmt = (
+            select(Invoice)
+            .options(lazyload("*"))
+            .where(Invoice.factory_id == factory_id)
+            .limit(limit)
         )
         result = await self.session.execute(stmt)
         return list(result.scalars().all())

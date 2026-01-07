@@ -1,3 +1,5 @@
+directive @rolePermissionAccess on FIELD_DEFINITION
+
 input AddressInput {
   sourceId: UUID!
   sourceType: AddressSourceTypeEnum!
@@ -246,7 +248,7 @@ type CheckDetailResponse {
   adjustmentId: UUID
   creditId: UUID
   appliedAmount: Decimal!
-  invoice: InvoiceCheckResponse
+  invoice: InvoiceLiteOrderResponse
   adjustment: AdjustmentCheckResponse
   credit: CreditCheckResponse
 }
@@ -270,7 +272,9 @@ type CheckLandingPage implements LandingPageInterfaceBase {
   createdBy: String!
   userIds: [UUID!]!
   checkNumber: String!
+  checkDate: Date!
   status: CheckStatus!
+  postDate: Date
   enteredCommissionAmount: Decimal
   commissionMonth: Date
   factoryName: String!
@@ -328,10 +332,21 @@ type CompanyLandingPage implements LandingPageInterfaceBase {
   createdBy: String!
   userIds: [UUID!]!
   name: String!
-  companySourceType: String!
+  companySourceType: CompanyType!
   website: String
   phone: String
   tags: [String!]
+}
+
+type CompanyLiteResponse {
+  id: UUID!
+  createdAt: datetime!
+  name: String!
+  companySourceType: CompanyType!
+  website: String
+  phone: String
+  tags: [String!]
+  parentCompanyId: UUID
 }
 
 type CompanyResponse {
@@ -412,6 +427,12 @@ type ContainerTypeResponse {
   weight: Decimal!
   position: Int!
   createdAt: datetime!
+}
+
+input CreateFolderInput {
+  name: String!
+  description: String = null
+  parentId: UUID = null
 }
 
 input CreateHighlightVersionInput {
@@ -693,11 +714,34 @@ input DeleteLinkByEntitiesInput {
   targetEntityId: UUID!
 }
 
+enum DocumentEntityType {
+  QUOTES
+  ORDERS
+  INVOICES
+  CHECKS
+  UNDEFINED
+  ORDER_ACKNOWLEDGEMENTS
+  CUSTOMERS
+  FACTORIES
+  PRODUCTS
+  END_USERS
+}
+
 enum EmailStatus {
   PENDING
   SENT
   FAILED
   BOUNCED
+}
+
+union EntityResponse = PreOpportunityResponse | QuoteResponse | OrderResponse | InvoiceResponse | CheckResponse
+
+enum EntitySourceType {
+  PRE_OPPORTUNITIES
+  QUOTES
+  ORDERS
+  INVOICES
+  CHECKS
 }
 
 enum EntityType {
@@ -715,11 +759,18 @@ enum EntityType {
   CUSTOMER
   PRODUCT
   FILE
+  SHIPPING_CARRIER
 }
 
 type EstimateRecipientsResponse {
   count: Int!
   sampleContacts: [ContactResponse!]!
+}
+
+type ExecuteWorkflowResponse {
+  success: Boolean!
+  taskId: String!
+  message: String!
 }
 
 input FactoryInput {
@@ -753,8 +804,8 @@ type FactoryLandingPage implements LandingPageInterfaceBase {
   phone: String
   leadTime: Int
   paymentTerms: Int
-  baseCommissionRate: Decimal!
-  commissionDiscountRate: Decimal!
+  baseCommissionRate: Decimal
+  commissionDiscountRate: Decimal
   overallDiscountRate: Decimal!
   splitRates: [String!]!
 }
@@ -822,7 +873,21 @@ type FileLandingPage implements LandingPageInterfaceBase {
   fileName: String!
   filePath: String!
   fileSize: Int!
+  fileEntityType: DocumentEntityType
   fileType: String
+  fileSha: String
+  archived: Boolean!
+  folderId: UUID
+}
+
+type FileLiteResponse {
+  id: UUID!
+  createdAt: datetime!
+  fileName: String!
+  filePath: String
+  fileSize: Int!
+  fileType: FileTypeEnum
+  fileEntityType: DocumentEntityType
   fileSha: String
   archived: Boolean!
   folderId: UUID
@@ -832,9 +897,10 @@ type FileResponse {
   id: UUID!
   createdAt: datetime!
   fileName: String!
-  filePath: String!
+  filePath: String
   fileSize: Int!
   fileType: FileTypeEnum
+  fileEntityType: DocumentEntityType
   fileSha: String
   archived: Boolean!
   folderId: UUID
@@ -858,6 +924,7 @@ input FileUploadInput {
   fileName: String!
   folderId: UUID = null
   folderPath: String = null
+  fileEntityType: DocumentEntityType = null
 }
 
 input Filter {
@@ -882,6 +949,38 @@ enum FilterOperator {
   NOT_IN
   IS_NULL
   IS_NOT_NULL
+}
+
+type FolderLiteResponse {
+  id: UUID!
+  createdAt: datetime!
+  name: String!
+  description: String
+  parentId: UUID
+  archived: Boolean!
+}
+
+type FolderResponse {
+  id: UUID!
+  createdAt: datetime!
+  name: String!
+  description: String
+  parentId: UUID
+  archived: Boolean!
+  createdBy: UserResponse!
+}
+
+type FolderWithChildrenResponse {
+  id: UUID!
+  createdAt: datetime!
+  name: String!
+  description: String
+  parentId: UUID
+  archived: Boolean!
+  createdBy: UserResponse!
+  children: [FolderLiteResponse!]!
+  files: [FileLiteResponse!]!
+  parent: FolderLiteResponse
 }
 
 type GenericLandingPage {
@@ -976,23 +1075,6 @@ type InvoiceBalanceResponse {
   paidBalance: Decimal!
 }
 
-type InvoiceCheckResponse {
-  id: UUID!
-  createdAt: datetime!
-  createdById: UUID!
-  invoiceNumber: String!
-  entityDate: Date!
-  dueDate: Date
-  orderId: UUID!
-  status: InvoiceStatus!
-  published: Boolean!
-  locked: Boolean!
-  creationType: CreationType!
-  balanceId: UUID!
-  url: String!
-  order: OrderLiteResponse!
-}
-
 input InvoiceDetailInput {
   itemNumber: Int!
   quantity: Decimal!
@@ -1071,6 +1153,23 @@ type InvoiceLandingPage implements LandingPageInterfaceBase {
   orderId: String!
   orderNumber: String!
   factoryName: String!
+}
+
+type InvoiceLiteOrderResponse {
+  id: UUID!
+  createdAt: datetime!
+  createdById: UUID!
+  invoiceNumber: String!
+  entityDate: Date!
+  dueDate: Date
+  orderId: UUID!
+  status: InvoiceStatus!
+  published: Boolean!
+  locked: Boolean!
+  creationType: CreationType!
+  balanceId: UUID!
+  url: String!
+  order: OrderLiteResponse!
 }
 
 type InvoiceLiteResponse {
@@ -1185,14 +1284,14 @@ type JobLiteType {
 type JobRelatedEntitiesResponse {
   preOpportunities: [PreOpportunityLiteResponse!]!
   contacts: [ContactResponse!]!
-  companies: [CompanyResponse!]!
-  quotes: [QuoteResponse!]!
-  orders: [OrderResponse!]!
+  companies: [CompanyLiteResponse!]!
+  quotes: [QuoteLiteResponse!]!
+  orders: [OrderLiteResponse!]!
   invoices: [InvoiceLiteResponse!]!
-  checks: [CheckResponse!]!
-  factories: [FactoryResponse!]!
-  products: [ProductResponse!]!
-  customers: [CustomerResponse!]!
+  checks: [CheckLiteResponse!]!
+  factories: [FactoryLiteResponse!]!
+  products: [ProductLiteResponse!]!
+  customers: [CustomerLiteResponse!]!
 }
 
 type JobStatusType {
@@ -1224,7 +1323,7 @@ interface LandingPageInterfaceBase {
   userIds: [UUID!]!
 }
 
-union LandingRecord = JobLandingPage | CompanyLandingPage | ContactLandingPage | PreOpportunityLandingPage | NoteLandingPage | TaskLandingPage | CampaignLandingPage | CustomerLandingPage | FactoryLandingPage | ProductLandingPage | QuoteLandingPage | OrderLandingPage | FileLandingPage | InvoiceLandingPage | CreditLandingPage | AdjustmentLandingPage | CheckLandingPage
+union LandingRecord = JobLandingPage | CompanyLandingPage | ContactLandingPage | PreOpportunityLandingPage | NoteLandingPage | TaskLandingPage | CampaignLandingPage | CustomerLandingPage | FactoryLandingPage | ProductLandingPage | QuoteLandingPage | OrderLandingPage | FileLandingPage | InvoiceLandingPage | CreditLandingPage | AdjustmentLandingPage | CheckLandingPage | OrderAcknowledgementLandingPage | PendingDocumentLandingPage
 
 enum LandingSourceType {
   JOBS
@@ -1240,10 +1339,13 @@ enum LandingSourceType {
   QUOTES
   ORDERS
   FILES
+  FOLDERS
   INVOICES
   CREDITS
   ADJUSTMENTS
   CHECKS
+  ORDER_ACKNOWLEDGEMENTS
+  PENDING_DOCUMENTS
 }
 
 input LinkRelationInput {
@@ -1284,6 +1386,7 @@ input MultiFileUploadInput {
   fileNames: [String!]!
   folderId: UUID = null
   folderPath: String = null
+  fileEntityType: DocumentEntityType = null
 }
 
 type Mutation {
@@ -1304,6 +1407,7 @@ type Mutation {
   createCheck(input: CheckInput!): CheckResponse!
   updateCheck(input: CheckInput!): CheckResponse!
   deleteCheck(id: UUID!): Boolean!
+  unpostCheck(checkId: UUID!): CheckResponse!
   createCompany(input: CompanyInput!): CompanyResponse!
   deleteCompany(id: UUID!): Boolean!
   updateCompany(id: UUID!, input: CompanyInput!): CompanyResponse!
@@ -1313,6 +1417,11 @@ type Mutation {
   createCredit(input: CreditInput!): CreditResponse!
   updateCredit(input: CreditInput!): CreditResponse!
   deleteCredit(id: UUID!): Boolean!
+  executeDocumentWorkflow(pendingDocumentId: UUID!): ExecuteWorkflowResponse!
+  executeWorkflowNoWorker(pendingDocumentId: UUID!): [PendingDocumentProcessingType!]!
+  updatePendingDocumentProcessing(id: UUID!, input: PendingDocumentProcessingInput!): PendingDocumentProcessingType!
+  deletePendingDocumentProcessing(id: UUID!): Boolean!
+  sendPendingDocumentStatusEmail(pendingDocumentId: UUID!): ExecuteWorkflowResponse!
   gmailConnect(code: String!): GmailConnectionResultType!
   gmailDisconnect: Boolean!
   gmailSendEmail(input: GmailSendEmailInput!): GmailSendEmailResultType!
@@ -1336,10 +1445,16 @@ type Mutation {
   updateNoteConversation(noteConversationId: UUID!, input: NoteConversationInput!): NoteConversationType!
   deleteNoteConversation(conversationId: UUID!): Boolean!
   deleteNoteConversations(noteId: UUID!): Boolean!
+  createOrderAcknowledgement(input: OrderAcknowledgementInput!): OrderAcknowledgementResponse!
+  updateOrderAcknowledgement(input: OrderAcknowledgementInput!): OrderAcknowledgementResponse!
+  deleteOrderAcknowledgement(id: UUID!): Boolean!
   createOrder(input: OrderInput!): OrderResponse!
   updateOrder(input: OrderInput!): OrderResponse!
   deleteOrder(id: UUID!): Boolean!
   createOrderFromQuote(quoteId: UUID!, orderNumber: String!, factoryId: UUID!, dueDate: Date = null, quoteDetailIds: [UUID!] = null): OrderResponse!
+  duplicateOrder(orderId: UUID!, newOrderNumber: String!, newSoldToCustomerId: UUID!): OrderResponse!
+  createOrganization(input: OrganizationInput!): OrganizationType! @rolePermissionAccess
+  updateOrganization(input: OrganizationInput!): OrganizationType! @rolePermissionAccess
   createPreOpportunity(input: PreOpportunityInput!): PreOpportunityResponse!
   updatePreOpportunity(input: PreOpportunityInput!): PreOpportunityResponse!
   deletePreOpportunity(id: UUID!): Boolean!
@@ -1395,9 +1510,9 @@ type Mutation {
   createShippingCarrier(input: ShippingCarrierInput!): ShippingCarrierResponse!
   updateShippingCarrier(id: UUID!, input: ShippingCarrierInput!): ShippingCarrierResponse!
   deleteShippingCarrier(id: UUID!): Boolean!
-  createUser(input: UserInput!): UserResponse!
-  updateUser(id: UUID!, input: UserInput!): UserResponse!
-  deleteUser(id: UUID!): Boolean!
+  createUser(input: UserInput!): UserResponse! @rolePermissionAccess
+  updateUser(id: UUID!, input: UserInput!): UserResponse! @rolePermissionAccess
+  deleteUser(id: UUID!): Boolean! @rolePermissionAccess
   createWarehouse(input: WarehouseInput!): WarehouseResponse!
   updateWarehouse(id: UUID!, input: WarehouseInput!): WarehouseResponse!
   deleteWarehouse(id: UUID!): Boolean!
@@ -1407,9 +1522,13 @@ type Mutation {
   updateWarehouseSettings(input: WarehouseSettingsInput!): WarehouseSettingsResponse!
   updateWarehouseStructure(warehouseId: UUID!, levels: [WarehouseStructureLevelInput!]!): [WarehouseStructureResponse!]!
   uploadFile(input: FileUploadInput!): FileResponse!
-  uploadFiles(input: MultiFileUploadInput!): [FileResponse!]!
+  uploadFiles(input: MultiFileUploadInput!): [FileLiteResponse!]!
   archiveFile(fileId: UUID!): Boolean!
   deleteFile(fileId: UUID!): Boolean!
+  createFolder(input: CreateFolderInput!): FolderResponse!
+  updateFolder(input: UpdateFolderInput!): FolderResponse!
+  archiveFolder(folderId: UUID!): Boolean!
+  deleteFolder(folderId: UUID!): Boolean!
   updateRbacGrid(rbacGrid: [RbacGridInput!]!): [RbacGridResponse!]!
   updateCommissionVisibility(input: UpdateCommissionVisibilityInput!): RbacRoleSettingResponse!
 }
@@ -1424,6 +1543,7 @@ type NoteConversationType {
   createdAt: datetime!
   noteId: UUID!
   content: String!
+  createdBy: UserResponse!
 }
 
 input NoteInput {
@@ -1468,6 +1588,7 @@ type NoteType {
   tags: [String!]
   mentions: [UUID!]
   createdBy: UserResponse!
+  mentionedUsers: [UserResponse!]!
 }
 
 type O365CalendarAttendeeType {
@@ -1523,6 +1644,45 @@ type O365SendEmailResultType {
   success: Boolean!
   messageId: String
   error: String
+}
+
+input OrderAcknowledgementInput {
+  orderId: UUID!
+  orderDetailId: UUID!
+  orderAcknowledgementNumber: String!
+  entityDate: Date!
+  quantity: Decimal!
+  id: UUID
+  creationType: CreationType!
+}
+
+type OrderAcknowledgementLandingPage implements LandingPageInterfaceBase {
+  id: UUID!
+  createdAt: datetime!
+  createdBy: String!
+  userIds: [UUID!]!
+  orderAcknowledgementNumber: String!
+  quantity: Decimal!
+  shipDate: Date
+  creationType: CreationType!
+  orderNumber: String!
+  orderEntityDate: Date!
+  soldToCustomerName: String!
+  factoryName: String!
+  productName: String
+  itemNumber: Int!
+}
+
+type OrderAcknowledgementResponse {
+  id: UUID!
+  createdAt: datetime!
+  createdById: UUID!
+  orderId: UUID!
+  orderDetailId: UUID!
+  orderAcknowledgementNumber: String!
+  entityDate: Date!
+  quantity: Decimal!
+  creationType: CreationType!
 }
 
 type OrderBalanceResponse {
@@ -1662,6 +1822,7 @@ type OrderLandingPage implements LandingPageInterfaceBase {
   entityDate: Date!
   dueDate: Date!
   total: Decimal!
+  commission: Decimal
   published: Boolean!
   factoryName: String!
   jobName: String
@@ -1728,6 +1889,7 @@ type OrderResponse {
   soldToCustomer: CustomerLiteResponse!
   billToCustomer: CustomerLiteResponse
   balance: OrderBalanceResponse!
+  factory: FactoryLiteResponse!
   details: [OrderDetailResponse!]!
   job: JobLiteType
 }
@@ -1758,8 +1920,38 @@ enum OrderStatus {
 
 enum OrderType {
   NORMAL
+  TAG
   BLANKET
-  RELEASE
+  STORM
+}
+
+input OrganizationInput {
+  companyName: String!
+  streetAddress: String!
+  city: String!
+  state: String!
+  zipCode: String!
+  emailAddress: String!
+  phoneNumber: String!
+  addressLine2: String
+  logoFileId: UUID
+  logoWidth: Int
+  logoHeight: Int
+}
+
+type OrganizationType {
+  id: UUID!
+  companyName: String!
+  streetAddress: String!
+  addressLine2: String
+  city: String!
+  state: String!
+  zipCode: String!
+  emailAddress: String!
+  phoneNumber: String!
+  logoFileId: UUID
+  logoWidth: Int!
+  logoHeight: Int!
 }
 
 input OutsideSplitRateInput {
@@ -1767,6 +1959,39 @@ input OutsideSplitRateInput {
   splitRate: Decimal!
   position: Int!
   id: UUID = null
+}
+
+type PendingDocumentLandingPage {
+  id: UUID!
+  createdAt: datetime!
+  createdBy: String!
+  createdById: UUID!
+  clusterId: UUID
+  clusterName: String
+  fileId: UUID!
+  fileName: String!
+  documentType: String!
+  entityType: String
+  status: String!
+  workflowStatus: String
+  isNew: Boolean!
+}
+
+input PendingDocumentProcessingInput {
+  pendingDocumentId: UUID!
+  entityId: UUID = null
+  status: ProcessingResultStatus!
+  dtoJson: JSON = null
+  errorMessage: String = null
+}
+
+type PendingDocumentProcessingType {
+  id: UUID!
+  pendingDocumentId: UUID!
+  entityId: UUID
+  status: ProcessingResultStatus!
+  dtoJson: JSON
+  errorMessage: String
 }
 
 enum PipelineStage {
@@ -1793,10 +2018,10 @@ input PreOpportunityDetailInput {
   itemNumber: Int!
   unitPrice: Decimal!
   discountRate: Decimal!
-  productId: UUID!
   endUserId: UUID!
+  productId: UUID = null
+  factoryId: UUID = null
   id: UUID = null
-  productCpnId: UUID = null
   leadTime: String = null
 }
 
@@ -1810,11 +2035,12 @@ type PreOpportunityDetailResponse {
   discountRate: Decimal!
   discount: Decimal!
   total: Decimal!
-  productId: UUID!
-  productCpnId: UUID
+  productId: UUID
+  factoryId: UUID
   endUserId: UUID!
   leadTime: String
-  product: ProductLiteResponse!
+  product: ProductLiteResponse
+  factory: FactoryLiteResponse
   quote: QuoteLiteResponse
 }
 
@@ -1911,6 +2137,12 @@ type Privilege {
   option: RbacPrivilegeOptionEnum!
 }
 
+enum ProcessingResultStatus {
+  CREATED
+  ERROR
+  SKIPPED
+}
+
 input ProductCategoryInput {
   title: String!
   commissionRate: Decimal!
@@ -1923,20 +2155,27 @@ type ProductCategoryLiteResponse {
   id: UUID!
   title: String!
   factoryId: UUID
-  commissionRate: Decimal!
+  commissionRate: Decimal
 }
 
 type ProductCategoryResponse {
   id: UUID!
   title: String!
   factoryId: UUID
-  commissionRate: Decimal!
+  commissionRate: Decimal
   parent: ProductCategoryLiteResponse
   grandparent: ProductCategoryLiteResponse
 }
 
 input ProductCpnInput {
   productId: UUID!
+  customerId: UUID!
+  customerPartNumber: String!
+  unitPrice: Decimal!
+  commissionRate: Decimal!
+}
+
+input ProductCpnLiteInput {
   customerId: UUID!
   customerPartNumber: String!
   unitPrice: Decimal!
@@ -1982,6 +2221,7 @@ input ProductInput {
   approvalDate: Date = null
   approvalComments: String = null
   tags: [String!] = null
+  cpns: [ProductCpnLiteInput!] = null
 }
 
 type ProductLandingPage implements LandingPageInterfaceBase {
@@ -1991,7 +2231,7 @@ type ProductLandingPage implements LandingPageInterfaceBase {
   userIds: [UUID!]!
   factoryPartNumber: String!
   unitPrice: Decimal!
-  defaultCommissionRate: Decimal!
+  defaultCommissionRate: Decimal
   published: Boolean!
   approvalNeeded: Boolean!
   description: String
@@ -2084,16 +2324,19 @@ type Query {
   check(id: UUID!): CheckResponse!
   checkSearch(searchTerm: String!, limit: Int! = 20): [CheckLiteResponse!]!
   checksByFactory(factoryId: UUID!): [CheckLiteResponse!]!
+  entity(sourceType: EntitySourceType!, entityId: UUID!): EntityResponse!
   findLandingPages(sourceType: LandingSourceType!, filters: [Filter!] = null, orderBy: [OrderBy!] = null, limit: Int = 10, offset: Int = 0): GenericLandingPage!
+  relatedEntities(sourceType: LandingSourceType!, entityId: UUID!): RelatedEntitiesResponse!
   universalSearch(searchTerm: String!, limit: Int! = 20): [SearchResult!]!
   company(id: UUID!): CompanyResponse!
   companySearch(searchTerm: String!, limit: Int! = 20): [CompanyResponse!]!
   contact(id: UUID!): ContactResponse!
   contactsByCompany(companyId: UUID!): [ContactResponse!]!
   contactSearch(searchTerm: String!, limit: Int! = 20): [ContactResponse!]!
-  contactRelatedEntities(contactId: UUID!): ContactRelatedEntitiesResponse!
+  contactRelatedEntities(contactId: UUID!): ContactRelatedEntitiesResponse! @deprecated(reason: "Use related_entities(source_type: CONTACTS, entity_id: UUID)")
   credit(id: UUID!): CreditResponse!
   creditSearch(searchTerm: String!, limit: Int! = 20, openOnly: Boolean! = false, unlockedOnly: Boolean! = false): [CreditLiteResponse!]!
+  pendingDocumentProcessings(pendingDocumentId: UUID!): [PendingDocumentProcessingType!]!
   gmailAuthUrl(state: String = null): String!
   gmailConnectionStatus: GmailConnectionStatusType!
   o365AuthUrl(state: String = null): String!
@@ -2102,11 +2345,11 @@ type Query {
   o365CalendarEventsInRange(startDate: datetime!, endDate: datetime!, top: Int! = 100): O365CalendarEventsResultType!
   invoice(id: UUID!): InvoiceResponse!
   invoiceSearch(searchTerm: String!, limit: Int! = 20, openOnly: Boolean! = false, unlockedOnly: Boolean! = false): [InvoiceLiteResponse!]!
-  searchOpenInvoices(factoryId: UUID!, startFrom: Date!): [InvoiceLiteResponse!]!
+  searchOpenInvoices(factoryId: UUID!, startFrom: Date!): [InvoiceLiteOrderResponse!]!
   invoicesByOrderId(orderId: UUID!): [InvoiceLiteResponse!]!
   job(id: UUID!): JobType!
   jobStatuses: [JobStatusType!]!
-  jobRelatedEntities(jobId: UUID!): JobRelatedEntitiesResponse!
+  jobRelatedEntities(jobId: UUID!): JobRelatedEntitiesResponse! @deprecated(reason: "Use related_entities(source_type: JOBS, entity_id: UUID)")
   jobSearch(searchTerm: String!, limit: Int! = 20): [JobType!]!
   jobsByContact(contactId: UUID!): [JobType!]!
   jobsByCompany(companyId: UUID!): [JobType!]!
@@ -2119,9 +2362,13 @@ type Query {
   notesByEntity(entityType: EntityType!, entityId: UUID!): [NoteType!]!
   noteConversations(noteId: UUID!): [NoteConversationType!]!
   noteSearch(searchTerm: String!, limit: Int! = 20): [NoteType!]!
-  noteRelatedEntities(noteId: UUID!): NoteRelatedEntitiesResponse!
+  noteRelatedEntities(noteId: UUID!): NoteRelatedEntitiesResponse! @deprecated(reason: "Use related_entities(source_type: NOTES, entity_id: UUID)")
+  orderAcknowledgement(id: UUID!): OrderAcknowledgementResponse
+  orderAcknowledgementsByOrder(orderId: UUID!): [OrderAcknowledgementResponse!]!
+  orderAcknowledgementsByOrderDetail(orderDetailId: UUID!): [OrderAcknowledgementResponse!]!
   order(id: UUID!): OrderResponse!
   orderSearch(searchTerm: String!, limit: Int! = 20): [OrderLiteResponse!]!
+  organization: OrganizationType @rolePermissionAccess
   preOpportunity(id: UUID!): PreOpportunityResponse!
   preOpportunitySearch(searchTerm: String!, limit: Int! = 20): [PreOpportunityLiteResponse!]!
   quote(id: UUID!): QuoteResponse!
@@ -2134,7 +2381,7 @@ type Query {
   task(id: UUID!): TaskType!
   taskConversations(taskId: UUID!): [TaskConversationType!]!
   taskSearch(searchTerm: String!, limit: Int! = 20): [TaskType!]!
-  taskRelatedEntities(taskId: UUID!): TaskRelatedEntitiesResponse!
+  taskRelatedEntities(taskId: UUID!): TaskRelatedEntitiesResponse! @deprecated(reason: "Use related_entities(source_type: TASKS, entity_id: UUID)")
   tasksByEntity(entityType: EntityType!, entityId: UUID!): [TaskType!]!
   containerTypes: [ContainerTypeResponse!]!
   containerType(id: UUID!): ContainerTypeResponse!
@@ -2159,7 +2406,7 @@ type Query {
   shippingCarrierSearch(searchTerm: String!, limit: Int! = 20): [ShippingCarrierResponse!]!
   user(id: UUID!): UserResponse!
   userSearch(searchTerm: String!, isInside: Boolean = null, isOutside: Boolean = null, enabled: Boolean = true, limit: Int! = 20): [UserResponse!]!
-  users(limit: Int = null, offset: Int! = 0): [UserResponse!]!
+  users(limit: Int = null, offset: Int! = 0): [UserResponse!]! @rolePermissionAccess
   warehouses: [WarehouseResponse!]!
   warehouse(id: UUID!): WarehouseResponse!
   warehouseMembers(warehouseId: UUID!): [WarehouseMemberResponse!]!
@@ -2170,6 +2417,11 @@ type Query {
   filesByFolder(folderId: UUID!): [FileResponse!]!
   filePresignedUrl(fileId: UUID!): String
   filesByLinkedEntity(entityType: EntityType!, entityId: UUID!): [FileResponse!]!
+  folder(folderId: UUID!): FolderResponse
+  folderWithContents(folderId: UUID!): FolderWithChildrenResponse
+  searchFolders(searchTerm: String!, limit: Int! = 20): [FolderResponse!]!
+  foldersByParent(parentId: UUID = null): [FolderResponse!]!
+  rootFolders: [FolderResponse!]!
   getRbacGrid: [RbacGridResponse!]!
   getUserRbac(resource: RbacResourceEnum!): UserRbac!
   getRoleSettings: [RbacRoleSettingResponse!]!
@@ -2255,6 +2507,7 @@ input QuoteInput {
   pipelineStage: PipelineStage!
   details: [QuoteDetailInput!]!
   id: UUID
+  factoryPerLineItem: Boolean! = false
   jobId: UUID
   published: Boolean!
   creationType: CreationType!
@@ -2296,6 +2549,7 @@ type QuoteLandingPage implements LandingPageInterfaceBase {
   entityDate: Date!
   expDate: Date
   total: Decimal!
+  commission: Decimal
   published: Boolean!
 }
 
@@ -2310,6 +2564,7 @@ type QuoteLiteResponse {
   published: Boolean!
   creationType: CreationType!
   soldToCustomerId: UUID!
+  factoryPerLineItem: Boolean!
   billToCustomerId: UUID
   paymentTerms: String
   customerRef: String
@@ -2338,6 +2593,7 @@ type QuoteResponse {
   published: Boolean!
   creationType: CreationType!
   soldToCustomerId: UUID!
+  factoryPerLineItem: Boolean!
   billToCustomerId: UUID
   paymentTerms: String
   customerRef: String
@@ -2462,6 +2718,24 @@ enum RecipientListType {
   DYNAMIC
 }
 
+type RelatedEntitiesResponse {
+  sourceType: LandingSourceType!
+  sourceEntityId: UUID!
+  jobs: [JobLiteType!]
+  tasks: [TaskType!]
+  notes: [NoteType!]
+  contacts: [ContactResponse!]
+  companies: [CompanyLiteResponse!]
+  preOpportunities: [PreOpportunityLiteResponse!]
+  quotes: [QuoteLiteResponse!]
+  orders: [OrderLiteResponse!]
+  invoices: [InvoiceLiteResponse!]
+  checks: [CheckLiteResponse!]
+  factories: [FactoryLiteResponse!]
+  products: [ProductLiteResponse!]
+  customers: [CustomerLiteResponse!]
+}
+
 enum RepTypeEnum {
   OUTSIDE
   INSIDE
@@ -2551,6 +2825,8 @@ enum SourceType {
   SHIPPING_CARRIER
   CONTAINER_TYPE
   WAREHOUSE
+  ORDER_ACKNOWLEDGEMENT
+  FOLDER
 }
 
 type SpecSheetResponse {
@@ -2584,6 +2860,7 @@ type TaskConversationType {
   createdAt: datetime!
   taskId: UUID!
   content: String!
+  createdBy: UserResponse!
 }
 
 input TaskInput {
@@ -2661,6 +2938,13 @@ scalar UUID
 input UpdateCommissionVisibilityInput {
   role: RbacRoleEnum!
   commission: Boolean!
+}
+
+input UpdateFolderInput {
+  folderId: UUID!
+  name: String = null
+  description: String = null
+  parentId: UUID = null
 }
 
 input UpdateHighlightRegionsInput {

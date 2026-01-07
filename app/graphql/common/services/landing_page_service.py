@@ -14,9 +14,15 @@ from app.graphql.common.paginated_landing_page import PaginatedLandingPageInterf
 from app.graphql.companies.repositories.companies_repository import CompaniesRepository
 from app.graphql.contacts.repositories.contacts_repository import ContactsRepository
 from app.graphql.credits.repositories.credits_repository import CreditsRepository
+from app.graphql.documents.repositories.pending_document_repository import (
+    PendingDocumentRepository,
+)
 from app.graphql.invoices.repositories.invoices_repository import InvoicesRepository
 from app.graphql.jobs.repositories.jobs_repository import JobsRepository
 from app.graphql.notes.repositories.notes_repository import NotesRepository
+from app.graphql.orders.repositories.order_acknowledgement_repository import (
+    OrderAcknowledgementRepository,
+)
 from app.graphql.orders.repositories.orders_repository import OrdersRepository
 from app.graphql.pre_opportunities.repositories.pre_opportunities_repository import (
     PreOpportunitiesRepository,
@@ -33,6 +39,7 @@ from app.graphql.v2.core.products.repositories.products_repository import (
     ProductsRepository,
 )
 from app.graphql.v2.files.repositories.file_repository import FileRepository
+from app.graphql.v2.files.repositories.folder_repository import FolderRepository
 from app.graphql.v2.rbac.services.rbac_filter_service import RbacFilterService
 
 
@@ -53,10 +60,13 @@ class LandingPageService:
         quotes_repository: QuotesRepository,
         orders_repository: OrdersRepository,
         file_repository: FileRepository,
+        folder_repository: FolderRepository,
         invoices_repository: InvoicesRepository,
         credits_repository: CreditsRepository,
         adjustments_repository: AdjustmentsRepository,
         checks_repository: ChecksRepository,
+        order_acknowledgement_repository: OrderAcknowledgementRepository,
+        pending_document_repository: PendingDocumentRepository,
         rbac_filter_service: RbacFilterService,
     ) -> None:
         super().__init__()
@@ -76,10 +86,13 @@ class LandingPageService:
             LandingSourceType.QUOTES: quotes_repository,
             LandingSourceType.ORDERS: orders_repository,
             LandingSourceType.FILES: file_repository,
+            LandingSourceType.FOLDERS: folder_repository,
             LandingSourceType.INVOICES: invoices_repository,
             LandingSourceType.CREDITS: credits_repository,
             LandingSourceType.ADJUSTMENTS: adjustments_repository,
             LandingSourceType.CHECKS: checks_repository,
+            LandingSourceType.ORDER_ACKNOWLEDGEMENTS: order_acknowledgement_repository,
+            LandingSourceType.PENDING_DOCUMENTS: pending_document_repository,
         }
 
     async def find_landing_pages(

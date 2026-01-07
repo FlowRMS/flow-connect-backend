@@ -41,20 +41,20 @@ class UserService:
 
     async def create(self, user_input: UserInput) -> User:
         user_model = user_input.to_orm_model()
-        user_model.id = uuid.uuid4()
-        auth_user = await self._create_workos_user(user_input, user_model.id)
+        auth_user = await self._create_workos_user(user_input)
         if not auth_user:
             raise Exception("Failed to create user in WorkOS")
 
         user_model.auth_provider_id = auth_user.id
+        user_model.id = auth_user.external_id
         return await self.repository.create(user_model)
 
     async def _create_workos_user(
-        self, user_input: UserInput, external_id: uuid.UUID
+        self, user_input: UserInput, external_id: uuid.UUID | None = None
     ) -> AuthUser | None:
         auth_input = AuthUserInput(
             email=user_input.email,
-            external_id=external_id,
+            external_id=uuid.uuid4() if external_id is None else external_id,
             tenant_id=self.auth_info.tenant_id,
             role=user_input.role,
             first_name=user_input.first_name,

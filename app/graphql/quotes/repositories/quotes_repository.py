@@ -8,12 +8,8 @@ from commons.db.v6.crm.quotes import (
     Quote,
     QuoteBalance,
     QuoteDetail,
-    QuoteInsideRep,
-    QuoteSplitRate,
 )
-from sqlalchemy import Select, func, literal, or_, select, update
-from sqlalchemy.dialects.postgresql import ARRAY, array
-from sqlalchemy.dialects.postgresql import UUID as PG_UUID
+from sqlalchemy import Select, func, or_, select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import joinedload, lazyload
 
@@ -71,40 +67,6 @@ class QuotesRepository(BaseRepository[Quote]):
         return QuoteOwnerFilterStrategy(RbacResourceEnum.QUOTE)
 
     def paginated_stmt(self) -> Select[Any]:
-        empty_array = literal([]).cast(ARRAY(PG_UUID))
-
-        inside_rep_user_ids_subq = (
-            select(
-                QuoteDetail.quote_id,
-                func.array_agg(QuoteInsideRep.user_id).label("inside_rep_user_ids"),
-            )
-            .join(QuoteInsideRep, QuoteInsideRep.quote_detail_id == QuoteDetail.id)
-            .group_by(QuoteDetail.quote_id)
-            .subquery()
-        )
-
-        split_rate_user_ids_subq = (
-            select(
-                QuoteDetail.quote_id,
-                func.array_agg(QuoteSplitRate.user_id.distinct()).label(
-                    "split_rate_user_ids"
-                ),
-            )
-            .join(QuoteSplitRate, QuoteSplitRate.quote_detail_id == QuoteDetail.id)
-            .group_by(QuoteDetail.quote_id)
-            .subquery()
-        )
-
-        user_ids_expr = func.array_cat(
-            func.array_cat(
-                array([Quote.created_by_id]),
-                func.coalesce(
-                    inside_rep_user_ids_subq.c.inside_rep_user_ids, empty_array
-                ),
-            ),
-            func.coalesce(split_rate_user_ids_subq.c.split_rate_user_ids, empty_array),
-        ).label("user_ids")
-
         return (
             select(
                 Quote.id,
@@ -116,22 +78,25 @@ class QuotesRepository(BaseRepository[Quote]):
                 Quote.entity_date,
                 Quote.exp_date,
                 QuoteBalance.total.label("total"),
+                QuoteBalance.commission.label("commission"),
                 Quote.published,
-                user_ids_expr,
+                Quote.user_ids,
             )
             .select_from(Quote)
             .options(lazyload("*"))
             .join(User, User.id == Quote.created_by_id)
             .join(QuoteBalance, QuoteBalance.id == Quote.balance_id)
-            .outerjoin(
-                inside_rep_user_ids_subq,
-                inside_rep_user_ids_subq.c.quote_id == Quote.id,
-            )
-            .outerjoin(
-                split_rate_user_ids_subq,
-                split_rate_user_ids_subq.c.quote_id == Quote.id,
-            )
         )
+
+    @override
+    def compute_user_ids(self, quote: Quote) -> list[UUID]:
+        user_ids: set[UUID] = {self.auth_info.flow_user_id}
+        for detail in quote.details:
+            for split_rate in detail.outside_split_rates:
+                user_ids.add(split_rate.user_id)
+            for inside_rep in detail.inside_split_rates:
+                user_ids.add(inside_rep.user_id)
+        return list(user_ids)
 
     async def find_quote_by_id(self, quote_id: UUID) -> Quote:
         quote = await self.get_by_id(

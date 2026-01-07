@@ -2,6 +2,9 @@ from datetime import date
 from decimal import Decimal
 
 from commons.db.v6.common.creation_type import CreationType
+from commons.db.v6.crm.pre_opportunities.pre_opportunity_detail_model import (
+    PreOpportunityDetail,
+)
 from commons.db.v6.crm.pre_opportunities.pre_opportunity_model import PreOpportunity
 from commons.db.v6.crm.quotes import (
     PipelineStage,
@@ -21,6 +24,7 @@ class QuoteFactory:
         quote_number: str,
     ) -> Quote:
         return Quote(
+            factory_per_line_item=False,
             inside_per_line_item=True,
             outside_per_line_item=True,
             end_user_per_line_item=False,
@@ -43,6 +47,7 @@ class QuoteFactory:
     @staticmethod
     def duplicate(source_quote: Quote, new_quote_number: str) -> Quote:
         return Quote(
+            factory_per_line_item=source_quote.factory_per_line_item,
             inside_per_line_item=source_quote.inside_per_line_item,
             outside_per_line_item=source_quote.outside_per_line_item,
             end_user_per_line_item=source_quote.end_user_per_line_item,
@@ -63,7 +68,9 @@ class QuoteFactory:
         )
 
     @staticmethod
-    def _map_pre_opp_details(pre_opp_details: list) -> list[QuoteDetail]:
+    def _map_pre_opp_details(
+        pre_opp_details: list[PreOpportunityDetail],
+    ) -> list[QuoteDetail]:
         return [
             QuoteDetail(
                 item_number=detail.item_number,
@@ -74,6 +81,7 @@ class QuoteFactory:
                 discount=detail.discount,
                 total=detail.total,
                 product_id=detail.product_id,
+                factory_id=detail.factory_id,
                 end_user_id=detail.end_user_id,
                 lead_time=detail.lead_time,
                 status=QuoteDetailStatus.OPEN,

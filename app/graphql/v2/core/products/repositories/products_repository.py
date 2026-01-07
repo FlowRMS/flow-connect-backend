@@ -7,7 +7,7 @@ from commons.db.v6.core.factories.factory import Factory
 from commons.db.v6.core.products.product_cpn import ProductCpn
 from commons.db.v6.core.products.product_uom import ProductUom
 from commons.db.v6.crm.links.entity_type import EntityType
-from sqlalchemy import Select, func, select
+from sqlalchemy import Select, func, select, tuple_
 from sqlalchemy.dialects.postgresql import array
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import lazyload
@@ -42,6 +42,30 @@ class ProductsRepository(BaseRepository[Product]):
             processor_executor=processor_executor,
             processor_executor_classes=[validate_product_category_processor],
         )
+
+    async def factory_part_number_exists(
+        self, factory_part_number: str, factory_id: UUID
+    ) -> bool:
+        stmt = select(func.count()).where(
+            Product.factory_part_number == factory_part_number,
+            Product.factory_id == factory_id,
+        )
+        result = await self.session.execute(stmt)
+        count = result.scalar_one()
+        return count > 0
+
+    async def get_existing_factory_part_numbers(
+        self, fpn_factory_pairs: list[tuple[str, UUID]]
+    ) -> set[tuple[str, UUID]]:
+        if not fpn_factory_pairs:
+            return set()
+
+        pairs = [(fpn, fid) for fpn, fid in fpn_factory_pairs]
+        stmt = select(Product.factory_part_number, Product.factory_id).where(
+            tuple_(Product.factory_part_number, Product.factory_id).in_(pairs)
+        )
+        result = await self.session.execute(stmt)
+        return {(row[0], row[1]) for row in result.all()}
 
     def paginated_stmt(self) -> Select[Any]:
         return (
@@ -117,17 +141,6 @@ class ProductsRepository(BaseRepository[Product]):
     async def search_product_categories(
         self, search_term: str, factory_id: UUID | None, limit: int = 20
     ) -> list[ProductCategory]:
-        """
-        Search product categories by title using case-insensitive pattern matching.
-
-        Args:
-            search_term: The search term to match against category title
-            factory_id: The UUID of the factory to filter categories by (optional)
-            limit: Maximum number of categories to return (default: 20)
-
-        Returns:
-            List of ProductCategory objects matching the search criteria
-        """
         stmt = (
             select(ProductCategory)
             .where(ProductCategory.title.ilike(f"%{search_term}%"))
@@ -142,3 +155,15 @@ class ProductsRepository(BaseRepository[Product]):
         stmt = select(Product).where(Product.factory_part_number == factory_part_number)
         result = await self.session.execute(stmt)
         return result.scalars().first()
+
+    async def find_by_factory_id(
+        self, factory_id: UUID, limit: int = 25
+    ) -> list[Product]:
+        stmt = (
+            select(Product)
+            .options(lazyload("*"))
+            .where(Product.factory_id == factory_id)
+            .limit(limit)
+        )
+        result = await self.session.execute(stmt)
+        return list(result.scalars().all())

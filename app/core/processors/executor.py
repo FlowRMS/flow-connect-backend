@@ -17,7 +17,8 @@ class ProcessorExecutor:
     async def execute(
         self,
         entity_context: EntityContext[T],
-        processor_classes: list[BaseProcessor],
+        processor_classes: list[BaseProcessor[T]],
     ) -> None:
-        for processor_class in processor_classes:
-            await processor_class.process(entity_context)
+        for processor in processor_classes:
+            if entity_context.event in processor.events:
+                await processor.process(entity_context)

@@ -4,7 +4,7 @@ from commons.db.v6 import Customer
 from commons.db.v6.crm.links.entity_type import EntityType
 from sqlalchemy.orm import joinedload
 
-from app.errors.common_errors import NotFoundError
+from app.errors.common_errors import NameAlreadyExistsError, NotFoundError
 from app.graphql.v2.core.customers.repositories.customers_repository import (
     CustomersRepository,
 )
@@ -33,8 +33,28 @@ class CustomerService:
         return customer
 
     async def create(self, customer_input: CustomerInput) -> Customer:
+        if await self.repository.company_name_exists(customer_input.company_name):
+            raise NameAlreadyExistsError(customer_input.company_name)
+
         customer = await self.repository.create(customer_input.to_orm_model())
         return await self.get_by_id(customer.id)
+
+    async def bulk_create(self, customer_inputs: list[CustomerInput]) -> list[Customer]:
+        if not customer_inputs:
+            return []
+
+        company_names = [inp.company_name for inp in customer_inputs]
+        existing = await self.repository.get_existing_company_names(company_names)
+
+        valid_inputs = [
+            inp for inp in customer_inputs if inp.company_name not in existing
+        ]
+        if not valid_inputs:
+            return []
+
+        entities = [inp.to_orm_model() for inp in valid_inputs]
+        created = await self.repository.bulk_create(entities)
+        return created
 
     async def update(
         self, customer_id: UUID, customer_input: CustomerInput

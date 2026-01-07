@@ -20,6 +20,7 @@ from app.graphql.companies.strawberry.company_landing_page_response import (
 class CompaniesRepository(BaseRepository[Company]):
     landing_model = CompanyLandingPageResponse
     rbac_resource: RbacResourceEnum | None = None
+    entity_type = EntityType.COMPANY
 
     def __init__(self, context_wrapper: ContextWrapper, session: AsyncSession) -> None:
         super().__init__(session, context_wrapper, Company)

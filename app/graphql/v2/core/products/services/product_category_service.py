@@ -2,7 +2,7 @@ from uuid import UUID
 
 from commons.db.v6.core.products.product_category import ProductCategory
 
-from app.errors.common_errors import NotFoundError
+from app.errors.common_errors import NameAlreadyExistsError, NotFoundError
 from app.graphql.v2.core.products.repositories.product_category_repository import (
     ProductCategoryRepository,
 )
@@ -41,6 +41,11 @@ class ProductCategoryService:
         )
 
     async def create(self, category_input: ProductCategoryInput) -> ProductCategory:
+        if await self.repository.name_exists(
+            category_input.factory_id, category_input.title
+        ):
+            raise NameAlreadyExistsError(category_input.title)
+
         return await self.repository.create(category_input.to_orm_model())
 
     async def update(

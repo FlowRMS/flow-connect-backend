@@ -7,6 +7,9 @@ from app.graphql.orders.strawberry.order_lite_response import OrderLiteResponse
 from app.graphql.v2.core.customers.strawberry.customer_response import (
     CustomerLiteResponse,
 )
+from app.graphql.v2.core.factories.strawberry.factory_response import (
+    FactoryLiteResponse,
+)
 from app.graphql.v2.core.users.strawberry.user_response import UserResponse
 
 
@@ -29,6 +32,10 @@ class OrderResponse(OrderLiteResponse):
     @strawberry.field
     def balance(self) -> OrderBalanceResponse:
         return OrderBalanceResponse.from_orm_model(self._instance.balance)
+
+    @strawberry.field
+    def factory(self) -> FactoryLiteResponse:
+        return FactoryLiteResponse.from_orm_model(self._instance.factory)
 
     @strawberry.field
     def details(self) -> list[OrderDetailResponse]:

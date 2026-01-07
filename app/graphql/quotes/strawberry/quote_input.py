@@ -23,6 +23,7 @@ class QuoteInput(BaseInputGQL[Quote]):
     details: list[QuoteDetailInput]
 
     id: UUID | None = strawberry.UNSET
+    factory_per_line_item: bool = False
     job_id: UUID | None = strawberry.UNSET
     published: bool = strawberry.UNSET
     creation_type: CreationType = strawberry.UNSET
@@ -48,6 +49,7 @@ class QuoteInput(BaseInputGQL[Quote]):
         blanket = self.blanket if self.blanket != strawberry.UNSET else False
 
         return Quote(
+            factory_per_line_item=self.factory_per_line_item,
             inside_per_line_item=self.inside_per_line_item,
             outside_per_line_item=self.outside_per_line_item,
             end_user_per_line_item=self.end_user_per_line_item,
