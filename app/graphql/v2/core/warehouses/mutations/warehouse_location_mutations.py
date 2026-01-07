@@ -1,5 +1,3 @@
-"""GraphQL mutations for warehouse locations."""
-
 from decimal import Decimal
 from uuid import UUID
 
@@ -7,6 +5,9 @@ import strawberry
 from aioinject import Injected
 
 from app.graphql.inject import inject
+from app.graphql.v2.core.warehouses.services.warehouse_location_assignment_service import (
+    WarehouseLocationAssignmentService,
+)
 from app.graphql.v2.core.warehouses.services.warehouse_location_service import (
     WarehouseLocationService,
 )
@@ -22,9 +23,6 @@ from app.graphql.v2.core.warehouses.strawberry.warehouse_location_response impor
 
 @strawberry.type
 class WarehouseLocationMutations:
-    """GraphQL mutations for WarehouseLocation entity."""
-
-    # Location CRUD
     @strawberry.mutation
     @inject
     async def create_warehouse_location(
@@ -32,7 +30,6 @@ class WarehouseLocationMutations:
         input: WarehouseLocationInput,
         service: Injected[WarehouseLocationService],
     ) -> WarehouseLocationResponse:
-        """Create a new warehouse location."""
         location = await service.create(input)
         return WarehouseLocationResponse.from_orm_model(location)
 
@@ -44,7 +41,6 @@ class WarehouseLocationMutations:
         input: WarehouseLocationInput,
         service: Injected[WarehouseLocationService],
     ) -> WarehouseLocationResponse:
-        """Update a warehouse location."""
         location = await service.update(id, input)
         return WarehouseLocationResponse.from_orm_model(location)
 
@@ -74,7 +70,6 @@ class WarehouseLocationMutations:
         saved = await service.bulk_save(warehouse_id, locations)
         return WarehouseLocationResponse.from_orm_model_list(saved)
 
-    # Product assignment mutations
     @strawberry.mutation
     @inject
     async def assign_product_to_location(
@@ -82,9 +77,8 @@ class WarehouseLocationMutations:
         location_id: UUID,
         product_id: UUID,
         quantity: Decimal,
-        service: Injected[WarehouseLocationService],
+        service: Injected[WarehouseLocationAssignmentService],
     ) -> LocationProductAssignmentResponse:
-        """Assign a product to a location."""
         assignment = await service.assign_product(location_id, product_id, quantity)
         return LocationProductAssignmentResponse.from_orm_model(assignment)
 
@@ -95,9 +89,8 @@ class WarehouseLocationMutations:
         location_id: UUID,
         product_id: UUID,
         quantity: Decimal,
-        service: Injected[WarehouseLocationService],
+        service: Injected[WarehouseLocationAssignmentService],
     ) -> LocationProductAssignmentResponse:
-        """Update product quantity at a location."""
         assignment = await service.update_product_quantity(
             location_id, product_id, quantity
         )
@@ -109,7 +102,6 @@ class WarehouseLocationMutations:
         self,
         location_id: UUID,
         product_id: UUID,
-        service: Injected[WarehouseLocationService],
+        service: Injected[WarehouseLocationAssignmentService],
     ) -> bool:
-        """Remove a product from a location."""
         return await service.remove_product(location_id, product_id)
