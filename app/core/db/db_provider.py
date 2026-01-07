@@ -26,9 +26,8 @@ async def create_transient_session(
     controller: MultiTenantController,
     auth_info: AuthInfo,
 ) -> AsyncIterator[TransientSession]:
-    async with controller.scoped_session(auth_info.tenant_name) as session:
-        async with session.begin():
-            yield session  # type: ignore[return-value]
+    async with controller.transient_session(auth_info.tenant_name) as session:
+        yield session  # type: ignore[return-value]
 
 
 async def create_multitenant_controller(settings: Settings) -> MultiTenantController:
