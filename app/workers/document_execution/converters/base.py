@@ -1,7 +1,7 @@
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from decimal import Decimal
-from typing import TYPE_CHECKING, Generic, TypeVar
+from typing import TYPE_CHECKING, Any, Generic, TypeVar
 from uuid import UUID
 
 from commons.db.v6.ai.documents import PendingDocument
@@ -62,17 +62,19 @@ class BaseEntityConverter(ABC, Generic[TDto, TInput, TOutput]):
         self,
         dto: TDto,
         entity_mapping: "EntityMapping",
-    ) -> TInput: ...
+    ) -> TInput | None: ...
 
     async def to_inputs_bulk(
         self,
         dtos: list[TDto],
         entity_mappings: list["EntityMapping"],
     ) -> list[TInput]:
-        return [
-            await self.to_input(dto, mapping)
-            for dto, mapping in zip(dtos, entity_mappings, strict=True)
-        ]
+        inputs: list[TInput] = []
+        for dto, mapping in zip(dtos, entity_mappings, strict=True):
+            input_data = await self.to_input(dto, mapping)
+            if input_data is not None:
+                inputs.append(input_data)
+        return inputs
 
     async def create_entities_bulk(
         self,
@@ -140,3 +142,40 @@ class BaseEntityConverter(ABC, Generic[TDto, TInput, TOutput]):
         pending_document: PendingDocument,
     ) -> LoadedDTOs:
         return await self.dto_loader_service.load_dtos_from_pending(pending_document)
+
+    def get_dedup_key(
+        self,
+        dto: TDto,
+        entity_mapping: "EntityMapping",
+    ) -> tuple[Any, ...] | None:
+        """
+        Returns a hashable key for deduplication.
+        Return None to skip deduplication for this converter.
+        Override in subclasses to enable deduplication.
+        """
+        return None
+
+    def deduplicate(
+        self,
+        dtos: list[TDto],
+        entity_mappings: list["EntityMapping"],
+    ) -> tuple[list[TDto], list["EntityMapping"]]:
+        """
+        Remove duplicates based on get_dedup_key.
+        Keeps the first occurrence of each unique key.
+        """
+        seen: set[tuple[Any, ...]] = set()
+        result_dtos: list[TDto] = []
+        result_mappings: list["EntityMapping"] = []
+
+        for dto, mapping in zip(dtos, entity_mappings, strict=True):
+            key = self.get_dedup_key(dto, mapping)
+            if key is None:
+                result_dtos.append(dto)
+                result_mappings.append(mapping)
+            elif key not in seen:
+                seen.add(key)
+                result_dtos.append(dto)
+                result_mappings.append(mapping)
+
+        return result_dtos, result_mappings

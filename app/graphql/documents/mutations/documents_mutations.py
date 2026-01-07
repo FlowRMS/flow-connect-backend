@@ -18,8 +18,12 @@ from app.graphql.documents.strawberry.pending_document_processing_type import (
     PendingDocumentProcessingType,
 )
 from app.graphql.inject import inject
-from app.workers.broker import execute_pending_document_task
+from app.workers.broker import (
+    execute_pending_document_task,
+    pending_document_status_email_task,
+)
 from app.workers.document_execution.executor_service import DocumentExecutorService
+from app.workers.tasks.pending_document_status_task import PendingDocumentStatusItem
 
 
 @strawberry.type
@@ -92,3 +96,34 @@ class DocumentsMutations:
         service: Injected[PendingDocumentProcessingService],
     ) -> bool:
         return await service.delete(id)
+
+    @strawberry.mutation
+    @inject
+    async def send_pending_document_status_email(
+        self,
+        pending_document_id: UUID,
+        auth_info: Injected[AuthInfo],
+        pending_document_repository: Injected[PendingDocumentRepository],
+    ) -> ExecuteWorkflowResponse:
+        pending_document = await pending_document_repository.get_by_id(
+            pending_document_id
+        )
+        if not pending_document:
+            return ExecuteWorkflowResponse(
+                success=False,
+                task_id="",
+                message=f"Pending document {pending_document_id} not found",
+            )
+
+        item = PendingDocumentStatusItem(
+            pending_document_id=str(pending_document_id),
+            tenant=auth_info.tenant_name,
+            user_id=str(auth_info.flow_user_id),
+        )
+        task = await pending_document_status_email_task.kiq(item)
+
+        return ExecuteWorkflowResponse(
+            success=True,
+            task_id=str(task.task_id),
+            message="Status email task queued. You will receive an email when processing completes.",
+        )

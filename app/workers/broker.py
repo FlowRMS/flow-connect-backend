@@ -14,6 +14,10 @@ from app.workers.tasks.campaign_tasks import (
     inner_check_and_process_campaigns_task,
 )
 from app.workers.tasks.document_tasks import inner_execute_pending_document_task
+from app.workers.tasks.pending_document_status_task import (
+    PendingDocumentStatusItem,
+    poll_pending_document_status,
+)
 
 configure_mappers()
 
@@ -41,3 +45,10 @@ async def execute_pending_document_task(
     return await inner_execute_pending_document_task(
         pending_document_id, auth_info_model
     )
+
+
+@broker.task
+async def pending_document_status_email_task(
+    item: PendingDocumentStatusItem,
+) -> None:
+    await poll_pending_document_status(item)

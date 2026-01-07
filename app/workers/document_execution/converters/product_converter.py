@@ -1,5 +1,5 @@
 from decimal import Decimal
-from typing import override
+from typing import Any, override
 from uuid import UUID
 
 from commons.db.v6.ai.documents.enums.entity_type import DocumentEntityType
@@ -37,6 +37,14 @@ class ProductConverter(BaseEntityConverter[ProductDTO, ProductInput, Product]):
         self._uom_cache = {}
 
     @override
+    def get_dedup_key(
+        self,
+        dto: ProductDTO,
+        entity_mapping: EntityMapping,
+    ) -> tuple[Any, ...] | None:
+        return (dto.factory_part_number, entity_mapping.factory_id)
+
+    @override
     async def create_entity(
         self,
         input_data: ProductInput,
@@ -63,12 +71,15 @@ class ProductConverter(BaseEntityConverter[ProductDTO, ProductInput, Product]):
         self,
         dto: ProductDTO,
         entity_mapping: EntityMapping,
-    ) -> ProductInput:
+    ) -> ProductInput | None:
         factory_id = entity_mapping.factory_id
         if not factory_id:
-            raise ValueError("Factory ID is required but not found in entity_mapping")
+            return None
 
         uom_id = await self._get_or_create_uom_id(dto.unit_of_measure)
+
+        if not dto.factory_part_number:
+            return None
 
         product_input = ProductInput(
             factory_part_number=dto.factory_part_number,
@@ -104,8 +115,8 @@ class ProductConverter(BaseEntityConverter[ProductDTO, ProductInput, Product]):
 
         return product_input
 
-    async def _get_or_create_uom_id(self, uom_title: str) -> UUID:
-        title_upper = uom_title.upper()
+    async def _get_or_create_uom_id(self, uom_title: str | None) -> UUID:
+        title_upper = (uom_title or "EA").upper()
         if title_upper in self._uom_cache:
             return self._uom_cache[title_upper]
 

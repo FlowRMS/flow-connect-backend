@@ -10,6 +10,7 @@ from app.admin.providers import admin_providers
 from app.auth import auth_provider
 from app.core import s3_provider
 from app.core.config.base_settings import get_settings
+from app.core.config.resend_settings import ResendSettings
 from app.core.config.s3_settings import S3Settings
 from app.core.config.settings import Settings
 from app.core.config.workos_settings import WorkOSSettings
@@ -48,6 +49,7 @@ settings_classes: Iterable[type[BaseSettings]] = [
     S3Settings,
     WorkOSSettings,
     AdminSettings,
+    ResendSettings,
 ]
 
 

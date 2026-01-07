@@ -17,6 +17,7 @@ from loguru import logger
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import joinedload
 
+from app.core.db.transient_session import TransientSession
 from app.graphql.links.services.links_service import LinksService
 from app.workers.document_execution.converters.check_converter import CheckConverter
 from app.workers.document_execution.converters.customer_converter import (
@@ -55,6 +56,7 @@ class DocumentExecutorService:
     def __init__(
         self,
         session: AsyncSession,
+        transient_session: TransientSession,
         dto_loader_service: DTOLoaderService,
         links_service: LinksService,
         quote_converter: QuoteConverter,
@@ -68,6 +70,7 @@ class DocumentExecutorService:
     ) -> None:
         super().__init__()
         self.session = session
+        self.transient_session = transient_session
         self.dto_loader_service = dto_loader_service
         self.links_service = links_service
         self.quote_converter = quote_converter
@@ -106,7 +109,7 @@ class DocumentExecutorService:
         pending_document_id: UUID,
         batch_size: int = DEFAULT_BATCH_SIZE,
     ) -> list[PendingDocumentProcessing]:
-        pending_document = await self.session.get_one(
+        pending_document = await self.transient_session.get_one(
             PendingDocument,
             pending_document_id,
             options=[joinedload(PendingDocument.pending_entities)],
@@ -143,7 +146,7 @@ class DocumentExecutorService:
             return processing_records
         except Exception as e:
             pending_document.workflow_status = WorkflowStatus.FAILED
-            await self.session.flush()
+            await self.transient_session.flush()
             logger.exception(f"Error executing document {pending_document_id}: {e}")
             return []
 
@@ -168,6 +171,10 @@ class DocumentExecutorService:
                 entity_mappings.get(dto.internal_uuid, EntityMapping())
                 for dto in batch_dtos
             ]
+
+            batch_dtos, batch_mappings = converter.deduplicate(
+                batch_dtos, batch_mappings
+            )
 
             batch_records = await self._process_batch(
                 converter=converter,
