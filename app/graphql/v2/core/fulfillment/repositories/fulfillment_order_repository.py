@@ -30,6 +30,7 @@ class FulfillmentOrderRepository(BaseRepository[FulfillmentOrder]):
                 selectinload(FulfillmentOrder.packing_boxes),
                 selectinload(FulfillmentOrder.assignments),
                 selectinload(FulfillmentOrder.activities),
+                selectinload(FulfillmentOrder.documents),
             )
             .where(FulfillmentOrder.id == order_id)
         )
@@ -47,6 +48,7 @@ class FulfillmentOrderRepository(BaseRepository[FulfillmentOrder]):
         stmt = select(FulfillmentOrder).options(
             selectinload(FulfillmentOrder.warehouse),
             selectinload(FulfillmentOrder.line_items),
+            selectinload(FulfillmentOrder.documents),
         )
 
         if warehouse_id:

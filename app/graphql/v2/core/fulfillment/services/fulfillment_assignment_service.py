@@ -113,10 +113,10 @@ class FulfillmentAssignmentService:
         metadata: dict | None = None,
     ) -> FulfillmentActivity:
         activity = FulfillmentActivity(
-            activity_type=activity_type,
             content=content,
             activity_metadata=metadata,
         )
         activity.fulfillment_order_id = order_id
+        activity.activity_type = activity_type
         activity.created_by_id = self.auth_info.flow_user_id
         return await self.activity_repository.create(activity)

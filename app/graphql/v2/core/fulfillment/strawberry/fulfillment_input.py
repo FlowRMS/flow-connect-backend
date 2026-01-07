@@ -1,8 +1,10 @@
 from datetime import date
 from decimal import Decimal
+from typing import Optional
 from uuid import UUID
 
 import strawberry
+from strawberry.file_uploads import Upload
 
 from commons.db.v6.fulfillment import (
     CarrierType,
@@ -18,19 +20,25 @@ from app.core.strawberry.inputs import BaseInputGQL
 
 @strawberry.input
 class ShipToAddressInput:
+    name: str | None = None
     street: str | None = None
+    street_line_2: str | None = None
     city: str | None = None
     state: str | None = None
     postal_code: str | None = None
     country: str | None = None
+    phone: str | None = None
 
     def to_dict(self) -> dict:
         return {
+            "name": self.name,
             "street": self.street,
+            "street_line_2": self.street_line_2,
             "city": self.city,
             "state": self.state,
             "postal_code": self.postal_code,
             "country": self.country,
+            "phone": self.phone,
         }
 
 
@@ -60,6 +68,7 @@ class CreateFulfillmentOrderInput(BaseInputGQL[FulfillmentOrder]):
 @strawberry.input
 class UpdateFulfillmentOrderInput:
     warehouse_id: UUID | None = strawberry.UNSET
+    fulfillment_method: FulfillmentMethod | None = strawberry.UNSET
     carrier_id: UUID | None = strawberry.UNSET
     carrier_type: CarrierType | None = strawberry.UNSET
     ship_to_address: ShipToAddressInput | None = strawberry.UNSET
@@ -176,3 +185,24 @@ class CancelBackorderInput:
     fulfillment_order_id: UUID
     line_item_ids: list[UUID]
     reason: str
+
+
+@strawberry.input
+class AddDocumentInput:
+    """Input for adding a document to a fulfillment order."""
+    fulfillment_order_id: UUID
+    document_type: str  # BOL, PACKING_SLIP, SHIPPING_LABEL, INVOICE, PHOTO, OTHER
+    file_name: str
+    file_url: str
+    file_size: int | None = None
+    mime_type: str | None = None
+    notes: str | None = None
+
+
+@strawberry.input
+class UploadDocumentInput:
+    """Input for uploading a document file to a fulfillment order."""
+    fulfillment_order_id: UUID
+    document_type: str  # BOL, PACKING_SLIP, SHIPPING_LABEL, INVOICE, PHOTO, OTHER
+    file: Upload
+    notes: Optional[str] = None

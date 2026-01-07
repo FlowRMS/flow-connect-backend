@@ -10,6 +10,7 @@ from app.graphql.inject import inject
 from app.graphql.v2.core.fulfillment.services import (
     FulfillmentAssignmentService,
     FulfillmentBackorderService,
+    FulfillmentDocumentService,
     FulfillmentOrderService,
     FulfillmentPackingService,
     FulfillmentPickingService,
@@ -17,12 +18,14 @@ from app.graphql.v2.core.fulfillment.services import (
 )
 from app.graphql.v2.core.fulfillment.strawberry import (
     AddAssignmentInput,
+    AddDocumentInput,
     AssignItemToBoxInput,
     BulkAssignmentInput,
     CancelBackorderInput,
     CompleteShippingInput,
     CreateFulfillmentOrderInput,
     CreatePackingBoxInput,
+    FulfillmentDocumentResponse,
     FulfillmentOrderLineItemResponse,
     FulfillmentOrderResponse,
     MarkManufacturerFulfilledInput,
@@ -31,6 +34,7 @@ from app.graphql.v2.core.fulfillment.strawberry import (
     UpdateFulfillmentOrderInput,
     UpdatePackingBoxInput,
     UpdatePickedQuantityInput,
+    UploadDocumentInput,
 )
 
 
@@ -348,3 +352,52 @@ class FulfillmentMutations:
         """Resolve backorder status and continue fulfillment."""
         order = await service.resolve_backorder(fulfillment_order_id)
         return FulfillmentOrderResponse.from_orm_model(order)
+
+    # ─────────────────────────────────────────────────────────────────
+    # Documents
+    # ─────────────────────────────────────────────────────────────────
+
+    @strawberry.mutation
+    @inject
+    async def add_document(
+        self,
+        input: AddDocumentInput,
+        service: Injected[FulfillmentDocumentService],
+    ) -> FulfillmentDocumentResponse:
+        """Add a document to a fulfillment order."""
+        document = await service.add_document(
+            input.fulfillment_order_id,
+            input.document_type,
+            input.file_name,
+            input.file_url,
+            input.file_size,
+            input.mime_type,
+            input.notes,
+        )
+        return FulfillmentDocumentResponse.from_orm_model(document)
+
+    @strawberry.mutation
+    @inject
+    async def upload_document(
+        self,
+        input: UploadDocumentInput,
+        service: Injected[FulfillmentDocumentService],
+    ) -> FulfillmentDocumentResponse:
+        """Upload a file and attach to fulfillment order."""
+        document = await service.upload_document(
+            input.fulfillment_order_id,
+            input.document_type,
+            input.file,
+            input.notes,
+        )
+        return FulfillmentDocumentResponse.from_orm_model(document)
+
+    @strawberry.mutation
+    @inject
+    async def delete_document(
+        self,
+        document_id: UUID,
+        service: Injected[FulfillmentDocumentService],
+    ) -> bool:
+        """Delete a document from a fulfillment order."""
+        return await service.delete_document(document_id)

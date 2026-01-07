@@ -1,5 +1,6 @@
 from app.graphql.v2.core.fulfillment.strawberry.fulfillment_input import (
     AddAssignmentInput,
+    AddDocumentInput,
     AssignItemToBoxInput,
     AssignUserInput,
     BulkAssignmentInput,
@@ -14,10 +15,12 @@ from app.graphql.v2.core.fulfillment.strawberry.fulfillment_input import (
     UpdateFulfillmentOrderInput,
     UpdatePackingBoxInput,
     UpdatePickedQuantityInput,
+    UploadDocumentInput,
 )
 from app.graphql.v2.core.fulfillment.strawberry.fulfillment_response import (
     FulfillmentActivityResponse,
     FulfillmentAssignmentResponse,
+    FulfillmentDocumentResponse,
     FulfillmentOrderLineItemResponse,
     FulfillmentOrderResponse,
     FulfillmentStatsResponse,
@@ -29,6 +32,7 @@ from app.graphql.v2.core.fulfillment.strawberry.fulfillment_response import (
 __all__ = [
     # Input types
     "AddAssignmentInput",
+    "AddDocumentInput",
     "AssignItemToBoxInput",
     "AssignUserInput",
     "BulkAssignmentInput",
@@ -43,9 +47,11 @@ __all__ = [
     "UpdateFulfillmentOrderInput",
     "UpdatePackingBoxInput",
     "UpdatePickedQuantityInput",
+    "UploadDocumentInput",
     # Response types
     "FulfillmentActivityResponse",
     "FulfillmentAssignmentResponse",
+    "FulfillmentDocumentResponse",
     "FulfillmentOrderLineItemResponse",
     "FulfillmentOrderResponse",
     "FulfillmentStatsResponse",

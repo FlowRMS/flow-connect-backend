@@ -61,14 +61,12 @@ class FileUploadService:
         logger.info(f"Uploading file to S3: bucket={bucket_name}, key={s3_key}")
 
         await self.s3_service.upload(
-            bucket=bucket_name,
             key=s3_key,
             file_obj=io.BytesIO(file_content),
             ContentType=content_type,
         )
 
         presigned_url = await self.s3_service.generate_presigned_url(
-            bucket=bucket_name,
             key=s3_key,
         )
 
@@ -87,7 +85,6 @@ class FileUploadService:
         if not bucket_name:
             raise ValueError("S3 bucket name is not configured")
         return await self.s3_service.generate_presigned_url(
-            bucket=bucket_name,
             key=s3_key,
             expires_in=expires_in,
         )

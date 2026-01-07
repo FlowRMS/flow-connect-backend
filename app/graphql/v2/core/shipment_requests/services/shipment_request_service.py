@@ -71,12 +71,15 @@ class ShipmentRequestService:
         items: list[ShipmentRequestItemInput],
     ) -> ShipmentRequest:
         request_number = await self.generate_request_number()
-        
+
+        # Convert timezone-aware datetime to timezone-naive for database compatibility
+        naive_request_date = request_date.replace(tzinfo=None) if request_date and request_date.tzinfo else request_date
+
         request = ShipmentRequest(
             request_number=request_number,
             warehouse_id=warehouse_id,
             factory_id=factory_id,
-            request_date=request_date,
+            request_date=naive_request_date,
             priority=priority,
             method=method,
             status=status,

@@ -79,6 +79,8 @@ class FulfillmentOrderService:
 
         if input.warehouse_id is not strawberry.UNSET:
             order.warehouse_id = input.warehouse_id
+        if input.fulfillment_method is not strawberry.UNSET:
+            order.fulfillment_method = input.fulfillment_method
         if input.carrier_id is not strawberry.UNSET:
             order.carrier_id = input.carrier_id
         if input.carrier_type is not strawberry.UNSET:
@@ -87,6 +89,10 @@ class FulfillmentOrderService:
             order.need_by_date = input.need_by_date
         if input.hold_reason is not strawberry.UNSET:
             order.hold_reason = input.hold_reason
+        if input.ship_to_address is not strawberry.UNSET:
+            order.ship_to_address = (
+                input.ship_to_address.to_dict() if input.ship_to_address else None
+            )
 
         return await self.repository.update(order)
 
@@ -100,10 +106,11 @@ class FulfillmentOrderService:
         order.released_at = datetime.utcnow()
 
         # Auto-assign current user as manager
-        assignment = FulfillmentAssignment(
-            user_id=self.auth_info.flow_user_id,
-            role=FulfillmentAssignmentRole.MANAGER,
-        )
+        assignment = FulfillmentAssignment()
+        assignment.fulfillment_order_id = order.id
+        assignment.user_id = self.auth_info.flow_user_id
+        assignment.role = FulfillmentAssignmentRole.MANAGER
+        assignment.created_by_id = self.auth_info.flow_user_id
         order.assignments.append(assignment)
 
         order = await self.repository.update(order)
