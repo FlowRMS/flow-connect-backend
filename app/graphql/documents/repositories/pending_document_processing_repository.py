@@ -30,7 +30,7 @@ class PendingDocumentProcessingRepository(BaseRepository[PendingDocumentProcessi
     ) -> list[PendingDocumentProcessing]:
         stmt = select(PendingDocumentProcessing).where(
             PendingDocumentProcessing.pending_document_id == pending_document_id,
-            PendingDocumentProcessing.status.is_not(ProcessingResultStatus.CREATED),
+            PendingDocumentProcessing.status != ProcessingResultStatus.CREATED,
         )
         result = await self.session.execute(stmt)
         return list(result.scalars().all())
