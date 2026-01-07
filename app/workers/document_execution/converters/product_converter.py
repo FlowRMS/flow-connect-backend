@@ -1,5 +1,5 @@
 from decimal import Decimal
-from typing import override
+from typing import Any, override
 from uuid import UUID
 
 from commons.db.v6.ai.documents.enums.entity_type import DocumentEntityType
@@ -35,6 +35,14 @@ class ProductConverter(BaseEntityConverter[ProductDTO, ProductInput, Product]):
         super().__init__(session, dto_loader_service)
         self.product_service = product_service
         self._uom_cache = {}
+
+    @override
+    def get_dedup_key(
+        self,
+        dto: ProductDTO,
+        entity_mapping: EntityMapping,
+    ) -> tuple[Any, ...] | None:
+        return (dto.factory_part_number, entity_mapping.factory_id)
 
     @override
     async def create_entity(

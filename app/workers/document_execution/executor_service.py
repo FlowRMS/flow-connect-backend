@@ -169,6 +169,10 @@ class DocumentExecutorService:
                 for dto in batch_dtos
             ]
 
+            batch_dtos, batch_mappings = converter.deduplicate(
+                batch_dtos, batch_mappings
+            )
+
             batch_records = await self._process_batch(
                 converter=converter,
                 dtos=batch_dtos,
