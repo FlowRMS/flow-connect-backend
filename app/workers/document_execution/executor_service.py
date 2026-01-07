@@ -10,8 +10,6 @@ from commons.db.v6.ai.documents.pending_document import PendingDocument
 from commons.db.v6.ai.documents.pending_document_processing import (
     PendingDocumentProcessing,
 )
-from commons.db.v6.ai.entities.enums import ConfirmationStatus, EntityPendingType
-from commons.db.v6.ai.entities.pending_entity import PendingEntity
 from commons.db.v6.crm.links.entity_type import EntityType
 from commons.db.v6.enums import WorkflowStatus
 from commons.dtos.common.dto_loader_service import DTOLoaderService
@@ -23,22 +21,24 @@ from app.graphql.links.services.links_service import LinksService
 from app.workers.document_execution.converters.customer_converter import (
     CustomerConverter,
 )
+from app.workers.document_execution.converters.entity_mapping_builder import (
+    build_entity_mappings,
+)
 from app.workers.document_execution.converters.factory_converter import FactoryConverter
 from app.workers.document_execution.converters.invoice_converter import InvoiceConverter
 from app.workers.document_execution.converters.order_converter import OrderConverter
 from app.workers.document_execution.converters.product_converter import ProductConverter
 from app.workers.document_execution.converters.quote_converter import QuoteConverter
+from app.workers.document_execution.converters.set_for_creation_service import (
+    SetForCreationService,
+)
+from app.workers.document_execution.converters.skipped_entity_handler import (
+    is_dto_skipped_for_invoice,
+    is_dto_skipped_for_order,
+)
 
 from .converters.base import DEFAULT_BATCH_SIZE, BaseEntityConverter
 from .converters.entity_mapping import EntityMapping
-
-CONFIRMED_STATUSES = frozenset(
-    {
-        ConfirmationStatus.CONFIRMED,
-        ConfirmationStatus.AUTO_MATCHED,
-        ConfirmationStatus.CREATED_NEW,
-    }
-)
 
 DOCUMENT_TO_LINK_ENTITY_TYPE: dict[DocumentEntityType, EntityType] = {
     DocumentEntityType.ORDERS: EntityType.ORDER,
@@ -61,6 +61,7 @@ class DocumentExecutorService:
         factory_converter: FactoryConverter,
         product_converter: ProductConverter,
         invoice_converter: InvoiceConverter,
+        set_for_creation_service: SetForCreationService,
     ) -> None:
         super().__init__()
         self.session = session
@@ -72,6 +73,7 @@ class DocumentExecutorService:
         self.factory_converter = factory_converter
         self.product_converter = product_converter
         self.invoice_converter = invoice_converter
+        self.set_for_creation_service = set_for_creation_service
 
     def get_converter(
         self,
@@ -107,14 +109,18 @@ class DocumentExecutorService:
             if not pending_document.entity_type:
                 raise ValueError("PendingDocument has no entity_type set")
 
-            entity_mappings = self._build_entity_mappings(
-                pending_document.pending_entities
-            )
+            entity_mappings = build_entity_mappings(pending_document.pending_entities)
             logger.info(f"Built entity mapping: {entity_mappings}")
 
             converter = self.get_converter(pending_document.entity_type)
             dtos = await self._parse_dtos(converter, pending_document)
             logger.info(f"Parsed {len(dtos)} DTOs from extracted_data_json")
+
+            await self.set_for_creation_service.process_set_for_creation(
+                pending_entities=pending_document.pending_entities,
+                dtos=dtos,
+                entity_mappings=entity_mappings,
+            )
 
             processing_records = await self._execute_bulk(
                 converter=converter,
@@ -177,8 +183,13 @@ class DocumentExecutorService:
         conversion_errors: dict[int, str] = {}
         valid_inputs: list[Any] = []
         valid_indices: list[int] = []
+        user_skipped_indices: set[int] = set()
 
         for i, (dto, mapping) in enumerate(zip(dtos, mappings, strict=True)):
+            if self._is_dto_skipped(mapping, pending_document.entity_type):
+                user_skipped_indices.add(i)
+                continue
+
             try:
                 inp = await converter.to_input(dto, mapping)
                 valid_inputs.append(inp)
@@ -186,6 +197,17 @@ class DocumentExecutorService:
             except Exception as e:
                 logger.error(f"Error converting DTO {i}: {e}")
                 conversion_errors[i] = str(e)
+
+        for i in user_skipped_indices:
+            records.append(
+                PendingDocumentProcessing(
+                    pending_document_id=pending_document.id,
+                    entity_id=None,
+                    status=ProcessingResultStatus.SKIPPED,
+                    dto_json=dtos[i].model_dump(mode="json"),
+                    error_message="Skipped by user",
+                )
+            )
 
         if valid_inputs:
             bulk_result = await converter.create_entities_bulk(valid_inputs)
@@ -231,66 +253,18 @@ class DocumentExecutorService:
 
         return records
 
-    def _build_entity_mappings(
+    def _is_dto_skipped(
         self,
-        pending_entities: list[PendingEntity],
-    ) -> dict[UUID, EntityMapping]:
-        mappings: dict[UUID, EntityMapping] = {}
-
-        logger.info(
-            f"Building entity mapping from {len(pending_entities)} PendingEntities"
-        )
-
-        for pe in pending_entities:
-            if pe.confirmation_status not in CONFIRMED_STATUSES:
-                continue
-
-            if not pe.best_match_id:
-                logger.warning(
-                    f"PendingEntity {pe.id} is confirmed but has no best_match_id"
-                )
-                continue
-
-            mapping = EntityMapping()
-
-            match pe.entity_type:
-                case EntityPendingType.FACTORIES:
-                    mapping.factory_id = pe.best_match_id
-                case EntityPendingType.CUSTOMERS:
-                    mapping.sold_to_customer_id = pe.best_match_id
-                case EntityPendingType.BILL_TO_CUSTOMERS:
-                    mapping.bill_to_customer_id = pe.best_match_id
-                case EntityPendingType.ORDERS:
-                    mapping.order_id = pe.best_match_id
-                case EntityPendingType.PRODUCTS:
-                    if pe.flow_index_detail is not None:
-                        mapping.products[pe.flow_index_detail] = pe.best_match_id
-                case EntityPendingType.END_USERS:
-                    if pe.flow_index_detail is not None:
-                        mapping.end_users[pe.flow_index_detail] = pe.best_match_id
-
-            for dto_id in pe.dto_ids or []:
-                existing_mapping = mappings.get(dto_id)
-                if existing_mapping:
-                    if mapping.factory_id:
-                        existing_mapping.factory_id = mapping.factory_id
-                    if mapping.sold_to_customer_id:
-                        existing_mapping.sold_to_customer_id = (
-                            mapping.sold_to_customer_id
-                        )
-                    if mapping.bill_to_customer_id:
-                        existing_mapping.bill_to_customer_id = (
-                            mapping.bill_to_customer_id
-                        )
-                    if mapping.order_id:
-                        existing_mapping.order_id = mapping.order_id
-                    existing_mapping.products.update(mapping.products)
-                    existing_mapping.end_users.update(mapping.end_users)
-
-                else:
-                    mappings[dto_id] = mapping
-
-        return mappings
+        mapping: EntityMapping,
+        entity_type: DocumentEntityType | None,
+    ) -> bool:
+        match entity_type:
+            case DocumentEntityType.ORDERS:
+                return is_dto_skipped_for_order(mapping)
+            case DocumentEntityType.INVOICES:
+                return is_dto_skipped_for_invoice(mapping)
+            case _:
+                return False
 
     async def _parse_dtos(
         self,
