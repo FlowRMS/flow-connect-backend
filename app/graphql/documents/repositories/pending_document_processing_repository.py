@@ -4,6 +4,9 @@ from commons.db.v6 import RbacResourceEnum
 from commons.db.v6.ai.documents.pending_document_processing import (
     PendingDocumentProcessing,
 )
+from commons.db.v6.enums import (
+    ProcessingResultStatus,
+)
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -26,7 +29,8 @@ class PendingDocumentProcessingRepository(BaseRepository[PendingDocumentProcessi
         pending_document_id: UUID,
     ) -> list[PendingDocumentProcessing]:
         stmt = select(PendingDocumentProcessing).where(
-            PendingDocumentProcessing.pending_document_id == pending_document_id
+            PendingDocumentProcessing.pending_document_id == pending_document_id,
+            PendingDocumentProcessing.status.is_not(ProcessingResultStatus.CREATED),
         )
         result = await self.session.execute(stmt)
         return list(result.scalars().all())
