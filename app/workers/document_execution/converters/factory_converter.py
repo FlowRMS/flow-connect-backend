@@ -1,5 +1,5 @@
 from decimal import Decimal
-from typing import override
+from typing import Any, override
 
 from commons.db.v6.ai.documents.enums.entity_type import DocumentEntityType
 from commons.db.v6.core.factories.factory import Factory
@@ -29,6 +29,14 @@ class FactoryConverter(BaseEntityConverter[FactoryDTO, FactoryInput, Factory]):
     ) -> None:
         super().__init__(session, dto_loader_service)
         self.factory_service = factory_service
+
+    @override
+    def get_dedup_key(
+        self,
+        dto: FactoryDTO,
+        entity_mapping: EntityMapping,
+    ) -> tuple[Any, ...] | None:
+        return (dto.factory_name,)
 
     @override
     async def create_entity(

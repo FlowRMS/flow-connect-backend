@@ -1,4 +1,4 @@
-from typing import override
+from typing import Any, override
 
 from commons.db.v6 import Customer
 from commons.db.v6.ai.documents.enums.entity_type import DocumentEntityType
@@ -25,6 +25,14 @@ class CustomerConverter(BaseEntityConverter[CustomerDTO, CustomerInput, Customer
     ) -> None:
         super().__init__(session, dto_loader_service)
         self.customer_service = customer_service
+
+    @override
+    def get_dedup_key(
+        self,
+        dto: CustomerDTO,
+        entity_mapping: EntityMapping,
+    ) -> tuple[Any, ...] | None:
+        return (dto.company_name,)
 
     @override
     async def create_entity(
