@@ -14,6 +14,7 @@ from commons.db.v6.crm.links.entity_type import EntityType
 from commons.db.v6.enums import WorkflowStatus
 from commons.dtos.common.dto_loader_service import DTOLoaderService
 from loguru import logger
+from sqlalchemy import update
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import joinedload
 
@@ -145,7 +146,11 @@ class DocumentExecutorService:
             pending_document.workflow_status = WorkflowStatus.COMPLETED
             return processing_records
         except Exception as e:
-            pending_document.workflow_status = WorkflowStatus.FAILED
+            _ = await self.transient_session.execute(
+                update(PendingDocument)
+                .where(PendingDocument.id == pending_document_id)
+                .values(workflow_status=WorkflowStatus.FAILED)
+            )
             await self.transient_session.flush()
             logger.exception(f"Error executing document {pending_document_id}: {e}")
             return []
