@@ -1,8 +1,8 @@
 """add warehouse locations tables
 
 Revision ID: warehouse_locations_001
-Revises: warehouse_settings_001
-Create Date: 2025-12-31
+Revises: organizations_001
+Create Date: 2026-01-07
 
 """
 
@@ -15,7 +15,7 @@ from alembic import op
 
 # revision identifiers, used by Alembic.
 revision: str = "warehouse_locations_001"
-down_revision: str | None = "warehouse_settings_001"
+down_revision: str | None = "organizations_001"
 branch_labels: str | Sequence[str] | None = None
 depends_on: str | Sequence[str] | None = None
 
