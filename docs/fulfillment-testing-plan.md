@@ -324,6 +324,7 @@ When you find an issue in the other dev's area:
 | 2026-01-06 | Joel | A9-A10: Packing Flow | ✅ Pass | Add items to pallets, custom weight, complete packing |
 | 2026-01-06 | Joel | A11-A14: Shipping Flow | ✅ Pass | Carrier selection, tracking number, signature capture, confirm shipment |
 | 2026-01-06 | Joel | A15-A16: Shipped Status | ✅ Pass | Full SHIPPED interface with timeline, reprint documents, send confirmation modal |
+| 2026-01-06 | Joel | Assignment Panel | ✅ Pass | Worker/manager assignment using real warehouse members API |
 
 ### Bugs Fixed During Testing
 
@@ -338,6 +339,10 @@ When you find an issue in the other dev's area:
 | 2026-01-06 | Items count showing "010.00005.0000" (decimal string concatenation) | Added `Number()` wrapper in `ShippingInterface.tsx` |
 | 2026-01-06 | "Cannot read properties of undefined (reading 'name')" on Send Confirmation | Added optional chaining (`?.`) to all `shipTo` references in `ShipmentConfirmationModal.tsx` |
 | 2026-01-06 | Send Confirmation not changing status to COMMUNICATED | Added `mark_communicated` mutation to backend and frontend, wired up in `handleSendShipmentConfirmation` |
+| 2026-01-06 | Assignment Panel dropdown clipped by parent overflow | Changed to fixed positioning with dynamic above/below placement based on viewport space |
+| 2026-01-06 | Assignment Panel using mock data instead of real API | Rewrote to use `useWarehouseQuery` for members and `useUsersQuery` for user details |
+| 2026-01-06 | `FulfillmentAssignmentRepository` has no attribute `get` | Changed `assignment_repository.get()` to `assignment_repository.get_by_id()` in service |
+| 2026-01-06 | Role normalization failing for string roles | Added `normalizeRole()` function to handle both number (1=WORKER, 2=MANAGER) and string formats |
 
 ---
 

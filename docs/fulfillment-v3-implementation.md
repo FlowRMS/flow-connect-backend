@@ -711,6 +711,8 @@ const handleGenerateFulfillmentRequest = async (selectedWarehouseId: string) => 
 
 | Date | Changes |
 |------|---------|
+| 2026-01-06 | **Assignment Panel rewritten to use real warehouse members API** |
+| 2026-01-06 | Fixed `FulfillmentAssignmentRepository.get()` → `get_by_id()` for removing assignments |
 | 2026-01-06 | **Full PENDING → SHIPPED → COMMUNICATED flow tested and working** |
 | 2026-01-06 | Added `mark_communicated` mutation for SHIPPED → COMMUNICATED transition |
 | 2026-01-06 | Fixed datetime timezone issues in packing/shipping/order services (use `datetime.utcnow()` not `datetime.now(timezone.utc)`) |
@@ -732,6 +734,7 @@ const handleGenerateFulfillmentRequest = async (selectedWarehouseId: string) => 
 | `app/graphql/v2/core/fulfillment/services/fulfillment_shipping_service.py` | Fixed datetime timezone for `pickup_timestamp`, `ship_confirmed_at`, `delivered_at` |
 | `app/graphql/v2/core/fulfillment/services/fulfillment_order_service.py` | Fixed datetime timezone for `released_at` |
 | `app/graphql/v2/core/fulfillment/mutations/fulfillment_mutations.py` | Added `mark_communicated` mutation |
+| `app/graphql/v2/core/fulfillment/services/fulfillment_assignment_service.py` | Fixed `get()` → `get_by_id()` for assignment removal |
 
 ### Frontend Files (flow-crm)
 
@@ -742,6 +745,7 @@ const handleGenerateFulfillmentRequest = async (selectedWarehouseId: string) => 
 | `components/warehouse/api/fulfillmentApi.ts` | Added `MARK_COMMUNICATED` query and `markCommunicated` function |
 | `components/warehouse/api/useFulfillmentApi.ts` | Added `useMarkCommunicated` hook |
 | `components/warehouse/FulfillmentOrderDetailContent.tsx` | Wired up `handleSendShipmentConfirmation` to call `markCommunicated` mutation |
+| `components/warehouse/AssignmentPanel.tsx` | **Major rewrite**: Uses real warehouse members API instead of mock data, fixed dropdown positioning |
 
 ### New Mutations Added
 
@@ -866,4 +870,100 @@ Methods:
 - Phone Call: Manual phone order
 - EDI: Electronic data interchange
 - Portal: Vendor portal submission
+```
+
+---
+
+## Assignment Panel - Real API Integration
+
+### Overview
+
+The `AssignmentPanel` component was rewritten to fetch workers and managers from the real warehouse members API instead of using mock data.
+
+### Data Flow
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│                    ASSIGNMENT PANEL DATA FLOW                    │
+├─────────────────────────────────────────────────────────────────┤
+│                                                                  │
+│  1. Component receives warehouseId prop                         │
+│                                                                  │
+│  2. Fetch warehouse with members:                               │
+│     useWarehouseQuery(warehouseId)                              │
+│     → Returns: { members: [{ userId, role }] }                  │
+│                                                                  │
+│  3. Fetch all users for details:                                │
+│     useUsersQuery(100)                                          │
+│     → Returns: [{ id, fullName, email, enabled }]               │
+│                                                                  │
+│  4. Join members with users:                                    │
+│     For each warehouse member:                                  │
+│       - Find matching user by userId                            │
+│       - Skip if user disabled                                   │
+│       - Normalize role (handle string/number)                   │
+│       - Add to availableWorkers[] or availableManagers[]        │
+│       - Exclude already-assigned users                          │
+│                                                                  │
+│  5. Render dropdown with fixed positioning:                     │
+│     - Calculate viewport space above/below button               │
+│     - Show dropdown in direction with more space                │
+│     - Use position: fixed to avoid parent overflow clipping     │
+│                                                                  │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+### Role Normalization
+
+The backend may return roles as numbers (1=WORKER, 2=MANAGER) or strings ('WORKER', 'MANAGER', 'worker', 'manager'). The `normalizeRole` function handles all cases:
+
+```typescript
+const normalizeRole = (role: number | string): 'WORKER' | 'MANAGER' => {
+  if (typeof role === 'number') {
+    return role === 2 ? 'MANAGER' : 'WORKER';
+  }
+  const roleStr = String(role).toUpperCase();
+  return roleStr === 'MANAGER' ? 'MANAGER' : 'WORKER';
+};
+```
+
+### Dropdown Positioning Fix
+
+The dropdown was being clipped by parent containers with `overflow: hidden`. Fixed by:
+
+1. Using `position: fixed` instead of `position: absolute`
+2. Calculating position based on button's `getBoundingClientRect()`
+3. Determining whether to show above or below based on available viewport space
+4. Adding `z-index: 101` to ensure dropdown appears above other content
+
+```typescript
+const calculateDropdownPosition = (buttonRef) => {
+  const rect = buttonRef.current.getBoundingClientRect();
+  const spaceBelow = window.innerHeight - rect.bottom;
+  const spaceAbove = rect.top;
+  const showAbove = spaceBelow < 224 && spaceAbove > spaceBelow;
+
+  return {
+    position: 'fixed',
+    left: rect.left,
+    width: rect.width,
+    maxHeight: Math.min(224, showAbove ? spaceAbove - 8 : spaceBelow - 8),
+    ...(showAbove
+      ? { bottom: window.innerHeight - rect.top + 8 }
+      : { top: rect.bottom + 8 }
+    ),
+  };
+};
+```
+
+### Backend Fix
+
+The `FulfillmentAssignmentService.remove_assignment()` method was calling `assignment_repository.get()` which doesn't exist in `BaseRepository`. Fixed to use `get_by_id()`:
+
+```python
+# Before (broken):
+assignment = await self.assignment_repository.get(assignment_id)
+
+# After (fixed):
+assignment = await self.assignment_repository.get_by_id(assignment_id)
 ```
