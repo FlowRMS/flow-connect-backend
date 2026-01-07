@@ -1421,6 +1421,7 @@ type Mutation {
   executeWorkflowNoWorker(pendingDocumentId: UUID!): [PendingDocumentProcessingType!]!
   updatePendingDocumentProcessing(id: UUID!, input: PendingDocumentProcessingInput!): PendingDocumentProcessingType!
   deletePendingDocumentProcessing(id: UUID!): Boolean!
+  sendPendingDocumentStatusEmail(pendingDocumentId: UUID!): ExecuteWorkflowResponse!
   gmailConnect(code: String!): GmailConnectionResultType!
   gmailDisconnect: Boolean!
   gmailSendEmail(input: GmailSendEmailInput!): GmailSendEmailResultType!
