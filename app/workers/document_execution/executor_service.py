@@ -18,6 +18,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import joinedload
 
 from app.graphql.links.services.links_service import LinksService
+from app.workers.document_execution.converters.check_converter import CheckConverter
 from app.workers.document_execution.converters.customer_converter import (
     CustomerConverter,
 )
@@ -46,6 +47,7 @@ DOCUMENT_TO_LINK_ENTITY_TYPE: dict[DocumentEntityType, EntityType] = {
     DocumentEntityType.FACTORIES: EntityType.FACTORY,
     DocumentEntityType.PRODUCTS: EntityType.PRODUCT,
     DocumentEntityType.INVOICES: EntityType.INVOICE,
+    DocumentEntityType.CHECKS: EntityType.CHECK,
 }
 
 
@@ -61,6 +63,7 @@ class DocumentExecutorService:
         factory_converter: FactoryConverter,
         product_converter: ProductConverter,
         invoice_converter: InvoiceConverter,
+        check_converter: CheckConverter,
         set_for_creation_service: SetForCreationService,
     ) -> None:
         super().__init__()
@@ -73,6 +76,7 @@ class DocumentExecutorService:
         self.factory_converter = factory_converter
         self.product_converter = product_converter
         self.invoice_converter = invoice_converter
+        self.check_converter = check_converter
         self.set_for_creation_service = set_for_creation_service
 
     def get_converter(
@@ -92,6 +96,8 @@ class DocumentExecutorService:
                 return self.product_converter
             case DocumentEntityType.INVOICES:
                 return self.invoice_converter
+            case DocumentEntityType.CHECKS:
+                return self.check_converter
             case _:
                 raise ValueError(f"Unsupported entity type: {entity_type}")
 
@@ -137,8 +143,9 @@ class DocumentExecutorService:
             return processing_records
         except Exception as e:
             pending_document.workflow_status = WorkflowStatus.FAILED
+            await self.session.flush()
             logger.exception(f"Error executing document {pending_document_id}: {e}")
-            raise
+            return []
 
     async def _execute_bulk(
         self,
