@@ -3,10 +3,13 @@ from dataclasses import dataclass
 from typing import Any, cast
 
 from commons.auth import AuthInfo
+from commons.db.v6.commission.orders import Order
 from commons.db.v6.crm.jobs import Job
 from commons.db.v6.crm.links.entity_type import EntityType
 from commons.db.v6.crm.links.link_relation_model import LinkRelation
-from sqlalchemy import CursorResult, text
+from commons.db.v6.crm.pre_opportunities.pre_opportunity_model import PreOpportunity
+from commons.db.v6.crm.quotes import Quote
+from sqlalchemy import CursorResult, update
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import Mapper
 
@@ -189,20 +192,19 @@ class JobMergeService:
         from_job_id: uuid.UUID,
         to_job_id: uuid.UUID,
     ) -> int:
-        tables_with_job_fk = [
-            "pycrm.quotes",
-            "pycrm.pre_opportunities",
-            "pycommission.orders",
-        ]
+        models_with_job_fk = [Quote, PreOpportunity, Order]
 
         total_updated = 0
-        for table in tables_with_job_fk:
-            result = await self.session.execute(
-                text(f"UPDATE {table} SET job_id = :to_id WHERE job_id = :from_id"),
-                {"to_id": to_job_id, "from_id": from_job_id},
+        for model in models_with_job_fk:
+            result = cast(
+                CursorResult[Any],
+                await self.session.execute(
+                    update(model)
+                    .where(model.job_id == from_job_id)
+                    .values(job_id=to_job_id)
+                ),
             )
-            cursor_result = cast(CursorResult[Any], result)
-            total_updated += cursor_result.rowcount or 0
+            total_updated += result.rowcount or 0
 
         await self.session.flush()
         return total_updated
