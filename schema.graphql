@@ -1452,6 +1452,8 @@ type Mutation {
   deleteOrder(id: UUID!): Boolean!
   createOrderFromQuote(quoteId: UUID!, orderNumber: String!, factoryId: UUID!, dueDate: Date = null, quoteDetailIds: [UUID!] = null): OrderResponse!
   duplicateOrder(orderId: UUID!, newOrderNumber: String!, newSoldToCustomerId: UUID!): OrderResponse!
+  createOrganization(input: OrganizationInput!): OrganizationType! @rolePermissionAccess
+  updateOrganization(input: OrganizationInput!): OrganizationType! @rolePermissionAccess
   createPreOpportunity(input: PreOpportunityInput!): PreOpportunityResponse!
   updatePreOpportunity(input: PreOpportunityInput!): PreOpportunityResponse!
   deletePreOpportunity(id: UUID!): Boolean!
@@ -1922,6 +1924,35 @@ enum OrderType {
   STORM
 }
 
+input OrganizationInput {
+  companyName: String!
+  streetAddress: String!
+  city: String!
+  state: String!
+  zipCode: String!
+  emailAddress: String!
+  phoneNumber: String!
+  addressLine2: String
+  logoFileId: UUID
+  logoWidth: Int
+  logoHeight: Int
+}
+
+type OrganizationType {
+  id: UUID!
+  companyName: String!
+  streetAddress: String!
+  addressLine2: String
+  city: String!
+  state: String!
+  zipCode: String!
+  emailAddress: String!
+  phoneNumber: String!
+  logoFileId: UUID
+  logoWidth: Int!
+  logoHeight: Int!
+}
+
 input OutsideSplitRateInput {
   userId: UUID!
   splitRate: Decimal!
@@ -2336,6 +2367,7 @@ type Query {
   orderAcknowledgementsByOrderDetail(orderDetailId: UUID!): [OrderAcknowledgementResponse!]!
   order(id: UUID!): OrderResponse!
   orderSearch(searchTerm: String!, limit: Int! = 20): [OrderLiteResponse!]!
+  organization: OrganizationType @rolePermissionAccess
   preOpportunity(id: UUID!): PreOpportunityResponse!
   preOpportunitySearch(searchTerm: String!, limit: Int! = 20): [PreOpportunityLiteResponse!]!
   quote(id: UUID!): QuoteResponse!
