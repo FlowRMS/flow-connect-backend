@@ -22,39 +22,39 @@ class ConfirmedDifferentService:
 
     async def confirm_jobs_different(
         self,
-        job_id_1: uuid.UUID,
-        job_id_2: uuid.UUID,
+        source_job_id: uuid.UUID,
+        target_job_id: uuid.UUID,
         reason: str | None = None,
     ) -> ConfirmedDifferentJob:
-        job1 = await self.jobs_repository.get_by_id(job_id_1)
-        job2 = await self.jobs_repository.get_by_id(job_id_2)
+        source_job = await self.jobs_repository.get_by_id(source_job_id)
+        target_job = await self.jobs_repository.get_by_id(target_job_id)
 
-        if not job1 or not job2:
+        if not source_job or not target_job:
             raise ValueError("One or both jobs not found")
 
-        if await self.repository.is_confirmed_different(job_id_1, job_id_2):
+        if await self.repository.is_confirmed_different(source_job_id, target_job_id):
             raise ValueError("Jobs are already marked as different")
 
         return await self.repository.create(
-            job_id_1=job_id_1,
-            job_id_2=job_id_2,
+            job_id_1=source_job_id,
+            job_id_2=target_job_id,
             confirmed_by_id=self.auth_info.flow_user_id,
             reason=reason,
         )
 
     async def is_confirmed_different(
         self,
-        job_id_1: uuid.UUID,
-        job_id_2: uuid.UUID,
+        source_job_id: uuid.UUID,
+        target_job_id: uuid.UUID,
     ) -> bool:
-        return await self.repository.is_confirmed_different(job_id_1, job_id_2)
+        return await self.repository.is_confirmed_different(source_job_id, target_job_id)
 
     async def remove_confirmed_different(
         self,
-        job_id_1: uuid.UUID,
-        job_id_2: uuid.UUID,
+        source_job_id: uuid.UUID,
+        target_job_id: uuid.UUID,
     ) -> bool:
-        return await self.repository.delete(job_id_1, job_id_2)
+        return await self.repository.delete(source_job_id, target_job_id)
 
     async def get_confirmed_different_for_job(
         self,

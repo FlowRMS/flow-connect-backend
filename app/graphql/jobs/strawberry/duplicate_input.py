@@ -25,6 +25,6 @@ class MergeJobsInput:
 
 @strawberry.input
 class ConfirmDifferentInput:
-    job_id_1: UUID
-    job_id_2: UUID
+    source_job_id: UUID
+    target_job_id: UUID
     reason: str | None = strawberry.UNSET

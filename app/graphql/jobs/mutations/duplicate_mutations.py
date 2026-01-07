@@ -51,8 +51,8 @@ class DuplicateDetectionMutations:
             reason = input.reason
 
         _ = await confirmed_service.confirm_jobs_different(
-            job_id_1=input.job_id_1,
-            job_id_2=input.job_id_2,
+            source_job_id=input.source_job_id,
+            target_job_id=input.target_job_id,
             reason=reason,
         )
         return True
