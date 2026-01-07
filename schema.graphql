@@ -732,6 +732,16 @@ enum EmailStatus {
   BOUNCED
 }
 
+union EntityResponse = PreOpportunityResponse | QuoteResponse | OrderResponse | InvoiceResponse | CheckResponse
+
+enum EntitySourceType {
+  PRE_OPPORTUNITIES
+  QUOTES
+  ORDERS
+  INVOICES
+  CHECKS
+}
+
 enum EntityType {
   JOB
   TASK
@@ -2280,6 +2290,7 @@ type Query {
   check(id: UUID!): CheckResponse!
   checkSearch(searchTerm: String!, limit: Int! = 20): [CheckLiteResponse!]!
   checksByFactory(factoryId: UUID!): [CheckLiteResponse!]!
+  entity(sourceType: EntitySourceType!, entityId: UUID!): EntityResponse!
   findLandingPages(sourceType: LandingSourceType!, filters: [Filter!] = null, orderBy: [OrderBy!] = null, limit: Int = 10, offset: Int = 0): GenericLandingPage!
   relatedEntities(sourceType: LandingSourceType!, entityId: UUID!): RelatedEntitiesResponse!
   universalSearch(searchTerm: String!, limit: Int! = 20): [SearchResult!]!
