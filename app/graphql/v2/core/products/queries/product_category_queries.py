@@ -33,3 +33,16 @@ class ProductCategoryQueries:
                 grandparent_id=grandparent_id_value,
             )
         )
+
+    @strawberry.field
+    @inject
+    async def root_product_categories(
+        self,
+        service: Injected[ProductCategoryService],
+        factory_id: strawberry.Maybe[uuid.UUID] = None,
+    ) -> list[ProductCategoryResponse]:
+        """Get all Level 1 categories (no parent) - the top of the hierarchy."""
+        factory_id_value = factory_id.value if factory_id else None
+        return ProductCategoryResponse.from_orm_model_list(
+            await service.get_root_categories(factory_id=factory_id_value)
+        )

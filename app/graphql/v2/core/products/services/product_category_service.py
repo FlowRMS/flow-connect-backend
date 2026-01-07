@@ -40,17 +40,40 @@ class ProductCategoryService:
             grandparent_id=grandparent_id,
         )
 
+    async def get_children(self, parent_id: UUID) -> list[ProductCategory]:
+        """Get all categories that have this category as their parent."""
+        return await self.repository.get_children(parent_id)
+
+    async def get_root_categories(
+        self, factory_id: UUID | None = None
+    ) -> list[ProductCategory]:
+        """Get all categories with no parent (Level 1 / root categories)."""
+        return await self.repository.get_root_categories(factory_id)
+
+    async def _validate_hierarchy(self, category_input: ProductCategoryInput) -> None:
+        """Ensure grandparent is actually the parent's parent."""
+        if category_input.grandparent_id and not category_input.parent_id:
+            raise ValueError("Cannot set grandparent without a parent")
+
+        if category_input.parent_id and category_input.grandparent_id:
+            parent = await self.repository.get_by_id(category_input.parent_id)
+            if parent and parent.parent_id != category_input.grandparent_id:
+                raise ValueError("Grandparent must be the parent's parent")
+
     async def create(self, category_input: ProductCategoryInput) -> ProductCategory:
         if await self.repository.name_exists(
             category_input.factory_id, category_input.title
         ):
             raise NameAlreadyExistsError(category_input.title)
 
+        await self._validate_hierarchy(category_input)
+
         return await self.repository.create(category_input.to_orm_model())
 
     async def update(
         self, category_id: UUID, category_input: ProductCategoryInput
     ) -> ProductCategory:
+        await self._validate_hierarchy(category_input)
         category = category_input.to_orm_model()
         category.id = category_id
         return await self.repository.update(category)

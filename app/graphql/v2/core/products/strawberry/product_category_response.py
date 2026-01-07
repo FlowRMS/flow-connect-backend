@@ -46,3 +46,19 @@ class ProductCategoryResponse(ProductCategoryLiteResponse):
             return None
 
         return ProductCategoryLiteResponse.from_orm_model(self._instance.grandparent)
+
+    @strawberry.field
+    async def children(
+        self,
+        info: strawberry.Info,
+    ) -> list[ProductCategoryLiteResponse]:
+        """Get direct children of this category (where parent_id = self.id)."""
+        from app.graphql.v2.core.products.services.product_category_service import (
+            ProductCategoryService,
+        )
+
+        service: ProductCategoryService = info.context["injector"].get(
+            ProductCategoryService
+        )
+        children = await service.get_children(self.id)
+        return ProductCategoryLiteResponse.from_orm_model_list(children)

@@ -47,3 +47,24 @@ class ProductCategoryRepository(BaseRepository[ProductCategory]):
             )
         )
         return list(result.scalars().all())
+
+    async def get_children(self, parent_id: UUID) -> list[ProductCategory]:
+        """Get all categories where parent_id equals the given ID."""
+        stmt = select(ProductCategory).where(ProductCategory.parent_id == parent_id)
+        result = await self.session.execute(stmt)
+        return list(result.scalars().all())
+
+    async def get_root_categories(
+        self, factory_id: UUID | None = None
+    ) -> list[ProductCategory]:
+        """Get all categories with no parent (Level 1 / root categories)."""
+        stmt = select(ProductCategory).where(ProductCategory.parent_id.is_(None))
+        if factory_id is not None:
+            stmt = stmt.where(ProductCategory.factory_id == factory_id)
+        result = await self.session.execute(
+            stmt.options(
+                joinedload(ProductCategory.parent),
+                joinedload(ProductCategory.grandparent),
+            )
+        )
+        return list(result.scalars().all())
