@@ -211,6 +211,12 @@ class DocumentExecutorService:
 
             try:
                 inp = await converter.to_input(dto, mapping)
+                if not inp:
+                    conversion_errors[i] = (
+                        "Record could not be converted to input. Missing required fields?"
+                    )
+                    continue
+
                 valid_inputs.append(inp)
                 valid_indices.append(i)
             except Exception as e:
