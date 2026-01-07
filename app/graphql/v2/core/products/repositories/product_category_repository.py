@@ -3,7 +3,7 @@ from uuid import UUID
 from commons.db.v6.core.products.product_category import ProductCategory
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.orm import joinedload
+from sqlalchemy.orm import joinedload, selectinload
 
 from app.core.context_wrapper import ContextWrapper
 from app.graphql.base_repository import BaseRepository
@@ -44,9 +44,10 @@ class ProductCategoryRepository(BaseRepository[ProductCategory]):
             stmt.options(
                 joinedload(ProductCategory.parent),
                 joinedload(ProductCategory.grandparent),
+                selectinload(ProductCategory.children),
             )
         )
-        return list(result.scalars().all())
+        return list(result.scalars().unique().all())
 
     async def get_children(self, parent_id: UUID) -> list[ProductCategory]:
         """Get all categories where parent_id equals the given ID."""
@@ -65,6 +66,7 @@ class ProductCategoryRepository(BaseRepository[ProductCategory]):
             stmt.options(
                 joinedload(ProductCategory.parent),
                 joinedload(ProductCategory.grandparent),
+                selectinload(ProductCategory.children),
             )
         )
-        return list(result.scalars().all())
+        return list(result.scalars().unique().all())

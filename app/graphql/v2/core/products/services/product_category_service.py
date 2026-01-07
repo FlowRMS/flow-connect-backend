@@ -51,14 +51,31 @@ class ProductCategoryService:
         return await self.repository.get_root_categories(factory_id)
 
     async def _validate_hierarchy(self, category_input: ProductCategoryInput) -> None:
-        """Ensure grandparent is actually the parent's parent."""
+        """Validate hierarchy rules:
+        1. Cannot set grandparent without parent
+        2. Grandparent must be parent's parent
+        3. Maximum depth is 3 levels (cannot create child of Level 3 category)
+        """
         if category_input.grandparent_id and not category_input.parent_id:
             raise ValueError("Cannot set grandparent without a parent")
 
-        if category_input.parent_id and category_input.grandparent_id:
+        if category_input.parent_id:
             parent = await self.repository.get_by_id(category_input.parent_id)
-            if parent and parent.parent_id != category_input.grandparent_id:
-                raise ValueError("Grandparent must be the parent's parent")
+            if not parent:
+                raise ValueError(f"Parent category not found: {category_input.parent_id}")
+
+            # Validate grandparent consistency
+            if category_input.grandparent_id:
+                if parent.parent_id != category_input.grandparent_id:
+                    raise ValueError("Grandparent must be the parent's parent")
+
+            # Validate maximum depth of 3 levels
+            # If parent has a grandparent, it's Level 3 - cannot add children
+            if parent.grandparent_id is not None:
+                raise ValueError(
+                    "Maximum hierarchy depth is 3 levels. "
+                    "Cannot create child of a Level 3 category."
+                )
 
     async def create(self, category_input: ProductCategoryInput) -> ProductCategory:
         if await self.repository.name_exists(
