@@ -40,8 +40,7 @@ class O365EmailStrategy(EmailStrategy):
         user_id: UUID,
     ) -> O365UserToken | None:
         stmt = select(O365UserToken).where(
-            O365UserToken.user_id == user_id,
-            O365UserToken.is_active == True,  # noqa: E712
+            O365UserToken.user_id == user_id, O365UserToken.is_active.is_(True)
         )
         result = await session.execute(stmt)
         return result.scalar_one_or_none()

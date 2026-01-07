@@ -2,6 +2,7 @@ from uuid import UUID
 
 from commons.auth import AuthInfo
 from commons.db.v6.crm.companies.company_model import Company
+from sqlalchemy.orm import joinedload, lazyload
 
 from app.errors.common_errors import NotFoundError
 from app.graphql.companies.repositories.companies_repository import CompaniesRepository
@@ -20,9 +21,22 @@ class CompaniesService:
         self.repository = repository
         self.auth_info = auth_info
 
+    async def find_company_by_id(self, company_id: UUID) -> Company:
+        company = await self.repository.get_by_id(
+            company_id,
+            options=[
+                joinedload(Company.created_by),
+                lazyload("*"),
+            ],
+        )
+
+        if not company:
+            raise NotFoundError(str(company_id))
+        return company
+
     async def create_company(self, company_input: CompanyInput) -> Company:
-        company = company_input.to_orm_model()
-        return await self.repository.create(company)
+        company = await self.repository.create(company_input.to_orm_model())
+        return await self.find_company_by_id(company.id)
 
     async def delete_company(self, company_id: UUID | str) -> bool:
         if not await self.repository.exists(company_id):
@@ -59,7 +73,8 @@ class CompaniesService:
 
         company = company_input.to_orm_model()
         company.id = company_id
-        return await self.repository.update(company)
+        _ = await self.repository.update(company)
+        return await self.find_company_by_id(company_id)
 
     async def search_companies(
         self, search_term: str, limit: int = 20

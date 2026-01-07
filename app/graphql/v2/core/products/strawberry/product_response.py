@@ -24,7 +24,7 @@ class ProductLiteResponse(DTOMixin[Product]):
     id: UUID
     factory_part_number: str
     unit_price: Decimal
-    default_commission_rate: Decimal
+    default_commission_rate: Decimal | None
     published: bool
     approval_needed: bool | None
     description: str | None
@@ -64,25 +64,13 @@ class ProductLiteResponse(DTOMixin[Product]):
 @strawberry.type
 class ProductResponse(ProductLiteResponse):
     @strawberry.field
-    async def factory(self) -> FactoryLiteResponse:
-        return FactoryLiteResponse.from_orm_model(
-            await self._instance.awaitable_attrs.factory
-        )
+    def factory(self) -> FactoryLiteResponse:
+        return FactoryLiteResponse.from_orm_model(self._instance.factory)
 
     @strawberry.field
-    async def category(self) -> ProductCategoryResponse | None:
-        if self._instance.category is None:
-            return None
-
-        return ProductCategoryResponse.from_orm_model(
-            await self._instance.awaitable_attrs.category
-        )
+    def category(self) -> ProductCategoryResponse | None:
+        return ProductCategoryResponse.from_orm_model_optional(self._instance.category)
 
     @strawberry.field
-    async def uom(self) -> ProductUomResponse | None:
-        if self._instance.uom is None:
-            return None
-
-        return ProductUomResponse.from_orm_model(
-            await self._instance.awaitable_attrs.uom
-        )
+    def uom(self) -> ProductUomResponse | None:
+        return ProductUomResponse.from_orm_model_optional(self._instance.uom)

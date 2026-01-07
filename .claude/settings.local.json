@@ -38,7 +38,8 @@
       "mcp__plugin_playwright_playwright__browser_click",
       "Bash(python3:*)",
       "Bash(xargs:*)",
-      "Bash(git tag:*)"
+      "Bash(git tag:*)",
+      "Bash(mv:*)"
     ]
   },
   "enableAllProjectMcpServers": true,

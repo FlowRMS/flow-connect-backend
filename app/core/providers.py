@@ -9,7 +9,6 @@ from app.admin.config.admin_settings import AdminSettings
 from app.admin.providers import admin_providers
 from app.auth import auth_provider
 from app.core import s3_provider
-from app.core.config.auth_settings import AuthSettings
 from app.core.config.base_settings import get_settings
 from app.core.config.s3_settings import S3Settings
 from app.core.config.settings import Settings
@@ -34,7 +33,6 @@ modules: Iterable[Iterable[aioinject.Provider[Any]]] = [
 
 settings_classes: Iterable[type[BaseSettings]] = [
     Settings,
-    AuthSettings,
     O365Settings,
     GmailSettings,
     S3Settings,

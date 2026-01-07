@@ -23,3 +23,9 @@ class RbacRolePermissionResponse:
 class RbacGridResponse:
     resource: RbacResourceEnum
     roles: list[RbacRolePermissionResponse]
+
+
+@strawberry.type
+class RbacRoleSettingResponse:
+    role: RbacRoleEnum
+    commission: bool

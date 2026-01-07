@@ -1,9 +1,9 @@
 from datetime import date
 from decimal import Decimal
 
+from commons.db.v6.common.creation_type import CreationType
 from commons.db.v6.crm.pre_opportunities.pre_opportunity_model import PreOpportunity
 from commons.db.v6.crm.quotes import (
-    CreationType,
     PipelineStage,
     Quote,
     QuoteDetail,
@@ -21,6 +21,9 @@ class QuoteFactory:
         quote_number: str,
     ) -> Quote:
         return Quote(
+            inside_per_line_item=True,
+            outside_per_line_item=True,
+            end_user_per_line_item=False,
             quote_number=quote_number,
             entity_date=date.today(),
             sold_to_customer_id=pre_opportunity.sold_to_customer_id,
@@ -40,6 +43,9 @@ class QuoteFactory:
     @staticmethod
     def duplicate(source_quote: Quote, new_quote_number: str) -> Quote:
         return Quote(
+            inside_per_line_item=source_quote.inside_per_line_item,
+            outside_per_line_item=source_quote.outside_per_line_item,
+            end_user_per_line_item=source_quote.end_user_per_line_item,
             quote_number=new_quote_number,
             entity_date=date.today(),
             sold_to_customer_id=source_quote.sold_to_customer_id,
@@ -54,7 +60,6 @@ class QuoteFactory:
             blanket=source_quote.blanket,
             published=False,
             details=QuoteFactory._deep_copy_details(source_quote.details),
-            inside_reps=QuoteFactory._deep_copy_inside_reps(source_quote.inside_reps),
         )
 
     @staticmethod
@@ -105,27 +110,22 @@ class QuoteFactory:
                 lead_time=d.lead_time,
                 note=d.note,
                 status=QuoteDetailStatus.OPEN,
-                split_rates=[
+                outside_split_rates=[
                     QuoteSplitRate(
                         user_id=sr.user_id,
                         split_rate=sr.split_rate,
                         position=sr.position,
                     )
-                    for sr in d.split_rates
+                    for sr in d.outside_split_rates
+                ],
+                inside_split_rates=[
+                    QuoteInsideRep(
+                        user_id=ir.user_id,
+                        split_rate=ir.split_rate,
+                        position=ir.position,
+                    )
+                    for ir in d.inside_split_rates
                 ],
             )
             for d in details
-        ]
-
-    @staticmethod
-    def _deep_copy_inside_reps(
-        inside_reps: list[QuoteInsideRep],
-    ) -> list[QuoteInsideRep]:
-        return [
-            QuoteInsideRep(
-                user_id=rep.user_id,
-                split_rate=rep.split_rate,
-                position=rep.position,
-            )
-            for rep in inside_reps
         ]

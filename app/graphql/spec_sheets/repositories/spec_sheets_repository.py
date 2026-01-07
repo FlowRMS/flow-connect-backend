@@ -43,7 +43,7 @@ class SpecSheetsRepository(BaseRepository[SpecSheet]):
         stmt = select(SpecSheet).where(SpecSheet.factory_id == factory_id)
 
         if published_only:
-            stmt = stmt.where(SpecSheet.published == True)  # noqa: E712
+            stmt = stmt.where(SpecSheet.published.is_(True))
 
         result = await self.session.execute(stmt)
         return list(result.scalars().all())
@@ -91,7 +91,7 @@ class SpecSheetsRepository(BaseRepository[SpecSheet]):
 
         # Published filter
         if published_only:
-            stmt = stmt.where(SpecSheet.published == True)  # noqa: E712
+            stmt = stmt.where(SpecSheet.published.is_(True))
 
         stmt = stmt.limit(limit).order_by(SpecSheet.display_name)
 

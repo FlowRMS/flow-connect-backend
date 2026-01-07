@@ -14,12 +14,12 @@ class QuoteBalanceResponse(DTOMixin[QuoteBalance]):
     quantity: Decimal
     subtotal: Decimal
     total: Decimal
-    commission: Decimal
+    commission: Decimal | None
     discount: Decimal
     discount_rate: Decimal
-    commission_rate: Decimal
-    commission_discount: Decimal
-    commission_discount_rate: Decimal
+    commission_rate: Decimal | None
+    commission_discount: Decimal | None
+    commission_discount_rate: Decimal | None
 
     @classmethod
     def from_orm_model(cls, model: QuoteBalance) -> Self:

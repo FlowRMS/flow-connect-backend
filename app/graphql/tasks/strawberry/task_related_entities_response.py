@@ -5,7 +5,7 @@ import strawberry
 from app.graphql.checks.strawberry.check_response import CheckResponse
 from app.graphql.companies.strawberry.company_response import CompanyResponse
 from app.graphql.contacts.strawberry.contact_response import ContactResponse
-from app.graphql.invoices.strawberry.invoice_response import InvoiceResponse
+from app.graphql.invoices.strawberry.invoice_response import InvoiceLiteResponse
 from app.graphql.jobs.strawberry.job_response import JobType
 from app.graphql.notes.strawberry.note_response import NoteType
 from app.graphql.orders.strawberry.order_response import OrderResponse
@@ -29,7 +29,7 @@ class TaskRelatedEntitiesResponse:
     pre_opportunities: list[PreOpportunityLiteResponse]
     quotes: list[QuoteResponse]
     orders: list[OrderResponse]
-    invoices: list[InvoiceResponse]
+    invoices: list[InvoiceLiteResponse]
     checks: list[CheckResponse]
     factories: list[FactoryResponse]
     products: list[ProductResponse]

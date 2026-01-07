@@ -8,7 +8,10 @@ from app.graphql.v2.core.products.services.product_service import ProductService
 from app.graphql.v2.core.products.strawberry.product_category_response import (
     ProductCategoryLiteResponse,
 )
-from app.graphql.v2.core.products.strawberry.product_response import ProductResponse
+from app.graphql.v2.core.products.strawberry.product_response import (
+    ProductLiteResponse,
+    ProductResponse,
+)
 
 
 @strawberry.type
@@ -32,9 +35,9 @@ class ProductsQueries:
         product_category_ids: list[uuid.UUID] | None = None,
         factory_id: strawberry.Maybe[uuid.UUID] = None,
         limit: int = 20,
-    ) -> list[ProductResponse]:
+    ) -> list[ProductLiteResponse]:
         factory_id_value = factory_id.value if factory_id else None
-        return ProductResponse.from_orm_model_list(
+        return ProductLiteResponse.from_orm_model_list(
             await service.search_products(
                 search_term, factory_id_value, product_category_ids, limit
             )

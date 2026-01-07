@@ -40,7 +40,7 @@ class GmailEmailStrategy(EmailStrategy):
     ) -> GmailUserToken | None:
         stmt = select(GmailUserToken).where(
             GmailUserToken.user_id == user_id,
-            GmailUserToken.is_active == True,  # noqa: E712
+            GmailUserToken.is_active.is_(True),
         )
         result = await session.execute(stmt)
         return result.scalar_one_or_none()

@@ -2,8 +2,8 @@ from datetime import date
 from uuid import UUID
 
 import strawberry
+from commons.db.v6.common.creation_type import CreationType
 from commons.db.v6.crm.quotes import (
-    CreationType,
     PipelineStage,
     Quote,
     QuoteStatus,
@@ -11,7 +11,6 @@ from commons.db.v6.crm.quotes import (
 
 from app.core.strawberry.inputs import BaseInputGQL
 from app.graphql.quotes.strawberry.quote_detail_input import QuoteDetailInput
-from app.graphql.quotes.strawberry.quote_inside_rep_input import QuoteInsideRepInput
 
 
 @strawberry.input
@@ -24,6 +23,7 @@ class QuoteInput(BaseInputGQL[Quote]):
     details: list[QuoteDetailInput]
 
     id: UUID | None = strawberry.UNSET
+    job_id: UUID | None = strawberry.UNSET
     published: bool = strawberry.UNSET
     creation_type: CreationType = strawberry.UNSET
     bill_to_customer_id: UUID | None = strawberry.UNSET
@@ -34,10 +34,11 @@ class QuoteInput(BaseInputGQL[Quote]):
     revise_date: date | None = strawberry.UNSET
     accept_date: date | None = strawberry.UNSET
     blanket: bool = strawberry.UNSET
-    inside_reps: list[QuoteInsideRepInput] | None = strawberry.UNSET
+    inside_per_line_item: bool = True
+    outside_per_line_item: bool = True
+    end_user_per_line_item: bool = False
 
     def to_orm_model(self) -> Quote:
-        inside_reps_val = self.optional_field(self.inside_reps)
         published = self.published if self.published != strawberry.UNSET else False
         creation_type = (
             self.creation_type
@@ -47,9 +48,13 @@ class QuoteInput(BaseInputGQL[Quote]):
         blanket = self.blanket if self.blanket != strawberry.UNSET else False
 
         return Quote(
+            inside_per_line_item=self.inside_per_line_item,
+            outside_per_line_item=self.outside_per_line_item,
+            end_user_per_line_item=self.end_user_per_line_item,
             quote_number=self.quote_number,
             entity_date=self.entity_date,
             sold_to_customer_id=self.sold_to_customer_id,
+            job_id=self.optional_field(self.job_id),
             status=self.status,
             pipeline_stage=self.pipeline_stage,
             published=published,
@@ -63,9 +68,4 @@ class QuoteInput(BaseInputGQL[Quote]):
             accept_date=self.optional_field(self.accept_date),
             blanket=blanket,
             details=[detail.to_orm_model() for detail in self.details],
-            inside_reps=(
-                [rep.to_orm_model() for rep in inside_reps_val]
-                if inside_reps_val
-                else []
-            ),
         )

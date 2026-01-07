@@ -6,6 +6,10 @@ import strawberry
 from commons.db.v6.crm.quotes import QuoteDetail, QuoteDetailStatus
 
 from app.core.db.adapters.dto import DTOMixin
+from app.graphql.orders.strawberry.order_lite_response import OrderLiteResponse
+from app.graphql.quotes.strawberry.quote_inside_rep_response import (
+    QuoteInsideRepResponse,
+)
 from app.graphql.quotes.strawberry.quote_split_rate_response import (
     QuoteSplitRateResponse,
 )
@@ -25,11 +29,11 @@ class QuoteDetailResponse(DTOMixin[QuoteDetail]):
     unit_price: Decimal
     subtotal: Decimal
     total: Decimal
-    total_line_commission: Decimal
-    commission_rate: Decimal
-    commission: Decimal
-    commission_discount_rate: Decimal
-    commission_discount: Decimal
+    total_line_commission: Decimal | None
+    commission_rate: Decimal | None
+    commission: Decimal | None
+    commission_discount_rate: Decimal | None
+    commission_discount: Decimal | None
     discount_rate: Decimal
     discount: Decimal
     product_id: UUID | None
@@ -70,23 +74,25 @@ class QuoteDetailResponse(DTOMixin[QuoteDetail]):
         )
 
     @strawberry.field
-    def split_rates(self) -> list[QuoteSplitRateResponse]:
-        return QuoteSplitRateResponse.from_orm_model_list(self._instance.split_rates)
-
-    @strawberry.field
-    async def product(self) -> ProductLiteResponse | None:
-        if not self._instance.product_id:
-            return None
-
-        return ProductLiteResponse.from_orm_model(
-            await self._instance.awaitable_attrs.product
+    def outside_split_rates(self) -> list[QuoteSplitRateResponse]:
+        return QuoteSplitRateResponse.from_orm_model_list(
+            self._instance.outside_split_rates
         )
 
     @strawberry.field
-    async def uom(self) -> ProductUomResponse | None:
-        if not self._instance.uom_id:
-            return None
-
-        return ProductUomResponse.from_orm_model(
-            await self._instance.awaitable_attrs.uom
+    def inside_split_rates(self) -> list[QuoteInsideRepResponse]:
+        return QuoteInsideRepResponse.from_orm_model_list(
+            self._instance.inside_split_rates
         )
+
+    @strawberry.field
+    def product(self) -> ProductLiteResponse | None:
+        return ProductLiteResponse.from_orm_model_optional(self._instance.product)
+
+    @strawberry.field
+    def uom(self) -> ProductUomResponse | None:
+        return ProductUomResponse.from_orm_model_optional(self._instance.uom)
+
+    @strawberry.field
+    def order(self) -> OrderLiteResponse | None:
+        return OrderLiteResponse.from_orm_model_optional(self._instance.order)

@@ -3,7 +3,7 @@ from uuid import UUID
 from commons.db.v6.core.products.product_cpn import ProductCpn
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.orm import joinedload
+from sqlalchemy.orm import joinedload, lazyload
 
 from app.core.context_wrapper import ContextWrapper
 from app.graphql.base_repository import BaseRepository
@@ -37,6 +37,20 @@ class ProductCpnRepository(BaseRepository[ProductCpn]):
                 joinedload(ProductCpn.customer),
                 joinedload(ProductCpn.product),
             )
+        )
+        result = await self.session.execute(stmt)
+        return result.unique().scalar_one_or_none()
+
+    async def find_cpn_by_product_and_customer(
+        self, product_id: UUID, customer_id: UUID
+    ) -> ProductCpn | None:
+        stmt = (
+            select(ProductCpn)
+            .where(
+                ProductCpn.product_id == product_id,
+                ProductCpn.customer_id == customer_id,
+            )
+            .options(lazyload("*"))
         )
         result = await self.session.execute(stmt)
         return result.unique().scalar_one_or_none()

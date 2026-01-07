@@ -23,6 +23,13 @@ class ProductCpnService:
     async def list_by_product_id(self, product_id: UUID) -> list[ProductCpn]:
         return await self.repository.list_by_product_id(product_id)
 
+    async def find_cpn_by_product_and_customer(
+        self, product_id: UUID, customer_id: UUID
+    ) -> ProductCpn | None:
+        return await self.repository.find_cpn_by_product_and_customer(
+            product_id, customer_id
+        )
+
     async def create(self, cpn_input: ProductCpnInput) -> ProductCpn:
         cpn = await self.repository.create(cpn_input.to_orm_model())
         return await self.get_by_id(cpn.id)

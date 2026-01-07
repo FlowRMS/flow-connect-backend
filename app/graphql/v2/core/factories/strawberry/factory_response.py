@@ -25,8 +25,8 @@ class FactoryLiteResponse(DTOMixin[Factory]):
     logo_id: UUID | None
     lead_time: int | None
     payment_terms: int | None
-    base_commission_rate: Decimal
-    commission_discount_rate: Decimal
+    base_commission_rate: Decimal | None
+    commission_discount_rate: Decimal | None
     overall_discount_rate: Decimal
     additional_information: str | None
     freight_terms: str | None
@@ -58,11 +58,9 @@ class FactoryLiteResponse(DTOMixin[Factory]):
 @strawberry.type
 class FactoryResponse(FactoryLiteResponse):
     @strawberry.field
-    async def created_by(self) -> UserResponse:
-        return UserResponse.from_orm_model(
-            await self._instance.awaitable_attrs.created_by
-        )
+    def created_by(self) -> UserResponse:
+        return UserResponse.from_orm_model(self._instance.created_by)
 
     @strawberry.field
-    async def split_rates(self) -> list[FactorySplitRateResponse]:
+    def split_rates(self) -> list[FactorySplitRateResponse]:
         return FactorySplitRateResponse.from_orm_model_list(self._instance.split_rates)

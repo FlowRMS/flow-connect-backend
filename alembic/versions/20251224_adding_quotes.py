@@ -156,35 +156,6 @@ def upgrade() -> None:
         schema="pycrm",
     )
     _ = op.create_table(
-        "quote_inside_reps",
-        sa.Column("quote_id", sa.UUID(), nullable=False),
-        sa.Column("user_id", sa.UUID(), nullable=False),
-        sa.Column(
-            "split_rate",
-            sa.Numeric(precision=18, scale=6),
-            nullable=False,
-            server_default="0",
-        ),
-        sa.Column("position", sa.Integer(), nullable=False, server_default="0"),
-        sa.Column("id", sa.UUID(), nullable=False),
-        sa.Column(
-            "created_at",
-            postgresql.TIMESTAMP(timezone=True),
-            server_default=sa.text("now()"),
-            nullable=False,
-        ),
-        sa.ForeignKeyConstraint(
-            ["quote_id"],
-            ["pycrm.quotes.id"],
-        ),
-        sa.ForeignKeyConstraint(
-            ["user_id"],
-            ["pyuser.users.id"],
-        ),
-        sa.PrimaryKeyConstraint("id"),
-        schema="pycrm",
-    )
-    _ = op.create_table(
         "quote_details",
         sa.Column("quote_id", sa.UUID(), nullable=False),
         sa.Column("item_number", sa.Integer(), nullable=False),
@@ -293,6 +264,35 @@ def upgrade() -> None:
         sa.ForeignKeyConstraint(
             ["uom_id"],
             ["pycore.product_uoms.id"],
+        ),
+        sa.PrimaryKeyConstraint("id"),
+        schema="pycrm",
+    )
+    _ = op.create_table(
+        "quote_inside_reps",
+        sa.Column("quote_detail_id", sa.UUID(), nullable=False),
+        sa.Column("user_id", sa.UUID(), nullable=False),
+        sa.Column(
+            "split_rate",
+            sa.Numeric(precision=18, scale=6),
+            nullable=False,
+            server_default="0",
+        ),
+        sa.Column("position", sa.Integer(), nullable=False, server_default="0"),
+        sa.Column("id", sa.UUID(), nullable=False),
+        sa.Column(
+            "created_at",
+            postgresql.TIMESTAMP(timezone=True),
+            server_default=sa.text("now()"),
+            nullable=False,
+        ),
+        sa.ForeignKeyConstraint(
+            ["quote_detail_id"],
+            ["pycrm.quote_details.id"],
+        ),
+        sa.ForeignKeyConstraint(
+            ["user_id"],
+            ["pyuser.users.id"],
         ),
         sa.PrimaryKeyConstraint("id"),
         schema="pycrm",

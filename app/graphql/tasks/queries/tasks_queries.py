@@ -12,7 +12,7 @@ from app.graphql.contacts.services.contacts_service import ContactsService
 from app.graphql.contacts.strawberry.contact_response import ContactResponse
 from app.graphql.inject import inject
 from app.graphql.invoices.services.invoice_service import InvoiceService
-from app.graphql.invoices.strawberry.invoice_response import InvoiceResponse
+from app.graphql.invoices.strawberry.invoice_response import InvoiceLiteResponse
 from app.graphql.jobs.services.jobs_service import JobsService
 from app.graphql.jobs.strawberry.job_response import JobType
 from app.graphql.notes.services.notes_service import NotesService
@@ -142,7 +142,7 @@ class TasksQueries:
             ),
             quotes=QuoteResponse.from_orm_model_list(quotes),
             orders=OrderResponse.from_orm_model_list(orders),
-            invoices=InvoiceResponse.from_orm_model_list(invoices),
+            invoices=InvoiceLiteResponse.from_orm_model_list(invoices),
             checks=CheckResponse.from_orm_model_list(checks),
             factories=FactoryResponse.from_orm_model_list(factories),
             products=ProductResponse.from_orm_model_list(products),

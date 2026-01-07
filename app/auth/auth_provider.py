@@ -8,29 +8,18 @@ from commons.auth import (
     AuthInfoService,
     AuthProviderEnum,
     AuthService,
-    KeycloakService,
-    KeycloakStrategy,
     WorkOSService,
     WorkOSStrategy,
 )
 
 from app.auth.workos_auth_service import WorkOSAuthService
-from app.core.config.auth_settings import AuthSettings
 from app.core.config.workos_settings import WorkOSSettings
 from app.core.context_wrapper import ContextWrapper
 
 
 def create_auth_service_singleton(
-    auth_settings: AuthSettings,
     workos_settings: WorkOSSettings,
 ) -> AuthService:
-    keycloak_strategy = KeycloakStrategy(
-        KeycloakService(
-            auth_settings.auth_url,
-            auth_settings.client_id,
-            auth_settings.client_secret,
-        )
-    )
     workos_strategy = WorkOSStrategy(
         WorkOSService(
             api_key=workos_settings.workos_api_key,
@@ -39,7 +28,6 @@ def create_auth_service_singleton(
     )
     return AuthService(
         strategies={
-            AuthProviderEnum.KEYCLOAK: keycloak_strategy,
             AuthProviderEnum.WORKOS: workos_strategy,
         }
     )

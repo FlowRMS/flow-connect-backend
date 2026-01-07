@@ -16,7 +16,7 @@ class CustomerSplitRateResponse(DTOMixin[CustomerSplitRate]):
     customer_id: UUID
     rep_type: RepTypeEnum
     position: int
-    split_rate: Decimal
+    split_rate: Decimal | None
 
     @classmethod
     def from_orm_model(cls, model: CustomerSplitRate) -> Self:

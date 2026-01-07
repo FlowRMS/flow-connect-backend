@@ -3,14 +3,21 @@ from commons.graphql.filter_types import Filter
 from commons.graphql.order_by_types import OrderBy
 
 from app.core.context_wrapper import ContextWrapper
+from app.graphql.adjustments.repositories.adjustments_repository import (
+    AdjustmentsRepository,
+)
 from app.graphql.campaigns.repositories.campaigns_repository import CampaignsRepository
+from app.graphql.checks.repositories.checks_repository import ChecksRepository
 from app.graphql.common.landing_repository_protocol import LandingRepositoryProtocol
 from app.graphql.common.landing_source_type import LandingSourceType
 from app.graphql.common.paginated_landing_page import PaginatedLandingPageInterface
 from app.graphql.companies.repositories.companies_repository import CompaniesRepository
 from app.graphql.contacts.repositories.contacts_repository import ContactsRepository
+from app.graphql.credits.repositories.credits_repository import CreditsRepository
+from app.graphql.invoices.repositories.invoices_repository import InvoicesRepository
 from app.graphql.jobs.repositories.jobs_repository import JobsRepository
 from app.graphql.notes.repositories.notes_repository import NotesRepository
+from app.graphql.orders.repositories.orders_repository import OrdersRepository
 from app.graphql.pre_opportunities.repositories.pre_opportunities_repository import (
     PreOpportunitiesRepository,
 )
@@ -25,6 +32,7 @@ from app.graphql.v2.core.factories.repositories.factories_repository import (
 from app.graphql.v2.core.products.repositories.products_repository import (
     ProductsRepository,
 )
+from app.graphql.v2.files.repositories.file_repository import FileRepository
 from app.graphql.v2.rbac.services.rbac_filter_service import RbacFilterService
 
 
@@ -43,6 +51,12 @@ class LandingPageService:
         factories_repository: FactoriesRepository,
         products_repository: ProductsRepository,
         quotes_repository: QuotesRepository,
+        orders_repository: OrdersRepository,
+        file_repository: FileRepository,
+        invoices_repository: InvoicesRepository,
+        credits_repository: CreditsRepository,
+        adjustments_repository: AdjustmentsRepository,
+        checks_repository: ChecksRepository,
         rbac_filter_service: RbacFilterService,
     ) -> None:
         super().__init__()
@@ -60,6 +74,12 @@ class LandingPageService:
             LandingSourceType.FACTORIES: factories_repository,
             LandingSourceType.PRODUCTS: products_repository,
             LandingSourceType.QUOTES: quotes_repository,
+            LandingSourceType.ORDERS: orders_repository,
+            LandingSourceType.FILES: file_repository,
+            LandingSourceType.INVOICES: invoices_repository,
+            LandingSourceType.CREDITS: credits_repository,
+            LandingSourceType.ADJUSTMENTS: adjustments_repository,
+            LandingSourceType.CHECKS: checks_repository,
         }
 
     async def find_landing_pages(

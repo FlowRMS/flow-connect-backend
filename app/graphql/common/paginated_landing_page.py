@@ -9,8 +9,14 @@ from commons.graphql.pagination import get_pagination_window as _get_pagination_
 from sqlalchemy import Select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.graphql.adjustments.strawberry.adjustment_landing_page_response import (
+    AdjustmentLandingPageResponse,
+)
 from app.graphql.campaigns.strawberry.campaign_landing_page_response import (
     CampaignLandingPageResponse,
+)
+from app.graphql.checks.strawberry.check_landing_page_response import (
+    CheckLandingPageResponse,
 )
 from app.graphql.companies.strawberry.company_landing_page_response import (
     CompanyLandingPageResponse,
@@ -18,9 +24,18 @@ from app.graphql.companies.strawberry.company_landing_page_response import (
 from app.graphql.contacts.strawberry.contact_landing_page_response import (
     ContactLandingPageResponse,
 )
+from app.graphql.credits.strawberry.credit_landing_page_response import (
+    CreditLandingPageResponse,
+)
+from app.graphql.invoices.strawberry.invoice_landing_page_response import (
+    InvoiceLandingPageResponse,
+)
 from app.graphql.jobs.strawberry.job_landing_page_response import JobLandingPageResponse
 from app.graphql.notes.strawberry.note_landing_page_response import (
     NoteLandingPageResponse,
+)
+from app.graphql.orders.strawberry.order_landing_page_response import (
+    OrderLandingPageResponse,
 )
 from app.graphql.pre_opportunities.strawberry.pre_opportunity_landing_page_response import (
     PreOpportunityLandingPageResponse,
@@ -40,6 +55,9 @@ from app.graphql.v2.core.factories.strawberry.factory_landing_page_response impo
 from app.graphql.v2.core.products.strawberry.product_landing_page_response import (
     ProductLandingPageResponse,
 )
+from app.graphql.v2.files.strawberry.file_landing_page_response import (
+    FileLandingPageResponse,
+)
 
 LandingRecord = strawberry.union(
     name="LandingRecord",
@@ -55,6 +73,12 @@ LandingRecord = strawberry.union(
         FactoryLandingPageResponse,
         ProductLandingPageResponse,
         QuoteLandingPageResponse,
+        OrderLandingPageResponse,
+        FileLandingPageResponse,
+        InvoiceLandingPageResponse,
+        CreditLandingPageResponse,
+        AdjustmentLandingPageResponse,
+        CheckLandingPageResponse,
     ],
 )
 

@@ -2,8 +2,9 @@ from uuid import UUID
 
 from commons.auth import AuthInfo
 from commons.db.v6.core.factories.factory import Factory
+from commons.db.v6.core.factories.factory_split_rate import FactorySplitRate
 from commons.db.v6.crm.links.entity_type import EntityType
-from sqlalchemy.orm import joinedload
+from sqlalchemy.orm import joinedload, lazyload
 
 from app.errors.common_errors import NotFoundError
 from app.graphql.v2.core.factories.repositories.factories_repository import (
@@ -24,19 +25,27 @@ class FactoryService:
 
     async def get_by_id(self, factory_id: UUID) -> Factory:
         factory = await self.repository.get_by_id(
-            factory_id, options=[joinedload(Factory.split_rates)]
+            factory_id,
+            options=[
+                joinedload(Factory.split_rates),
+                joinedload(Factory.split_rates).joinedload(FactorySplitRate.user),
+                joinedload(Factory.created_by),
+                lazyload("*"),
+            ],
         )
         if not factory:
             raise NotFoundError(f"Factory with id {factory_id} not found")
         return factory
 
     async def create(self, factory_input: FactoryInput) -> Factory:
-        return await self.repository.create(factory_input.to_orm_model())
+        factory = await self.repository.create(factory_input.to_orm_model())
+        return await self.get_by_id(factory.id)
 
     async def update(self, factory_id: UUID, factory_input: FactoryInput) -> Factory:
         factory = factory_input.to_orm_model()
         factory.id = factory_id
-        return await self.repository.update(factory)
+        _ = await self.repository.update(factory)
+        return await self.get_by_id(factory_id)
 
     async def delete(self, factory_id: UUID) -> bool:
         if not await self.repository.exists(factory_id):

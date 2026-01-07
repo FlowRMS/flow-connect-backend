@@ -11,15 +11,19 @@ from commons.db.v6.crm.quotes import (
     QuoteInsideRep,
     QuoteSplitRate,
 )
-from sqlalchemy import Select, func, literal, or_, select
+from sqlalchemy import Select, func, literal, or_, select, update
 from sqlalchemy.dialects.postgresql import ARRAY, array
 from sqlalchemy.dialects.postgresql import UUID as PG_UUID
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.orm import lazyload
+from sqlalchemy.orm import joinedload, lazyload
 
 from app.core.context_wrapper import ContextWrapper
+from app.core.exceptions import NotFoundError
 from app.core.processors import ProcessorExecutor
 from app.graphql.base_repository import BaseRepository
+from app.graphql.quotes.processors.default_rep_split_processor import (
+    DefaultRepSplitProcessor,
+)
 from app.graphql.quotes.processors.validate_rep_split_processor import (
     ValidateRepSplitProcessor,
 )
@@ -46,6 +50,7 @@ class QuotesRepository(BaseRepository[Quote]):
         balance_repository: QuoteBalanceRepository,
         rbac_filter_service: RbacFilterService,
         processor_executor: ProcessorExecutor,
+        default_rep_split_processor: DefaultRepSplitProcessor,
         validate_rep_split_processor: ValidateRepSplitProcessor,
     ) -> None:
         super().__init__(
@@ -54,7 +59,10 @@ class QuotesRepository(BaseRepository[Quote]):
             Quote,
             rbac_filter_service,
             processor_executor,
-            processor_executor_classes=[validate_rep_split_processor],
+            processor_executor_classes=[
+                default_rep_split_processor,
+                validate_rep_split_processor,
+            ],
         )
         self.balance_repository = balance_repository
 
@@ -67,10 +75,11 @@ class QuotesRepository(BaseRepository[Quote]):
 
         inside_rep_user_ids_subq = (
             select(
-                QuoteInsideRep.quote_id,
+                QuoteDetail.quote_id,
                 func.array_agg(QuoteInsideRep.user_id).label("inside_rep_user_ids"),
             )
-            .group_by(QuoteInsideRep.quote_id)
+            .join(QuoteInsideRep, QuoteInsideRep.quote_detail_id == QuoteDetail.id)
+            .group_by(QuoteDetail.quote_id)
             .subquery()
         )
 
@@ -124,18 +133,41 @@ class QuotesRepository(BaseRepository[Quote]):
             )
         )
 
+    async def find_quote_by_id(self, quote_id: UUID) -> Quote:
+        quote = await self.get_by_id(
+            quote_id,
+            options=[
+                joinedload(Quote.details),
+                joinedload(Quote.details).joinedload(QuoteDetail.product),
+                joinedload(Quote.details).joinedload(QuoteDetail.outside_split_rates),
+                joinedload(Quote.details).joinedload(QuoteDetail.inside_split_rates),
+                joinedload(Quote.details).joinedload(QuoteDetail.uom),
+                joinedload(Quote.details).joinedload(QuoteDetail.order),
+                joinedload(Quote.balance),
+                joinedload(Quote.sold_to_customer),
+                joinedload(Quote.bill_to_customer),
+                joinedload(Quote.created_by),
+                joinedload(Quote.job),
+                lazyload("*"),
+            ],
+        )
+        if not quote:
+            raise NotFoundError(str(quote_id))
+        return quote
+
     async def create_with_balance(self, quote: Quote) -> Quote:
         balance = await self.balance_repository.create_from_details(quote.details)
         quote.balance_id = balance.id
-        return await self.create(quote)
+        _ = await self.create(quote)
+        return await self.find_quote_by_id(quote.id)
 
     async def update_with_balance(self, quote: Quote) -> Quote:
         updated = await self.update(quote)
         _ = await self.balance_repository.recalculate_balance(
             updated.balance_id, updated.details
         )
-        await self.session.refresh(updated)
-        return updated
+        await self.session.flush()
+        return await self.find_quote_by_id(updated.id)
 
     async def quote_number_exists(self, quote_number: str) -> bool:
         result = await self.session.execute(
@@ -181,3 +213,13 @@ class QuotesRepository(BaseRepository[Quote]):
         )
         result = await self.session.execute(stmt)
         return list(result.scalars().all())
+
+    async def update_detail_order_ids(
+        self, detail_ids: list[UUID], order_id: UUID
+    ) -> None:
+        stmt = (
+            update(QuoteDetail)
+            .where(QuoteDetail.id.in_(detail_ids))
+            .values(order_id=order_id)
+        )
+        _ = await self.session.execute(stmt)

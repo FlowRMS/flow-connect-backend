@@ -13,7 +13,7 @@ from app.graphql.v2.core.products.strawberry.product_response import ProductLite
 
 
 @strawberry.type
-class ProductCpnResponse(DTOMixin[ProductCpn]):
+class ProductCpnLiteResponse(DTOMixin[ProductCpn]):
     _instance: strawberry.Private[ProductCpn]
     id: UUID
     product_id: UUID
@@ -34,6 +34,9 @@ class ProductCpnResponse(DTOMixin[ProductCpn]):
             commission_rate=model.commission_rate,
         )
 
+
+@strawberry.type
+class ProductCpnResponse(ProductCpnLiteResponse):
     @strawberry.field
     async def product(self) -> ProductLiteResponse:
         return ProductLiteResponse.from_orm_model(

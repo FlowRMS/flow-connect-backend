@@ -5,6 +5,7 @@ import strawberry
 from commons.db.v6.crm.quotes import QuoteDetail, QuoteDetailStatus
 
 from app.core.strawberry.inputs import BaseInputGQL
+from app.graphql.quotes.strawberry.quote_inside_rep_input import QuoteInsideRepInput
 from app.graphql.quotes.strawberry.quote_split_rate_input import QuoteSplitRateInput
 
 
@@ -28,7 +29,8 @@ class QuoteDetailInput(BaseInputGQL[QuoteDetail]):
     discount_rate: Decimal = Decimal("0")
     commission_rate: Decimal = Decimal("0")
     commission_discount_rate: Decimal = Decimal("0")
-    split_rates: list[QuoteSplitRateInput] | None = None
+    outside_split_rates: list[QuoteSplitRateInput] | None = None
+    inside_split_rates: list[QuoteInsideRepInput] | None = None
 
     def to_orm_model(self) -> QuoteDetail:
         subtotal = self.quantity * self.unit_price
@@ -63,9 +65,14 @@ class QuoteDetailInput(BaseInputGQL[QuoteDetail]):
             lead_time=self.lead_time,
             note=self.note,
             status=self.status,
-            split_rates=(
-                [sr.to_orm_model() for sr in self.split_rates]
-                if self.split_rates
+            outside_split_rates=(
+                [sr.to_orm_model() for sr in self.outside_split_rates]
+                if self.outside_split_rates
+                else []
+            ),
+            inside_split_rates=(
+                [ir.to_orm_model() for ir in self.inside_split_rates]
+                if self.inside_split_rates
                 else []
             ),
         )

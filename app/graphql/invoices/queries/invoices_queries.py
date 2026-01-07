@@ -1,14 +1,28 @@
+from datetime import date
+from uuid import UUID
+
 import strawberry
 from aioinject import Injected
 
 from app.graphql.inject import inject
 from app.graphql.invoices.services.invoice_service import InvoiceService
-from app.graphql.invoices.strawberry.invoice_response import InvoiceResponse
+from app.graphql.invoices.strawberry.invoice_response import (
+    InvoiceLiteResponse,
+    InvoiceResponse,
+)
 
 
 @strawberry.type
 class InvoicesQueries:
-    """GraphQL queries for Invoices entity."""
+    @strawberry.field
+    @inject
+    async def invoice(
+        self,
+        service: Injected[InvoiceService],
+        id: UUID,
+    ) -> InvoiceResponse:
+        invoice = await service.find_invoice_by_id(id)
+        return InvoiceResponse.from_orm_model(invoice)
 
     @strawberry.field
     @inject
@@ -17,17 +31,34 @@ class InvoicesQueries:
         service: Injected[InvoiceService],
         search_term: str,
         limit: int = 20,
-    ) -> list[InvoiceResponse]:
-        """
-        Search invoices by invoice number.
+        open_only: bool = False,
+        unlocked_only: bool = False,
+    ) -> list[InvoiceLiteResponse]:
+        return InvoiceLiteResponse.from_orm_model_list(
+            await service.search_invoices(
+                search_term, limit, open_only=open_only, unlocked_only=unlocked_only
+            )
+        )
 
-        Args:
-            search_term: The search term to match against invoice number
-            limit: Maximum number of invoices to return (default: 20)
+    @strawberry.field
+    @inject
+    async def search_open_invoices(
+        self,
+        service: Injected[InvoiceService],
+        factory_id: UUID,
+        start_from: date,
+    ) -> list[InvoiceLiteResponse]:
+        return InvoiceLiteResponse.from_orm_model_list(
+            await service.search_open_invoices(factory_id, start_from)
+        )
 
-        Returns:
-            List of InvoiceResponse objects matching the search criteria
-        """
-        return InvoiceResponse.from_orm_model_list(
-            await service.search_invoices(search_term, limit)
+    @strawberry.field
+    @inject
+    async def invoices_by_order_id(
+        self,
+        service: Injected[InvoiceService],
+        order_id: UUID,
+    ) -> list[InvoiceLiteResponse]:
+        return InvoiceLiteResponse.from_orm_model_list(
+            await service.find_invoices_by_order_id(order_id)
         )
