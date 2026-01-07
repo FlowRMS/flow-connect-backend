@@ -332,7 +332,7 @@ type CompanyLandingPage implements LandingPageInterfaceBase {
   createdBy: String!
   userIds: [UUID!]!
   name: String!
-  companySourceType: String!
+  companySourceType: CompanyType!
   website: String
   phone: String
   tags: [String!]
