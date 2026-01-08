@@ -65,12 +65,6 @@ class ProductCategoryRepository(BaseRepository[ProductCategory]):
         )
         return list(result.scalars().unique().all())
 
-    async def get_children(self, parent_id: UUID) -> list[ProductCategory]:
-        """Get all categories where parent_id equals the given ID."""
-        stmt = select(ProductCategory).where(ProductCategory.parent_id == parent_id)
-        result = await self.session.execute(stmt)
-        return list(result.scalars().all())
-
     async def get_root_categories(
         self, factory_id: UUID | None = None
     ) -> list[ProductCategory]:

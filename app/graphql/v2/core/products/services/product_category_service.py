@@ -40,10 +40,6 @@ class ProductCategoryService:
             grandparent_id=grandparent_id,
         )
 
-    async def get_children(self, parent_id: UUID) -> list[ProductCategory]:
-        """Get all categories that have this category as their parent."""
-        return await self.repository.get_children(parent_id)
-
     async def get_root_categories(
         self, factory_id: UUID | None = None
     ) -> list[ProductCategory]:
