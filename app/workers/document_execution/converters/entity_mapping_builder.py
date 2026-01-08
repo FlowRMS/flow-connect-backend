@@ -71,6 +71,10 @@ class EntityMappingBuilder:
                 mapping.order_id = entity_id
             case EntityPendingType.INVOICES:
                 mapping.invoice_id = entity_id
+            case EntityPendingType.CREDITS:
+                mapping.credit_id = entity_id
+            case EntityPendingType.ADJUSTMENTS:
+                mapping.adjustment_id = entity_id
             case EntityPendingType.PRODUCTS:
                 if pe.flow_index_detail is not None:
                     mapping.products[pe.flow_index_detail] = entity_id
@@ -94,6 +98,10 @@ class EntityMappingBuilder:
                 existing.order_id = source.order_id
             if source.invoice_id:
                 existing.invoice_id = source.invoice_id
+            if source.credit_id:
+                existing.credit_id = source.credit_id
+            if source.adjustment_id:
+                existing.adjustment_id = source.adjustment_id
             existing.products.update(source.products)
             existing.end_users.update(source.end_users)
             existing.skipped_product_indices.update(source.skipped_product_indices)

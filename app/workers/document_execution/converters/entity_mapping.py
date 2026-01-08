@@ -9,6 +9,8 @@ class EntityMapping:
     bill_to_customer_id: UUID | None = None
     order_id: UUID | None = None
     invoice_id: UUID | None = None
+    credit_id: UUID | None = None
+    adjustment_id: UUID | None = None
     products: dict[int, UUID] = field(default_factory=dict)
     end_users: dict[int, UUID] = field(default_factory=dict)
     skipped_product_indices: set[int] = field(default_factory=set)
