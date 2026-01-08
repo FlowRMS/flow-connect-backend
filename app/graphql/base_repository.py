@@ -276,17 +276,28 @@ class BaseRepository(Generic[T]):
         return result.scalar_one()
 
     async def bulk_create(self, entities: list[T]) -> list[T]:
-        """
-        Create multiple entities in bulk.
+        if not entities:
+            return []
 
-        Args:
-            entities: List of entities to create
+        for entity in entities:
+            if hasattr(entity, "created_by_id"):
+                setattr(entity, "created_by_id", self.context.auth_info.flow_user_id)
 
-        Returns:
-            List of created entities
-        """
+            if hasattr(entity, "created_at"):
+                setattr(entity, "created_at", pendulum.now())
+
+            user_ids = self.compute_user_ids(entity)
+            if user_ids is not None and hasattr(entity, "user_ids"):
+                setattr(entity, "user_ids", user_ids)
+
+            await self._run_processors(RepositoryEvent.PRE_CREATE, entity)
+
         self.session.add_all(entities)
         await self.session.flush()
+
+        for entity in entities:
+            await self._run_processors(RepositoryEvent.POST_CREATE, entity)
+
         return entities
 
     async def find_by_entity(self, entity_type: EntityType, entity_id: UUID) -> list[T]:

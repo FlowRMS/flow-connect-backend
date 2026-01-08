@@ -1,13 +1,13 @@
 from decimal import Decimal
-from typing import override
+from typing import Any, override
 from uuid import UUID
 
-from commons.graphql.models.enums.common_enums import CreationTypeEnum
 from commons.db.v6.ai.documents.enums.entity_type import DocumentEntityType
 from commons.db.v6.core.products.product import Product
 from commons.db.v6.core.products.product_uom import ProductUom
 from commons.dtos.common.dto_loader_service import DTOLoaderService
 from commons.dtos.core.product_dto import ProductDTO
+from commons.graphql.models.enums.common_enums import CreationTypeEnum
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -17,14 +17,14 @@ from app.graphql.v2.core.products.strawberry.product_cpn_input import (
 )
 from app.graphql.v2.core.products.strawberry.product_input import ProductInput
 
-from .base import BaseEntityConverter
+from .base import BaseEntityConverter, BulkCreateResult, ConversionResult
 from .entity_mapping import EntityMapping
+from .exceptions import FactoryPartNumberRequiredError, FactoryRequiredError
 
 
 class ProductConverter(BaseEntityConverter[ProductDTO, ProductInput, Product]):
     entity_type = DocumentEntityType.PRODUCTS
     dto_class = ProductDTO
-    _uom_cache: dict[str, UUID]
 
     def __init__(
         self,
@@ -34,7 +34,15 @@ class ProductConverter(BaseEntityConverter[ProductDTO, ProductInput, Product]):
     ) -> None:
         super().__init__(session, dto_loader_service)
         self.product_service = product_service
-        self._uom_cache = {}
+        self._uom_cache: dict[str, UUID] = {}
+
+    @override
+    def get_dedup_key(
+        self,
+        dto: ProductDTO,
+        entity_mapping: EntityMapping,
+    ) -> tuple[Any, ...] | None:
+        return (dto.factory_part_number, entity_mapping.factory_id)
 
     @override
     async def create_entity(
@@ -45,14 +53,33 @@ class ProductConverter(BaseEntityConverter[ProductDTO, ProductInput, Product]):
         return product
 
     @override
+    async def create_entities_bulk(
+        self,
+        inputs: list[ProductInput],
+    ) -> BulkCreateResult[Product]:
+        created = await self.product_service.bulk_create(inputs)
+        created_keys = {(p.factory_part_number, p.factory_id) for p in created}
+        skipped = [
+            i
+            for i, inp in enumerate(inputs)
+            if (inp.factory_part_number, inp.factory_id) not in created_keys
+        ]
+        return BulkCreateResult(created=created, skipped_indices=skipped)
+
+    @override
     async def to_input(
         self,
         dto: ProductDTO,
         entity_mapping: EntityMapping,
-    ) -> ProductInput:
+    ) -> ConversionResult[ProductInput]:
         factory_id = entity_mapping.factory_id
         if not factory_id:
-            raise ValueError("Factory ID is required but not found in entity_mapping")
+            return ConversionResult.fail(FactoryRequiredError())
+
+        if not dto.factory_part_number:
+            return ConversionResult.fail(
+                FactoryPartNumberRequiredError(dto.description)
+            )
 
         uom_id = await self._get_or_create_uom_id(dto.unit_of_measure)
 
@@ -62,7 +89,7 @@ class ProductConverter(BaseEntityConverter[ProductDTO, ProductInput, Product]):
             product_uom_id=uom_id,
             unit_price=dto.unit_price or Decimal("0"),
             default_commission_rate=dto.commission_rate or Decimal("0"),
-            published=dto.published or False,
+            published=dto.published or True,
             description=dto.description,
             upc=dto.upc,
             min_order_qty=Decimal(dto.min_order_qty) if dto.min_order_qty else None,
@@ -88,10 +115,10 @@ class ProductConverter(BaseEntityConverter[ProductDTO, ProductInput, Product]):
                 )
             ]
 
-        return product_input
+        return ConversionResult.ok(product_input)
 
-    async def _get_or_create_uom_id(self, uom_title: str) -> UUID:
-        title_upper = uom_title.upper()
+    async def _get_or_create_uom_id(self, uom_title: str | None) -> UUID:
+        title_upper = (uom_title or "EA").upper()
         if title_upper in self._uom_cache:
             return self._uom_cache[title_upper]
 
@@ -103,7 +130,11 @@ class ProductConverter(BaseEntityConverter[ProductDTO, ProductInput, Product]):
             self._uom_cache[title_upper] = uom.id
             return uom.id
 
-        new_uom = ProductUom(title=title_upper, division_factor=Decimal("1"), creation_type=CreationTypeEnum.FLOW_BOT)
+        new_uom = ProductUom(
+            title=title_upper,
+            division_factor=Decimal("1"),
+            creation_type=CreationTypeEnum.FLOW_BOT,
+        )
         self.session.add(new_uom)
         await self.session.flush([new_uom])
         self._uom_cache[title_upper] = new_uom.id

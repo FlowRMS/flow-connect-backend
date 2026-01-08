@@ -1,4 +1,5 @@
 from .base import BaseEntityConverter
+from .check_converter import CheckConverter
 from .customer_converter import CustomerConverter
 from .delivery_converter import DeliveryConverter
 from .factory_converter import FactoryConverter
@@ -9,6 +10,7 @@ from .quote_converter import QuoteConverter
 
 __all__ = [
     "BaseEntityConverter",
+    "CheckConverter",
     "CustomerConverter",
     "DeliveryConverter",
     "FactoryConverter",

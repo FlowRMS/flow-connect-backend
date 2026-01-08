@@ -13,8 +13,13 @@ from app.graphql.orders.services.order_service import OrderService
 from app.graphql.orders.strawberry.order_detail_input import OrderDetailInput
 from app.graphql.orders.strawberry.order_input import OrderInput
 
-from .base import BaseEntityConverter
+from .base import BaseEntityConverter, ConversionResult
 from .entity_mapping import EntityMapping
+from .exceptions import (
+    EndUserRequiredError,
+    FactoryRequiredError,
+    SoldToCustomerRequiredError,
+)
 
 
 class OrderConverter(BaseEntityConverter[OrderDTO, OrderInput, Order]):
@@ -42,16 +47,14 @@ class OrderConverter(BaseEntityConverter[OrderDTO, OrderInput, Order]):
         self,
         dto: OrderDTO,
         entity_mapping: EntityMapping,
-    ) -> OrderInput:
+    ) -> ConversionResult[OrderInput]:
         factory_id = entity_mapping.factory_id
         sold_to_id = entity_mapping.sold_to_customer_id
 
         if not factory_id:
-            raise ValueError("Factory ID is required but not found in entity_mapping")
+            return ConversionResult.fail(FactoryRequiredError())
         if not sold_to_id:
-            raise ValueError(
-                "Sold-to customer ID is required but not found in entity_mapping"
-            )
+            return ConversionResult.fail(SoldToCustomerRequiredError())
 
         default_commission_rate = await self.get_factory_commission_rate(factory_id)
         default_commission_discount = await self.get_factory_commission_discount_rate(
@@ -63,28 +66,34 @@ class OrderConverter(BaseEntityConverter[OrderDTO, OrderInput, Order]):
         entity_date = dto.order_date or date.today()
         due_date = dto.due_date or entity_date
 
-        details = [
-            self._convert_detail(
+        details: list[OrderDetailInput] = []
+        for detail in dto.details:
+            if detail.flow_index in entity_mapping.skipped_product_indices:
+                continue
+            detail_result = self._convert_detail(
                 detail=detail,
                 entity_mapping=entity_mapping,
                 default_commission_rate=default_commission_rate,
                 default_commission_discount=default_commission_discount,
                 default_discount_rate=default_discount_rate,
             )
-            for detail in dto.details
-        ]
+            if detail_result.is_error():
+                return ConversionResult.fail(detail_result.unwrap_error())
+            details.append(detail_result.unwrap())
 
-        return OrderInput(
-            order_number=order_number,
-            entity_date=entity_date,
-            due_date=due_date,
-            sold_to_customer_id=sold_to_id,
-            factory_id=factory_id,
-            bill_to_customer_id=entity_mapping.bill_to_customer_id,
-            shipping_terms=dto.shipping_terms,
-            ship_date=dto.ship_date,
-            mark_number=dto.mark_number,
-            details=details,
+        return ConversionResult.ok(
+            OrderInput(
+                order_number=order_number,
+                entity_date=entity_date,
+                due_date=due_date,
+                sold_to_customer_id=sold_to_id,
+                factory_id=factory_id,
+                bill_to_customer_id=entity_mapping.bill_to_customer_id,
+                shipping_terms=dto.shipping_terms,
+                ship_date=dto.ship_date,
+                mark_number=dto.mark_number,
+                details=details,
+            )
         )
 
     def _convert_detail(
@@ -94,15 +103,13 @@ class OrderConverter(BaseEntityConverter[OrderDTO, OrderInput, Order]):
         default_commission_rate: Decimal,
         default_commission_discount: Decimal,
         default_discount_rate: Decimal,
-    ) -> OrderDetailInput:
+    ) -> ConversionResult[OrderDetailInput]:
         flow_index = detail.flow_index
         product_id = entity_mapping.get_product_id(flow_index)
         end_user_id = entity_mapping.get_end_user_id(flow_index)
 
         if not end_user_id:
-            raise ValueError(
-                f"End user ID is required for detail at index {flow_index}"
-            )
+            return ConversionResult.fail(EndUserRequiredError(flow_index))
 
         commission_rate = (
             detail.commission_rate
@@ -120,18 +127,24 @@ class OrderConverter(BaseEntityConverter[OrderDTO, OrderInput, Order]):
             else default_discount_rate
         )
 
-        return OrderDetailInput(
-            item_number=detail.item_number or 1,
-            quantity=Decimal(str(detail.quantity or 1)),
-            unit_price=detail.unit_price or Decimal("0"),
-            end_user_id=end_user_id,
-            product_id=product_id,
-            product_name_adhoc=self._get_adhoc_name(detail) if not product_id else None,
-            product_description_adhoc=detail.description if not product_id else None,
-            lead_time=detail.lead_time,
-            discount_rate=discount_rate,
-            commission_rate=commission_rate,
-            commission_discount_rate=commission_discount_rate,
+        return ConversionResult.ok(
+            OrderDetailInput(
+                item_number=detail.item_number or 1,
+                quantity=Decimal(str(detail.quantity or 1)),
+                unit_price=detail.unit_price or Decimal("0"),
+                end_user_id=end_user_id,
+                product_id=product_id,
+                product_name_adhoc=self._get_adhoc_name(detail)
+                if not product_id
+                else None,
+                product_description_adhoc=detail.description
+                if not product_id
+                else None,
+                lead_time=detail.lead_time,
+                discount_rate=discount_rate,
+                commission_rate=commission_rate,
+                commission_discount_rate=commission_discount_rate,
+            )
         )
 
     def _get_adhoc_name(self, detail: OrderDetailDTO) -> str | None:

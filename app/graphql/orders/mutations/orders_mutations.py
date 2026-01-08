@@ -60,3 +60,19 @@ class OrdersMutations:
             quote_detail_ids=quote_detail_ids,
         )
         return OrderResponse.from_orm_model(order)
+
+    @strawberry.mutation
+    @inject
+    async def duplicate_order(
+        self,
+        order_id: UUID,
+        new_order_number: str,
+        new_sold_to_customer_id: UUID,
+        service: Injected[OrderService],
+    ) -> OrderResponse:
+        order = await service.duplicate_order(
+            order_id=order_id,
+            new_order_number=new_order_number,
+            new_sold_to_customer_id=new_sold_to_customer_id,
+        )
+        return OrderResponse.from_orm_model(order)

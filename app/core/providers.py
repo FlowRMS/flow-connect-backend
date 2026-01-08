@@ -10,6 +10,7 @@ from app.admin.providers import admin_providers
 from app.auth import auth_provider
 from app.core import s3_provider
 from app.core.config.base_settings import get_settings
+from app.core.config.resend_settings import ResendSettings
 from app.core.config.s3_settings import S3Settings
 from app.core.config.settings import Settings
 from app.core.config.workos_settings import WorkOSSettings
@@ -17,6 +18,9 @@ from app.core.context_wrapper import create_context_wrapper
 from app.core.db import db_provider
 from app.core.dto_providers import providers as dto_providers
 from app.core.processors.executor import ProcessorExecutor
+from app.graphql.common.services.entity_lookup_registry_factory import (
+    create_entity_lookup_registry,
+)
 from app.graphql.common.services.related_entities_registry_factory import (
     create_related_entities_registry,
 )
@@ -45,6 +49,7 @@ settings_classes: Iterable[type[BaseSettings]] = [
     S3Settings,
     WorkOSSettings,
     AdminSettings,
+    ResendSettings,
 ]
 
 
@@ -73,6 +78,7 @@ def providers() -> Iterable[aioinject.Provider[Any]]:
     providers.append(aioinject.Scoped(DocumentExecutorService))
     providers.append(aioinject.Singleton(create_search_strategy_registry))
     providers.append(aioinject.Scoped(create_related_entities_registry))
+    providers.append(aioinject.Scoped(create_entity_lookup_registry))
 
     for settings_class in settings_classes:
         providers.append(aioinject.Object(get_settings(settings_class)))

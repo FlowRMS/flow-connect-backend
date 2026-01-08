@@ -7,7 +7,7 @@ from commons.db.v6.core.factories.factory import Factory
 from commons.db.v6.core.products.product_cpn import ProductCpn
 from commons.db.v6.core.products.product_uom import ProductUom
 from commons.db.v6.crm.links.entity_type import EntityType
-from sqlalchemy import Select, func, select
+from sqlalchemy import Select, func, select, tuple_
 from sqlalchemy.dialects.postgresql import array
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import lazyload
@@ -53,6 +53,19 @@ class ProductsRepository(BaseRepository[Product]):
         result = await self.session.execute(stmt)
         count = result.scalar_one()
         return count > 0
+
+    async def get_existing_factory_part_numbers(
+        self, fpn_factory_pairs: list[tuple[str, UUID]]
+    ) -> set[tuple[str, UUID]]:
+        if not fpn_factory_pairs:
+            return set()
+
+        pairs = [(fpn, fid) for fpn, fid in fpn_factory_pairs]
+        stmt = select(Product.factory_part_number, Product.factory_id).where(
+            tuple_(Product.factory_part_number, Product.factory_id).in_(pairs)
+        )
+        result = await self.session.execute(stmt)
+        return {(row[0], row[1]) for row in result.all()}
 
     def paginated_stmt(self) -> Select[Any]:
         return (

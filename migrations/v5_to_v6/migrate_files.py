@@ -16,6 +16,7 @@ async def migrate_folders(source: asyncpg.Connection, dest: asyncpg.Connection) 
             COALESCE(f.create_date, now()) as created_at,
             f.created_by as created_by_id
         FROM files.folders f
+        JOIN "user".users u ON f.created_by = u.id
     """)
 
     if not folders:

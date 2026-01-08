@@ -33,3 +33,28 @@ class TenantDatabaseService:
             raise ValueError(f"Database '{db_name}' already exists")
 
         await self.create_database(db_name)
+
+    async def terminate_connections(self, db_name: str) -> None:
+        async with self.engine.connect() as conn:
+            _ = await conn.execution_options(isolation_level="AUTOCOMMIT")
+            _ = await conn.execute(
+                text("""
+                    SELECT pg_terminate_backend(pid)
+                    FROM pg_stat_activity
+                    WHERE datname = :db_name
+                    AND pid <> pg_backend_pid()
+                """),
+                {"db_name": db_name},
+            )
+        logger.info(f"Terminated connections to database: {db_name}")
+
+    async def drop_database(self, db_name: str) -> None:
+        if not await self.database_exists(db_name):
+            logger.warning(f"Database '{db_name}' does not exist, skipping drop")
+            return
+
+        await self.terminate_connections(db_name)
+        async with self.engine.connect() as conn:
+            _ = await conn.execution_options(isolation_level="AUTOCOMMIT")
+            _ = await conn.execute(text(f'DROP DATABASE "{db_name}"'))
+        logger.info(f"Dropped database: {db_name}")

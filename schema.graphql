@@ -1,3 +1,5 @@
+directive @rolePermissionAccess on FIELD_DEFINITION
+
 input AddressInput {
   sourceId: UUID!
   sourceType: AddressSourceTypeEnum!
@@ -330,7 +332,7 @@ type CompanyLandingPage implements LandingPageInterfaceBase {
   createdBy: String!
   userIds: [UUID!]!
   name: String!
-  companySourceType: String!
+  companySourceType: CompanyType!
   website: String
   phone: String
   tags: [String!]
@@ -732,10 +734,14 @@ enum EmailStatus {
   BOUNCED
 }
 
-type EntityProcessResponse {
-  entityId: UUID
-  dto: JSON!
-  error: String
+union EntityResponse = PreOpportunityResponse | QuoteResponse | OrderResponse | InvoiceResponse | CheckResponse
+
+enum EntitySourceType {
+  PRE_OPPORTUNITIES
+  QUOTES
+  ORDERS
+  INVOICES
+  CHECKS
 }
 
 enum EntityType {
@@ -1412,7 +1418,10 @@ type Mutation {
   updateCredit(input: CreditInput!): CreditResponse!
   deleteCredit(id: UUID!): Boolean!
   executeDocumentWorkflow(pendingDocumentId: UUID!): ExecuteWorkflowResponse!
-  executeWorkflowNoWorker(pendingDocumentId: UUID!): [EntityProcessResponse!]!
+  executeWorkflowNoWorker(pendingDocumentId: UUID!): [PendingDocumentProcessingType!]!
+  updatePendingDocumentProcessing(id: UUID!, input: PendingDocumentProcessingInput!): PendingDocumentProcessingType!
+  deletePendingDocumentProcessing(id: UUID!): Boolean!
+  sendPendingDocumentStatusEmail(pendingDocumentId: UUID!): ExecuteWorkflowResponse!
   gmailConnect(code: String!): GmailConnectionResultType!
   gmailDisconnect: Boolean!
   gmailSendEmail(input: GmailSendEmailInput!): GmailSendEmailResultType!
@@ -1443,6 +1452,9 @@ type Mutation {
   updateOrder(input: OrderInput!): OrderResponse!
   deleteOrder(id: UUID!): Boolean!
   createOrderFromQuote(quoteId: UUID!, orderNumber: String!, factoryId: UUID!, dueDate: Date = null, quoteDetailIds: [UUID!] = null): OrderResponse!
+  duplicateOrder(orderId: UUID!, newOrderNumber: String!, newSoldToCustomerId: UUID!): OrderResponse!
+  createOrganization(input: OrganizationInput!): OrganizationType! @rolePermissionAccess
+  updateOrganization(input: OrganizationInput!): OrganizationType! @rolePermissionAccess
   createPreOpportunity(input: PreOpportunityInput!): PreOpportunityResponse!
   updatePreOpportunity(input: PreOpportunityInput!): PreOpportunityResponse!
   deletePreOpportunity(id: UUID!): Boolean!
@@ -1498,9 +1510,9 @@ type Mutation {
   createShippingCarrier(input: ShippingCarrierInput!): ShippingCarrierResponse!
   updateShippingCarrier(id: UUID!, input: ShippingCarrierInput!): ShippingCarrierResponse!
   deleteShippingCarrier(id: UUID!): Boolean!
-  createUser(input: UserInput!): UserResponse!
-  updateUser(id: UUID!, input: UserInput!): UserResponse!
-  deleteUser(id: UUID!): Boolean!
+  createUser(input: UserInput!): UserResponse! @rolePermissionAccess
+  updateUser(id: UUID!, input: UserInput!): UserResponse! @rolePermissionAccess
+  deleteUser(id: UUID!): Boolean! @rolePermissionAccess
   createWarehouse(input: WarehouseInput!): WarehouseResponse!
   updateWarehouse(id: UUID!, input: WarehouseInput!): WarehouseResponse!
   deleteWarehouse(id: UUID!): Boolean!
@@ -1913,6 +1925,35 @@ enum OrderType {
   STORM
 }
 
+input OrganizationInput {
+  companyName: String!
+  streetAddress: String!
+  city: String!
+  state: String!
+  zipCode: String!
+  emailAddress: String!
+  phoneNumber: String!
+  addressLine2: String
+  logoFileId: UUID
+  logoWidth: Int
+  logoHeight: Int
+}
+
+type OrganizationType {
+  id: UUID!
+  companyName: String!
+  streetAddress: String!
+  addressLine2: String
+  city: String!
+  state: String!
+  zipCode: String!
+  emailAddress: String!
+  phoneNumber: String!
+  logoFileId: UUID
+  logoWidth: Int!
+  logoHeight: Int!
+}
+
 input OutsideSplitRateInput {
   userId: UUID!
   splitRate: Decimal!
@@ -1934,6 +1975,23 @@ type PendingDocumentLandingPage {
   status: String!
   workflowStatus: String
   isNew: Boolean!
+}
+
+input PendingDocumentProcessingInput {
+  pendingDocumentId: UUID!
+  entityId: UUID = null
+  status: ProcessingResultStatus!
+  dtoJson: JSON = null
+  errorMessage: String = null
+}
+
+type PendingDocumentProcessingType {
+  id: UUID!
+  pendingDocumentId: UUID!
+  entityId: UUID
+  status: ProcessingResultStatus!
+  dtoJson: JSON
+  errorMessage: String
 }
 
 enum PipelineStage {
@@ -2077,6 +2135,12 @@ enum PreOpportunityStatus {
 type Privilege {
   privilege: RbacPrivilegeTypeEnum!
   option: RbacPrivilegeOptionEnum!
+}
+
+enum ProcessingResultStatus {
+  CREATED
+  ERROR
+  SKIPPED
 }
 
 input ProductCategoryInput {
@@ -2260,6 +2324,7 @@ type Query {
   check(id: UUID!): CheckResponse!
   checkSearch(searchTerm: String!, limit: Int! = 20): [CheckLiteResponse!]!
   checksByFactory(factoryId: UUID!): [CheckLiteResponse!]!
+  entity(sourceType: EntitySourceType!, entityId: UUID!): EntityResponse!
   findLandingPages(sourceType: LandingSourceType!, filters: [Filter!] = null, orderBy: [OrderBy!] = null, limit: Int = 10, offset: Int = 0): GenericLandingPage!
   relatedEntities(sourceType: LandingSourceType!, entityId: UUID!): RelatedEntitiesResponse!
   universalSearch(searchTerm: String!, limit: Int! = 20): [SearchResult!]!
@@ -2271,6 +2336,7 @@ type Query {
   contactRelatedEntities(contactId: UUID!): ContactRelatedEntitiesResponse! @deprecated(reason: "Use related_entities(source_type: CONTACTS, entity_id: UUID)")
   credit(id: UUID!): CreditResponse!
   creditSearch(searchTerm: String!, limit: Int! = 20, openOnly: Boolean! = false, unlockedOnly: Boolean! = false): [CreditLiteResponse!]!
+  pendingDocumentProcessings(pendingDocumentId: UUID!): [PendingDocumentProcessingType!]!
   gmailAuthUrl(state: String = null): String!
   gmailConnectionStatus: GmailConnectionStatusType!
   o365AuthUrl(state: String = null): String!
@@ -2302,6 +2368,7 @@ type Query {
   orderAcknowledgementsByOrderDetail(orderDetailId: UUID!): [OrderAcknowledgementResponse!]!
   order(id: UUID!): OrderResponse!
   orderSearch(searchTerm: String!, limit: Int! = 20): [OrderLiteResponse!]!
+  organization: OrganizationType @rolePermissionAccess
   preOpportunity(id: UUID!): PreOpportunityResponse!
   preOpportunitySearch(searchTerm: String!, limit: Int! = 20): [PreOpportunityLiteResponse!]!
   quote(id: UUID!): QuoteResponse!
@@ -2339,7 +2406,7 @@ type Query {
   shippingCarrierSearch(searchTerm: String!, limit: Int! = 20): [ShippingCarrierResponse!]!
   user(id: UUID!): UserResponse!
   userSearch(searchTerm: String!, isInside: Boolean = null, isOutside: Boolean = null, enabled: Boolean = true, limit: Int! = 20): [UserResponse!]!
-  users(limit: Int = null, offset: Int! = 0): [UserResponse!]!
+  users(limit: Int = null, offset: Int! = 0): [UserResponse!]! @rolePermissionAccess
   warehouses: [WarehouseResponse!]!
   warehouse(id: UUID!): WarehouseResponse!
   warehouseMembers(warehouseId: UUID!): [WarehouseMemberResponse!]!

@@ -14,8 +14,9 @@ from app.graphql.quotes.services.quote_service import QuoteService
 from app.graphql.quotes.strawberry.quote_detail_input import QuoteDetailInput
 from app.graphql.quotes.strawberry.quote_input import QuoteInput
 
-from .base import BaseEntityConverter
+from .base import BaseEntityConverter, ConversionResult
 from .entity_mapping import EntityMapping
+from .exceptions import FactoryRequiredError, SoldToCustomerRequiredError
 
 
 class QuoteConverter(BaseEntityConverter[QuoteDTO, QuoteInput, Quote]):
@@ -43,16 +44,14 @@ class QuoteConverter(BaseEntityConverter[QuoteDTO, QuoteInput, Quote]):
         self,
         dto: QuoteDTO,
         entity_mapping: EntityMapping,
-    ) -> QuoteInput:
+    ) -> ConversionResult[QuoteInput]:
         factory_id = entity_mapping.factory_id
         sold_to_id = entity_mapping.sold_to_customer_id
 
         if not factory_id:
-            raise ValueError("Factory ID is required but not found in entity_mapping")
+            return ConversionResult.fail(FactoryRequiredError())
         if not sold_to_id:
-            raise ValueError(
-                "Sold-to customer ID is required but not found in entity_mapping"
-            )
+            return ConversionResult.fail(SoldToCustomerRequiredError())
 
         default_commission_rate = await self.get_factory_commission_rate(factory_id)
         default_commission_discount = await self.get_factory_commission_discount_rate(
@@ -75,17 +74,19 @@ class QuoteConverter(BaseEntityConverter[QuoteDTO, QuoteInput, Quote]):
             for detail in dto.details
         ]
 
-        return QuoteInput(
-            quote_number=quote_number,
-            entity_date=entity_date,
-            sold_to_customer_id=sold_to_id,
-            status=QuoteStatus.OPEN,
-            pipeline_stage=PipelineStage.PROPOSAL,
-            bill_to_customer_id=entity_mapping.bill_to_customer_id,
-            payment_terms=dto.payment_terms,
-            freight_terms=dto.freight_terms,
-            exp_date=dto.expiration_date,
-            details=details,
+        return ConversionResult.ok(
+            QuoteInput(
+                quote_number=quote_number,
+                entity_date=entity_date,
+                sold_to_customer_id=sold_to_id,
+                status=QuoteStatus.OPEN,
+                pipeline_stage=PipelineStage.PROPOSAL,
+                bill_to_customer_id=entity_mapping.bill_to_customer_id,
+                payment_terms=dto.payment_terms,
+                freight_terms=dto.freight_terms,
+                exp_date=dto.expiration_date,
+                details=details,
+            )
         )
 
     def _convert_detail(

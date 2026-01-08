@@ -1,5 +1,5 @@
 from decimal import Decimal
-from typing import override
+from typing import Any, override
 
 from commons.db.v6.ai.documents.enums.entity_type import DocumentEntityType
 from commons.db.v6.core.factories.factory import Factory
@@ -13,7 +13,7 @@ from app.graphql.v2.core.factories.strawberry.factory_split_rate_input import (
     FactorySplitRateInput,
 )
 
-from .base import BaseEntityConverter
+from .base import BaseEntityConverter, ConversionResult
 from .entity_mapping import EntityMapping
 
 
@@ -31,6 +31,14 @@ class FactoryConverter(BaseEntityConverter[FactoryDTO, FactoryInput, Factory]):
         self.factory_service = factory_service
 
     @override
+    def get_dedup_key(
+        self,
+        dto: FactoryDTO,
+        entity_mapping: EntityMapping,
+    ) -> tuple[Any, ...] | None:
+        return (dto.factory_name,)
+
+    @override
     async def create_entity(
         self,
         input_data: FactoryInput,
@@ -42,19 +50,21 @@ class FactoryConverter(BaseEntityConverter[FactoryDTO, FactoryInput, Factory]):
         self,
         dto: FactoryDTO,
         entity_mapping: EntityMapping,
-    ) -> FactoryInput:
+    ) -> ConversionResult[FactoryInput]:
         split_rates = await self._build_split_rates(dto.inside_sales_rep_name)
 
-        return FactoryInput(
-            title=dto.factory_name,
-            published=False,
-            email=dto.email,
-            phone=dto.phone,
-            lead_time=self._parse_lead_time(dto.lead_time),
-            payment_terms=dto.payment_terms,
-            base_commission_rate=dto.base_commission or Decimal("0"),
-            freight_terms=dto.freight_terms,
-            split_rates=split_rates,
+        return ConversionResult.ok(
+            FactoryInput(
+                title=dto.factory_name,
+                published=True,
+                email=dto.email,
+                phone=dto.phone,
+                lead_time=self._parse_lead_time(dto.lead_time),
+                payment_terms=dto.payment_terms,
+                base_commission_rate=dto.base_commission or Decimal("0"),
+                freight_terms=dto.freight_terms,
+                split_rates=split_rates,
+            )
         )
 
     async def _build_split_rates(
