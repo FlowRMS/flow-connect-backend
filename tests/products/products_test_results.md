@@ -1,6 +1,6 @@
 # SUP-148: Product Category Hierarchy Test Results
 
-**Date:** 2026-01-07
+**Date:** 2026-01-08
 **Feature:** Three levels of product category hierarchy
 **Status:** ALL TESTS PASSED
 
@@ -9,12 +9,14 @@
 ## How to Run Tests
 
 ```bash
+# Start the server first
+uv run ./start.py
 
-# Run with credentials
+# Run with credentials (for multi-org users, include --org-id)
 uv run python tests/products/test_product_category_hierarchy.py \
   --email your@email.com \
-  --password 'your_password'
-
+  --password 'your_password' \
+  --org-id org_01KE7D0TTXV7TZ9JSXFPXCXJ35
 ```
 
 ### Command Line Options
@@ -23,6 +25,7 @@ uv run python tests/products/test_product_category_hierarchy.py \
 |--------|-------|-------------|
 | `--email` | `-e` | User email for authentication (required) |
 | `--password` | `-p` | User password for authentication (required) |
+| `--org-id` | `-o` | Organization ID (required for multi-org users) |
 
 ### Test Files
 
@@ -279,14 +282,23 @@ Attempting to create Level 4 (should FAIL)...
   PASSED: Correctly rejected with: Maximum hierarchy depth is 3 levels. Cannot create child of a Level 3 category.
 ```
 
-**Validation Logic:**
+**Validation Logic (Processor Pattern):**
 ```python
-# In product_category_service.py
-if parent.grandparent_id is not None:
-    raise ValueError(
-        "Maximum hierarchy depth is 3 levels. "
-        "Cannot create child of a Level 3 category."
-    )
+# In validate_product_category_hierarchy_processor.py
+class ValidateProductCategoryHierarchyProcessor(BaseProcessor[ProductCategory]):
+    @property
+    def events(self) -> list[RepositoryEvent]:
+        return [RepositoryEvent.PRE_CREATE, RepositoryEvent.PRE_UPDATE]
+
+    async def process(self, context: EntityContext[ProductCategory]) -> None:
+        category = context.entity
+        if category.parent_id:
+            parent = await self._get_category(category.parent_id)
+            if parent.grandparent_id is not None:
+                raise ValidationError(
+                    "Maximum hierarchy depth is 3 levels. "
+                    "Cannot create child of a Level 3 category."
+                )
 ```
 
 ---
@@ -375,18 +387,20 @@ Filters categories by their direct parent. Useful for:
 
 | File | Changes |
 |------|---------|
-| `product_category_repository.py` | Added `get_root_categories()`, `get_children()`, eager loading with `selectinload` |
-| `product_category_service.py` | Added `get_root_categories()`, `get_children()`, hierarchy validation, **max depth check** |
+| `product_category_repository.py` | Added `get_root_categories()`, `get_children()`, eager loading with `selectinload`, processor integration |
+| `product_category_service.py` | Added `get_root_categories()`, `get_children()` |
 | `product_category_queries.py` | Added `rootProductCategories` query |
-| `product_category_response.py` | Added `children` field to response type |
+| `product_category_response.py` | Added `children` field to response type, fixed import |
 | `product_category.py` (commons) | Added `children` relationship with `back_populates` |
+| `validate_product_category_hierarchy_processor.py` | **NEW** - Processor for hierarchy validation (max depth, grandparent consistency) |
 
 ### Key Implementation Choices
 
-1. **Eager Loading**: Children loaded with `selectinload` to avoid N+1 queries
-2. **Grandparent Validation**: Ensures `grandparent_id` matches `parent.parent_id`
-3. **Max Depth Enforcement**: Prevents Level 4+ by checking if parent has grandparent
-4. **Bidirectional Navigation**: Navigate up (`parent`/`grandparent`) and down (`children`)
+1. **Processor Pattern**: Validation logic uses `ValidateProductCategoryHierarchyProcessor` instead of service methods
+2. **Eager Loading**: Children loaded with `selectinload` to avoid N+1 queries
+3. **Grandparent Validation**: Ensures `grandparent_id` matches `parent.parent_id`
+4. **Max Depth Enforcement**: Prevents Level 4+ by checking if parent has grandparent
+5. **Bidirectional Navigation**: Navigate up (`parent`/`grandparent`) and down (`children`)
 
 ---
 
