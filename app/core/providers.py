@@ -8,12 +8,11 @@ from pydantic_settings import BaseSettings
 from app.admin.config.admin_settings import AdminSettings
 from app.admin.providers import admin_providers
 from app.auth import auth_provider
-from app.core import s3_provider, vector_provider
+from app.core import s3_provider
 from app.core.config.base_settings import get_settings
 from app.core.config.resend_settings import ResendSettings
 from app.core.config.s3_settings import S3Settings
 from app.core.config.settings import Settings
-from app.core.config.vector_settings import VectorSettings
 from app.core.config.workos_settings import WorkOSSettings
 from app.core.context_wrapper import create_context_wrapper
 from app.core.db import db_provider
@@ -43,7 +42,6 @@ modules: Iterable[Iterable[aioinject.Provider[Any]]] = [
     auth_provider.providers,
     db_provider.providers,
     s3_provider.providers,
-    vector_provider.providers,
     converter_providers,
 ]
 
@@ -52,7 +50,6 @@ settings_classes: Iterable[type[BaseSettings]] = [
     O365Settings,
     GmailSettings,
     S3Settings,
-    VectorSettings,
     WorkOSSettings,
     AdminSettings,
     ResendSettings,
