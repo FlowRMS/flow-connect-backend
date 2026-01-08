@@ -138,7 +138,7 @@ class SetForCreationService:
         try:
             result = await self._invoice_converter.to_input(dto, mapping)
             if result.is_error() or result.value is None:
-                logger.error(f"Failed to convert invoice: {result.error}")
+                logger.error(f"Failed to convert invoice: {result.unwrap_error()}")
                 return None
             invoice = await self._invoice_converter.create_entity(result.value)
             logger.info(f"Created invoice {invoice.id} for SET_FOR_CREATION")

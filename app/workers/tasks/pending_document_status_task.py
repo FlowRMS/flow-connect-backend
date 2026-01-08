@@ -1,4 +1,5 @@
 import asyncio
+import random
 from dataclasses import dataclass
 from uuid import UUID
 
@@ -20,8 +21,9 @@ from app.workers.tasks.pending_document_email_builder import (
     build_pending_document_status_email,
 )
 
-POLL_INTERVAL_SECONDS = 5
-MAX_POLL_ATTEMPTS = 120  # 10 minutes max
+POLL_INTERVAL_MIN_SECONDS = 5
+POLL_INTERVAL_MAX_SECONDS = 20
+MAX_POLL_ATTEMPTS = 60  # ~10-15 minutes max with random intervals
 
 
 @dataclass
@@ -29,21 +31,6 @@ class PendingDocumentStatusItem:
     pending_document_id: str
     tenant: str
     user_id: str
-
-
-async def get_multitenant_controller(settings: Settings) -> MultiTenantController:
-    controller = MultiTenantController(
-        pg_url=settings.pg_url.unicode_string(),
-        app_name="Pending Document Status Worker",
-        echo=settings.log_level == "DEBUG",
-        connect_args={
-            "timeout": 5,
-            "command_timeout": 90,
-        },
-        env=settings.environment,
-    )
-    await controller.load_data_sources()
-    return controller
 
 
 async def poll_pending_document_status(item: PendingDocumentStatusItem) -> None:
@@ -56,7 +43,7 @@ async def poll_pending_document_status(item: PendingDocumentStatusItem) -> None:
     async with container.context() as ctx:
         settings = await ctx.resolve(Settings)
         resend_settings = await ctx.resolve(ResendSettings)
-        controller = await get_multitenant_controller(settings)
+        controller = await ctx.resolve(MultiTenantController)
         notification_service = ResendNotificationService(resend_settings)
 
         pending_document_id = UUID(item.pending_document_id)
@@ -94,7 +81,6 @@ async def poll_pending_document_status(item: PendingDocumentStatusItem) -> None:
                                 )
                                 return
 
-                            # frontend_base_url = f"https://{item.tenant}.app.flowrms.com"
                             if settings.environment == "production":
                                 frontend_base_url = "https://console.flowrms.com"
                             else:
@@ -129,7 +115,10 @@ async def poll_pending_document_status(item: PendingDocumentStatusItem) -> None:
             except Exception as e:
                 logger.exception(f"Error polling document status: {e}")
 
-            await asyncio.sleep(POLL_INTERVAL_SECONDS)
+            sleep_time = random.uniform(
+                POLL_INTERVAL_MIN_SECONDS, POLL_INTERVAL_MAX_SECONDS
+            )
+            await asyncio.sleep(sleep_time)
 
         logger.warning(f"Max poll attempts reached for document {pending_document_id}")
 

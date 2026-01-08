@@ -25,7 +25,6 @@ from .exceptions import FactoryPartNumberRequiredError, FactoryRequiredError
 class ProductConverter(BaseEntityConverter[ProductDTO, ProductInput, Product]):
     entity_type = DocumentEntityType.PRODUCTS
     dto_class = ProductDTO
-    _uom_cache: dict[str, UUID]
 
     def __init__(
         self,
@@ -35,7 +34,7 @@ class ProductConverter(BaseEntityConverter[ProductDTO, ProductInput, Product]):
     ) -> None:
         super().__init__(session, dto_loader_service)
         self.product_service = product_service
-        self._uom_cache = {}
+        self._uom_cache: dict[str, UUID] = {}
 
     @override
     def get_dedup_key(

@@ -9,6 +9,7 @@ from commons.db.v6.ai.documents.enums.entity_type import DocumentEntityType
 from commons.db.v6.core.factories.factory import Factory
 from commons.db.v6.user import User
 from commons.dtos.common.dto_loader_service import DTOLoaderService, LoadedDTOs
+from loguru import logger
 from pydantic import BaseModel
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -48,14 +49,12 @@ class ConversionResult(Generic[T]):
     def unwrap(self) -> T:
         if self.is_error():
             raise ValueError("Cannot unwrap a ConversionResult with an error")
-        assert self.value is not None
-        return self.value
+        return self.value  # type: ignore[return-value]
 
     def unwrap_error(self) -> ConversionError:
         if self.is_ok():
             raise ValueError("Cannot unwrap_error a ConversionResult without an error")
-        assert self.error is not None
-        return self.error
+        return self.error  # type: ignore[return-value]
 
 
 @dataclass
@@ -81,16 +80,7 @@ class BaseEntityConverter(ABC, Generic[TDto, TInput, TOutput]):
     async def create_entity(
         self,
         input_data: TInput,
-    ) -> TOutput:
-        """
-        Create the entity in the system using the provided input data.
-
-        Args:
-            input_data: The Strawberry input data for entity creation
-        Returns:
-            The created ORM entity
-        """
-        ...
+    ) -> TOutput: ...
 
     @abstractmethod
     async def to_input(
@@ -121,7 +111,8 @@ class BaseEntityConverter(ABC, Generic[TDto, TInput, TOutput]):
             try:
                 entity = await self.create_entity(inp)
                 created.append(entity)
-            except Exception:
+            except Exception as e:
+                logger.warning(f"Failed to create entity at index {i}: {e}")
                 skipped.append(i)
         return BulkCreateResult(created=created, skipped_indices=skipped)
 
