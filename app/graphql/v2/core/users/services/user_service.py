@@ -118,4 +118,4 @@ class UserService:
         )
 
     async def list_all(self, limit: int | None = None, offset: int = 0) -> list[User]:
-        return await self.repository.list_all(limit, offset)
+        return await self.repository.list_users(limit, offset)

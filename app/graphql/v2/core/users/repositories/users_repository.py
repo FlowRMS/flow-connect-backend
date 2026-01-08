@@ -78,3 +78,10 @@ class UsersRepository(BaseRepository[User]):
 
         result = await self.session.execute(stmt)
         return list(result.scalars().all())
+
+    async def list_users(self, limit: int | None = None, offset: int = 0) -> list[User]:
+        stmt = select(User).where(User.visible.is_not(False)).offset(offset)
+        if limit is not None:
+            stmt = stmt.limit(limit)
+        result = await self.session.execute(stmt)
+        return list(result.scalars().all())
