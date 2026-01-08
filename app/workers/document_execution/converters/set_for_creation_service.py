@@ -1,4 +1,3 @@
-from typing import TYPE_CHECKING
 from uuid import UUID
 
 from commons.db.v6.ai.entities.enums import ConfirmationStatus, EntityPendingType
@@ -8,24 +7,22 @@ from commons.dtos.invoice.invoice_dto import InvoiceDTO
 from commons.dtos.order.order_dto import OrderDTO
 from loguru import logger
 
+from .adjustment_converter import AdjustmentConverter
+from .credit_converter import CreditConverter
 from .entity_mapping import EntityMapping
+from .invoice_converter import InvoiceConverter
+from .order_converter import OrderConverter
 
 type DTOType = OrderDTO | InvoiceDTO | CheckDetailDTO
-
-if TYPE_CHECKING:
-    from .adjustment_converter import AdjustmentConverter
-    from .credit_converter import CreditConverter
-    from .invoice_converter import InvoiceConverter
-    from .order_converter import OrderConverter
 
 
 class SetForCreationService:
     def __init__(
         self,
-        order_converter: "OrderConverter",
-        invoice_converter: "InvoiceConverter",
-        credit_converter: "CreditConverter | None" = None,
-        adjustment_converter: "AdjustmentConverter | None" = None,
+        order_converter: OrderConverter,
+        invoice_converter: InvoiceConverter,
+        credit_converter: CreditConverter,
+        adjustment_converter: AdjustmentConverter,
     ) -> None:
         super().__init__()
         self._order_converter = order_converter
@@ -188,9 +185,6 @@ class SetForCreationService:
         dto_by_id: dict[UUID, DTOType],
         entity_mappings: dict[UUID, EntityMapping],
     ) -> None:
-        if not self._credit_converter:
-            return
-
         credit_entities = [
             pe
             for pe in pending_entities
@@ -211,7 +205,7 @@ class SetForCreationService:
         dto_by_id: dict[UUID, DTOType],
         entity_mappings: dict[UUID, EntityMapping],
     ) -> UUID | None:
-        if not pe.dto_ids or not self._credit_converter:
+        if not pe.dto_ids:
             logger.warning(f"PendingEntity {pe.id} has no dto_ids for SET_FOR_CREATION")
             return None
 
@@ -257,9 +251,6 @@ class SetForCreationService:
         dto_by_id: dict[UUID, DTOType],
         entity_mappings: dict[UUID, EntityMapping],
     ) -> None:
-        if not self._adjustment_converter:
-            return
-
         adjustment_entities = [
             pe
             for pe in pending_entities
@@ -282,7 +273,7 @@ class SetForCreationService:
         dto_by_id: dict[UUID, DTOType],
         entity_mappings: dict[UUID, EntityMapping],
     ) -> UUID | None:
-        if not pe.dto_ids or not self._adjustment_converter:
+        if not pe.dto_ids:
             logger.warning(f"PendingEntity {pe.id} has no dto_ids for SET_FOR_CREATION")
             return None
 
