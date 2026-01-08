@@ -90,8 +90,10 @@ class InventoryItemService:
             item.quantity = quantity
 
         if location_id is not strawberry.UNSET:
-            new_location_id: UUID | None = location_id if location_id is not None else None
-            item.location_id = new_location_id
+            if location_id is None:
+                item.location_id = None
+            elif isinstance(location_id, UUID):
+                item.location_id = location_id
 
         if status is not strawberry.UNSET and isinstance(status, InventoryItemStatus):
             item.status = status
