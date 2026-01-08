@@ -2198,6 +2198,7 @@ type ProductCategoryResponse {
   commissionRate: Decimal
   parent: ProductCategoryLiteResponse
   grandparent: ProductCategoryLiteResponse
+  children: [ProductCategoryLiteResponse!]!
 }
 
 input ProductCpnInput {
@@ -2425,6 +2426,7 @@ type Query {
   factory(id: UUID!): FactoryResponse!
   factorySearch(searchTerm: String!, published: Boolean! = true, limit: Int! = 20, useCustomOrder: Boolean! = false): [FactoryResponse!]!
   productCategories(factoryId: UUID, parentId: UUID, grandparentId: UUID): [ProductCategoryResponse!]!
+  rootProductCategories(factoryId: UUID): [ProductCategoryResponse!]!
   productCpn(id: UUID!): ProductCpnResponse!
   listProductCpnsByProductId(productId: UUID!): [ProductCpnResponse!]!
   productCpnByProductIdAndCustomerId(productId: UUID!, customerId: UUID!): ProductCpnLiteResponse
@@ -3016,6 +3018,7 @@ input UserInput {
   enabled: Boolean! = true
   inside: Boolean = null
   outside: Boolean = null
+  visible: Boolean = true
 }
 
 type UserRbac {
@@ -3035,6 +3038,7 @@ type UserResponse {
   authProviderId: String!
   inside: Boolean
   outside: Boolean
+  visible: Boolean
 }
 
 input WarehouseInput {

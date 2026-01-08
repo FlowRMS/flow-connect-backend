@@ -63,6 +63,7 @@ class UsersRepository(BaseRepository[User]):
                 | (User.last_name.ilike(f"%{search_term}%"))
                 | (User.email.ilike(f"%{search_term}%"))
             )
+            .where(User.visible.is_not(False))
             .limit(limit)
         )
 
