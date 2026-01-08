@@ -120,8 +120,24 @@ class PreOpportunitiesRepository(BaseRepository[PreOpportunity]):
         return result.scalar_one() > 0
 
     async def get_by_job_id(self, job_id: UUID) -> list[PreOpportunity]:
-        """Get all pre-opportunities for a specific job."""
-        stmt = select(PreOpportunity).where(PreOpportunity.job_id == job_id)
+        """Get all pre-opportunities linked to a specific job via LinkRelation."""
+        stmt = select(PreOpportunity).join(
+            LinkRelation,
+            or_(
+                (
+                    (LinkRelation.source_entity_type == EntityType.PRE_OPPORTUNITY)
+                    & (LinkRelation.target_entity_type == EntityType.JOB)
+                    & (LinkRelation.target_entity_id == job_id)
+                    & (LinkRelation.source_entity_id == PreOpportunity.id)
+                ),
+                (
+                    (LinkRelation.source_entity_type == EntityType.JOB)
+                    & (LinkRelation.target_entity_type == EntityType.PRE_OPPORTUNITY)
+                    & (LinkRelation.source_entity_id == job_id)
+                    & (LinkRelation.target_entity_id == PreOpportunity.id)
+                ),
+            ),
+        )
         result = await self.session.execute(stmt)
         return list(result.scalars().all())
 
