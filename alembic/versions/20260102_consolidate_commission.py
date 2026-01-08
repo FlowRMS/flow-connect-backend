@@ -22,8 +22,9 @@ def upgrade() -> None:
     
     # ===== ORDER BALANCES TABLE =====
     if 'order_balances' not in existing_tables:
-        op.create_table('order_balances',
-            sa.Column('id', postgresql.UUID(as_uuid=True), primary_key=True),
+        _ = op.create_table(
+            "order_balances",
+            sa.Column("id", postgresql.UUID(as_uuid=True), primary_key=True),
             sa.Column('quantity', sa.Numeric(18, 6), nullable=False, server_default='0'),
             sa.Column('subtotal', sa.Numeric(18, 6), nullable=False, server_default='0'),
             sa.Column('total', sa.Numeric(18, 6), nullable=False, server_default='0'),
@@ -58,7 +59,7 @@ def upgrade() -> None:
 
     # ===== ORDERS TABLE =====
     if 'orders' not in existing_tables:
-        op.create_table('orders',
+        _ = op.create_table('orders',
             sa.Column('id', postgresql.UUID(as_uuid=True), primary_key=True),
             sa.Column('order_number', sa.String(255), nullable=False),
             sa.Column('entity_date', sa.Date, nullable=False),
@@ -113,7 +114,7 @@ def upgrade() -> None:
 
     # ===== ORDER DETAILS TABLE =====
     if 'order_details' not in existing_tables:
-        op.create_table('order_details',
+        _ = op.create_table('order_details',
             sa.Column('id', postgresql.UUID(as_uuid=True), primary_key=True),
             sa.Column('order_id', postgresql.UUID(as_uuid=True), nullable=False),
             sa.Column('item_number', sa.Integer, nullable=False),
@@ -150,7 +151,7 @@ def upgrade() -> None:
 
     # ===== INVOICE BALANCES TABLE =====
     if 'invoice_balances' not in existing_tables:
-        op.create_table('invoice_balances',
+        _ = op.create_table('invoice_balances',
             sa.Column('id', postgresql.UUID(as_uuid=True), primary_key=True),
             sa.Column('quantity', sa.Numeric(18, 6), nullable=False, server_default='0'),
             sa.Column('subtotal', sa.Numeric(18, 6), nullable=False, server_default='0'),
@@ -167,7 +168,7 @@ def upgrade() -> None:
 
     # ===== INVOICES TABLE =====
     if 'invoices' not in existing_tables:
-        op.create_table('invoices',
+        _ = op.create_table('invoices',
             sa.Column('id', postgresql.UUID(as_uuid=True), primary_key=True),
             sa.Column('invoice_number', sa.String(255), nullable=False),
             sa.Column('entity_date', sa.Date, nullable=False),
@@ -198,7 +199,7 @@ def upgrade() -> None:
 
     # ===== INVOICE DETAILS TABLE =====
     if 'invoice_details' not in existing_tables:
-        op.create_table('invoice_details',
+        _ = op.create_table('invoice_details',
             sa.Column('id', postgresql.UUID(as_uuid=True), primary_key=True),
             sa.Column('invoice_id', postgresql.UUID(as_uuid=True), nullable=False),
             sa.Column('order_detail_id', postgresql.UUID(as_uuid=True), nullable=True),
@@ -236,7 +237,7 @@ def upgrade() -> None:
 
     # ===== SPLIT RATE TABLES =====
     if 'order_split_rates' not in existing_tables:
-        op.create_table('order_split_rates',
+        _ = op.create_table('order_split_rates',
             sa.Column('id', postgresql.UUID(as_uuid=True), primary_key=True),
             sa.Column('order_detail_id', postgresql.UUID(as_uuid=True), nullable=False),
             sa.Column('user_id', postgresql.UUID(as_uuid=True), nullable=False),
@@ -250,7 +251,7 @@ def upgrade() -> None:
         op.create_index('ix_pycommission_order_split_rates_order_detail_id', 'order_split_rates', ['order_detail_id'], schema='pycommission')
 
     if 'order_inside_reps' not in existing_tables:
-        op.create_table('order_inside_reps',
+        _ = op.create_table('order_inside_reps',
             sa.Column('id', postgresql.UUID(as_uuid=True), primary_key=True),
             sa.Column('order_detail_id', postgresql.UUID(as_uuid=True), nullable=False),
             sa.Column('user_id', postgresql.UUID(as_uuid=True), nullable=False),
@@ -264,7 +265,7 @@ def upgrade() -> None:
         op.create_index('ix_pycommission_order_inside_reps_order_detail_id', 'order_inside_reps', ['order_detail_id'], schema='pycommission')
 
     if 'invoice_split_rates' not in existing_tables:
-        op.create_table('invoice_split_rates',
+        _ = op.create_table('invoice_split_rates',
             sa.Column('id', postgresql.UUID(as_uuid=True), primary_key=True),
             sa.Column('invoice_detail_id', postgresql.UUID(as_uuid=True), nullable=False),
             sa.Column('user_id', postgresql.UUID(as_uuid=True), nullable=False),

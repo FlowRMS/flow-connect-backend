@@ -103,8 +103,9 @@ class ProductsRepository(BaseRepository[Product]):
         limit: int = 20,
     ) -> list[Product]:
         """
-        Search products using trigram similarity matching on factory part numbers.
-        Higher similarity scores are prioritized in results.
+        Search products using trigram similarity matching.
+        Searches across factory_part_number, description, and customer_part_number.
+        Results with similarity > 0.2 are returned, ordered by highest similarity.
         """
 
         greatest = func.greatest(
@@ -118,7 +119,7 @@ class ProductsRepository(BaseRepository[Product]):
             .outerjoin(ProductCpn, ProductCpn.product_id == Product.id)
             .limit(limit)
         )
-        if search_term != "":
+        if search_term:
             stmt = stmt.where(greatest > 0.2).order_by(greatest.desc())
 
         if factory_id is not None:

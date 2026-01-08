@@ -21,7 +21,7 @@ def upgrade() -> None:
     
     # Create warehouses table
     if not inspector.has_table("warehouses", schema="pywarehouse"):
-        op.create_table(
+        _ = op.create_table(
             "warehouses",
             sa.Column("id", postgresql.UUID(as_uuid=True), primary_key=True),
             sa.Column("name", sa.String(255), nullable=False),
@@ -38,7 +38,7 @@ def upgrade() -> None:
 
     # Create warehouse_locations table
     if not inspector.has_table("warehouse_locations", schema="pywarehouse"):
-        op.create_table(
+        _ = op.create_table(
             "warehouse_locations",
             sa.Column("id", postgresql.UUID(as_uuid=True), primary_key=True),
             sa.Column(
@@ -75,7 +75,7 @@ def upgrade() -> None:
 
     # Create inventory table
     if not inspector.has_table("inventory", schema="pywarehouse"):
-        op.create_table(
+        _ = op.create_table(
             "inventory",
             sa.Column("id", postgresql.UUID(as_uuid=True), primary_key=True),
             sa.Column(
@@ -122,7 +122,7 @@ def upgrade() -> None:
 
     # Create inventory_items table
     if not inspector.has_table("inventory_items", schema="pywarehouse"):
-        op.create_table(
+        _ = op.create_table(
             "inventory_items",
             sa.Column("id", postgresql.UUID(as_uuid=True), primary_key=True),
             sa.Column(

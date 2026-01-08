@@ -153,14 +153,17 @@ class InventoryFileService:
                     total_quantity=Decimal(0),
                     available_quantity=Decimal(0),
                 ))
+                # New inventory has no items yet
+                existing_items = []
+            else:
+                existing_items = await self.item_repository.find_by_inventory_id(inventory.id)
 
             status_enum = InventoryItemStatus.AVAILABLE
             try:
                 status_enum = InventoryItemStatus[status_str]
             except KeyError:
-                pass  # Use default
+                pass  # Use default status (AVAILABLE) if invalid
 
-            existing_items = await self.item_repository.find_by_inventory_id(inventory.id)
             target_item = self._find_matching_item(
                 existing_items,
                 location.id if location else None,
