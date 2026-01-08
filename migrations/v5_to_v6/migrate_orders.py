@@ -126,7 +126,7 @@ async def migrate_orders(source: asyncpg.Connection, dest: asyncpg.Connection) -
         FROM commission.orders o
         JOIN "user".users u ON u.id = o.created_by
         WHERE 
-            o.sold_to_customer_id IS NOT NULL
+            o.sold_to_customer_id IS NOT NULL AND o.factory_id IS NOT NULL
     """)
 
     if not orders:

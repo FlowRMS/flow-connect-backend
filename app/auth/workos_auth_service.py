@@ -157,6 +157,7 @@ class WorkOSAuthService:
                     last_name=auth_user_input.last_name,
                     email_verified=auth_user_input.email_verified,
                     external_id=str(auth_user_input.external_id),
+                    metadata=auth_user_input.metadata,
                 )
                 _ = await self.client.user_management.create_password_reset(
                     email=auth_user_input.email,
@@ -203,6 +204,7 @@ class WorkOSAuthService:
                 first_name=auth_user_input.first_name,
                 last_name=auth_user_input.last_name,
                 email_verified=auth_user_input.email_verified,
+                metadata=auth_user_input.metadata,
             )
             return self._build_auth_user(response)
         except Exception as e:
