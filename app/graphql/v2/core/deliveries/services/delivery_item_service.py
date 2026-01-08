@@ -3,6 +3,7 @@ from uuid import UUID
 
 from commons.auth import AuthInfo
 from commons.db.v6 import DeliveryItem
+from sqlalchemy.orm import selectinload
 
 from app.errors.common_errors import NotFoundError
 from app.graphql.v2.core.deliveries.repositories.delivery_items_repository import (
@@ -36,10 +37,20 @@ class DeliveryItemService:
         return await self.repository.create(input.to_orm_model())
 
     async def update(self, item_id: UUID, input: DeliveryItemInput) -> DeliveryItem:
-        if not await self.repository.exists(item_id):
+        existing = await self.repository.get_by_id(
+            item_id,
+            options=[
+                selectinload(DeliveryItem.issues),
+                selectinload(DeliveryItem.receipts),
+            ],
+        )
+        if not existing:
             raise NotFoundError(f"Delivery item with id {item_id} not found")
         item = input.to_orm_model()
         item.id = item_id
+        # Preserve child collections to avoid delete-orphan wipes on update.
+        item.issues = existing.issues
+        item.receipts = existing.receipts
         return await self.repository.update(item)
 
     async def delete(self, item_id: UUID) -> bool:

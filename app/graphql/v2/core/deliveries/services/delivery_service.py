@@ -39,10 +39,18 @@ class DeliveryService:
         return await self.repository.create(input.to_orm_model())
 
     async def update(self, delivery_id: UUID, input: DeliveryInput) -> Delivery:
-        if not await self.repository.exists(delivery_id):
+        existing = await self.repository.get_with_relations(delivery_id)
+        if not existing:
             raise NotFoundError(f"Delivery with id {delivery_id} not found")
         delivery = input.to_orm_model()
         delivery.id = delivery_id
+        # Preserve child collections to avoid delete-orphan wipes on update.
+        delivery.items = existing.items
+        delivery.status_history = existing.status_history
+        delivery.issues = existing.issues
+        delivery.assignees = existing.assignees
+        delivery.documents = existing.documents
+        delivery.recurring_shipment = existing.recurring_shipment
         return await self.repository.update(delivery)
 
     async def delete(self, delivery_id: UUID) -> bool:

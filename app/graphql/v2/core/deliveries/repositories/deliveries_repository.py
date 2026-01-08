@@ -1,6 +1,6 @@
 from uuid import UUID
 
-from commons.db.v6 import Delivery
+from commons.db.v6 import Delivery, DeliveryItem
 from sqlalchemy import Select, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
@@ -19,12 +19,16 @@ class DeliveriesRepository(BaseRepository[Delivery]):
 
     def _with_relations(self, stmt: Select[Delivery]) -> Select[Delivery]:
         return stmt.options(
-            selectinload(Delivery.items),
+            selectinload(Delivery.items).selectinload(DeliveryItem.product),
+            selectinload(Delivery.items).selectinload(DeliveryItem.receipts),
+            selectinload(Delivery.items).selectinload(DeliveryItem.issues),
             selectinload(Delivery.status_history),
             selectinload(Delivery.issues),
             selectinload(Delivery.assignees),
             selectinload(Delivery.documents),
             selectinload(Delivery.recurring_shipment),
+            selectinload(Delivery.vendor),
+            selectinload(Delivery.carrier),
         )
 
     async def get_with_relations(self, delivery_id: UUID) -> Delivery | None:
