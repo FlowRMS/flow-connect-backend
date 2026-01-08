@@ -9,20 +9,44 @@ async def migrate_order_balances(source: asyncpg.Connection, dest: asyncpg.Conne
     """Migrate order balances from v5 (commission.order_balances) to v6 (pycommission.order_balances)."""
     logger.info("Starting order balance migration...")
 
-    balances = await source.fetch("""
+    # Max value for NUMERIC(18,6) is 10^12 - 1 (999999999999.999999)
+    max_val = 999999999999
+
+    # Log any records with overflow values before clamping
+    overflow_records = await source.fetch(f"""
+        SELECT ob.id
+        FROM commission.order_balances ob
+        WHERE ABS(COALESCE(ob.quantity, 0)) >= {max_val}
+           OR ABS(COALESCE(ob.subtotal, 0)) >= {max_val}
+           OR ABS(COALESCE(ob.total, 0)) >= {max_val}
+           OR ABS(COALESCE(ob.commission, 0)) >= {max_val}
+           OR ABS(COALESCE(ob.discount, 0)) >= {max_val}
+           OR ABS(COALESCE(ob.commission_rate, 0)) >= {max_val}
+           OR ABS(COALESCE(ob.commission_discount, 0)) >= {max_val}
+           OR ABS(COALESCE(ob.shipping_balance, 0)) >= {max_val}
+           OR ABS(COALESCE(ob.freight_charge, 0)) >= {max_val}
+    """)
+    if overflow_records:
+        overflow_ids = [str(r["id"]) for r in overflow_records]
+        logger.warning(
+            f"Found {len(overflow_records)} order_balances with overflow values "
+            f"(will be clamped to {max_val}): {overflow_ids}"
+        )
+
+    balances = await source.fetch(f"""
         SELECT
             ob.id,
-            COALESCE(ob.quantity, 0) as quantity,
-            COALESCE(ob.subtotal, 0) as subtotal,
-            COALESCE(ob.total, 0) as total,
-            COALESCE(ob.commission, 0) as commission,
-            COALESCE(ob.discount, 0) as discount,
-            COALESCE(ob.discount_rate, 0) as discount_rate,
-            COALESCE(ob.commission_rate, 0) as commission_rate,
-            COALESCE(ob.commission_discount, 0) as commission_discount,
-            COALESCE(ob.commission_discount_rate, 0) as commission_discount_rate,
-            COALESCE(ob.shipping_balance, 0) as shipping_balance,
-            COALESCE(ob.freight_charge, 0) as freight_charge_balance
+            LEAST(GREATEST(COALESCE(ob.quantity, 0), -{max_val}), {max_val}) as quantity,
+            LEAST(GREATEST(COALESCE(ob.subtotal, 0), -{max_val}), {max_val}) as subtotal,
+            LEAST(GREATEST(COALESCE(ob.total, 0), -{max_val}), {max_val}) as total,
+            LEAST(GREATEST(COALESCE(ob.commission, 0), -{max_val}), {max_val}) as commission,
+            LEAST(GREATEST(COALESCE(ob.discount, 0), -{max_val}), {max_val}) as discount,
+            LEAST(GREATEST(COALESCE(ob.discount_rate, 0), -{max_val}), {max_val}) as discount_rate,
+            LEAST(GREATEST(COALESCE(ob.commission_rate, 0), -{max_val}), {max_val}) as commission_rate,
+            LEAST(GREATEST(COALESCE(ob.commission_discount, 0), -{max_val}), {max_val}) as commission_discount,
+            LEAST(GREATEST(COALESCE(ob.commission_discount_rate, 0), -{max_val}), {max_val}) as commission_discount_rate,
+            LEAST(GREATEST(COALESCE(ob.shipping_balance, 0), -{max_val}), {max_val}) as shipping_balance,
+            LEAST(GREATEST(COALESCE(ob.freight_charge, 0), -{max_val}), {max_val}) as freight_charge_balance
         FROM commission.order_balances ob
     """)
 
