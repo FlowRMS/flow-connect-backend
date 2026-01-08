@@ -115,10 +115,23 @@ class AdminUserService:
             logger.error(f"Failed to get user {user_id} from tenant {tenant.url}: {e}")
             return None
 
+    async def _check_user_exists_by_email(self, tenant: Tenant, email: str) -> bool:
+        try:
+            async with self.controller.scoped_session(tenant.url) as session:
+                stmt = select(User).where(User.email == email)
+                result = await session.execute(stmt)
+                return result.scalar_one_or_none() is not None
+        except Exception as e:
+            logger.warning(f"Failed to check user email in tenant {tenant.url}: {e}")
+            return False
+
     async def create_user(self, input: CreateAdminUserInput) -> AdminUserData:
         tenant = await self.tenants_repository.get_by_id(input.tenant_id)
         if not tenant:
             raise ValueError(f"Tenant {input.tenant_id} not found")
+
+        if await self._check_user_exists_by_email(tenant, input.email):
+            raise ValueError(f"User with email {input.email} already exists")
 
         workos_org_id = await self._get_workos_org_id_for_tenant(tenant)
         if not workos_org_id:
