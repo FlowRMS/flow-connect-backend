@@ -45,6 +45,7 @@ class InventoryFileService:
         self.location_repository = location_repository
         self.item_service = item_service
         self.auth_info = auth_info
+        super().__init__()
 
     async def export_inventory_csv(self, warehouse_id: UUID) -> str:
         inventory_list = await self.inventory_repository.find_by_warehouse(
@@ -173,7 +174,7 @@ class InventoryFileService:
             
             if target_item:
                 new_qty = target_item.quantity + quantity
-                await self.item_service.update_item(
+                _ = await self.item_service.update_item(
                     item_id=target_item.id,
                     quantity=new_qty
                 )
@@ -186,7 +187,7 @@ class InventoryFileService:
                     status=status_enum,
                     lot_number=lot_number
                 )
-                await self.item_service.add_item(new_item)
+                _ = await self.item_service.add_item(new_item)
                 stats["created"] += 1
 
         return stats

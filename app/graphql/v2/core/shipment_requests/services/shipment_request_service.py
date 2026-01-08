@@ -28,6 +28,7 @@ class ShipmentRequestService:
         self,
         repository: ShipmentRequestRepository,
     ) -> None:
+        super().__init__()
         self.repository = repository
 
     async def list_by_warehouse(
