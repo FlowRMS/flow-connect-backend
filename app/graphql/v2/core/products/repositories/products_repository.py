@@ -102,18 +102,6 @@ class ProductsRepository(BaseRepository[Product]):
         product_category_ids: list[UUID] | None = None,
         limit: int = 20,
     ) -> list[Product]:
-        """
-        Search products by factory part number using case-insensitive pattern matching.
-
-        Args:
-            search_term: The search term to match against factory part number
-            factory_id: The UUID of the factory to filter products by (optional)
-            product_category_id: The UUID of the product category to filter by (optional)
-            limit: Maximum number of products to return (default: 20)
-
-        Returns:
-            List of Product objects matching the search criteria
-        """
 
         greatest = func.greatest(
             func.similarity(Product.factory_part_number, search_term),

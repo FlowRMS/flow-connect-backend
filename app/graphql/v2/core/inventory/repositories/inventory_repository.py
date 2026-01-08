@@ -11,8 +11,6 @@ from app.graphql.base_repository import BaseRepository
 from app.graphql.v2.core.inventory.strawberry.inventory_stats_response import (
     InventoryStatsResponse,
 )
-
-
 from app.core.constants import DEFAULT_QUERY_LIMIT, DEFAULT_QUERY_OFFSET
 
 class InventoryRepository(BaseRepository[Inventory]):
@@ -70,11 +68,11 @@ class InventoryRepository(BaseRepository[Inventory]):
                 Inventory.warehouse_id == warehouse_id,
                 Inventory.product_id == product_id
             )
+            .join(Inventory.product)
             .options(
                 joinedload(Inventory.items),
                 contains_eager(Inventory.product),
             )
-            .join(Inventory.product)
         )
         result = await self.session.execute(stmt)
         return result.unique().scalar_one_or_none()

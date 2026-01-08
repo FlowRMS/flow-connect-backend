@@ -1,11 +1,3 @@
-"""add customer factory sales reps table
-
-Revision ID: 6b9c4d3e2f1a
-Revises: b57a72ba9d00
-Create Date: 2025-12-25 10:00:00.000000
-
-"""
-
 from collections.abc import Sequence
 
 import sqlalchemy as sa

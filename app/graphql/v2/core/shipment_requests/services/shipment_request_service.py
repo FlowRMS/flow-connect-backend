@@ -86,16 +86,16 @@ class ShipmentRequestService:
             request.notes = notes
 
         if items is not None:
-            # Clear existing items and add new ones
-            request.items.clear()
-            for item_input in items:
-                request.items.append(
-                    ShipmentRequestItem(
-                        request_id=request.id,
-                        product_id=item_input.product_id,
-                        quantity=item_input.quantity,
-                    )
+            # Replace existing items with new ones
+            # SQLAlchemy will handle deleting orphans due to cascade="all, delete-orphan"
+            request.items = [
+                ShipmentRequestItem(
+                    request_id=request.id,
+                    product_id=item_input.product_id,
+                    quantity=item_input.quantity,
                 )
+                for item_input in items
+            ]
 
         return await self.repository.update(request)
 

@@ -35,6 +35,18 @@ class BackorderRepository(BaseRepository[OrderDetail]):
         limit: int = DEFAULT_QUERY_LIMIT,
         offset: int = DEFAULT_QUERY_OFFSET,
     ) -> list[OrderDetail]:
+        """
+        Retrieve backordered order details with calculated availability.
+
+        Backorders are identified where:
+        1. Order status is OPEN or PARTIAL_SHIPPED
+        2. Ordered quantity > Shipped quantity
+        3. Remaining needed quantity > Total available inventory for the product
+
+        The query calculates:
+        - Shipped quantity from invoice details
+        - Total available inventory across all warehouses
+        """
         # Subquery to calculate shipped quantity
         shipped_subquery = (
             select(

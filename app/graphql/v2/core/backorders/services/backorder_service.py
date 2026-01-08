@@ -19,7 +19,6 @@ class BackorderService:
         context_wrapper: ContextWrapper,
         session: AsyncSession,
     ) -> None:
-        super().__init__()
         self.repository = repository
         self.context_wrapper = context_wrapper
         self.session = session

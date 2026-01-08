@@ -67,8 +67,11 @@ class InventoryFileService:
                 continue
 
             for item in inventory.items:
-                product_name = inventory.product.description or "N/A"
-                sku = inventory.product.factory_part_number
+                product_name = "N/A"
+                sku = "N/A"
+                if inventory.product:
+                    product_name = inventory.product.description or "N/A"
+                    sku = inventory.product.factory_part_number
                 
                 location_name = "N/A"
                 if item.location:
@@ -92,7 +95,7 @@ class InventoryFileService:
         try:
             decoded_content = base64.b64decode(file_content).decode("utf-8")
         except (ValueError, TypeError) as e:
-            raise ValueError(f"Invalid Base64 encoded file content: {e}")
+            raise ValueError(f"Invalid Base64 encoded file content: {e}") from e
 
         reader = csv.DictReader(io.StringIO(decoded_content))
         
@@ -151,23 +154,18 @@ class InventoryFileService:
                     available_quantity=Decimal(0),
                 ))
 
-            # 4. Find/Create Item
+            status_enum = InventoryItemStatus.AVAILABLE
             try:
-                status = InventoryItemStatus[status_str]
+                status_enum = InventoryItemStatus[status_str]
             except KeyError:
-                status = InventoryItemStatus.AVAILABLE
+                pass  # Use default
 
-            existing_items = await self.item_repository.find_by_inventory_id(inventory.id)
-            target_item = None
-            for item in existing_items:
-                if item.location_id != (location.id if location else None):
-                    continue
-                if item.lot_number != lot_number:
-                    continue
-                if item.status != status:
-                    continue
-                target_item = item
-                break
+            target_item = self._find_matching_item(
+                existing_items,
+                location.id if location else None,
+                lot_number,
+                status_enum,
+            )
             
             if target_item:
                 new_qty = target_item.quantity + quantity
@@ -181,10 +179,27 @@ class InventoryFileService:
                     inventory_id=inventory.id,
                     location_id=location.id if location else None,
                     quantity=quantity,
-                    status=status,
+                    status=status_enum,
                     lot_number=lot_number
                 )
                 await self.item_service.add_item(new_item)
                 stats["created"] += 1
 
         return stats
+
+    def _find_matching_item(
+        self,
+        items: list[InventoryItem],
+        location_id: UUID | None,
+        lot_number: str | None,
+        status: InventoryItemStatus,
+    ) -> InventoryItem | None:
+        for item in items:
+            if item.location_id != location_id:
+                continue
+            if item.lot_number != lot_number:
+                continue
+            if item.status != status:
+                continue
+            return item
+        return None

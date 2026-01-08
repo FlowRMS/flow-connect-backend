@@ -1,11 +1,3 @@
-"""adding organizations table
-
-Revision ID: organizations_001
-Revises: pending_doc_proc_001
-Create Date: 2026-01-06
-
-"""
-
 from collections.abc import Sequence
 
 import sqlalchemy as sa
@@ -13,8 +5,8 @@ from sqlalchemy.dialects import postgresql
 
 from alembic import op
 
-revision: str = "organizations_001"
-down_revision: str | None = "pending_doc_proc_001"
+revision: str = "d264b061ab7e"
+down_revision: str | None = "71ad17a08c48"
 branch_labels: str | Sequence[str] | None = None
 depends_on: str | Sequence[str] | None = None
 

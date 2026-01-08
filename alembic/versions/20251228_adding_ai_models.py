@@ -1,11 +1,3 @@
-"""adding ai models
-
-Revision ID: 9d87acc00979
-Revises: cd1f6cbd8751
-Create Date: 2025-12-28 20:03:23.275621
-
-"""
-
 from collections.abc import Sequence
 
 import sqlalchemy as sa
