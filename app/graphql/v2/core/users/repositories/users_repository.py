@@ -1,9 +1,9 @@
 from commons.db.v6.user import User
+from graphql import GraphQLError
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.context_wrapper import ContextWrapper
-from app.core.exceptions import UnauthorizedError
 from app.graphql.base_repository import BaseRepository
 
 
@@ -16,10 +16,22 @@ class UsersRepository(BaseRepository[User]):
         user = await self.get_by_id(user_id)
 
         if not user:
-            raise UnauthorizedError("User not found in the system.")
+            raise GraphQLError(
+                message=str("User not found in the system."),
+                extensions={
+                    "statusCode": 401,
+                    "type": "UserNotFoundError",
+                },
+            )
 
         if not user.enabled:
-            raise UnauthorizedError("User is disabled.")
+            raise GraphQLError(
+                message=str("User is disabled."),
+                extensions={
+                    "statusCode": 401,
+                    "type": "UserDisabledError",
+                },
+            )
 
     async def get_by_email(self, email: str) -> User | None:
         stmt = select(User).where(User.email == email)
