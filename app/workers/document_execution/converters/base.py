@@ -13,14 +13,49 @@ from pydantic import BaseModel
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from .exceptions import ConversionError
+
 if TYPE_CHECKING:
     from .entity_mapping import EntityMapping
 
 TDto = TypeVar("TDto", bound=BaseModel)
 TInput = TypeVar("TInput")
 TOutput = TypeVar("TOutput")
+T = TypeVar("T")
 
 DEFAULT_BATCH_SIZE = 500
+
+
+@dataclass
+class ConversionResult(Generic[T]):
+    value: T | None
+    error: ConversionError | None
+
+    @classmethod
+    def ok(cls, value: T) -> "ConversionResult[T]":
+        return cls(value=value, error=None)
+
+    @classmethod
+    def fail(cls, error: ConversionError) -> "ConversionResult[T]":
+        return cls(value=None, error=error)
+
+    def is_ok(self) -> bool:
+        return self.error is None
+
+    def is_error(self) -> bool:
+        return self.error is not None
+
+    def unwrap(self) -> T:
+        if self.is_error():
+            raise ValueError("Cannot unwrap a ConversionResult with an error")
+        assert self.value is not None
+        return self.value
+
+    def unwrap_error(self) -> ConversionError:
+        if self.is_ok():
+            raise ValueError("Cannot unwrap_error a ConversionResult without an error")
+        assert self.error is not None
+        return self.error
 
 
 @dataclass
@@ -62,7 +97,7 @@ class BaseEntityConverter(ABC, Generic[TDto, TInput, TOutput]):
         self,
         dto: TDto,
         entity_mapping: "EntityMapping",
-    ) -> TInput | None: ...
+    ) -> ConversionResult[TInput]: ...
 
     async def to_inputs_bulk(
         self,
@@ -71,9 +106,9 @@ class BaseEntityConverter(ABC, Generic[TDto, TInput, TOutput]):
     ) -> list[TInput]:
         inputs: list[TInput] = []
         for dto, mapping in zip(dtos, entity_mappings, strict=True):
-            input_data = await self.to_input(dto, mapping)
-            if input_data is not None:
-                inputs.append(input_data)
+            result = await self.to_input(dto, mapping)
+            if result.is_ok() and result.value is not None:
+                inputs.append(result.value)
         return inputs
 
     async def create_entities_bulk(

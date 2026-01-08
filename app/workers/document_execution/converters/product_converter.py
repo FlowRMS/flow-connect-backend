@@ -17,8 +17,9 @@ from app.graphql.v2.core.products.strawberry.product_cpn_input import (
 )
 from app.graphql.v2.core.products.strawberry.product_input import ProductInput
 
-from .base import BaseEntityConverter, BulkCreateResult
+from .base import BaseEntityConverter, BulkCreateResult, ConversionResult
 from .entity_mapping import EntityMapping
+from .exceptions import FactoryPartNumberRequiredError, FactoryRequiredError
 
 
 class ProductConverter(BaseEntityConverter[ProductDTO, ProductInput, Product]):
@@ -71,15 +72,17 @@ class ProductConverter(BaseEntityConverter[ProductDTO, ProductInput, Product]):
         self,
         dto: ProductDTO,
         entity_mapping: EntityMapping,
-    ) -> ProductInput | None:
+    ) -> ConversionResult[ProductInput]:
         factory_id = entity_mapping.factory_id
         if not factory_id:
-            return None
-
-        uom_id = await self._get_or_create_uom_id(dto.unit_of_measure)
+            return ConversionResult.fail(FactoryRequiredError())
 
         if not dto.factory_part_number:
-            return None
+            return ConversionResult.fail(
+                FactoryPartNumberRequiredError(dto.description)
+            )
+
+        uom_id = await self._get_or_create_uom_id(dto.unit_of_measure)
 
         product_input = ProductInput(
             factory_part_number=dto.factory_part_number,
@@ -113,7 +116,7 @@ class ProductConverter(BaseEntityConverter[ProductDTO, ProductInput, Product]):
                 )
             ]
 
-        return product_input
+        return ConversionResult.ok(product_input)
 
     async def _get_or_create_uom_id(self, uom_title: str | None) -> UUID:
         title_upper = (uom_title or "EA").upper()

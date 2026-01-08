@@ -223,8 +223,7 @@ def build_pending_document_status_email(
     user_name = user.full_name if user else "User"
 
     doc_url = (
-        f"{frontend_base_url}/apps/flowrms/documents"
-        f"?pendingDocumentId={pending_document.id}"
+        f"{frontend_base_url}/flow-ai/upload-complete?pendingId={pending_document.id}"
     )
 
     processing_html = _build_processing_results_html(processing_records)

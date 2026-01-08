@@ -210,14 +210,18 @@ class DocumentExecutorService:
                 continue
 
             try:
-                inp = await converter.to_input(dto, mapping)
-                if not inp:
+                result = await converter.to_input(dto, mapping)
+                if result.is_error():
+                    conversion_errors[i] = str(result.unwrap_error())
+                    continue
+
+                if result.value is None:
                     conversion_errors[i] = (
                         "Record could not be converted to input. Missing required fields?"
                     )
                     continue
 
-                valid_inputs.append(inp)
+                valid_inputs.append(result.unwrap())
                 valid_indices.append(i)
             except Exception as e:
                 logger.error(f"Error converting DTO {i}: {e}")
@@ -248,7 +252,7 @@ class DocumentExecutorService:
                             entity_id=None,
                             status=ProcessingResultStatus.SKIPPED,
                             dto_json=dto.model_dump(mode="json"),
-                            error_message="Skipped: duplicate or validation error",
+                            error_message="Duplicate or could not be created",
                         )
                     )
                 else:

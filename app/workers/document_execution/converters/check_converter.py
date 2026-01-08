@@ -17,8 +17,9 @@ from app.graphql.checks.services.check_service import CheckService
 from app.graphql.checks.strawberry.check_detail_input import CheckDetailInput
 from app.graphql.checks.strawberry.check_input import CheckInput
 
-from .base import BaseEntityConverter
+from .base import BaseEntityConverter, ConversionResult
 from .entity_mapping import EntityMapping
+from .exceptions import FactoryRequiredError
 
 
 class CheckConverter(BaseEntityConverter[CheckDTO, CheckInput, Check]):
@@ -44,11 +45,11 @@ class CheckConverter(BaseEntityConverter[CheckDTO, CheckInput, Check]):
         self,
         dto: CheckDTO,
         entity_mapping: EntityMapping,
-    ) -> CheckInput:
+    ) -> ConversionResult[CheckInput]:
         factory_id = entity_mapping.factory_id
 
         if not factory_id:
-            raise ValueError("Factory ID is required but not found in entity_mapping")
+            return ConversionResult.fail(FactoryRequiredError())
 
         check_number = dto.check_number or self._generate_check_number()
         entity_date = dto.check_date or date.today()
@@ -63,14 +64,16 @@ class CheckConverter(BaseEntityConverter[CheckDTO, CheckInput, Check]):
             (detail.applied_amount for detail in details), Decimal("0")
         )
 
-        return CheckInput(
-            check_number=check_number,
-            entity_date=entity_date,
-            factory_id=factory_id,
-            entered_commission_amount=entered_commission_amount,
-            details=details,
-            post_date=dto.post_date,
-            commission_month=dto.commission_month,
+        return ConversionResult.ok(
+            CheckInput(
+                check_number=check_number,
+                entity_date=entity_date,
+                factory_id=factory_id,
+                entered_commission_amount=entered_commission_amount,
+                details=details,
+                post_date=dto.post_date,
+                commission_month=dto.commission_month,
+            )
         )
 
     async def _convert_detail(

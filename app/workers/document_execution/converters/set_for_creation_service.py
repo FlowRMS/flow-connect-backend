@@ -81,8 +81,11 @@ class SetForCreationService:
         mapping = entity_mappings.get(dto_id, EntityMapping())
 
         try:
-            order_input = await self._order_converter.to_input(dto, mapping)
-            order = await self._order_converter.create_entity(order_input)
+            result = await self._order_converter.to_input(dto, mapping)
+            if result.is_error() or result.value is None:
+                logger.error(f"Failed to convert order: {result.unwrap_error()}")
+                return None
+            order = await self._order_converter.create_entity(result.unwrap())
             logger.info(f"Created order {order.id} for SET_FOR_CREATION")
             return order.id
         except Exception as e:
@@ -133,8 +136,11 @@ class SetForCreationService:
         mapping = entity_mappings.get(dto_id, EntityMapping())
 
         try:
-            invoice_input = await self._invoice_converter.to_input(dto, mapping)
-            invoice = await self._invoice_converter.create_entity(invoice_input)
+            result = await self._invoice_converter.to_input(dto, mapping)
+            if result.is_error() or result.value is None:
+                logger.error(f"Failed to convert invoice: {result.error}")
+                return None
+            invoice = await self._invoice_converter.create_entity(result.value)
             logger.info(f"Created invoice {invoice.id} for SET_FOR_CREATION")
             return invoice.id
         except Exception as e:
