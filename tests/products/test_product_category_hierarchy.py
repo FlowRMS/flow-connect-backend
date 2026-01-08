@@ -320,7 +320,7 @@ async def cleanup_test_categories(headers: dict, category_ids: list[str]) -> Non
             print(f"  Deleted {cat_id[:8]}...: {'OK' if success else 'FAILED'}")
 
 
-async def run_tests(email: str, password: str):
+async def run_tests(email: str, password: str, org_id: str | None = None):
     """Run all tests."""
     print("=" * 60)
     print("Product Category Hierarchy Tests (SUP-148)")
@@ -329,7 +329,7 @@ async def run_tests(email: str, password: str):
     # Generate authentication token
     print(f"\nGenerating authentication token for {email}...")
     try:
-        headers = await generate_token(email=email, password=password)
+        headers = await generate_token(email=email, password=password, organization_id=org_id)
         print("Token generated successfully!")
     except Exception as e:
         print(f"Failed to generate token: {e}")
@@ -379,10 +379,11 @@ def main():
     )
     parser.add_argument("--email", "-e", required=True, help="User email")
     parser.add_argument("--password", "-p", required=True, help="User password")
+    parser.add_argument("--org-id", "-o", help="Organization ID (required for multi-org users)")
 
     args = parser.parse_args()
 
-    asyncio.run(run_tests(email=args.email, password=args.password))
+    asyncio.run(run_tests(email=args.email, password=args.password, org_id=args.org_id))
 
 
 if __name__ == "__main__":

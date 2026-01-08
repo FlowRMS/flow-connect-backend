@@ -6,12 +6,28 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import joinedload, selectinload
 
 from app.core.context_wrapper import ContextWrapper
+from app.core.processors.executor import ProcessorExecutor
 from app.graphql.base_repository import BaseRepository
+from app.graphql.v2.core.products.processors.validate_product_category_hierarchy_processor import (
+    ValidateProductCategoryHierarchyProcessor,
+)
 
 
 class ProductCategoryRepository(BaseRepository[ProductCategory]):
-    def __init__(self, context_wrapper: ContextWrapper, session: AsyncSession) -> None:
-        super().__init__(session, context_wrapper, ProductCategory)
+    def __init__(
+        self,
+        context_wrapper: ContextWrapper,
+        session: AsyncSession,
+        processor_executor: ProcessorExecutor,
+        validate_hierarchy_processor: ValidateProductCategoryHierarchyProcessor,
+    ) -> None:
+        super().__init__(
+            session,
+            context_wrapper,
+            ProductCategory,
+            processor_executor=processor_executor,
+            processor_executor_classes=[validate_hierarchy_processor],
+        )
 
     async def name_exists(self, factory_id: UUID | None, name: str) -> bool:
         stmt = select(ProductCategory).where(
