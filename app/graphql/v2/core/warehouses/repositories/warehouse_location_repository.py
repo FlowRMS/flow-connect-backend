@@ -33,7 +33,7 @@ class WarehouseLocationRepository(BaseRepository[WarehouseLocation]):
             .where(WarehouseLocation.id == location_id)
         )
         result = await self.session.execute(stmt)
-        return result.scalar_one_or_none()
+        return result.unique().scalar_one_or_none()
 
     async def list_by_warehouse(self, warehouse_id: UUID) -> list[WarehouseLocation]:
         stmt = (
@@ -59,7 +59,7 @@ class WarehouseLocationRepository(BaseRepository[WarehouseLocation]):
             .order_by(WarehouseLocation.level, WarehouseLocation.sort_order)
         )
         result = await self.session.execute(stmt)
-        return list(result.scalars().all())
+        return list(result.unique().scalars().all())
 
     async def get_root_locations(self, warehouse_id: UUID) -> list[WarehouseLocation]:
         stmt = (
@@ -75,7 +75,7 @@ class WarehouseLocationRepository(BaseRepository[WarehouseLocation]):
             .order_by(WarehouseLocation.sort_order)
         )
         result = await self.session.execute(stmt)
-        return list(result.scalars().all())
+        return list(result.unique().scalars().all())
 
     async def get_children(self, parent_id: UUID) -> list[WarehouseLocation]:
         stmt = (
@@ -88,7 +88,7 @@ class WarehouseLocationRepository(BaseRepository[WarehouseLocation]):
             .order_by(WarehouseLocation.sort_order)
         )
         result = await self.session.execute(stmt)
-        return list(result.scalars().all())
+        return list(result.unique().scalars().all())
 
     async def delete_by_warehouse(self, warehouse_id: UUID) -> None:
         stmt = select(WarehouseLocation).where(
@@ -132,7 +132,7 @@ class LocationProductAssignmentRepository(BaseRepository[LocationProductAssignme
             .where(LocationProductAssignment.location_id == location_id)
         )
         result = await self.session.execute(stmt)
-        return list(result.scalars().all())
+        return list(result.unique().scalars().all())
 
     async def list_by_product(
         self, product_id: UUID
@@ -143,7 +143,7 @@ class LocationProductAssignmentRepository(BaseRepository[LocationProductAssignme
             .where(LocationProductAssignment.product_id == product_id)
         )
         result = await self.session.execute(stmt)
-        return list(result.scalars().all())
+        return list(result.unique().scalars().all())
 
     async def delete_by_location_and_product(
         self, location_id: UUID, product_id: UUID
