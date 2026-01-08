@@ -22,7 +22,6 @@ class InventoryItemService:
         item_repository: InventoryItemRepository,
         inventory_repository: InventoryRepository,
     ) -> None:
-        super().__init__()
         self.item_repository = item_repository
         self.inventory_repository = inventory_repository
 
@@ -88,8 +87,7 @@ class InventoryItemService:
             item.quantity = quantity
 
         if location_id is not strawberry.UNSET:
-             # We can't easily validate UUID here without casting, but strawberry ensures types usually.
-            item.location_id = location_id  # type: ignore
+             item.location_id = location_id if location_id is not None else None
 
         if status is not strawberry.UNSET and isinstance(status, InventoryItemStatus):
             item.status = status

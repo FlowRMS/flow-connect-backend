@@ -1,14 +1,4 @@
-"""consolidate all pycommission tables and columns
 
-Revision ID: 20260102_consolidate_commission
-Revises: 20260102_consolidate_pycore
-Create Date: 2026-01-02 11:25:00.000000
-
-This migration consolidates all fragmented pycommission migrations into one:
-- Commission tables creation (order_balances, orders, order_details, invoice_balances, invoices, invoice_details)
-- All missing column additions
-- Split rate tables (order_split_rates, order_inside_reps, invoice_split_rates)
-"""
 from typing import Sequence, Union
 
 from alembic import op

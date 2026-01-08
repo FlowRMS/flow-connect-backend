@@ -1,10 +1,4 @@
-"""add inventory tables
 
-Revision ID: a1b2c3d4e5f6
-Revises: 20251225_add_customer_factory_sales_reps
-Create Date: 2025-12-26 11:20:00.000000
-
-"""
 
 from collections.abc import Sequence
 

@@ -26,7 +26,6 @@ class ShipmentRequestService:
         self,
         repository: ShipmentRequestRepository,
     ) -> None:
-        super().__init__()
         self.repository = repository
 
     async def list_by_warehouse(
@@ -131,7 +130,7 @@ class ShipmentRequestService:
                 ShipmentRequestItem(
                     product_id=item_input.product_id,
                     quantity=item_input.quantity,
-                    request_id=request.id,  # Will be assigned? No, ORM handles relationship
+                    request_id=request.id,
                 )
             )
 
@@ -140,16 +139,7 @@ class ShipmentRequestService:
 
     async def generate_request_number(self) -> str:
         # Simple generation strategy: SR-{YYYY}-{RANDOM/SEQ}
-        # In production, use DB sequence or count. Here using functional approach.
         year = datetime.now().year
-        # We need to query max or sequence. 
-        # For this refactor, let's use a simpler unique ID or query count.
-        # But to be robust, let's query repository for count?
-        # Repository doesn't have count method exposed easily.
-        # Let's use UUID segment or similar for uniqueness now, 
-        # as generating sequential Request Number usually requires locking/sequences.
-        # Format: SR-YYYY-XXXX (last 4 of UUID/Random) to avoid DB lock complexity for now
-        # OR count existing requests.
-        # Let's assume unique enough:
+        # Using 8 chars of UUID for uniqueness without DB locking
         unique_suffix = uuid.uuid4().hex[:8].upper()
         return f"SR-{year}-{unique_suffix}"

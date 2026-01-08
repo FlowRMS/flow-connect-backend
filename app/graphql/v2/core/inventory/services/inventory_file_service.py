@@ -64,7 +64,7 @@ class InventoryFileService:
 
         for inventory in inventory_list:
             if not inventory.items:
-                 continue
+                continue
 
             for item in inventory.items:
                 product_name = inventory.product.description or "N/A"
@@ -72,7 +72,7 @@ class InventoryFileService:
                 
                 location_name = "N/A"
                 if item.location:
-                   location_name = item.location.name
+                    location_name = item.location.name
                 
                 writer.writerow({
                     "SKU": sku,
@@ -91,8 +91,8 @@ class InventoryFileService:
     ) -> dict[str, int]:
         try:
             decoded_content = base64.b64decode(file_content).decode("utf-8")
-        except Exception:
-             raise ValueError("Invalid Base64 encoded file content")
+        except (ValueError, TypeError) as e:
+             raise ValueError(f"Invalid Base64 encoded file content: {e}")
 
         reader = csv.DictReader(io.StringIO(decoded_content))
         
@@ -118,7 +118,7 @@ class InventoryFileService:
 
             try:
                 quantity = Decimal(quantity_str)
-            except Exception:
+            except (ValueError, decimal.InvalidOperation):
                 stats["errors"] += 1
                 continue
 

@@ -150,8 +150,10 @@ class ProductsRepository(BaseRepository[Product]):
         if factory_id is not None:
             stmt = stmt.where(ProductCategory.factory_id == factory_id)
 
+        result = await self.session.execute(stmt)
+        return list(result.scalars().all())
+
     async def find_by_factory_part_number(self, factory_part_number: str) -> Product | None:
-        """Find a product by factory part number (exact match)."""
         stmt = select(Product).where(Product.factory_part_number == factory_part_number)
         result = await self.session.execute(stmt)
         return result.scalars().first()

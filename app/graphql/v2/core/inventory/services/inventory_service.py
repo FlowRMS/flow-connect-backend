@@ -16,7 +16,6 @@ class InventoryService:
         self,
         repository: InventoryRepository,
     ) -> None:
-        super().__init__()
         self.repository = repository
 
     async def get_by_id(self, inventory_id: UUID) -> Inventory:
