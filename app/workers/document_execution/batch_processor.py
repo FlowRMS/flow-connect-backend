@@ -20,6 +20,14 @@ from .converters.skipped_entity_handler import (
 
 
 class DocumentBatchProcessor:
+    """
+    Handles bulk document processing with error tracking and batch chunking.
+
+    Processes DTOs in configurable batches, tracking which records were
+    created, skipped, or failed. Coordinates with converters to handle
+    deduplication and entity creation.
+    """
+
     async def execute_bulk(
         self,
         converter: BaseEntityConverter[Any, Any, Any],

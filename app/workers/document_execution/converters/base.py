@@ -49,12 +49,16 @@ class ConversionResult(Generic[T]):
     def unwrap(self) -> T:
         if self.is_error():
             raise ValueError("Cannot unwrap a ConversionResult with an error")
-        return self.value  # type: ignore[return-value]
+        if self.value is None:
+            raise ValueError("ConversionResult value is None")
+        return self.value
 
     def unwrap_error(self) -> ConversionError:
         if self.is_ok():
             raise ValueError("Cannot unwrap_error a ConversionResult without an error")
-        return self.error  # type: ignore[return-value]
+        if self.error is None:
+            raise ValueError("ConversionResult error is None")
+        return self.error
 
 
 @dataclass

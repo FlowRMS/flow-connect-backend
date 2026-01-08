@@ -81,17 +81,12 @@ async def poll_pending_document_status(item: PendingDocumentStatusItem) -> None:
                                 )
                                 return
 
-                            if settings.environment == "production":
-                                frontend_base_url = "https://console.flowrms.com"
-                            else:
-                                frontend_base_url = f"https://{settings.environment}.console.flowrms.com"
-
                             html_body = build_pending_document_status_email(
                                 pending_document=pending_doc,
                                 processing_records=processing_records,
                                 user=user,
                                 tenant=item.tenant,
-                                frontend_base_url=frontend_base_url,
+                                frontend_base_url=settings.frontend_base_url,
                             )
 
                             subject = _build_email_subject(pending_doc)
