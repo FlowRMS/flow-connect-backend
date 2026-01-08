@@ -1,4 +1,4 @@
-"""Add freight_class to shipping_carriers.
+"""Add freight_class to fulfillment_orders.
 
 Revision ID: 20260107_freight_class
 Revises: 20260107_documents
@@ -15,9 +15,9 @@ branch_labels = None
 depends_on = None
 
 def upgrade() -> None:
-    # Add freight_class column to shipping_carriers
+    # Add freight_class column to fulfillment_orders
     op.add_column(
-        'shipping_carriers',
+        'fulfillment_orders',
         sa.Column('freight_class', sa.String(10), nullable=True),
         schema='pywarehouse'
     )
@@ -25,4 +25,4 @@ def upgrade() -> None:
 
 def downgrade() -> None:
     # Remove freight_class column
-    op.drop_column('shipping_carriers', 'freight_class', schema='pywarehouse')
+    op.drop_column('fulfillment_orders', 'freight_class', schema='pywarehouse')

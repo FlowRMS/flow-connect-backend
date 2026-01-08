@@ -85,6 +85,8 @@ class FulfillmentOrderService:
             order.carrier_id = input.carrier_id
         if input.carrier_type is not strawberry.UNSET:
             order.carrier_type = input.carrier_type
+        if input.freight_class is not strawberry.UNSET:
+            order.freight_class = input.freight_class
         if input.need_by_date is not strawberry.UNSET:
             order.need_by_date = input.need_by_date
         if input.hold_reason is not strawberry.UNSET:

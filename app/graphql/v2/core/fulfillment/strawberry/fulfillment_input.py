@@ -71,6 +71,7 @@ class UpdateFulfillmentOrderInput:
     fulfillment_method: FulfillmentMethod | None = strawberry.UNSET
     carrier_id: UUID | None = strawberry.UNSET
     carrier_type: CarrierType | None = strawberry.UNSET
+    freight_class: str | None = strawberry.UNSET
     ship_to_address: ShipToAddressInput | None = strawberry.UNSET
     need_by_date: date | None = strawberry.UNSET
     hold_reason: str | None = strawberry.UNSET

@@ -273,6 +273,7 @@ class FulfillmentOrderResponse(DTOMixin[FulfillmentOrder]):
     status: FulfillmentOrderStatus
     fulfillment_method: FulfillmentMethod
     carrier_type: CarrierType | None
+    freight_class: str | None
     need_by_date: date | None
     has_backorder_items: bool
     hold_reason: str | None
@@ -309,6 +310,7 @@ class FulfillmentOrderResponse(DTOMixin[FulfillmentOrder]):
             status=model.status,
             fulfillment_method=model.fulfillment_method,
             carrier_type=model.carrier_type,
+            freight_class=model.freight_class,
             need_by_date=model.need_by_date,
             has_backorder_items=model.has_backorder_items,
             hold_reason=model.hold_reason,
