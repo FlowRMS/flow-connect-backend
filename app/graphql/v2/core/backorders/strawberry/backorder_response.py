@@ -23,7 +23,7 @@ from app.graphql.v2.core.products.strawberry.product_response import ProductLite
 @strawberry.type
 class BackorderResponse(DTOMixin[OrderDetail]):
     _instance: strawberry.Private[OrderDetail]
-    
+
     # OrderDetail fields
     id: UUID
     ordered_quantity: Decimal

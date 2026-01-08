@@ -26,3 +26,15 @@ class CreateShipmentRequestInput:
     status: ShipmentRequestStatus = ShipmentRequestStatus.PENDING
     notes: str | None = None
     items: list[ShipmentRequestItemInput] = strawberry.field(default_factory=list)
+
+
+@strawberry.input
+class UpdateShipmentRequestInput:
+    id: UUID
+    factory_id: UUID | None = None
+    priority: ShipmentPriority | None = None
+    method: ShipmentMethod | None = None
+    status: ShipmentRequestStatus | None = None
+    notes: str | None = None
+    items: list[ShipmentRequestItemInput] | None = None
+

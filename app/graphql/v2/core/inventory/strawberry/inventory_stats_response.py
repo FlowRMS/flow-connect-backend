@@ -11,3 +11,5 @@ class InventoryStatsResponse:
     reserved_quantity: Decimal
     low_stock_count: int
     picking_quantity: Decimal
+    out_of_stock_count: int
+    total_value: Decimal

@@ -1,11 +1,3 @@
-"""add shipment requests tables
-
-Revision ID: b2c3d4e5f607
-Revises: a1b2c3d4e5f6
-Create Date: 2025-12-26 12:00:00.000000
-
-"""
-
 from collections.abc import Sequence
 
 import sqlalchemy as sa

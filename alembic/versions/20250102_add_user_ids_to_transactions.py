@@ -1,14 +1,3 @@
-"""Add user_ids column to orders, quotes, invoices, and checks.
-
-This denormalizes user ownership for faster landing page queries.
-The user_ids array contains: created_by_id + all split rate user_ids.
-
-Revision ID: add_user_ids_001
-Revises: order_acknowledgements_001
-Create Date: 2025-01-02
-
-"""
-
 from collections.abc import Sequence
 
 import sqlalchemy as sa
@@ -16,8 +5,8 @@ from sqlalchemy.dialects import postgresql
 
 from alembic import op
 
-revision: str = "add_user_ids_001"
-down_revision: str | None = "order_acknowledgements_001"
+revision: str = "21588c21d093"
+down_revision: str | None = "d627dc1dbf6e"
 branch_labels: str | Sequence[str] | None = None
 depends_on: str | Sequence[str] | None = None
 

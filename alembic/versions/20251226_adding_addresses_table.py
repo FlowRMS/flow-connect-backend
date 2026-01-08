@@ -1,11 +1,3 @@
-"""adding addresses table
-
-Revision ID: 6e453caa5fb9
-Revises: c04c14e9ba47
-Create Date: 2025-12-26 15:37:31.885776
-
-"""
-
 from collections.abc import Sequence
 
 import sqlalchemy as sa

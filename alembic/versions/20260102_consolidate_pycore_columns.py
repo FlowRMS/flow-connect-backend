@@ -1,11 +1,4 @@
-"""consolidate pycore columns
-
-Revision ID: 20260102_consolidate_pycore
-Revises: 20251224_init_commit
-Create Date: 2026-01-02 11:15:00.000000
-
-"""
-from typing import Sequence, Union
+from collections.abc import Sequence
 
 from alembic import op
 import sqlalchemy as sa
@@ -13,9 +6,9 @@ from sqlalchemy.dialects import postgresql
 
 # revision identifiers, used by Alembic.
 revision: str = 'c4d5e6f71920'
-down_revision: Union[str, None] = 'b2c3d4e5f607'
-branch_labels: Union[str, Sequence[str], None] = None
-depends_on: Union[str, Sequence[str], None] = None
+down_revision: str | None = '0ce93b01f551'
+branch_labels: str | Sequence[str] | None = None
+depends_on: str | Sequence[str] | None = None
 
 
 def upgrade() -> None:

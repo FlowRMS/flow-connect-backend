@@ -1,4 +1,5 @@
 from datetime import datetime
+from decimal import Decimal
 from typing import Self
 from uuid import UUID
 
@@ -54,13 +55,16 @@ class ShipmentRequestResponse(DTOMixin[ShipmentRequest]):
         )
 
     @strawberry.field
-    async def items(self) -> list[ShipmentRequestItemResponse]:
-        items = await self._instance.awaitable_attrs.items
-        return ShipmentRequestItemResponse.from_orm_model_list(items)
+    def items(self) -> list[ShipmentRequestItemResponse]:
+        return ShipmentRequestItemResponse.from_orm_model_list(self._instance.items)
 
     @strawberry.field
-    async def factory(self) -> FactoryLiteResponse | None:
-        factory = await self._instance.awaitable_attrs.factory
+    def total_quantity(self) -> Decimal:
+        return sum((item.quantity for item in self._instance.items), Decimal("0"))
+
+    @strawberry.field
+    def factory(self) -> FactoryLiteResponse | None:
+        factory = self._instance.factory
         if not factory:
             return None
         return FactoryLiteResponse.from_orm_model(factory)

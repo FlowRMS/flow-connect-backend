@@ -1,15 +1,9 @@
-from decimal import Decimal
 from uuid import UUID
 
-from commons.db.v6 import (
-    LocationProductAssignment,
-    WarehouseLocation,
-    WarehouseStructureCode,
-)
+from commons.db.v6 import WarehouseLocation, WarehouseStructureCode
 
 from app.errors.common_errors import NotFoundError, ValidationError
 from app.graphql.v2.core.warehouses.repositories import (
-    LocationProductAssignmentRepository,
     WarehouseLocationRepository,
     WarehouseRepository,
 )
@@ -32,12 +26,10 @@ class WarehouseLocationService:
     def __init__(
         self,
         location_repository: WarehouseLocationRepository,
-        assignment_repository: LocationProductAssignmentRepository,
         warehouse_repository: WarehouseRepository,
     ) -> None:
         super().__init__()
         self.location_repository = location_repository
-        self.assignment_repository = assignment_repository
         self.warehouse_repository = warehouse_repository
 
     async def get_by_id(self, location_id: UUID) -> WarehouseLocation:
@@ -59,9 +51,7 @@ class WarehouseLocationService:
     async def create(self, input: WarehouseLocationInput) -> WarehouseLocation:
         if not await self.warehouse_repository.exists(input.warehouse_id):
             raise NotFoundError(f"Warehouse with id {input.warehouse_id} not found")
-        await self._validate_hierarchy(
-            WarehouseStructureCode(input.level.value), input.parent_id
-        )
+        await self._validate_hierarchy(input.level, input.parent_id)
         location = self._build_location(input, input.warehouse_id, input.parent_id)
         return await self.location_repository.create(location)
 
@@ -72,9 +62,7 @@ class WarehouseLocationService:
         if not existing:
             raise NotFoundError(f"Location with id {location_id} not found")
         if input.parent_id != existing.parent_id:
-            await self._validate_hierarchy(
-                WarehouseStructureCode(input.level.value), input.parent_id
-            )
+            await self._validate_hierarchy(input.level, input.parent_id)
         location = self._build_location(input, input.warehouse_id, input.parent_id)
         location.id = location_id
         return await self.location_repository.update(location)
@@ -154,17 +142,17 @@ class WarehouseLocationService:
         return WarehouseLocation(
             warehouse_id=warehouse_id,
             parent_id=parent_id,
-            level=WarehouseStructureCode(inp.level.value),
+            level=inp.level,
             name=inp.name,
             code=inp.code,
             description=inp.description,
             is_active=inp.is_active if inp.is_active is not None else True,
             sort_order=inp.sort_order if inp.sort_order is not None else 0,
-            x=Decimal(str(inp.x)) if inp.x is not None else None,
-            y=Decimal(str(inp.y)) if inp.y is not None else None,
-            width=Decimal(str(inp.width)) if inp.width is not None else None,
-            height=Decimal(str(inp.height)) if inp.height is not None else None,
-            rotation=Decimal(str(inp.rotation)) if inp.rotation is not None else None,
+            x=inp.x,
+            y=inp.y,
+            width=inp.width,
+            height=inp.height,
+            rotation=inp.rotation,
         )
 
     async def _validate_hierarchy(
@@ -189,53 +177,3 @@ class WarehouseLocationService:
                     f"{level.name} locations must have a parent of type "
                     f"{expected_parent.name}, but got {parent.level.name}"
                 )
-
-    # Product assignment operations
-    async def assign_product(
-        self, location_id: UUID, product_id: UUID, quantity: Decimal
-    ) -> LocationProductAssignment:
-        location = await self.location_repository.get_by_id(location_id)
-        if not location:
-            raise NotFoundError(f"Location with id {location_id} not found")
-
-        existing = await self.assignment_repository.get_by_location_and_product(
-            location_id, product_id
-        )
-        if existing:
-            existing.quantity = quantity
-            return await self.assignment_repository.update(existing)
-
-        assignment = LocationProductAssignment(
-            location_id=location_id,
-            product_id=product_id,
-            quantity=quantity,
-        )
-        return await self.assignment_repository.create(assignment)
-
-    async def update_product_quantity(
-        self, location_id: UUID, product_id: UUID, quantity: Decimal
-    ) -> LocationProductAssignment:
-        assignment = await self.assignment_repository.get_by_location_and_product(
-            location_id, product_id
-        )
-        if not assignment:
-            raise NotFoundError(
-                f"Product {product_id} is not assigned to location {location_id}"
-            )
-        assignment.quantity = quantity
-        return await self.assignment_repository.update(assignment)
-
-    async def remove_product(self, location_id: UUID, product_id: UUID) -> bool:
-        return await self.assignment_repository.delete_by_location_and_product(
-            location_id, product_id
-        )
-
-    async def get_assignments_by_location(
-        self, location_id: UUID
-    ) -> list[LocationProductAssignment]:
-        return await self.assignment_repository.list_by_location(location_id)
-
-    async def get_assignments_by_product(
-        self, product_id: UUID
-    ) -> list[LocationProductAssignment]:
-        return await self.assignment_repository.list_by_product(product_id)

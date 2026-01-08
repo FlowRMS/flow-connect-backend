@@ -103,16 +103,9 @@ class ProductsRepository(BaseRepository[Product]):
         limit: int = 20,
     ) -> list[Product]:
         """
-        Search products by factory part number using case-insensitive pattern matching.
-
-        Args:
-            search_term: The search term to match against factory part number
-            factory_id: The UUID of the factory to filter products by (optional)
-            product_category_id: The UUID of the product category to filter by (optional)
-            limit: Maximum number of products to return (default: 20)
-
-        Returns:
-            List of Product objects matching the search criteria
+        Search products using trigram similarity matching.
+        Searches across factory_part_number, description, and customer_part_number.
+        Results with similarity > 0.2 are returned, ordered by highest similarity.
         """
 
         greatest = func.greatest(
@@ -126,7 +119,7 @@ class ProductsRepository(BaseRepository[Product]):
             .outerjoin(ProductCpn, ProductCpn.product_id == Product.id)
             .limit(limit)
         )
-        if search_term != "":
+        if search_term:
             stmt = stmt.where(greatest > 0.2).order_by(greatest.desc())
 
         if factory_id is not None:
@@ -152,6 +145,11 @@ class ProductsRepository(BaseRepository[Product]):
 
         result = await self.session.execute(stmt)
         return list(result.scalars().all())
+
+    async def find_by_factory_part_number(self, factory_part_number: str) -> Product | None:
+        stmt = select(Product).where(Product.factory_part_number == factory_part_number)
+        result = await self.session.execute(stmt)
+        return result.scalars().first()
 
     async def find_by_factory_id(
         self, factory_id: UUID, limit: int = 25

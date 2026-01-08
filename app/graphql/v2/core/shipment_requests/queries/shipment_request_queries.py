@@ -14,7 +14,22 @@ from app.graphql.v2.core.shipment_requests.strawberry.shipment_request_response 
 
 
 @strawberry.type
+class ShipmentRequestStatusOption:
+    label: str
+    value: str
+
+
+from app.core.constants import DEFAULT_QUERY_LIMIT, DEFAULT_QUERY_OFFSET
+
+@strawberry.type
 class ShipmentRequestQueries:
+    @strawberry.field
+    def shipment_request_statuses(self) -> list[ShipmentRequestStatusOption]:
+        return [
+            ShipmentRequestStatusOption(label=status.name.replace("_", " ").title(), value=status.name)
+            for status in ShipmentRequestStatus
+        ]
+
     @strawberry.field
     @inject
     async def shipment_requests(
@@ -22,8 +37,8 @@ class ShipmentRequestQueries:
         service: Injected[ShipmentRequestService],
         warehouse_id: UUID,
         status: ShipmentRequestStatus | None = None,
-        limit: int = 100,
-        offset: int = 0,
+        limit: int = DEFAULT_QUERY_LIMIT,
+        offset: int = DEFAULT_QUERY_OFFSET,
     ) -> list[ShipmentRequestResponse]:
         requests = await service.list_by_warehouse(
             warehouse_id=warehouse_id,

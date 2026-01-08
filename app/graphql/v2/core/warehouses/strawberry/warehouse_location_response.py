@@ -4,12 +4,13 @@ from typing import Self
 from uuid import UUID
 
 import strawberry
-from commons.db.v6 import LocationProductAssignment, WarehouseLocation
+from commons.db.v6 import (
+    LocationProductAssignment,
+    WarehouseLocation,
+    WarehouseStructureCode,
+)
 
 from app.core.db.adapters.dto import DTOMixin
-from app.graphql.v2.core.warehouses.strawberry.warehouse_input import (
-    WarehouseStructureCodeGQL,
-)
 
 
 @strawberry.type
@@ -39,7 +40,7 @@ class WarehouseLocationResponse(DTOMixin[WarehouseLocation]):
     id: UUID
     warehouse_id: UUID
     parent_id: UUID | None
-    level: WarehouseStructureCodeGQL
+    level: WarehouseStructureCode
     name: str
     code: str | None
     description: str | None
@@ -59,7 +60,7 @@ class WarehouseLocationResponse(DTOMixin[WarehouseLocation]):
             id=model.id,
             warehouse_id=model.warehouse_id,
             parent_id=model.parent_id,
-            level=WarehouseStructureCodeGQL(model.level.value),
+            level=model.level,
             name=model.name,
             code=model.code,
             description=model.description,

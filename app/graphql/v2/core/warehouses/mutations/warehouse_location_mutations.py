@@ -5,6 +5,9 @@ import strawberry
 from aioinject import Injected
 
 from app.graphql.inject import inject
+from app.graphql.v2.core.warehouses.services.warehouse_location_assignment_service import (
+    WarehouseLocationAssignmentService,
+)
 from app.graphql.v2.core.warehouses.services.warehouse_location_service import (
     WarehouseLocationService,
 )
@@ -74,7 +77,7 @@ class WarehouseLocationMutations:
         location_id: UUID,
         product_id: UUID,
         quantity: Decimal,
-        service: Injected[WarehouseLocationService],
+        service: Injected[WarehouseLocationAssignmentService],
     ) -> LocationProductAssignmentResponse:
         assignment = await service.assign_product(location_id, product_id, quantity)
         return LocationProductAssignmentResponse.from_orm_model(assignment)
@@ -86,7 +89,7 @@ class WarehouseLocationMutations:
         location_id: UUID,
         product_id: UUID,
         quantity: Decimal,
-        service: Injected[WarehouseLocationService],
+        service: Injected[WarehouseLocationAssignmentService],
     ) -> LocationProductAssignmentResponse:
         assignment = await service.update_product_quantity(
             location_id, product_id, quantity
@@ -99,6 +102,6 @@ class WarehouseLocationMutations:
         self,
         location_id: UUID,
         product_id: UUID,
-        service: Injected[WarehouseLocationService],
+        service: Injected[WarehouseLocationAssignmentService],
     ) -> bool:
         return await service.remove_product(location_id, product_id)

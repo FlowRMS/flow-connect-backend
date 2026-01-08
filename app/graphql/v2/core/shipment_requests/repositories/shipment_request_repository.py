@@ -6,11 +6,13 @@ from commons.db.v6.warehouse.shipment_requests import (
 )
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.orm import selectinload
+from sqlalchemy.orm import joinedload
 
 from app.core.context_wrapper import ContextWrapper
 from app.graphql.base_repository import BaseRepository
 
+
+from app.core.constants import DEFAULT_QUERY_LIMIT, DEFAULT_QUERY_OFFSET
 
 class ShipmentRequestRepository(BaseRepository[ShipmentRequest]):
     def __init__(
@@ -28,13 +30,16 @@ class ShipmentRequestRepository(BaseRepository[ShipmentRequest]):
         self,
         warehouse_id: UUID,
         status: ShipmentRequestStatus | None = None,
-        limit: int = 100,
-        offset: int = 0,
+        limit: int = DEFAULT_QUERY_LIMIT,
+        offset: int = DEFAULT_QUERY_OFFSET,
     ) -> list[ShipmentRequest]:
         stmt = (
             select(ShipmentRequest)
             .where(ShipmentRequest.warehouse_id == warehouse_id)
-            .options(selectinload(ShipmentRequest.items))
+            .options(
+                joinedload(ShipmentRequest.items),
+                joinedload(ShipmentRequest.factory),
+            )
             .limit(limit)
             .offset(offset)
         )

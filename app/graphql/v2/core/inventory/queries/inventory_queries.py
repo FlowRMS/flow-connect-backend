@@ -11,13 +11,26 @@ from app.graphql.v2.core.inventory.strawberry.inventory_response import (
 from app.graphql.v2.core.inventory.strawberry.inventory_stats_response import (
     InventoryStatsResponse,
 )
-from app.graphql.v2.core.inventory.strawberry.inventory_item_response import (
-    InventoryItemResponse,
-)
+from commons.db.v6.warehouse.inventory.inventory_item import InventoryItemStatus
 
 
 @strawberry.type
+class InventoryStatusOption:
+    label: str
+    value: str
+
+
+from app.core.constants import DEFAULT_QUERY_LIMIT, DEFAULT_QUERY_OFFSET
+
+@strawberry.type
 class InventoryQueries:
+    @strawberry.field
+    def inventory_statuses(self) -> list[InventoryStatusOption]:
+        return [
+            InventoryStatusOption(label=status.name.replace("_", " ").title(), value=status.name)
+            for status in InventoryItemStatus
+        ]
+
     @strawberry.field
     @inject
     async def inventories(
@@ -27,8 +40,8 @@ class InventoryQueries:
         factory_id: UUID | None = None,
         status: str | None = None,
         search: str | None = None,
-        limit: int = 100,
-        offset: int = 0,
+        limit: int = DEFAULT_QUERY_LIMIT,
+        offset: int = DEFAULT_QUERY_OFFSET,
     ) -> list[InventoryResponse]:
         inventories = await service.list_by_warehouse(
             warehouse_id=warehouse_id,
