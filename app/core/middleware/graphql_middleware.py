@@ -13,6 +13,7 @@ from app.core.container import create_container
 from app.core.context import Context
 from app.core.context_wrapper import ContextWrapper
 from app.core.db.db_provider import create_session
+from app.graphql.v2.core.users.repositories.users_repository import UsersRepository
 
 
 class GraphQLMiddleware(SchemaExtension):
@@ -50,6 +51,8 @@ class GraphQLMiddleware(SchemaExtension):
                 context.initialize(context_model, commission_visible=commission_visible)
                 context_wrapper = await conn_ctx.resolve(ContextWrapper)
                 wrapper_token = context_wrapper.set(context)
+                user_repository = await conn_ctx.resolve(UsersRepository)
+                await user_repository.check_active_user()
                 yield
                 context_wrapper.reset(wrapper_token)
 

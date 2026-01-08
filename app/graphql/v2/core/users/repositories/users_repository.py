@@ -3,12 +3,23 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.context_wrapper import ContextWrapper
+from app.core.exceptions import UnauthorizedError
 from app.graphql.base_repository import BaseRepository
 
 
 class UsersRepository(BaseRepository[User]):
     def __init__(self, context_wrapper: ContextWrapper, session: AsyncSession) -> None:
         super().__init__(session, context_wrapper, User)
+
+    async def check_active_user(self) -> None:
+        user_id = self.auth_info.flow_user_id
+        user = await self.get_by_id(user_id)
+
+        if not user:
+            raise UnauthorizedError("User not found in the system.")
+
+        if not user.enabled:
+            raise UnauthorizedError("User is disabled.")
 
     async def get_by_email(self, email: str) -> User | None:
         stmt = select(User).where(User.email == email)
