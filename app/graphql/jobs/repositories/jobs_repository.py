@@ -4,6 +4,7 @@ from uuid import UUID
 from commons.db.v6 import RbacResourceEnum, User
 from commons.db.v6.crm.jobs.job_status_model import JobStatus
 from commons.db.v6.crm.jobs.jobs_model import Job
+from commons.db.v6.crm.links.entity_type import EntityType
 from sqlalchemy import Select, func, or_, select
 from sqlalchemy.dialects.postgresql import array
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -19,6 +20,7 @@ from app.graphql.jobs.strawberry.job_landing_page_response import (
 class JobsRepository(BaseRepository[Job]):
     landing_model = JobLandingPageResponse
     rbac_resource: RbacResourceEnum | None = RbacResourceEnum.JOB
+    entity_type = EntityType.JOB
 
     def __init__(self, context_wrapper: ContextWrapper, session: AsyncSession) -> None:
         """

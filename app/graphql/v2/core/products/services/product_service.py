@@ -5,7 +5,7 @@ from commons.db.v6.core.products.product import Product, ProductCategory
 from commons.db.v6.crm.links.entity_type import EntityType
 from sqlalchemy.orm import joinedload, lazyload
 
-from app.errors.common_errors import NotFoundError
+from app.errors.common_errors import NameAlreadyExistsError, NotFoundError
 from app.graphql.v2.core.products.repositories.products_repository import (
     ProductsRepository,
 )
@@ -39,8 +39,33 @@ class ProductService:
         return product
 
     async def create(self, product_input: ProductInput) -> Product:
+        if await self.repository.factory_part_number_exists(
+            product_input.factory_part_number, product_input.factory_id
+        ):
+            raise NameAlreadyExistsError(product_input.factory_part_number)
         product = await self.repository.create(product_input.to_orm_model())
         return await self.get_by_id(product.id)
+
+    async def bulk_create(self, product_inputs: list[ProductInput]) -> list[Product]:
+        if not product_inputs:
+            return []
+
+        fpn_pairs = [
+            (inp.factory_part_number, inp.factory_id) for inp in product_inputs
+        ]
+        existing = await self.repository.get_existing_factory_part_numbers(fpn_pairs)
+
+        valid_inputs = [
+            inp
+            for inp in product_inputs
+            if (inp.factory_part_number, inp.factory_id) not in existing
+        ]
+        if not valid_inputs:
+            return []
+
+        entities = [inp.to_orm_model() for inp in valid_inputs]
+        created = await self.repository.bulk_create(entities)
+        return created
 
     async def update(self, product_id: UUID, product_input: ProductInput) -> Product:
         product = product_input.to_orm_model()
@@ -75,3 +100,8 @@ class ProductService:
         self, entity_type: EntityType, entity_id: UUID
     ) -> list[Product]:
         return await self.repository.find_by_entity(entity_type, entity_id)
+
+    async def find_by_factory_id(
+        self, factory_id: UUID, limit: int = 25
+    ) -> list[Product]:
+        return await self.repository.find_by_factory_id(factory_id, limit)

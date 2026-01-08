@@ -172,6 +172,7 @@ def upgrade() -> None:
         ),
         sa.Column("original_presigned_url", sa.String(), nullable=False),
         sa.Column("document_type", sa.SmallInteger(), nullable=False),
+        sa.Column("workflow_status", sa.SmallInteger(), nullable=True),
         sa.Column("document_sample_content", sa.String(), nullable=False),
         sa.Column("entity_type", sa.SmallInteger(), nullable=True, index=True),
         sa.Column("source_type", sa.SmallInteger(), nullable=True),

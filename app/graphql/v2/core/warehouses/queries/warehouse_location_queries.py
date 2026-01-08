@@ -1,5 +1,3 @@
-"""GraphQL queries for warehouse locations."""
-
 from uuid import UUID
 
 import strawberry
@@ -17,8 +15,6 @@ from app.graphql.v2.core.warehouses.strawberry.warehouse_location_response impor
 
 @strawberry.type
 class WarehouseLocationQueries:
-    """GraphQL queries for WarehouseLocation entity."""
-
     @strawberry.field
     @inject
     async def warehouse_locations(
@@ -48,7 +44,6 @@ class WarehouseLocationQueries:
         id: UUID,
         service: Injected[WarehouseLocationService],
     ) -> WarehouseLocationResponse:
-        """Get a location by ID."""
         location = await service.get_by_id(id)
         return WarehouseLocationResponse.from_orm_model(location)
 
@@ -59,7 +54,6 @@ class WarehouseLocationQueries:
         location_id: UUID,
         service: Injected[WarehouseLocationService],
     ) -> list[LocationProductAssignmentResponse]:
-        """Get all product assignments for a location."""
         assignments = await service.get_assignments_by_location(location_id)
         return LocationProductAssignmentResponse.from_orm_model_list(assignments)
 
@@ -70,6 +64,5 @@ class WarehouseLocationQueries:
         product_id: UUID,
         service: Injected[WarehouseLocationService],
     ) -> list[LocationProductAssignmentResponse]:
-        """Get all location assignments for a product."""
         assignments = await service.get_assignments_by_product(product_id)
         return LocationProductAssignmentResponse.from_orm_model_list(assignments)

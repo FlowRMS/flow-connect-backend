@@ -33,6 +33,7 @@ class FileRepository(BaseRepository[File]):
                 User.full_name.label("created_by"),
                 File.file_name,
                 File.file_path,
+                File.file_entity_type,
                 File.file_size,
                 File.file_type,
                 File.file_sha,

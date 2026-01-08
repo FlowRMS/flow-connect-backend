@@ -1,5 +1,3 @@
-"""Warehouse services."""
-
 from app.graphql.v2.core.warehouses.services.warehouse_location_service import (
     WarehouseLocationService,
 )

@@ -36,23 +36,15 @@ class JobsQueries:
     ) -> list[JobStatusType]:
         return JobStatusType.from_orm_model_list(await service.get_all_statuses())
 
-    @strawberry.field
+    @strawberry.field(
+        deprecation_reason="Use related_entities(source_type: JOBS, entity_id: UUID)"
+    )
     @inject
     async def job_related_entities(
         self,
         job_id: UUID,
         service: Injected[JobsService],
     ) -> JobRelatedEntitiesResponse:
-        """
-        Get all entities related to a job.
-
-        Args:
-            job_id: The job ID to get related entities for
-            service: Injected JobsService
-
-        Returns:
-            JobRelatedEntitiesResponse containing pre_opportunities, contacts, and companies
-        """
         return await service.get_job_related_entities(job_id)
 
     @strawberry.field

@@ -39,3 +39,13 @@ class ChecksMutations:
         service: Injected[CheckService],
     ) -> bool:
         return await service.delete_check(check_id=id)
+
+    @strawberry.mutation
+    @inject
+    async def unpost_check(
+        self,
+        check_id: UUID,
+        service: Injected[CheckService],
+    ) -> CheckResponse:
+        check = await service.unpost_check(check_id=check_id)
+        return CheckResponse.from_orm_model(check)

@@ -11,6 +11,19 @@ services:
       - "8000:8000"
     env_file:
       - .env.staging
+  flow-backend-worker:
+    build:
+      context: .
+      dockerfile: Dockerfile.worker
+      args:
+        GITHUB_TOKEN: ${GITHUB_TOKEN}
+    environment:
+      - PORT=8000
+    ports:
+      - "8000:8000"
+    env_file:
+      - .env.staging
+
   flow-postgres:
     image: postgres:17-alpine
     container_name: flow_db

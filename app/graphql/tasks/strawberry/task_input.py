@@ -32,5 +32,5 @@ class TaskInput(BaseInputGQL[Task]):
             assigned_to_id=self.optional_field(self.assigned_to_id),
             due_date=self.optional_field(self.due_date),
             reminder_date=self.optional_field(self.reminder_date),
-            tags=self.optional_field(self.tags),
+            tags=self.optional_field(self.tags) or [],
         )

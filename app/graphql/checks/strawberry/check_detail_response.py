@@ -10,7 +10,7 @@ from app.graphql.adjustments.strawberry.adjustment_response import (
     AdjustmentCheckResponse,
 )
 from app.graphql.credits.strawberry.credit_response import CreditCheckResponse
-from app.graphql.invoices.strawberry.invoice_response import InvoiceCheckResponse
+from app.graphql.invoices.strawberry.invoice_response import InvoiceLiteOrderResponse
 
 
 @strawberry.type
@@ -36,8 +36,8 @@ class CheckDetailResponse(DTOMixin[CheckDetail]):
         )
 
     @strawberry.field
-    def invoice(self) -> InvoiceCheckResponse | None:
-        return InvoiceCheckResponse.from_orm_model_optional(self._instance.invoice)
+    def invoice(self) -> InvoiceLiteOrderResponse | None:
+        return InvoiceLiteOrderResponse.from_orm_model_optional(self._instance.invoice)
 
     @strawberry.field
     def adjustment(self) -> AdjustmentCheckResponse | None:

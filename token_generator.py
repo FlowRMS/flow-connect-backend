@@ -44,7 +44,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Generate JWT token for a user")
     _ = parser.add_argument("--tenant", type=str, required=True, help="Tenant name")
     _ = parser.add_argument(
-        "--env", type=str, required=False, help="Environment", default="prod"
+        "--env", type=str, required=False, help="Environment", default="staging"
     )
     _ = parser.add_argument(
         "--role", type=str, required=False, help="User role", default="admin"
@@ -54,6 +54,6 @@ if __name__ == "__main__":
     token = asyncio.run(generate_token(args.tenant, args.env, args.role))
     print(
         json.dumps(
-            {"Authorization": f"Bearer {token}", "X-Auth-Provider": "WORKOS"}, indent=2
+            {"Authorization": f"Bearer {token}"}, indent=2
         )
     )

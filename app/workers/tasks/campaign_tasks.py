@@ -15,11 +15,11 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
-from app.core.config.settings import Settings
 from app.core.container import create_container
 from app.integrations.gmail.config import GmailSettings
 from app.integrations.microsoft_o365.config import O365Settings
-from app.workers.broker import broker
+
+# from app.workers.broker import broker
 from app.workers.services.worker_email_service import WorkerEmailService
 
 # Emails per hour for each pace
@@ -31,32 +31,7 @@ PACE_LIMITS: dict[SendPace, int] = {
 
 DEFAULT_MAX_EMAILS_PER_DAY = 1000
 
-# Cron schedule: run every 10 minutes
 CAMPAIGN_PROCESSING_CRON = "*/10 * * * *"
-
-
-async def get_multitenant_controller(settings: Settings) -> MultiTenantController:
-    """
-    Create and initialize the multi-tenant controller.
-
-    Args:
-        settings: Application settings (injected via DI)
-
-    Returns:
-        Initialized MultiTenantController
-    """
-    controller = MultiTenantController(
-        pg_url=settings.pg_url.unicode_string(),
-        app_name="Campaign Worker",
-        echo=settings.log_level == "DEBUG",
-        connect_args={
-            "timeout": 5,
-            "command_timeout": 90,
-        },
-        env=settings.environment,
-    )
-    await controller.load_data_sources()
-    return controller
 
 
 async def process_campaign_batch(
@@ -195,8 +170,8 @@ async def process_campaign_batch(
     }
 
 
-@broker.task(schedule=[{"cron": CAMPAIGN_PROCESSING_CRON}])
-async def check_and_process_campaigns_task() -> dict[str, object]:
+# @broker.task(schedule=[{"cron": CAMPAIGN_PROCESSING_CRON}])
+async def inner_check_and_process_campaigns_task() -> dict[str, object]:
     """
     TaskIQ task: Check for campaigns that need processing and process them.
 
@@ -218,18 +193,14 @@ async def check_and_process_campaigns_task() -> dict[str, object]:
     container = create_container()
 
     async with container.context() as ctx:
-        # Resolve dependencies via DI
-        settings = await ctx.resolve(Settings)
         o365_settings = await ctx.resolve(O365Settings)
         gmail_settings = await ctx.resolve(GmailSettings)
+        controller = await ctx.resolve(MultiTenantController)
 
-        # Create services
         email_service = WorkerEmailService(
             o365_settings=o365_settings,
             gmail_settings=gmail_settings,
         )
-
-        controller = await get_multitenant_controller(settings)
 
         total_campaigns_found = 0
         total_processed: list[str] = []

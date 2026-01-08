@@ -1,5 +1,3 @@
-"""Warehouse Strawberry types."""
-
 from app.graphql.v2.core.warehouses.strawberry.warehouse_input import (
     WarehouseInput,
     WarehouseMemberInput,

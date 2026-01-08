@@ -1,5 +1,4 @@
-"""Strawberry input types for warehouse locations."""
-
+from decimal import Decimal
 from uuid import UUID
 
 import strawberry
@@ -11,8 +10,6 @@ from app.graphql.v2.core.warehouses.strawberry.warehouse_input import (
 
 @strawberry.input
 class WarehouseLocationInput:
-    """Input type for creating/updating warehouse locations."""
-
     warehouse_id: UUID
     level: WarehouseStructureCodeGQL
     name: str
@@ -59,8 +56,6 @@ class BulkWarehouseLocationInput:
 
 @strawberry.input
 class LocationProductAssignmentInput:
-    """Input type for assigning products to locations."""
-
     location_id: UUID
     product_id: UUID
-    quantity: int = 0
+    quantity: Decimal = Decimal(0)

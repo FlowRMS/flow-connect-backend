@@ -1,5 +1,3 @@
-"""Warehouse module for GraphQL API."""
-
 from commons.db.v6 import (
     LocationProductAssignment,
     Warehouse,

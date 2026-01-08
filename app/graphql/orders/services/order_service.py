@@ -24,11 +24,18 @@ class OrderService:
         self.quotes_repository = quotes_repository
         self.auth_info = auth_info
 
+    async def check_order_exists(
+        self, order_number: str, customer_id: UUID | None = None
+    ) -> bool:
+        return await self.repository.order_number_exists(order_number, customer_id)
+
     async def find_order_by_id(self, order_id: UUID) -> Order:
         return await self.repository.find_order_by_id(order_id)
 
     async def create_order(self, order_input: OrderInput) -> Order:
-        if await self.repository.order_number_exists(order_input.order_number):
+        if await self.repository.order_number_exists(
+            order_input.order_number, order_input.sold_to_customer_id
+        ):
             raise NameAlreadyExistsError(order_input.order_number)
 
         order = order_input.to_orm_model()
@@ -58,6 +65,29 @@ class OrderService:
     ) -> list[Order]:
         return await self.repository.find_by_entity(entity_type, entity_id)
 
+    async def find_by_factory_id(
+        self, factory_id: UUID, limit: int = 25
+    ) -> list[Order]:
+        return await self.repository.find_by_factory_id(factory_id, limit)
+
+    async def duplicate_order(
+        self,
+        order_id: UUID,
+        new_order_number: str,
+        new_sold_to_customer_id: UUID,
+    ) -> Order:
+        existing_order = await self.repository.find_order_by_id(order_id)
+
+        if await self.repository.order_number_exists(
+            new_order_number, new_sold_to_customer_id
+        ):
+            raise NameAlreadyExistsError(new_order_number)
+
+        new_order = OrderFactory.from_order(
+            existing_order, new_order_number, new_sold_to_customer_id
+        )
+        return await self.repository.create_with_balance(new_order)
+
     async def create_order_from_quote(
         self,
         quote_id: UUID,
@@ -68,10 +98,14 @@ class OrderService:
     ) -> Order:
         quote = await self.quotes_repository.find_quote_by_id(quote_id)
 
-        if await self.repository.order_number_exists(order_number):
+        if await self.repository.order_number_exists(
+            order_number, quote.sold_to_customer_id
+        ):
             raise NameAlreadyExistsError(order_number)
 
-        order = OrderFactory.from_quote(quote, order_number, factory_id, due_date)
+        order = OrderFactory.from_quote(
+            quote, order_number, factory_id, due_date, quote_detail_ids
+        )
         created_order = await self.repository.create_with_balance(order)
 
         if quote_detail_ids:
