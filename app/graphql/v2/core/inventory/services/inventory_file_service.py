@@ -160,6 +160,7 @@ class InventoryFileService:
             except KeyError:
                 pass  # Use default
 
+            existing_items = await self.item_repository.find_by_inventory_id(inventory.id)
             target_item = self._find_matching_item(
                 existing_items,
                 location.id if location else None,

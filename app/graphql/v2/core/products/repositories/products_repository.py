@@ -102,6 +102,10 @@ class ProductsRepository(BaseRepository[Product]):
         product_category_ids: list[UUID] | None = None,
         limit: int = 20,
     ) -> list[Product]:
+        """
+        Search products using trigram similarity matching on factory part numbers.
+        Higher similarity scores are prioritized in results.
+        """
 
         greatest = func.greatest(
             func.similarity(Product.factory_part_number, search_term),
