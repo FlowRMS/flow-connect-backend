@@ -1,7 +1,7 @@
 """add visible column to users
 
-Revision ID: add_visible_to_users_001
-Revises: warehouse_locations_001
+Revision ID: add_visible_to_users
+Revises: location_quantity_decimal_001
 Create Date: 2026-01-08
 
 """
@@ -14,7 +14,7 @@ from alembic import op
 
 # revision identifiers, used by Alembic.
 revision: str = "add_visible_to_users"
-down_revision: str | None = "warehouse_locations_001"
+down_revision: str | None = "location_quantity_decimal_001"
 branch_labels: str | Sequence[str] | None = None
 depends_on: str | Sequence[str] | None = None
 
