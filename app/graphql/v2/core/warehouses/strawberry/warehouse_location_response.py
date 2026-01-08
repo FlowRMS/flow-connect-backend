@@ -1,28 +1,25 @@
-"""Strawberry response types for warehouse locations."""
-
 from datetime import datetime
 from decimal import Decimal
 from typing import Self
 from uuid import UUID
 
 import strawberry
-from commons.db.v6 import LocationProductAssignment, WarehouseLocation
+from commons.db.v6 import (
+    LocationProductAssignment,
+    WarehouseLocation,
+    WarehouseStructureCode,
+)
 
 from app.core.db.adapters.dto import DTOMixin
-from app.graphql.v2.core.warehouses.strawberry.warehouse_input import (
-    WarehouseStructureCodeGQL,
-)
 
 
 @strawberry.type
 class LocationProductAssignmentResponse(DTOMixin[LocationProductAssignment]):
-    """Response type for location product assignments."""
-
     _instance: strawberry.Private[LocationProductAssignment]
     id: UUID
     location_id: UUID
     product_id: UUID
-    quantity: int
+    quantity: Decimal
     created_at: datetime
 
     @classmethod
@@ -39,13 +36,11 @@ class LocationProductAssignmentResponse(DTOMixin[LocationProductAssignment]):
 
 @strawberry.type
 class WarehouseLocationResponse(DTOMixin[WarehouseLocation]):
-    """Response type for warehouse locations."""
-
     _instance: strawberry.Private[WarehouseLocation]
     id: UUID
     warehouse_id: UUID
     parent_id: UUID | None
-    level: WarehouseStructureCodeGQL
+    level: WarehouseStructureCode
     name: str
     code: str | None
     description: str | None
@@ -65,7 +60,7 @@ class WarehouseLocationResponse(DTOMixin[WarehouseLocation]):
             id=model.id,
             warehouse_id=model.warehouse_id,
             parent_id=model.parent_id,
-            level=WarehouseStructureCodeGQL(model.level.value),
+            level=WarehouseStructureCode(model.level.value),
             name=model.name,
             code=model.code,
             description=model.description,
@@ -81,12 +76,10 @@ class WarehouseLocationResponse(DTOMixin[WarehouseLocation]):
 
     @strawberry.field
     async def children(self) -> list["WarehouseLocationResponse"]:
-        """Get child locations."""
         children = await self._instance.awaitable_attrs.children
         return WarehouseLocationResponse.from_orm_model_list(children)
 
     @strawberry.field
     async def product_assignments(self) -> list[LocationProductAssignmentResponse]:
-        """Get product assignments for this location."""
         assignments = await self._instance.awaitable_attrs.product_assignments
         return LocationProductAssignmentResponse.from_orm_model_list(assignments)

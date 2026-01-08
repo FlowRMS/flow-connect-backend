@@ -155,6 +155,9 @@ class AdminUserService:
                 first_name=input.first_name,
                 last_name=input.last_name,
                 email_verified=False,
+                metadata={
+                    "enabled": str(input.enabled),
+                },
             )
         )
         if not auth_user:
@@ -260,6 +263,10 @@ class AdminUserService:
                         user.inside = input.inside
                     if input.outside is not None:
                         user.outside = input.outside
+                    if input.email is not None:
+                        user.email = input.email
+                    if input.username is not None:
+                        user.username = input.username
 
                     await session.flush([user])
 
@@ -273,6 +280,9 @@ class AdminUserService:
                                 external_id=user.id,
                                 first_name=user.first_name,
                                 last_name=user.last_name,
+                                metadata={
+                                    "enabled": str(user.enabled),
+                                },
                             ),
                         )
 

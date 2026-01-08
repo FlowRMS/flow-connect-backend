@@ -144,6 +144,24 @@ enum AdjustmentStatus {
   POSTED
 }
 
+input BulkWarehouseLocationInput {
+  level: WarehouseStructureCode!
+  name: String!
+  id: UUID = null
+  parentId: UUID = null
+  tempId: String = null
+  tempParentId: String = null
+  code: String = null
+  description: String = null
+  isActive: Boolean = true
+  sortOrder: Int = 0
+  x: Decimal = null
+  y: Decimal = null
+  width: Decimal = null
+  height: Decimal = null
+  rotation: Decimal = null
+}
+
 input CampaignCriteriaInput {
   groups: [CriteriaGroupInput!]!
   groupOperator: LogicalOperator! = AND
@@ -1370,6 +1388,14 @@ type LinkedEntity {
   entityType: EntityType!
 }
 
+type LocationProductAssignmentResponse {
+  id: UUID!
+  locationId: UUID!
+  productId: UUID!
+  quantity: Decimal!
+  createdAt: datetime!
+}
+
 enum LogicalOperator {
   AND
   OR
@@ -1513,6 +1539,13 @@ type Mutation {
   createUser(input: UserInput!): UserResponse! @rolePermissionAccess
   updateUser(id: UUID!, input: UserInput!): UserResponse! @rolePermissionAccess
   deleteUser(id: UUID!): Boolean! @rolePermissionAccess
+  createWarehouseLocation(input: WarehouseLocationInput!): WarehouseLocationResponse!
+  updateWarehouseLocation(id: UUID!, input: WarehouseLocationInput!): WarehouseLocationResponse!
+  deleteWarehouseLocation(id: UUID!): Boolean!
+  bulkSaveWarehouseLocations(warehouseId: UUID!, locations: [BulkWarehouseLocationInput!]!): [WarehouseLocationResponse!]!
+  assignProductToLocation(locationId: UUID!, productId: UUID!, quantity: Decimal!): LocationProductAssignmentResponse!
+  updateProductQuantityAtLocation(locationId: UUID!, productId: UUID!, quantity: Decimal!): LocationProductAssignmentResponse!
+  removeProductFromLocation(locationId: UUID!, productId: UUID!): Boolean!
   createWarehouse(input: WarehouseInput!): WarehouseResponse!
   updateWarehouse(id: UUID!, input: WarehouseInput!): WarehouseResponse!
   deleteWarehouse(id: UUID!): Boolean!
@@ -2407,6 +2440,11 @@ type Query {
   user(id: UUID!): UserResponse!
   userSearch(searchTerm: String!, isInside: Boolean = null, isOutside: Boolean = null, enabled: Boolean = true, limit: Int! = 20): [UserResponse!]!
   users(limit: Int = null, offset: Int! = 0): [UserResponse!]! @rolePermissionAccess
+  warehouseLocations(warehouseId: UUID!): [WarehouseLocationResponse!]!
+  warehouseLocationTree(warehouseId: UUID!): [WarehouseLocationResponse!]!
+  warehouseLocation(id: UUID!): WarehouseLocationResponse!
+  locationProductAssignments(locationId: UUID!): [LocationProductAssignmentResponse!]!
+  productLocationAssignments(productId: UUID!): [LocationProductAssignmentResponse!]!
   warehouses: [WarehouseResponse!]!
   warehouse(id: UUID!): WarehouseResponse!
   warehouseMembers(warehouseId: UUID!): [WarehouseMemberResponse!]!
@@ -3006,6 +3044,42 @@ input WarehouseInput {
   longitude: Decimal = null
   description: String = null
   isActive: Boolean! = true
+}
+
+input WarehouseLocationInput {
+  warehouseId: UUID!
+  level: WarehouseStructureCode!
+  name: String!
+  parentId: UUID = null
+  code: String = null
+  description: String = null
+  isActive: Boolean = true
+  sortOrder: Int = 0
+  x: Decimal = null
+  y: Decimal = null
+  width: Decimal = null
+  height: Decimal = null
+  rotation: Decimal = null
+}
+
+type WarehouseLocationResponse {
+  id: UUID!
+  warehouseId: UUID!
+  parentId: UUID
+  level: WarehouseStructureCode!
+  name: String!
+  code: String
+  description: String
+  isActive: Boolean!
+  sortOrder: Int!
+  x: Decimal
+  y: Decimal
+  width: Decimal
+  height: Decimal
+  rotation: Decimal
+  createdAt: datetime!
+  children: [WarehouseLocationResponse!]!
+  productAssignments: [LocationProductAssignmentResponse!]!
 }
 
 type WarehouseMemberResponse {
