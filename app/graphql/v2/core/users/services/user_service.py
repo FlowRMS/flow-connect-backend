@@ -60,6 +60,9 @@ class UserService:
             first_name=user_input.first_name,
             last_name=user_input.last_name,
             email_verified=False,
+            metadata={
+                "enabled": str(user_input.enabled),
+            },
         )
         auth_user = await self.workos_auth_service.create_user(auth_input)
         if not auth_user:
@@ -86,6 +89,9 @@ class UserService:
             first_name=user_input.first_name,
             last_name=user_input.last_name,
             external_id=user.id,
+            metadata={
+                "enabled": str(user_input.enabled),
+            },
         )
         _ = await self.workos_auth_service.update_user(
             user.auth_provider_id, auth_input

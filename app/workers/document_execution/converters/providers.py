@@ -2,7 +2,9 @@ import aioinject
 
 from app.graphql.invoices.services.order_detail_matcher import OrderDetailMatcherService
 
+from .adjustment_converter import AdjustmentConverter
 from .check_converter import CheckConverter
+from .credit_converter import CreditConverter
 from .customer_converter import CustomerConverter
 from .factory_converter import FactoryConverter
 from .invoice_converter import InvoiceConverter
@@ -18,6 +20,8 @@ converter_providers = [
     aioinject.Scoped(ProductConverter),
     aioinject.Scoped(QuoteConverter),
     aioinject.Scoped(InvoiceConverter),
+    aioinject.Scoped(CreditConverter),
+    aioinject.Scoped(AdjustmentConverter),
     aioinject.Scoped(CheckConverter),
     aioinject.Scoped(OrderDetailMatcherService),
     aioinject.Scoped(SetForCreationService),

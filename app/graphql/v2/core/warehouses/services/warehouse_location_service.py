@@ -105,7 +105,9 @@ class WarehouseLocationService:
             result.append(saved)
 
         for loc in with_temp_parent:
-            parent_id = temp_id_map.get(loc.temp_parent_id) if loc.temp_parent_id else None
+            parent_id = (
+                temp_id_map.get(loc.temp_parent_id) if loc.temp_parent_id else None
+            )
             saved = await self._save_location(
                 loc, warehouse_id, parent_id, existing_ids, input_ids, temp_id_map
             )
@@ -164,7 +166,9 @@ class WarehouseLocationService:
         expected_parent = LEVEL_HIERARCHY.get(level)
         if expected_parent is None:
             if parent_id is not None:
-                raise ValidationError(f"Sections cannot have a parent. Got parent_id={parent_id}")
+                raise ValidationError(
+                    f"Sections cannot have a parent. Got parent_id={parent_id}"
+                )
         else:
             if parent_id is None:
                 raise ValidationError(
