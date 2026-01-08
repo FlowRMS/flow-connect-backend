@@ -21,6 +21,8 @@ class CreateAdminUserInput:
 class UpdateAdminUserInput:
     first_name: str | None = None
     last_name: str | None = None
+    email: str | None = None
+    username: str | None = None
     role: RbacRoleEnum | None = None
     enabled: bool | None = None
     inside: bool | None = None

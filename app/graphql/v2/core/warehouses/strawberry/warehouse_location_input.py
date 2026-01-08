@@ -1,5 +1,3 @@
-"""Strawberry input types for warehouse locations."""
-
 from decimal import Decimal
 from uuid import UUID
 
@@ -9,8 +7,6 @@ from commons.db.v6 import WarehouseStructureCode
 
 @strawberry.input
 class WarehouseLocationInput:
-    """Input type for creating/updating warehouse locations."""
-
     warehouse_id: UUID
     level: WarehouseStructureCode
     name: str
@@ -57,8 +53,6 @@ class BulkWarehouseLocationInput:
 
 @strawberry.input
 class LocationProductAssignmentInput:
-    """Input type for assigning products to locations."""
-
     location_id: UUID
     product_id: UUID
     quantity: Decimal = Decimal(0)

@@ -1,5 +1,3 @@
-"""Strawberry response types for warehouse locations."""
-
 from datetime import datetime
 from decimal import Decimal
 from typing import Self
@@ -17,8 +15,6 @@ from app.core.db.adapters.dto import DTOMixin
 
 @strawberry.type
 class LocationProductAssignmentResponse(DTOMixin[LocationProductAssignment]):
-    """Response type for location product assignments."""
-
     _instance: strawberry.Private[LocationProductAssignment]
     id: UUID
     location_id: UUID
@@ -40,8 +36,6 @@ class LocationProductAssignmentResponse(DTOMixin[LocationProductAssignment]):
 
 @strawberry.type
 class WarehouseLocationResponse(DTOMixin[WarehouseLocation]):
-    """Response type for warehouse locations."""
-
     _instance: strawberry.Private[WarehouseLocation]
     id: UUID
     warehouse_id: UUID
@@ -82,12 +76,10 @@ class WarehouseLocationResponse(DTOMixin[WarehouseLocation]):
 
     @strawberry.field
     async def children(self) -> list["WarehouseLocationResponse"]:
-        """Get child locations."""
         children = await self._instance.awaitable_attrs.children
         return WarehouseLocationResponse.from_orm_model_list(children)
 
     @strawberry.field
     async def product_assignments(self) -> list[LocationProductAssignmentResponse]:
-        """Get product assignments for this location."""
         assignments = await self._instance.awaitable_attrs.product_assignments
         return LocationProductAssignmentResponse.from_orm_model_list(assignments)

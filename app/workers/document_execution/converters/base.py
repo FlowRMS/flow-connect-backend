@@ -9,9 +9,12 @@ from commons.db.v6.ai.documents.enums.entity_type import DocumentEntityType
 from commons.db.v6.core.factories.factory import Factory
 from commons.db.v6.user import User
 from commons.dtos.common.dto_loader_service import DTOLoaderService, LoadedDTOs
+from loguru import logger
 from pydantic import BaseModel
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
+
+from .exceptions import ConversionError
 
 if TYPE_CHECKING:
     from .entity_mapping import EntityMapping
@@ -19,8 +22,43 @@ if TYPE_CHECKING:
 TDto = TypeVar("TDto", bound=BaseModel)
 TInput = TypeVar("TInput")
 TOutput = TypeVar("TOutput")
+T = TypeVar("T")
 
 DEFAULT_BATCH_SIZE = 500
+
+
+@dataclass
+class ConversionResult(Generic[T]):
+    value: T | None
+    error: ConversionError | None
+
+    @classmethod
+    def ok(cls, value: T) -> "ConversionResult[T]":
+        return cls(value=value, error=None)
+
+    @classmethod
+    def fail(cls, error: ConversionError) -> "ConversionResult[T]":
+        return cls(value=None, error=error)
+
+    def is_ok(self) -> bool:
+        return self.error is None
+
+    def is_error(self) -> bool:
+        return self.error is not None
+
+    def unwrap(self) -> T:
+        if self.is_error():
+            raise ValueError("Cannot unwrap a ConversionResult with an error")
+        if self.value is None:
+            raise ValueError("ConversionResult value is None")
+        return self.value
+
+    def unwrap_error(self) -> ConversionError:
+        if self.is_ok():
+            raise ValueError("Cannot unwrap_error a ConversionResult without an error")
+        if self.error is None:
+            raise ValueError("ConversionResult error is None")
+        return self.error
 
 
 @dataclass
@@ -46,23 +84,14 @@ class BaseEntityConverter(ABC, Generic[TDto, TInput, TOutput]):
     async def create_entity(
         self,
         input_data: TInput,
-    ) -> TOutput:
-        """
-        Create the entity in the system using the provided input data.
-
-        Args:
-            input_data: The Strawberry input data for entity creation
-        Returns:
-            The created ORM entity
-        """
-        ...
+    ) -> TOutput: ...
 
     @abstractmethod
     async def to_input(
         self,
         dto: TDto,
         entity_mapping: "EntityMapping",
-    ) -> TInput | None: ...
+    ) -> ConversionResult[TInput]: ...
 
     async def to_inputs_bulk(
         self,
@@ -71,9 +100,9 @@ class BaseEntityConverter(ABC, Generic[TDto, TInput, TOutput]):
     ) -> list[TInput]:
         inputs: list[TInput] = []
         for dto, mapping in zip(dtos, entity_mappings, strict=True):
-            input_data = await self.to_input(dto, mapping)
-            if input_data is not None:
-                inputs.append(input_data)
+            result = await self.to_input(dto, mapping)
+            if result.is_ok() and result.value is not None:
+                inputs.append(result.value)
         return inputs
 
     async def create_entities_bulk(
@@ -86,7 +115,8 @@ class BaseEntityConverter(ABC, Generic[TDto, TInput, TOutput]):
             try:
                 entity = await self.create_entity(inp)
                 created.append(entity)
-            except Exception:
+            except Exception as e:
+                logger.warning(f"Failed to create entity at index {i}: {e}")
                 skipped.append(i)
         return BulkCreateResult(created=created, skipped_indices=skipped)
 

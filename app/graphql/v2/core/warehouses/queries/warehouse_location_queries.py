@@ -1,11 +1,12 @@
-"""GraphQL queries for warehouse locations."""
-
 from uuid import UUID
 
 import strawberry
 from aioinject import Injected
 
 from app.graphql.inject import inject
+from app.graphql.v2.core.warehouses.services.warehouse_location_assignment_service import (
+    WarehouseLocationAssignmentService,
+)
 from app.graphql.v2.core.warehouses.services.warehouse_location_service import (
     WarehouseLocationService,
 )
@@ -17,8 +18,6 @@ from app.graphql.v2.core.warehouses.strawberry.warehouse_location_response impor
 
 @strawberry.type
 class WarehouseLocationQueries:
-    """GraphQL queries for WarehouseLocation entity."""
-
     @strawberry.field
     @inject
     async def warehouse_locations(
@@ -48,7 +47,6 @@ class WarehouseLocationQueries:
         id: UUID,
         service: Injected[WarehouseLocationService],
     ) -> WarehouseLocationResponse:
-        """Get a location by ID."""
         location = await service.get_by_id(id)
         return WarehouseLocationResponse.from_orm_model(location)
 
@@ -57,9 +55,8 @@ class WarehouseLocationQueries:
     async def location_product_assignments(
         self,
         location_id: UUID,
-        service: Injected[WarehouseLocationService],
+        service: Injected[WarehouseLocationAssignmentService],
     ) -> list[LocationProductAssignmentResponse]:
-        """Get all product assignments for a location."""
         assignments = await service.get_assignments_by_location(location_id)
         return LocationProductAssignmentResponse.from_orm_model_list(assignments)
 
@@ -68,8 +65,7 @@ class WarehouseLocationQueries:
     async def product_location_assignments(
         self,
         product_id: UUID,
-        service: Injected[WarehouseLocationService],
+        service: Injected[WarehouseLocationAssignmentService],
     ) -> list[LocationProductAssignmentResponse]:
-        """Get all location assignments for a product."""
         assignments = await service.get_assignments_by_product(product_id)
         return LocationProductAssignmentResponse.from_orm_model_list(assignments)
