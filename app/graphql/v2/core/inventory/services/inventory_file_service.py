@@ -39,13 +39,13 @@ class InventoryFileService:
         item_service: InventoryItemService,
         auth_info: AuthInfo,
     ) -> None:
+        super().__init__()
         self.inventory_repository = inventory_repository
         self.item_repository = inventory_item_repository
         self.products_repository = products_repository
         self.location_repository = location_repository
         self.item_service = item_service
         self.auth_info = auth_info
-        super().__init__()
 
     async def export_inventory_csv(self, warehouse_id: UUID) -> str:
         inventory_list = await self.inventory_repository.find_by_warehouse(

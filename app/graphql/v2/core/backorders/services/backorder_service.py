@@ -8,8 +8,6 @@ from app.graphql.v2.core.backorders.repositories.backorder_repository import (
     BackorderRepository,
 )
 
-
-
 from app.core.constants import DEFAULT_QUERY_LIMIT, DEFAULT_QUERY_OFFSET
 
 class BackorderService:
