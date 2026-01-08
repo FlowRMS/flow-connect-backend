@@ -19,6 +19,8 @@ class ShipmentRequestStatusOption:
     value: str
 
 
+from app.core.constants import DEFAULT_QUERY_LIMIT, DEFAULT_QUERY_OFFSET
+
 @strawberry.type
 class ShipmentRequestQueries:
     @strawberry.field
@@ -35,8 +37,8 @@ class ShipmentRequestQueries:
         service: Injected[ShipmentRequestService],
         warehouse_id: UUID,
         status: ShipmentRequestStatus | None = None,
-        limit: int = 100,
-        offset: int = 0,
+        limit: int = DEFAULT_QUERY_LIMIT,
+        offset: int = DEFAULT_QUERY_OFFSET,
     ) -> list[ShipmentRequestResponse]:
         requests = await service.list_by_warehouse(
             warehouse_id=warehouse_id,

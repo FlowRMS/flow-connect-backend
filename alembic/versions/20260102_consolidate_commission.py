@@ -1,13 +1,13 @@
-from typing import Sequence, Union
+from collections.abc import Sequence
 
 from alembic import op
 import sqlalchemy as sa
 from sqlalchemy.dialects import postgresql
 
 revision: str = 'd5e6f7182031'
-down_revision: Union[str, None] = 'c4d5e6f71920'
-branch_labels: Union[str, Sequence[str], None] = None
-depends_on: Union[str, Sequence[str], None] = None
+down_revision: str | None = 'c4d5e6f71920'
+branch_labels: str | Sequence[str] | None = None
+depends_on: str | Sequence[str] | None = None
 
 
 def add_column_if_missing(table: str, column_name: str, column: sa.Column, schema: str, existing: set[str]) -> None:

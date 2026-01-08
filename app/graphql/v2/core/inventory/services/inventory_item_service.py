@@ -16,6 +16,8 @@ from app.graphql.v2.core.inventory.repositories.inventory_repository import (
 )
 
 
+from app.core.constants import DEFAULT_QUERY_LIMIT, DEFAULT_QUERY_OFFSET
+
 class InventoryItemService:
     def __init__(
         self,
@@ -48,8 +50,8 @@ class InventoryItemService:
     async def list_by_inventory(
         self,
         inventory_id: UUID,
-        limit: int = 100,
-        offset: int = 0,
+        limit: int = DEFAULT_QUERY_LIMIT,
+        offset: int = DEFAULT_QUERY_OFFSET,
     ) -> list[InventoryItem]:
         return await self.item_repository.find_by_inventory_id(
             inventory_id=inventory_id,

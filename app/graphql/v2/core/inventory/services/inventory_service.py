@@ -11,6 +11,8 @@ from app.graphql.v2.core.inventory.strawberry.inventory_stats_response import (
 )
 
 
+from app.core.constants import DEFAULT_QUERY_LIMIT, DEFAULT_QUERY_OFFSET
+
 class InventoryService:
     def __init__(
         self,
@@ -30,8 +32,8 @@ class InventoryService:
         factory_id: UUID | None = None,
         status: str | None = None,
         search: str | None = None,
-        limit: int = 100,
-        offset: int = 0,
+        limit: int = DEFAULT_QUERY_LIMIT,
+        offset: int = DEFAULT_QUERY_OFFSET,
     ) -> list[Inventory]:
         return await self.repository.find_by_warehouse(
             warehouse_id=warehouse_id,

@@ -13,6 +13,8 @@ from app.graphql.v2.core.inventory.strawberry.inventory_stats_response import (
 )
 
 
+from app.core.constants import DEFAULT_QUERY_LIMIT, DEFAULT_QUERY_OFFSET
+
 class InventoryRepository(BaseRepository[Inventory]):
     def __init__(
         self,
@@ -31,8 +33,8 @@ class InventoryRepository(BaseRepository[Inventory]):
         factory_id: UUID | None = None,
         status: str | None = None,
         search: str | None = None,
-        limit: int = 100,
-        offset: int = 0,
+        limit: int = DEFAULT_QUERY_LIMIT,
+        offset: int = DEFAULT_QUERY_OFFSET,
     ) -> list[Inventory]:
         stmt = (
             select(Inventory)

@@ -1,7 +1,7 @@
 import base64
 import csv
 import io
-from decimal import Decimal
+from decimal import Decimal, InvalidOperation
 from uuid import UUID
 
 from commons.auth import AuthInfo
@@ -92,7 +92,7 @@ class InventoryFileService:
         try:
             decoded_content = base64.b64decode(file_content).decode("utf-8")
         except (ValueError, TypeError) as e:
-             raise ValueError(f"Invalid Base64 encoded file content: {e}")
+            raise ValueError(f"Invalid Base64 encoded file content: {e}")
 
         reader = csv.DictReader(io.StringIO(decoded_content))
         
@@ -118,7 +118,7 @@ class InventoryFileService:
 
             try:
                 quantity = Decimal(quantity_str)
-            except (ValueError, decimal.InvalidOperation):
+            except (ValueError, InvalidOperation):
                 stats["errors"] += 1
                 continue
 

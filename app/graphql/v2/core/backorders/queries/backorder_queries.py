@@ -10,6 +10,8 @@ from app.graphql.v2.core.backorders.strawberry.backorder_response import (
 )
 
 
+from app.core.constants import DEFAULT_QUERY_LIMIT, DEFAULT_QUERY_OFFSET
+
 @strawberry.type
 class BackorderQueries:
     @strawberry.field
@@ -19,8 +21,8 @@ class BackorderQueries:
         service: Injected[BackorderService],
         customer_id: UUID | None = None,
         product_id: UUID | None = None,
-        limit: int = 100,
-        offset: int = 0,
+        limit: int = DEFAULT_QUERY_LIMIT,
+        offset: int = DEFAULT_QUERY_OFFSET,
     ) -> list[BackorderResponse]:
         backorder_data = await service.get_backorders(
             customer_id=customer_id,

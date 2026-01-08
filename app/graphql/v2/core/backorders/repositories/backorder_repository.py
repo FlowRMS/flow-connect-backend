@@ -14,6 +14,8 @@ from app.core.context_wrapper import ContextWrapper
 from app.graphql.base_repository import BaseRepository
 
 
+from app.core.constants import DEFAULT_QUERY_LIMIT, DEFAULT_QUERY_OFFSET
+
 class BackorderRepository(BaseRepository[OrderDetail]):
     def __init__(
         self,
@@ -30,8 +32,8 @@ class BackorderRepository(BaseRepository[OrderDetail]):
         self,
         customer_id: UUID | None = None,
         product_id: UUID | None = None,
-        limit: int = 100,
-        offset: int = 0,
+        limit: int = DEFAULT_QUERY_LIMIT,
+        offset: int = DEFAULT_QUERY_OFFSET,
     ) -> list[OrderDetail]:
         # Subquery to calculate shipped quantity
         shipped_subquery = (

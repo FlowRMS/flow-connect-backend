@@ -12,6 +12,8 @@ from app.core.context_wrapper import ContextWrapper
 from app.graphql.base_repository import BaseRepository
 
 
+from app.core.constants import DEFAULT_QUERY_LIMIT, DEFAULT_QUERY_OFFSET
+
 class ShipmentRequestRepository(BaseRepository[ShipmentRequest]):
     def __init__(
         self,
@@ -28,8 +30,8 @@ class ShipmentRequestRepository(BaseRepository[ShipmentRequest]):
         self,
         warehouse_id: UUID,
         status: ShipmentRequestStatus | None = None,
-        limit: int = 100,
-        offset: int = 0,
+        limit: int = DEFAULT_QUERY_LIMIT,
+        offset: int = DEFAULT_QUERY_OFFSET,
     ) -> list[ShipmentRequest]:
         stmt = (
             select(ShipmentRequest)

@@ -10,6 +10,8 @@ from app.graphql.v2.core.backorders.repositories.backorder_repository import (
 
 
 
+from app.core.constants import DEFAULT_QUERY_LIMIT, DEFAULT_QUERY_OFFSET
+
 class BackorderService:
     def __init__(
         self,
@@ -26,8 +28,8 @@ class BackorderService:
         self,
         customer_id: UUID | None = None,
         product_id: UUID | None = None,
-        limit: int = 100,
-        offset: int = 0,
+        limit: int = DEFAULT_QUERY_LIMIT,
+        offset: int = DEFAULT_QUERY_OFFSET,
     ) -> list[OrderDetail]:
         return await self.repository.get_backorders(
             customer_id=customer_id,

@@ -20,6 +20,8 @@ class InventoryStatusOption:
     value: str
 
 
+from app.core.constants import DEFAULT_QUERY_LIMIT, DEFAULT_QUERY_OFFSET
+
 @strawberry.type
 class InventoryQueries:
     @strawberry.field
@@ -38,8 +40,8 @@ class InventoryQueries:
         factory_id: UUID | None = None,
         status: str | None = None,
         search: str | None = None,
-        limit: int = 100,
-        offset: int = 0,
+        limit: int = DEFAULT_QUERY_LIMIT,
+        offset: int = DEFAULT_QUERY_OFFSET,
     ) -> list[InventoryResponse]:
         inventories = await service.list_by_warehouse(
             warehouse_id=warehouse_id,

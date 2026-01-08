@@ -9,6 +9,8 @@ from app.core.context_wrapper import ContextWrapper
 from app.graphql.base_repository import BaseRepository
 
 
+from app.core.constants import DEFAULT_QUERY_LIMIT, DEFAULT_QUERY_OFFSET
+
 class InventoryItemRepository(BaseRepository[InventoryItem]):
     def __init__(
         self,
@@ -24,8 +26,8 @@ class InventoryItemRepository(BaseRepository[InventoryItem]):
     async def find_by_inventory_id(
         self,
         inventory_id: UUID,
-        limit: int = 100,
-        offset: int = 0,
+        limit: int = DEFAULT_QUERY_LIMIT,
+        offset: int = DEFAULT_QUERY_OFFSET,
     ) -> list[InventoryItem]:
         stmt = (
             select(InventoryItem)
