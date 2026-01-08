@@ -4,6 +4,8 @@ from typing import override
 from commons.auth import AuthInfo, AuthService
 from commons.db.controller import MultiTenantController
 from commons.db.v6 import RbacRoleSetting
+from commons.db.v6.user import User
+from graphql import GraphQLError
 from loguru import logger
 from sqlalchemy import select
 from starlette.websockets import WebSocket
@@ -13,7 +15,6 @@ from app.core.container import create_container
 from app.core.context import Context
 from app.core.context_wrapper import ContextWrapper
 from app.core.db.db_provider import create_session
-from app.graphql.v2.core.users.repositories.users_repository import UsersRepository
 
 
 class GraphQLMiddleware(SchemaExtension):
@@ -51,8 +52,6 @@ class GraphQLMiddleware(SchemaExtension):
                 context.initialize(context_model, commission_visible=commission_visible)
                 context_wrapper = await conn_ctx.resolve(ContextWrapper)
                 wrapper_token = context_wrapper.set(context)
-                user_repository = await conn_ctx.resolve(UsersRepository)
-                await user_repository.check_active_user()
                 yield
                 context_wrapper.reset(wrapper_token)
 
@@ -70,6 +69,28 @@ class GraphQLMiddleware(SchemaExtension):
                 multi_tenant_controller,
                 auth_info,
             ) as session:
+                user = await session.get(
+                    User,
+                    auth_info.flow_user_id,
+                )
+
+                if not user:
+                    raise GraphQLError(
+                        message=str("User not found in the system."),
+                        extensions={
+                            "statusCode": 401,
+                            "type": "UserNotFoundError",
+                        },
+                    )
+
+                if not user.enabled:
+                    raise GraphQLError(
+                        message=str("User is disabled."),
+                        extensions={
+                            "statusCode": 401,
+                            "type": "UserDisabledError",
+                        },
+                    )
                 primary_role = roles[0]
                 stmt = select(RbacRoleSetting.commission).where(
                     RbacRoleSetting.role == primary_role
@@ -78,6 +99,8 @@ class GraphQLMiddleware(SchemaExtension):
                 commission = result.scalar_one_or_none()
 
                 return commission if commission is not None else True
+        except GraphQLError:
+            raise
         except Exception as e:
             logger.exception(f"Error fetching commission visibility: {e}")
             return True
