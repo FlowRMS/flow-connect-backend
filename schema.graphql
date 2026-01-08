@@ -144,6 +144,23 @@ enum AdjustmentStatus {
   POSTED
 }
 
+enum BulkDeleteEntityType {
+  FACTORIES
+  CUSTOMERS
+}
+
+type BulkDeleteFailure {
+  entityId: UUID!
+  error: String!
+}
+
+type BulkDeleteResult {
+  entityType: BulkDeleteEntityType!
+  deletedCount: Int!
+  failedCount: Int!
+  failures: [BulkDeleteFailure!]!
+}
+
 input BulkWarehouseLocationInput {
   level: WarehouseStructureCode!
   name: String!
@@ -1434,6 +1451,7 @@ type Mutation {
   updateCheck(input: CheckInput!): CheckResponse!
   deleteCheck(id: UUID!): Boolean!
   unpostCheck(checkId: UUID!): CheckResponse!
+  bulkDelete(entityType: BulkDeleteEntityType!, entityIds: [UUID!]!): BulkDeleteResult!
   createCompany(input: CompanyInput!): CompanyResponse!
   deleteCompany(id: UUID!): Boolean!
   updateCompany(id: UUID!, input: CompanyInput!): CompanyResponse!

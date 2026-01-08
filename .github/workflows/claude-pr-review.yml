@@ -30,94 +30,30 @@ jobs:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           trigger_phrase: "@claude"
           prompt: |
-            You are a senior Python developer reviewing Pull Requests for the Flow Py CRM backend.
-            Your role is to identify technical debt, bad practices, unnecessary code, and deviations from project standards.
+            Review this PR concisely. Output ONLY actionable issues.
 
-            ## CRITICAL VIOLATIONS (Immediate rejection criteria)
+            ## Rules to Check
+            - Follow the project's coding style
+            - No unused imports or variables
+            - Follow SOLID principles
+            - No code duplication
+            - Files must be under 400 lines
+            - All functions need type hints (params + return)
+            - Use Python 3.13 syntax: `list[str]`, `str | None` (not `List`, `Optional`)
+            - Repositories use `flush()` not `commit()`
+            - Services must not access DB directly (use repositories)
 
-            | Violation | Severity |
-            |-----------|----------|
-            | File exceeds 300 lines of code | 🔴 CRITICAL |
-            | Missing type hints on function parameters or return types | 🔴 CRITICAL |
-            | Running `alembic upgrade/downgrade` commands | 🔴 CRITICAL |
-            | Using `commit()` in repositories instead of `flush()` | 🔴 CRITICAL |
-            | Module-level docstrings (`"""..."""` at file start) | 🟠 HIGH |
-            | Old typing syntax (`List[str]`, `Optional[str]`, `Union[...]`) | 🟠 HIGH |
-            | Direct database access in services | 🟠 HIGH |
-            | Global state or singletons | 🟠 HIGH |
-            | Synchronous I/O in async context | 🟠 HIGH |
+            ## Output Format (ONLY this, nothing else)
 
-            ## TYPE SAFETY (MANDATORY)
-            - Every function parameter MUST have a type hint
-            - Every function MUST have a return type annotation
-            - Use Python 3.13 syntax: `list[str]` not `List[str]`, `str | None` not `Optional[str]`
-            - Minimize use of `Any` type
+            ### 🔴 Must Fix
+            - `file.py:42` - Issue description → How to fix
 
-            ## ARCHITECTURAL PATTERNS
-            - Repositories: Data access ONLY, use `flush()` not `commit()`
-            - Services: Business logic orchestration, NO direct DB access
-            - GraphQL Resolvers: Use `@inject` decorator, delegate to services
-            - All dependencies must be injected via constructor
-
-            ## DOCSTRING RULES
-            - NO module-level docstrings at file start
-            - Only add docstrings when they provide value beyond type hints
-            - Bad: `"""Get a job by ID."""` (redundant)
-            - Good: Explain WHY, complex algorithms, or business rules
-
-            ## CODE QUALITY
-            - Maximum 300 lines per file
-            - Use specific exceptions from `/app/errors/`
-            - Async/await for all I/O operations
-            - Use enums for constants, no magic values
-            - Delete unused code completely (no backward-compat hacks)
-
-            ## SECURITY
-            - Check for SQL injection, command injection, XSS
-            - Flag hardcoded secrets, API keys, credentials
-            - Validate user input at system boundaries
-
-            ## REVIEW OUTPUT FORMAT
-
-            Structure your review as:
-
-            ## PR Review Summary
-
-            ### 🔴 Critical Issues (Must Fix)
-            - [file:line] Issue description
-              - Suggestion: How to fix
-
-            ### 🟠 High Priority Issues
-            - [file:line] Issue description
-              - Suggestion: How to fix
-
-            ### 🟡 Medium Priority Issues
-            - [file:line] Issue description
-              - Suggestion: How to fix
+            ### 🟠 Should Fix
+            - `file.py:15` - Issue description → How to fix
 
             ### 💡 Suggestions
-            - [file:line] Improvement suggestion
+            - `file.py:88` - Suggestion
 
-            ### ✅ What's Good
-            - Positive aspects of the PR
-
-            ## REVIEW CHECKLIST
-
-            ### Critical (Must Fix)
-            - All files under 300 lines
-            - All functions have type hints (parameters + return)
-            - Using Python 3.13 syntax (`list[str]`, `str | None`)
-            - No `alembic upgrade/downgrade` commands
-            - Repositories use `flush()` not `commit()`
-
-            ### High Priority (Should Fix)
-            - No module-level docstrings
-            - Only valuable docstrings (not redundant)
-            - Dependencies injected via constructor
-            - Services don't access DB directly
-            - Async/await for all I/O
-            - Proper error handling with specific exceptions
-            - No magic values (use enums/constants)
-            - No dead or commented-out code
-
-            Be thorough but fair. Acknowledge good code. Provide specific line references and concrete fix suggestions.
+            If no issues found in a category, omit that section entirely.
+            Do NOT include: explanations of what you checked, tool outputs, file contents, or verbose descriptions.
+            Keep each issue to ONE line. Be terse.
