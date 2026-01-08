@@ -1,3 +1,9 @@
+"""Warehouse repositories."""
+
+from app.graphql.v2.core.warehouses.repositories.warehouse_location_repository import (
+    LocationProductAssignmentRepository,
+    WarehouseLocationRepository,
+)
 from app.graphql.v2.core.warehouses.repositories.warehouse_members_repository import (
     WarehouseMembersRepository,
 )
@@ -12,8 +18,10 @@ from app.graphql.v2.core.warehouses.repositories.warehouse_structure_repository 
 )
 
 __all__ = [
-    "WarehouseRepository",
+    "LocationProductAssignmentRepository",
+    "WarehouseLocationRepository",
     "WarehouseMembersRepository",
+    "WarehouseRepository",
     "WarehouseSettingsRepository",
     "WarehouseStructureRepository",
 ]

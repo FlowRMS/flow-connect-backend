@@ -9,7 +9,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.graphql.v2.core.customers.services.customer_service import CustomerService
 from app.graphql.v2.core.customers.strawberry.customer_input import CustomerInput
 
-from .base import BaseEntityConverter, BulkCreateResult
+from .base import BaseEntityConverter, BulkCreateResult, ConversionResult
 from .entity_mapping import EntityMapping
 
 
@@ -58,10 +58,12 @@ class CustomerConverter(BaseEntityConverter[CustomerDTO, CustomerInput, Customer
         self,
         dto: CustomerDTO,
         entity_mapping: EntityMapping,
-    ) -> CustomerInput:
-        return CustomerInput(
-            company_name=dto.company_name,
-            published=True,
-            is_parent=False,
-            parent_id=None,
+    ) -> ConversionResult[CustomerInput]:
+        return ConversionResult.ok(
+            CustomerInput(
+                company_name=dto.company_name,
+                published=True,
+                is_parent=False,
+                parent_id=None,
+            )
         )

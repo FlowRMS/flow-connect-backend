@@ -1,6 +1,7 @@
 """Strawberry input types for shipping carriers."""
 
 from decimal import Decimal
+from typing import Any, cast
 
 import strawberry
 from commons.db.v6 import ShippingCarrier
@@ -57,7 +58,9 @@ class ShippingCarrierInput(BaseInputGQL[ShippingCarrier]):
             api_key=self.api_key,
             api_endpoint=self.api_endpoint,
             tracking_url_template=self.tracking_url_template,
-            service_types=self.service_types,
+            service_types=cast(dict[Any, Any], self.service_types)
+            if self.service_types
+            else None,
             default_service_type=self.default_service_type,
             max_weight=self.max_weight,
             max_dimensions=self.max_dimensions,

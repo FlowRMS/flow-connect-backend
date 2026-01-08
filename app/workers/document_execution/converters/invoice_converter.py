@@ -16,8 +16,9 @@ from app.graphql.invoices.strawberry.invoice_detail_input import InvoiceDetailIn
 from app.graphql.invoices.strawberry.invoice_input import InvoiceInput
 from app.graphql.orders.repositories.orders_repository import OrdersRepository
 
-from .base import BaseEntityConverter
+from .base import BaseEntityConverter, ConversionResult
 from .entity_mapping import EntityMapping
+from .exceptions import FactoryRequiredError, OrderRequiredError
 
 
 class InvoiceConverter(BaseEntityConverter[InvoiceDTO, InvoiceInput, Invoice]):
@@ -46,14 +47,14 @@ class InvoiceConverter(BaseEntityConverter[InvoiceDTO, InvoiceInput, Invoice]):
         self,
         dto: InvoiceDTO,
         entity_mapping: EntityMapping,
-    ) -> InvoiceInput:
+    ) -> ConversionResult[InvoiceInput]:
         factory_id = entity_mapping.factory_id
         order_id = entity_mapping.order_id
 
         if not factory_id:
-            raise ValueError("Factory ID is required but not found in entity_mapping")
+            return ConversionResult.fail(FactoryRequiredError())
         if not order_id:
-            raise ValueError("Order ID is required but not found in entity_mapping")
+            return ConversionResult.fail(OrderRequiredError())
 
         order = await self.orders_repository.find_order_by_id(order_id)
 
@@ -79,12 +80,14 @@ class InvoiceConverter(BaseEntityConverter[InvoiceDTO, InvoiceInput, Invoice]):
             if detail.flow_index not in entity_mapping.skipped_product_indices
         ]
 
-        return InvoiceInput(
-            invoice_number=invoice_number,
-            entity_date=entity_date,
-            order_id=order_id,
-            factory_id=factory_id,
-            details=details,
+        return ConversionResult.ok(
+            InvoiceInput(
+                invoice_number=invoice_number,
+                entity_date=entity_date,
+                order_id=order_id,
+                factory_id=factory_id,
+                details=details,
+            )
         )
 
     async def _convert_detail(

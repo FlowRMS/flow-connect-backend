@@ -10,6 +10,12 @@ class Settings(BaseSettings):
 
     log_level: str = "INFO"
 
+    @property
+    def frontend_base_url(self) -> str:
+        if self.environment == "production":
+            return "https://console.flowrms.com"
+        return f"https://{self.environment}.console.flowrms.com"
+
     model_config = SettingsConfigDict(
         env_nested_delimiter="__",
         env_file_encoding="utf-8",

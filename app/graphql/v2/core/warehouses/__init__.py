@@ -1,27 +1,43 @@
-"""Warehouse module for GraphQL API."""
-
 from commons.db.v6 import (
+    LocationProductAssignment,
     Warehouse,
+    WarehouseLocation,
     WarehouseMember,
     WarehouseMemberRole,
     WarehouseSettings,
     WarehouseStructure,
 )
 
-from app.graphql.v2.core.warehouses.mutations import WarehousesMutations
-from app.graphql.v2.core.warehouses.queries import WarehousesQueries
+from app.graphql.v2.core.warehouses.mutations import (
+    WarehouseLocationMutations,
+    WarehousesMutations,
+)
+from app.graphql.v2.core.warehouses.queries import (
+    WarehouseLocationQueries,
+    WarehousesQueries,
+)
 from app.graphql.v2.core.warehouses.repositories import (
+    LocationProductAssignmentRepository,
+    WarehouseLocationRepository,
     WarehouseMembersRepository,
     WarehouseRepository,
     WarehouseSettingsRepository,
     WarehouseStructureRepository,
 )
-from app.graphql.v2.core.warehouses.services import WarehouseService
+from app.graphql.v2.core.warehouses.services import (
+    WarehouseLocationAssignmentService,
+    WarehouseLocationService,
+    WarehouseService,
+)
 from app.graphql.v2.core.warehouses.strawberry import (
+    BulkWarehouseLocationInput,
+    LocationProductAssignmentInput,
+    LocationProductAssignmentResponse,
     WarehouseInput,
+    WarehouseLocationInput,
+    WarehouseLocationResponse,
     WarehouseMemberInput,
     WarehouseMemberResponse,
-    WarehouseMemberRole,
     WarehouseResponse,
     WarehouseSettingsInput,
     WarehouseSettingsResponse,
@@ -32,30 +48,42 @@ from app.graphql.v2.core.warehouses.strawberry import (
 
 __all__ = [
     # Models (from commons)
+    "LocationProductAssignment",
     "Warehouse",
+    "WarehouseLocation",
     "WarehouseMember",
     "WarehouseMemberRole",
     "WarehouseSettings",
     "WarehouseStructure",
     # Repositories
-    "WarehouseRepository",
+    "LocationProductAssignmentRepository",
+    "WarehouseLocationRepository",
     "WarehouseMembersRepository",
+    "WarehouseRepository",
     "WarehouseSettingsRepository",
     "WarehouseStructureRepository",
     # Services
+    "WarehouseLocationAssignmentService",
+    "WarehouseLocationService",
     "WarehouseService",
     # GraphQL Types
-    "WarehouseResponse",
-    "WarehouseMemberResponse",
-    "WarehouseMemberRole",
-    "WarehouseSettingsResponse",
-    "WarehouseStructureResponse",
+    "BulkWarehouseLocationInput",
+    "LocationProductAssignmentInput",
+    "LocationProductAssignmentResponse",
     "WarehouseInput",
+    "WarehouseLocationInput",
+    "WarehouseLocationResponse",
     "WarehouseMemberInput",
+    "WarehouseMemberResponse",
+    "WarehouseResponse",
     "WarehouseSettingsInput",
+    "WarehouseSettingsResponse",
     "WarehouseStructureInput",
     "WarehouseStructureLevelInput",
+    "WarehouseStructureResponse",
     # GraphQL Operations
-    "WarehousesQueries",
+    "WarehouseLocationMutations",
+    "WarehouseLocationQueries",
     "WarehousesMutations",
+    "WarehousesQueries",
 ]
