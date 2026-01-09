@@ -41,7 +41,7 @@ Mutation = merge_types(
 )
 
 
-schema = strawberry.federation.Schema( 
+schema = strawberry.federation.Schema(
     Query,
     mutation=Mutation,
     extensions=[
