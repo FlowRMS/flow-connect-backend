@@ -7,9 +7,6 @@ Create Date: 2025-10-09 16:43:51.169236
 """
 from collections.abc import Sequence
 
-from alembic import op
-import sqlalchemy as sa
-from sqlalchemy.dialects.postgresql import JSONB
 
 revision: str = '6f462a3f0a59'
 down_revision: str | None = '62e4315e9e63'

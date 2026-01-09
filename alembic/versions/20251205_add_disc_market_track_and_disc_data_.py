@@ -24,7 +24,7 @@ def upgrade() -> None:
     op.execute(sa.text("CREATE SCHEMA IF NOT EXISTS disc"))
     
     # Create disc_market_track table
-    op.create_table(
+    _ = op.create_table(
         'disc_market_track',
         sa.Column('id', postgresql.UUID(as_uuid=True), primary_key=True),
         sa.Column('section', sa.String(), nullable=False),
@@ -47,7 +47,7 @@ def upgrade() -> None:
     op.create_index('idx_disc_market_track_location_year', 'disc_market_track', ['location', 'year'], schema='disc')
     
     # Create disc_data_search table
-    op.create_table(
+    _ = op.create_table(
         'disc_data_search',
         sa.Column('id', postgresql.UUID(as_uuid=True), primary_key=True),
         sa.Column('state', sa.String(), nullable=False),
