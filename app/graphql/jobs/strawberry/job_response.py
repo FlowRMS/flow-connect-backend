@@ -50,7 +50,7 @@ class JobLiteType(DTOMixin[Job]):
         )
 
 
-@strawberry.type
+@strawberry.federation.type(keys=["id"])
 class JobType(JobLiteType):
     @strawberry.field
     def status(self) -> JobStatusType:

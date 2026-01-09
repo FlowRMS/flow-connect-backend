@@ -1,5 +1,10 @@
 directive @rolePermissionAccess on FIELD_DEFINITION
 
+schema @link(url: "https://specs.apollo.dev/federation/v2.11", import: ["@key"]) {
+  query: Query
+  mutation: Mutation
+}
+
 input AddressInput {
   sourceId: UUID!
   sourceType: AddressSourceTypeEnum!
@@ -1340,7 +1345,7 @@ type JobStatusType {
   name: String!
 }
 
-type JobType {
+type JobType @key(fields: "id") {
   id: UUID!
   createdAt: datetime!
   jobName: String!
@@ -2369,6 +2374,7 @@ type ProductUomResponse {
 }
 
 type Query {
+  _entities(representations: [_Any!]!): [_Entity]!
   _service: _Service!
   address(id: UUID!): AddressResponse!
   addressesBySource(sourceType: AddressSourceTypeEnum!, sourceId: UUID!): [AddressResponse!]!
@@ -3177,6 +3183,8 @@ type WarehouseStructureResponse {
 }
 
 scalar _Any
+
+union _Entity = JobType
 
 type _Service {
   sdl: String!
