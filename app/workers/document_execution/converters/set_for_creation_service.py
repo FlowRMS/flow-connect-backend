@@ -13,7 +13,7 @@ from .entity_mapping import EntityMapping
 from .invoice_converter import InvoiceConverter
 from .order_converter import OrderConverter
 
-type DTOType = OrderDTO  | CheckDetailDTO
+type DTOType = OrderDTO | CheckDetailDTO
 
 
 class SetForCreationService:
@@ -53,9 +53,7 @@ class SetForCreationService:
         ]
 
         for pe in order_entities:
-            order_id = await self._create_order_for_pending_entity(
-                pe, entity_mappings
-            )
+            order_id = await self._create_order_for_pending_entity(pe, entity_mappings)
             if order_id:
                 self._update_mappings_with_order_id(entity_mappings, pe, order_id)
 
@@ -134,10 +132,14 @@ class SetForCreationService:
         pe: PendingEntity,
         order_id: UUID,
     ) -> None:
+        flow_idx = pe.flow_index_detail if pe.flow_index_detail is not None else 0
         for dto_id in pe.dto_ids or []:
             mapping = entity_mappings.setdefault(dto_id, EntityMapping())
-            mapping.order_id = order_id
-            logger.info(f"Updated mapping for DTO {dto_id} with order_id {order_id}")
+            mapping.orders[flow_idx] = order_id
+            logger.info(
+                f"Updated mapping for DTO {dto_id} with order_id {order_id} "
+                f"at flow_index {flow_idx}"
+            )
 
     def _update_mappings_with_invoice_id(
         self,
@@ -145,11 +147,13 @@ class SetForCreationService:
         pe: PendingEntity,
         invoice_id: UUID,
     ) -> None:
+        flow_idx = pe.flow_index_detail if pe.flow_index_detail is not None else 0
         for dto_id in pe.dto_ids or []:
             mapping = entity_mappings.setdefault(dto_id, EntityMapping())
-            mapping.invoice_id = invoice_id
+            mapping.invoices[flow_idx] = invoice_id
             logger.info(
-                f"Updated mapping for DTO {dto_id} with invoice_id {invoice_id}"
+                f"Updated mapping for DTO {dto_id} with invoice_id {invoice_id} "
+                f"at flow_index {flow_idx}"
             )
 
     async def _create_credits(
@@ -207,10 +211,14 @@ class SetForCreationService:
         pe: PendingEntity,
         credit_id: UUID,
     ) -> None:
+        flow_idx = pe.flow_index_detail if pe.flow_index_detail is not None else 0
         for dto_id in pe.dto_ids or []:
             mapping = entity_mappings.setdefault(dto_id, EntityMapping())
-            mapping.credit_id = credit_id
-            logger.info(f"Updated mapping for DTO {dto_id} with credit_id {credit_id}")
+            mapping.credits[flow_idx] = credit_id
+            logger.info(
+                f"Updated mapping for DTO {dto_id} with credit_id {credit_id} "
+                f"at flow_index {flow_idx}"
+            )
 
     async def _create_adjustments(
         self,
@@ -264,9 +272,11 @@ class SetForCreationService:
         pe: PendingEntity,
         adjustment_id: UUID,
     ) -> None:
+        flow_idx = pe.flow_index_detail if pe.flow_index_detail is not None else 0
         for dto_id in pe.dto_ids or []:
             mapping = entity_mappings.setdefault(dto_id, EntityMapping())
-            mapping.adjustment_id = adjustment_id
+            mapping.adjustments[flow_idx] = adjustment_id
             logger.info(
-                f"Updated mapping for DTO {dto_id} with adjustment_id {adjustment_id}"
+                f"Updated mapping for DTO {dto_id} with adjustment_id {adjustment_id} "
+                f"at flow_index {flow_idx}"
             )

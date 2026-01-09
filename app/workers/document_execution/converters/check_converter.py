@@ -62,7 +62,7 @@ class CheckConverter(BaseEntityConverter[CheckDTO, CheckInput, Check]):
 
         details: list[CheckDetailInput] = []
         for detail in dto.details:
-            if detail.flow_index in entity_mapping.skipped_product_indices:
+            if detail.flow_detail_index in entity_mapping.skipped_product_indices:
                 continue
             check_detail = await self._convert_detail(
                 detail, factory_id, entity_mapping
