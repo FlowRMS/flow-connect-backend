@@ -79,7 +79,6 @@ async def create_workos_user(
             organization_id=org_id,
             role_slug=user.role.name.lower(),
         )
-        _ = await client.user_management.create_password_reset(email=user.email)
         return (workos_user.id, user.id)
     except Exception as e:
         logger.error(f"Failed to create WorkOS user for {user.email}: {e}")

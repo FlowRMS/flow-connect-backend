@@ -76,8 +76,7 @@ class UserService:
     async def update(self, user_id: UUID, user_input: UserInput) -> User:
         user = user_input.to_orm_model()
         user.id = user_id
-        if self.workos_auth_service:
-            await self._update_workos_user(user_input)
+        await self._update_workos_user(user_input)
         return await self.repository.update(user)
 
     async def _update_workos_user(self, user_input: UserInput) -> None:
@@ -86,6 +85,17 @@ class UserService:
             raise NotFoundError(
                 f"User with username {user_input.username} not found in WorkOS"
             )
+
+        workos_user = await self.workos_auth_service.get_user(user.auth_provider_id)
+
+        if not workos_user:
+            raise NotFoundError(
+                f"User with auth provider id {user.auth_provider_id} not found in WorkOS"
+            )
+
+        if workos_user.external_id != user.id:
+            raise ValueError("Mismatch between local user ID and WorkOS external ID")
+
         auth_input = AuthUserInput(
             email=user_input.email,
             tenant_id=self.auth_info.tenant_name,

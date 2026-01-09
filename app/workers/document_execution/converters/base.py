@@ -4,6 +4,7 @@ from decimal import Decimal
 from typing import TYPE_CHECKING, Any, Generic, TypeVar
 from uuid import UUID
 
+from commons.db.v6 import RepTypeEnum
 from commons.db.v6.ai.documents import PendingDocument
 from commons.db.v6.ai.documents.enums.entity_type import DocumentEntityType
 from commons.db.v6.core.factories.factory import Factory
@@ -151,7 +152,9 @@ class BaseEntityConverter(ABC, Generic[TDto, TInput, TOutput]):
             return factory.overall_discount_rate
         return Decimal("0")
 
-    async def get_user_by_full_name(self, full_name: str) -> User | None:
+    async def get_user_by_full_name(
+        self, full_name: str, rep_type: RepTypeEnum | None = None
+    ) -> User | None:
         cache_key = full_name.lower().strip()
         if cache_key in self._user_cache:
             return self._user_cache[cache_key]
@@ -161,6 +164,10 @@ class BaseEntityConverter(ABC, Generic[TDto, TInput, TOutput]):
             | (func.lower(User.first_name) == cache_key)
             | (func.lower(User.last_name) == cache_key)
         )
+        if rep_type == RepTypeEnum.INSIDE:
+            stmt = stmt.where(User.inside.is_(True))
+        elif rep_type == RepTypeEnum.OUTSIDE:
+            stmt = stmt.where(User.outside.is_(True))
         result = await self.session.execute(stmt)
         user = result.scalars().first()
 

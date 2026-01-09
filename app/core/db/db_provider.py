@@ -16,7 +16,6 @@ async def create_session(
     controller: MultiTenantController,
     auth_info: AuthInfo,
 ) -> AsyncIterator[AsyncSession]:
-    print(f"Creating session for tenant: {auth_info.tenant_name}")
     async with controller.scoped_session(auth_info.tenant_name) as session:
         async with session.begin():
             yield session

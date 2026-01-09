@@ -1,6 +1,7 @@
+from decimal import Decimal
 from typing import Any, override
 
-from commons.db.v6 import Customer
+from commons.db.v6 import Customer, RepTypeEnum
 from commons.db.v6.ai.documents.enums.entity_type import DocumentEntityType
 from commons.dtos.common.dto_loader_service import DTOLoaderService
 from commons.dtos.core.customer_dto import CustomerDTO
@@ -8,6 +9,11 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.graphql.v2.core.customers.services.customer_service import CustomerService
 from app.graphql.v2.core.customers.strawberry.customer_input import CustomerInput
+from app.graphql.v2.core.customers.strawberry.customer_split_rate_input import (
+    InsideSplitRateInput,
+    OutsideSplitRateInput,
+)
+from app.workers.document_execution.converters.exceptions import ConversionError
 
 from .base import BaseEntityConverter, BulkCreateResult, ConversionResult
 from .entity_mapping import EntityMapping
@@ -59,11 +65,60 @@ class CustomerConverter(BaseEntityConverter[CustomerDTO, CustomerInput, Customer
         dto: CustomerDTO,
         entity_mapping: EntityMapping,
     ) -> ConversionResult[CustomerInput]:
+        if not dto.company_name:
+            return ConversionResult.fail(
+                ConversionError("CustomerDTO missing company_name")
+            )
+
+        outside_split_rates = await self._build_outside_split_rates(dto)
+        inside_split_rates = await self._build_inside_split_rates(dto)
+
         return ConversionResult.ok(
             CustomerInput(
                 company_name=dto.company_name,
                 published=True,
                 is_parent=False,
                 parent_id=None,
+                outside_split_rates=outside_split_rates,
+                inside_split_rates=inside_split_rates,
             )
         )
+
+    async def _build_outside_split_rates(
+        self,
+        dto: CustomerDTO,
+    ) -> list[OutsideSplitRateInput]:
+        split_rates: list[OutsideSplitRateInput] = []
+        for position, sales_rep in enumerate(dto.outside_sales_reps):
+            user = await self.get_user_by_full_name(
+                sales_rep.name_signature, RepTypeEnum.OUTSIDE
+            )
+            if not user:
+                continue
+            split_rates.append(
+                OutsideSplitRateInput(
+                    user_id=user.id,
+                    split_rate=sales_rep.split_rate or Decimal("0"),
+                    position=position,
+                )
+            )
+        return split_rates
+
+    async def _build_inside_split_rates(
+        self,
+        dto: CustomerDTO,
+    ) -> list[InsideSplitRateInput]:
+        if not dto.inside_sales_rep_name:
+            return []
+        user = await self.get_user_by_full_name(
+            dto.inside_sales_rep_name, RepTypeEnum.INSIDE
+        )
+        if not user:
+            return []
+        return [
+            InsideSplitRateInput(
+                user_id=user.id,
+                split_rate=Decimal("100"),
+                position=0,
+            )
+        ]
