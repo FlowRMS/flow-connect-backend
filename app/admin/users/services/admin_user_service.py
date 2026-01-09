@@ -223,11 +223,7 @@ class AdminUserService:
             raise ValueError(f"Tenant {tenant_id} not found")
         async with self.controller.transient_session(tenant.url) as session:
             async with session.begin():
-                stmt = select(User).where(User.id == user_id)
-                result = await session.execute(stmt)
-                user = result.scalar_one_or_none()
-                if not user:
-                    raise ValueError(f"User {user_id} not found")
+                user = await session.get_one(User, user_id)
                 if input.first_name is not None:
                     user.first_name = input.first_name
                 if input.last_name is not None:
@@ -254,7 +250,7 @@ class AdminUserService:
                             email=user.email,
                             tenant_id="",
                             role=user.role,
-                            external_id=user.id,
+                            external_id=user_id,
                             first_name=user.first_name,
                             last_name=user.last_name,
                             metadata={

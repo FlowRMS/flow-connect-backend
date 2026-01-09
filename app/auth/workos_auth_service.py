@@ -159,9 +159,6 @@ class WorkOSAuthService:
                     external_id=str(auth_user_input.external_id),
                     metadata=auth_user_input.metadata,
                 )
-                _ = await self.client.user_management.create_password_reset(
-                    email=auth_user_input.email,
-                )
 
             org_id = await self.link_user_to_tenant(
                 user_id=workos_user.id,
