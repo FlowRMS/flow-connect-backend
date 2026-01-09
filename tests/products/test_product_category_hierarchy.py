@@ -21,7 +21,7 @@ import httpx
 # Add parent directories to path for imports
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 
-from tests.products.token_generator import generate_token
+from tests.common.token_generator import generate_token
 
 BASE_URL = "http://localhost:5555/graphql"
 
