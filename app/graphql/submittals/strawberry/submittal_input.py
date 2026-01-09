@@ -1,0 +1,144 @@
+"""GraphQL input types for Submittal."""
+
+from decimal import Decimal
+from uuid import UUID
+
+import strawberry
+from commons.db.v6.crm.submittals import (
+    Submittal,
+    SubmittalItem,
+    SubmittalItemApprovalStatus,
+    SubmittalItemMatchStatus,
+    SubmittalStakeholder,
+    SubmittalStakeholderRole,
+    SubmittalStatus,
+    TransmittalPurpose,
+)
+
+from app.core.strawberry.inputs import BaseInputGQL
+from app.graphql.submittals.strawberry.enums import (
+    SubmittalItemApprovalStatusGQL,
+    SubmittalItemMatchStatusGQL,
+    SubmittalStakeholderRoleGQL,
+    SubmittalStatusGQL,
+    TransmittalPurposeGQL,
+)
+
+
+@strawberry.input
+class CreateSubmittalInput(BaseInputGQL[Submittal]):
+    """Input for creating a new submittal."""
+
+    submittal_number: str
+    quote_id: UUID | None = None
+    job_id: UUID | None = None
+    status: SubmittalStatusGQL = SubmittalStatusGQL.DRAFT
+    transmittal_purpose: TransmittalPurposeGQL | None = None
+    description: str | None = None
+
+    def to_orm_model(self) -> Submittal:
+        """Convert input to ORM model."""
+        return Submittal(
+            submittal_number=self.submittal_number,
+            quote_id=self.quote_id,
+            job_id=self.job_id,
+            status=SubmittalStatus(self.status.value),
+            transmittal_purpose=(
+                TransmittalPurpose(self.transmittal_purpose.value)
+                if self.transmittal_purpose
+                else None
+            ),
+            description=self.description,
+        )
+
+
+@strawberry.input
+class UpdateSubmittalInput:
+    """Input for updating a submittal."""
+
+    status: SubmittalStatusGQL | None = None
+    transmittal_purpose: TransmittalPurposeGQL | None = None
+    description: str | None = None
+
+
+@strawberry.input
+class SubmittalItemInput(BaseInputGQL[SubmittalItem]):
+    """Input for creating/updating a submittal item."""
+
+    item_number: int
+    quote_detail_id: UUID | None = None
+    spec_sheet_id: UUID | None = None
+    highlight_version_id: UUID | None = None
+    part_number: str | None = None
+    description: str | None = None
+    quantity: Decimal | None = None
+    approval_status: SubmittalItemApprovalStatusGQL = (
+        SubmittalItemApprovalStatusGQL.PENDING
+    )
+    match_status: SubmittalItemMatchStatusGQL = SubmittalItemMatchStatusGQL.NO_MATCH
+    notes: str | None = None
+
+    def to_orm_model(self) -> SubmittalItem:
+        """Convert input to ORM model."""
+        return SubmittalItem(
+            item_number=self.item_number,
+            quote_detail_id=self.quote_detail_id,
+            spec_sheet_id=self.spec_sheet_id,
+            highlight_version_id=self.highlight_version_id,
+            part_number=self.part_number,
+            description=self.description,
+            quantity=self.quantity,
+            approval_status=SubmittalItemApprovalStatus(self.approval_status.value),
+            match_status=SubmittalItemMatchStatus(self.match_status.value),
+            notes=self.notes,
+        )
+
+
+@strawberry.input
+class UpdateSubmittalItemInput:
+    """Input for updating a submittal item."""
+
+    spec_sheet_id: UUID | None = None
+    highlight_version_id: UUID | None = None
+    part_number: str | None = None
+    description: str | None = None
+    quantity: Decimal | None = None
+    approval_status: SubmittalItemApprovalStatusGQL | None = None
+    match_status: SubmittalItemMatchStatusGQL | None = None
+    notes: str | None = None
+
+
+@strawberry.input
+class SubmittalStakeholderInput(BaseInputGQL[SubmittalStakeholder]):
+    """Input for adding a stakeholder to a submittal."""
+
+    role: SubmittalStakeholderRoleGQL
+    customer_id: UUID | None = None
+    is_primary: bool = False
+    contact_name: str | None = None
+    contact_email: str | None = None
+    contact_phone: str | None = None
+    company_name: str | None = None
+
+    def to_orm_model(self) -> SubmittalStakeholder:
+        """Convert input to ORM model."""
+        return SubmittalStakeholder(
+            role=SubmittalStakeholderRole(self.role.value),
+            customer_id=self.customer_id,
+            is_primary=self.is_primary,
+            contact_name=self.contact_name,
+            contact_email=self.contact_email,
+            contact_phone=self.contact_phone,
+            company_name=self.company_name,
+        )
+
+
+@strawberry.input
+class SendSubmittalEmailInput:
+    """Input for sending a submittal email."""
+
+    submittal_id: UUID
+    revision_id: UUID | None = None
+    subject: str
+    body: str | None = None
+    recipient_emails: list[str]
