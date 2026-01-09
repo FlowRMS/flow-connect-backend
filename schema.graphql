@@ -147,6 +147,12 @@ enum AdjustmentStatus {
 enum BulkDeleteEntityType {
   FACTORIES
   CUSTOMERS
+  PRODUCTS
+  ORDERS
+  INVOICES
+  QUOTES
+  CHECKS
+  PRE_OPS
 }
 
 type BulkDeleteFailure {
