@@ -193,23 +193,24 @@ class AdminUserService:
         visible: bool | None = True,
     ) -> User:
         async with self.controller.scoped_session(tenant.url) as session:
-            user = User(
-                username=username,
-                first_name=first_name,
-                last_name=last_name,
-                email=email,
-                role=role,
-                enabled=enabled,
-                inside=inside,
-                outside=outside,
-                visible=visible,
-            )
-            user.id = user_id
-            user.auth_provider_id = workos_user_id
-            session.add(user)
-            await session.flush([user])
-            logger.info(f"Created user {email} in tenant database")
-            return user
+            async with session.begin():
+                user = User(
+                    username=username,
+                    first_name=first_name,
+                    last_name=last_name,
+                    email=email,
+                    role=role,
+                    enabled=enabled,
+                    inside=inside,
+                    outside=outside,
+                    visible=visible,
+                )
+                user.id = user_id
+                user.auth_provider_id = workos_user_id
+                session.add(user)
+                await session.flush([user])
+                logger.info(f"Created user {email} in tenant database")
+                return user
 
     async def update_user(
         self,
@@ -221,48 +222,49 @@ class AdminUserService:
         if not tenant:
             raise ValueError(f"Tenant {tenant_id} not found")
         async with self.controller.scoped_session(tenant.url) as session:
-            stmt = select(User).where(User.id == user_id)
-            result = await session.execute(stmt)
-            user = result.scalar_one_or_none()
-            if not user:
-                raise ValueError(f"User {user_id} not found")
-            if input.first_name is not None:
-                user.first_name = input.first_name
-            if input.last_name is not None:
-                user.last_name = input.last_name
-            if input.role is not None:
-                user.role = input.role
-            if input.enabled is not None:
-                user.enabled = input.enabled
-            if input.inside is not None:
-                user.inside = input.inside
-            if input.outside is not None:
-                user.outside = input.outside
-            if input.email is not None:
-                user.email = input.email
-            if input.username is not None:
-                user.username = input.username
-            if input.visible is not None:
-                user.visible = input.visible
-            await session.flush([user])
-            if input.first_name is not None or input.last_name is not None:
-                _ = await self.workos_service.update_user(
-                    user_id=user.auth_provider_id,
-                    auth_user_input=AuthUserInput(
-                        email=user.email,
-                        tenant_id="",
-                        role=user.role,
-                        external_id=user.id,
-                        first_name=user.first_name,
-                        last_name=user.last_name,
-                        metadata={
-                            "enabled": str(user.enabled),
-                        },
-                    ),
+            async with session.begin():
+                stmt = select(User).where(User.id == user_id)
+                result = await session.execute(stmt)
+                user = result.scalar_one_or_none()
+                if not user:
+                    raise ValueError(f"User {user_id} not found")
+                if input.first_name is not None:
+                    user.first_name = input.first_name
+                if input.last_name is not None:
+                    user.last_name = input.last_name
+                if input.role is not None:
+                    user.role = input.role
+                if input.enabled is not None:
+                    user.enabled = input.enabled
+                if input.inside is not None:
+                    user.inside = input.inside
+                if input.outside is not None:
+                    user.outside = input.outside
+                if input.email is not None:
+                    user.email = input.email
+                if input.username is not None:
+                    user.username = input.username
+                if input.visible is not None:
+                    user.visible = input.visible
+                await session.flush([user])
+                if input.first_name is not None or input.last_name is not None:
+                    _ = await self.workos_service.update_user(
+                        user_id=user.auth_provider_id,
+                        auth_user_input=AuthUserInput(
+                            email=user.email,
+                            tenant_id="",
+                            role=user.role,
+                            external_id=user.id,
+                            first_name=user.first_name,
+                            last_name=user.last_name,
+                            metadata={
+                                "enabled": str(user.enabled),
+                            },
+                        ),
+                    )
+                return AdminUserData.from_orm(
+                    user,
+                    tenant_id=tenant.id,
+                    tenant_name=tenant.name,
+                    tenant_url=tenant.url,
                 )
-            return AdminUserData.from_orm(
-                user,
-                tenant_id=tenant.id,
-                tenant_name=tenant.name,
-                tenant_url=tenant.url,
-            )
