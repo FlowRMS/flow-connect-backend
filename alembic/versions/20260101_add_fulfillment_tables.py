@@ -42,9 +42,7 @@ def upgrade() -> None:
         sa.Column("pack_completed_at", sa.DateTime(), nullable=True),
         sa.Column("ship_confirmed_at", sa.DateTime(), nullable=True),
         sa.Column("delivered_at", sa.DateTime(), nullable=True),
-        sa.Column(
-            "tracking_numbers", postgresql.ARRAY(sa.String()), nullable=False
-        ),
+        sa.Column("tracking_numbers", postgresql.ARRAY(sa.String()), nullable=False),
         sa.Column("bol_number", sa.String(100), nullable=True),
         sa.Column("pro_number", sa.String(100), nullable=True),
         sa.Column("pickup_signature", sa.Text(), nullable=True),
@@ -100,7 +98,9 @@ def upgrade() -> None:
     _ = op.create_table(
         "fulfillment_order_line_items",
         sa.Column("id", postgresql.UUID(as_uuid=True), nullable=False),
-        sa.Column("fulfillment_order_id", postgresql.UUID(as_uuid=True), nullable=False),
+        sa.Column(
+            "fulfillment_order_id", postgresql.UUID(as_uuid=True), nullable=False
+        ),
         sa.Column("order_detail_id", postgresql.UUID(as_uuid=True), nullable=True),
         sa.Column("product_id", postgresql.UUID(as_uuid=True), nullable=False),
         sa.Column(
@@ -156,9 +156,7 @@ def upgrade() -> None:
             ["pywarehouse.fulfillment_orders.id"],
             ondelete="CASCADE",
         ),
-        sa.ForeignKeyConstraint(
-            ["order_detail_id"], ["pycommission.order_details.id"]
-        ),
+        sa.ForeignKeyConstraint(["order_detail_id"], ["pycommission.order_details.id"]),
         sa.ForeignKeyConstraint(["product_id"], ["pycore.products.id"]),
         sa.PrimaryKeyConstraint("id"),
         schema="pywarehouse",
@@ -174,7 +172,9 @@ def upgrade() -> None:
     _ = op.create_table(
         "fulfillment_assignments",
         sa.Column("id", postgresql.UUID(as_uuid=True), nullable=False),
-        sa.Column("fulfillment_order_id", postgresql.UUID(as_uuid=True), nullable=False),
+        sa.Column(
+            "fulfillment_order_id", postgresql.UUID(as_uuid=True), nullable=False
+        ),
         sa.Column("user_id", postgresql.UUID(as_uuid=True), nullable=False),
         sa.Column("role", sa.SmallInteger(), nullable=False),
         sa.Column(
@@ -205,7 +205,9 @@ def upgrade() -> None:
     _ = op.create_table(
         "fulfillment_activities",
         sa.Column("id", postgresql.UUID(as_uuid=True), nullable=False),
-        sa.Column("fulfillment_order_id", postgresql.UUID(as_uuid=True), nullable=False),
+        sa.Column(
+            "fulfillment_order_id", postgresql.UUID(as_uuid=True), nullable=False
+        ),
         sa.Column("activity_type", sa.SmallInteger(), nullable=False),
         sa.Column("content", sa.Text(), nullable=True),
         sa.Column("metadata", postgresql.JSONB(), nullable=True),
@@ -236,7 +238,9 @@ def upgrade() -> None:
     _ = op.create_table(
         "packing_boxes",
         sa.Column("id", postgresql.UUID(as_uuid=True), nullable=False),
-        sa.Column("fulfillment_order_id", postgresql.UUID(as_uuid=True), nullable=False),
+        sa.Column(
+            "fulfillment_order_id", postgresql.UUID(as_uuid=True), nullable=False
+        ),
         sa.Column("container_type_id", postgresql.UUID(as_uuid=True), nullable=True),
         sa.Column("box_number", sa.Integer(), nullable=False),
         sa.Column("length", sa.Numeric(10, 2), nullable=True),

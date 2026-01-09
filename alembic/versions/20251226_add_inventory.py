@@ -18,7 +18,7 @@ def upgrade() -> None:
 
     # Create pywarehouse schema if not exists
     op.execute("CREATE SCHEMA IF NOT EXISTS pywarehouse")
-    
+
     # Create warehouses table
     if not inspector.has_table("warehouses", schema="pywarehouse"):
         _ = op.create_table(

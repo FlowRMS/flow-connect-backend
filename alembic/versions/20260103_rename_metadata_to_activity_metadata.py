@@ -5,10 +5,10 @@ Revises: fulfillment_001
 Create Date: 2026-01-03 18:46:53.131853
 
 """
+
 from collections.abc import Sequence
 
 from alembic import op
-
 
 # revision identifiers, used by Alembic.
 revision: str = "22af57481162"
