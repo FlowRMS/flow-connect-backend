@@ -22,7 +22,7 @@ depends_on: str | Sequence[str] | None = None
 
 def upgrade() -> None:
     # Create warehouse_locations table in pywarehouse schema
-    op.create_table(
+    _ = op.create_table(
         "warehouse_locations",
         sa.Column("id", postgresql.UUID(as_uuid=True), nullable=False),
         sa.Column("warehouse_id", postgresql.UUID(as_uuid=True), nullable=False),
@@ -76,7 +76,7 @@ def upgrade() -> None:
     )
 
     # Create location_product_assignments table in pywarehouse schema
-    op.create_table(
+    _ = op.create_table(
         "location_product_assignments",
         sa.Column("id", postgresql.UUID(as_uuid=True), nullable=False),
         sa.Column("location_id", postgresql.UUID(as_uuid=True), nullable=False),
