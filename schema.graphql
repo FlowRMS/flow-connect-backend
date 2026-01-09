@@ -1,6 +1,6 @@
 directive @rolePermissionAccess on FIELD_DEFINITION
 
-schema @link(url: "https://specs.apollo.dev/federation/v2.11", import: ["@key"]) {
+schema @link(url: "https://specs.apollo.dev/federation/v2.0", import: ["@key"]) {
   query: Query
   mutation: Mutation
 }
