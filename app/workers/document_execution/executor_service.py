@@ -121,7 +121,7 @@ class DocumentExecutorService:
 
             await self.set_for_creation_service.process_set_for_creation(
                 pending_entities=pending_document.pending_entities,
-                dtos=dtos,
+                # dtos=dtos,
                 entity_mappings=entity_mappings,
             )
 

@@ -170,3 +170,8 @@ class CreditsRepository(BaseRepository[Credit]):
         )
         result = await self.session.execute(stmt)
         return list(result.scalars().all())
+
+    async def find_by_order_id(self, order_id: UUID) -> list[Credit]:
+        stmt = select(Credit).options(lazyload("*")).where(Credit.order_id == order_id)
+        result = await self.session.execute(stmt)
+        return list(result.scalars().all())

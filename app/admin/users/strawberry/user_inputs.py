@@ -15,6 +15,7 @@ class CreateAdminUserInput:
     enabled: bool = True
     inside: bool | None = None
     outside: bool | None = None
+    visible: bool | None = True
 
 
 @strawberry.input
@@ -27,3 +28,4 @@ class UpdateAdminUserInput:
     enabled: bool | None = None
     inside: bool | None = None
     outside: bool | None = None
+    visible: bool | None = None

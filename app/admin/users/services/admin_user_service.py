@@ -59,18 +59,8 @@ class AdminUserService:
                 users = result.scalars().all()
                 for user in users:
                     results.append(
-                        AdminUserData(
-                            id=user.id,
-                            username=user.username,
-                            first_name=user.first_name,
-                            last_name=user.last_name,
-                            email=user.email,
-                            full_name=user.full_name,
-                            enabled=user.enabled,
-                            role=user.role,
-                            auth_provider_id=user.auth_provider_id,
-                            inside=user.inside,
-                            outside=user.outside,
+                        AdminUserData.from_orm(
+                            user,
                             tenant_id=tenant.id,
                             tenant_name=tenant.name,
                             tenant_url=tenant.url,
@@ -115,18 +105,8 @@ class AdminUserService:
                 user = result.scalar_one_or_none()
                 if not user:
                     return None
-                return AdminUserData(
-                    id=user.id,
-                    username=user.username,
-                    first_name=user.first_name,
-                    last_name=user.last_name,
-                    email=user.email,
-                    full_name=user.full_name,
-                    enabled=user.enabled,
-                    role=user.role,
-                    auth_provider_id=user.auth_provider_id,
-                    inside=user.inside,
-                    outside=user.outside,
+                return AdminUserData.from_orm(
+                    user,
                     tenant_id=tenant.id,
                     tenant_name=tenant.name,
                     tenant_url=tenant.url,
@@ -135,10 +115,23 @@ class AdminUserService:
             logger.error(f"Failed to get user {user_id} from tenant {tenant.url}: {e}")
             return None
 
+    async def _check_user_exists_by_email(self, tenant: Tenant, email: str) -> bool:
+        try:
+            async with self.controller.scoped_session(tenant.url) as session:
+                stmt = select(User).where(User.email == email)
+                result = await session.execute(stmt)
+                return result.scalar_one_or_none() is not None
+        except Exception as e:
+            logger.warning(f"Failed to check user email in tenant {tenant.url}: {e}")
+            return False
+
     async def create_user(self, input: CreateAdminUserInput) -> AdminUserData:
         tenant = await self.tenants_repository.get_by_id(input.tenant_id)
         if not tenant:
             raise ValueError(f"Tenant {input.tenant_id} not found")
+
+        if await self._check_user_exists_by_email(tenant, input.email):
+            raise ValueError(f"User with email {input.email} already exists")
 
         workos_org_id = await self._get_workos_org_id_for_tenant(tenant)
         if not workos_org_id:
@@ -164,7 +157,7 @@ class AdminUserService:
             raise RuntimeError(f"Failed to create user in WorkOS: {input.email}")
 
         database_url = await self._get_tenant_database_url(tenant)
-        await self._create_user_in_tenant_db(
+        user = await self._create_user_in_tenant_db(
             database_url=database_url,
             user_id=auth_user.external_id,
             email=input.email,
@@ -176,20 +169,11 @@ class AdminUserService:
             enabled=input.enabled,
             inside=input.inside,
             outside=input.outside,
+            visible=input.visible,
         )
 
-        return AdminUserData(
-            id=auth_user.external_id,
-            username=username,
-            first_name=input.first_name,
-            last_name=input.last_name,
-            email=input.email,
-            full_name=f"{input.first_name} {input.last_name}",
-            enabled=input.enabled,
-            role=input.role,
-            auth_provider_id=auth_user.id,
-            inside=input.inside,
-            outside=input.outside,
+        return AdminUserData.from_orm(
+            user,
             tenant_id=tenant.id,
             tenant_name=tenant.name,
             tenant_url=tenant.url,
@@ -208,7 +192,8 @@ class AdminUserService:
         enabled: bool = True,
         inside: bool | None = None,
         outside: bool | None = None,
-    ) -> None:
+        visible: bool | None = True,
+    ) -> User:
         engine = create_async_engine(database_url)
         try:
             async with AsyncSession(engine) as session:
@@ -222,11 +207,13 @@ class AdminUserService:
                         enabled=enabled,
                         inside=inside,
                         outside=outside,
+                        visible=visible,
                     )
                     user.id = user_id
                     user.auth_provider_id = workos_user_id
                     session.add(user)
                     logger.info(f"Created user {email} in tenant database")
+                    return user
         finally:
             await engine.dispose()
 
@@ -268,6 +255,9 @@ class AdminUserService:
                     if input.username is not None:
                         user.username = input.username
 
+                    if input.visible is not None:
+                        user.visible = input.visible
+
                     await session.flush([user])
 
                     if input.first_name is not None or input.last_name is not None:
@@ -286,18 +276,8 @@ class AdminUserService:
                             ),
                         )
 
-                    return AdminUserData(
-                        id=user.id,
-                        username=user.username,
-                        first_name=user.first_name,
-                        last_name=user.last_name,
-                        email=user.email,
-                        full_name=user.full_name,
-                        enabled=user.enabled,
-                        role=user.role,
-                        auth_provider_id=user.auth_provider_id,
-                        inside=user.inside,
-                        outside=user.outside,
+                    return AdminUserData.from_orm(
+                        user,
                         tenant_id=tenant.id,
                         tenant_name=tenant.name,
                         tenant_url=tenant.url,

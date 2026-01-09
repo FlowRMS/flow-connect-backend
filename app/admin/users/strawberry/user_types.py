@@ -3,6 +3,7 @@ from uuid import UUID
 
 import strawberry
 from commons.db.v6.rbac.rbac_role_enum import RbacRoleEnum
+from commons.db.v6.user import User
 
 
 @dataclass
@@ -21,6 +22,29 @@ class AdminUserData:
     tenant_id: UUID
     tenant_name: str
     tenant_url: str
+    visible: bool | None
+
+    @classmethod
+    def from_orm(
+        cls, user: User, tenant_id: UUID, tenant_name: str, tenant_url: str
+    ) -> "AdminUserData":
+        return cls(
+            id=user.id,
+            username=user.username,
+            first_name=user.first_name,
+            last_name=user.last_name,
+            email=user.email,
+            full_name=f"{user.first_name} {user.last_name}",
+            enabled=user.enabled,
+            role=user.role,
+            auth_provider_id=user.auth_provider_id,
+            inside=user.inside,
+            outside=user.outside,
+            tenant_id=tenant_id,
+            tenant_name=tenant_name,
+            tenant_url=tenant_url,
+            visible=user.visible,
+        )
 
 
 @strawberry.type
@@ -39,6 +63,7 @@ class AdminUserType:
     tenant_id: UUID
     tenant_name: str
     tenant_url: str
+    visible: bool | None
 
     @classmethod
     def from_data(cls, data: AdminUserData) -> "AdminUserType":
@@ -57,6 +82,7 @@ class AdminUserType:
             tenant_id=data.tenant_id,
             tenant_name=data.tenant_name,
             tenant_url=data.tenant_url,
+            visible=data.visible,
         )
 
     @classmethod
