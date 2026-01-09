@@ -51,7 +51,6 @@ class TasksRepository(BaseRepository[Task]):
         # Lazy import to avoid circular dependency
         from commons.db.v6.crm.notes.note_model import Note
 
-        assigned_to_alias = aliased(User)
         assignee_user_alias = aliased(User)
 
         # Build a CTE that flattens link relations with entity info
@@ -234,7 +233,6 @@ class TasksRepository(BaseRepository[Task]):
                 Task.status,
                 Task.priority,
                 Task.description,
-                assigned_to_alias.full_name.label("assigned_to"),
                 func.coalesce(
                     assignees_subq.c.assignees, literal("[]").cast(JSONB)
                 ).label("assignees"),
@@ -249,7 +247,6 @@ class TasksRepository(BaseRepository[Task]):
             .select_from(Task)
             .options(lazyload("*"))
             .join(User, User.id == Task.created_by_id)
-            .outerjoin(assigned_to_alias, assigned_to_alias.id == Task.assigned_to_id)
             .outerjoin(assignees_subq, assignees_subq.c.task_id == Task.id)
             .outerjoin(linked_entities_subq, linked_entities_subq.c.task_id == Task.id)
         )

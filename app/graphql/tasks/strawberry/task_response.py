@@ -19,7 +19,6 @@ class TaskType(DTOMixin[Task]):
     status: TaskStatus
     priority: TaskPriority
     description: str | None
-    assigned_to_id: UUID | None  # Deprecated: use assignees field
     due_date: date | None
     reminder_date: date | None
     tags: list[str] | None
@@ -34,7 +33,6 @@ class TaskType(DTOMixin[Task]):
             status=model.status,
             priority=model.priority,
             description=model.description,
-            assigned_to_id=model.assigned_to_id,
             due_date=model.due_date,
             reminder_date=model.reminder_date,
             tags=model.tags,

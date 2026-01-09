@@ -63,8 +63,30 @@ def upgrade() -> None:
         WHERE assigned_to_id IS NOT NULL
     """)
 
+    # Drop the deprecated assigned_to_id column
+    op.drop_column("tasks", "assigned_to_id", schema="pycrm")
+
 
 def downgrade() -> None:
+    # Restore the assigned_to_id column
+    op.add_column(
+        "tasks",
+        sa.Column("assigned_to_id", postgresql.UUID(as_uuid=True), nullable=True),
+        schema="pycrm",
+    )
+
+    # Restore data from task_assignees (pick first assignee per task)
+    op.execute("""
+        UPDATE pycrm.tasks t
+        SET assigned_to_id = (
+            SELECT user_id
+            FROM pycrm.task_assignees ta
+            WHERE ta.task_id = t.id
+            ORDER BY ta.created_at
+            LIMIT 1
+        )
+    """)
+
     op.drop_index(
         "ix_task_assignees_user_id", table_name="task_assignees", schema="pycrm"
     )

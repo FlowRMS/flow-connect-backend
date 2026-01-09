@@ -15,7 +15,6 @@ class TaskInput(BaseInputGQL[Task]):
     status: TaskStatus
     priority: TaskPriority
     description: str | None = strawberry.UNSET
-    assigned_to_id: UUID | None = strawberry.UNSET  # Deprecated: use assignee_ids
     assignee_ids: list[UUID] | None = strawberry.UNSET
     due_date: date | None = strawberry.UNSET
     reminder_date: date | None = strawberry.UNSET
@@ -27,16 +26,10 @@ class TaskInput(BaseInputGQL[Task]):
             status=self.status,
             priority=self.priority,
             description=self.optional_field(self.description),
-            assigned_to_id=self.optional_field(self.assigned_to_id),
             due_date=self.optional_field(self.due_date),
             reminder_date=self.optional_field(self.reminder_date),
             tags=self.optional_field(self.tags) or [],
         )
 
     def get_assignee_ids(self) -> list[UUID]:
-        assignee_ids = self.optional_field(self.assignee_ids) or []
-        # Backwards compatibility: include assigned_to_id if provided and not in list
-        assigned_to = self.optional_field(self.assigned_to_id)
-        if assigned_to and assigned_to not in assignee_ids:
-            assignee_ids.append(assigned_to)
-        return assignee_ids
+        return self.optional_field(self.assignee_ids) or []

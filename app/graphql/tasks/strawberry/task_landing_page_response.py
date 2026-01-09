@@ -18,7 +18,6 @@ class TaskLandingPageResponse(LandingPageInterfaceBase):
     status: TaskStatus
     priority: TaskPriority
     description: str | None
-    assigned_to: str | None  # Deprecated: use assignees field
     assignees: list[str]
     due_date: date | None
     reminder_date: date | None
@@ -37,7 +36,6 @@ class TaskLandingPageResponse(LandingPageInterfaceBase):
             )
             for item in linked_entities_data
         ]
-        # Parse assignees from JSON array
         assignees_data = data.pop("assignees", []) or []
         data["assignees"] = [
             item["name"] for item in assignees_data if item.get("name")
