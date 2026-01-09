@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import UTC, datetime
 from uuid import UUID
 
 import strawberry
@@ -67,7 +67,7 @@ class FulfillmentOrderService:
         order.fulfillment_order_number = f"FO-{next_number:06d}"
 
         order = await self.repository.create(order)
-        await self._log_activity(
+        _ = await self._log_activity(
             order.id, FulfillmentActivityType.CREATED, "Fulfillment order created"
         )
         return order
@@ -77,7 +77,10 @@ class FulfillmentOrderService:
     ) -> FulfillmentOrder:
         order = await self._get_or_raise(order_id)
 
-        if input.warehouse_id is not strawberry.UNSET:
+        if (
+            input.warehouse_id is not strawberry.UNSET
+            and input.warehouse_id is not None
+        ):
             order.warehouse_id = input.warehouse_id
         if input.carrier_id is not strawberry.UNSET:
             order.carrier_id = input.carrier_id
@@ -97,7 +100,7 @@ class FulfillmentOrderService:
             raise ValueError("Order must be in PENDING status to release")
 
         order.status = FulfillmentOrderStatus.RELEASED
-        order.released_at = datetime.utcnow()
+        order.released_at = datetime.now(UTC)
 
         # Auto-assign current user as manager
         assignment = FulfillmentAssignment()
@@ -106,7 +109,7 @@ class FulfillmentOrderService:
         order.assignments.append(assignment)
 
         order = await self.repository.update(order)
-        await self._log_activity(
+        _ = await self._log_activity(
             order.id, FulfillmentActivityType.RELEASED, "Order released to warehouse"
         )
         return order
@@ -117,7 +120,7 @@ class FulfillmentOrderService:
         order.hold_reason = reason
 
         order = await self.repository.update(order)
-        await self._log_activity(
+        _ = await self._log_activity(
             order.id, FulfillmentActivityType.CANCELLED, f"Order cancelled: {reason}"
         )
         return order
@@ -156,8 +159,13 @@ class FulfillmentOrderService:
 
     async def add_note(self, order_id: UUID, content: str) -> FulfillmentOrder:
         order = await self._get_or_raise(order_id)
-        await self._log_activity(order.id, FulfillmentActivityType.NOTE_ADDED, content)
-        return await self.repository.get_with_relations(order.id)
+        _ = await self._log_activity(
+            order.id, FulfillmentActivityType.NOTE_ADDED, content
+        )
+        result = await self.repository.get_with_relations(order.id)
+        if not result:
+            raise NotFoundError(f"Fulfillment order {order_id} not found")
+        return result
 
     async def _get_or_raise(self, order_id: UUID) -> FulfillmentOrder:
         order = await self.repository.get_with_relations(order_id)

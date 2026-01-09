@@ -38,7 +38,7 @@ class FulfillmentAssignmentService:
         role: FulfillmentAssignmentRole,
     ) -> FulfillmentOrder:
         """Add a user assignment to a fulfillment order."""
-        order = await self._get_order_or_raise(fulfillment_order_id)
+        _ = await self._get_order_or_raise(fulfillment_order_id)
 
         # Check if assignment already exists
         existing = await self.assignment_repository.get_by_order_and_user(
@@ -48,14 +48,19 @@ class FulfillmentAssignmentService:
             # Update role if different
             if existing.role != role:
                 existing.role = role
-                await self.assignment_repository.update(existing)
-                await self._log_activity(
+                _ = await self.assignment_repository.update(existing)
+                _ = await self._log_activity(
                     fulfillment_order_id,
                     FulfillmentActivityType.ASSIGNMENT_ADDED,
                     f"Assignment role updated to {role.name}",
                     {"user_id": str(user_id), "role": role.name},
                 )
-            return await self.order_repository.get_with_relations(fulfillment_order_id)
+            order = await self.order_repository.get_with_relations(fulfillment_order_id)
+            if not order:
+                raise NotFoundError(
+                    f"Fulfillment order {fulfillment_order_id} not found"
+                )
+            return order
 
         # Create new assignment
         assignment = FulfillmentAssignment()
@@ -64,16 +69,19 @@ class FulfillmentAssignmentService:
         assignment.role = role
         assignment.created_by_id = self.auth_info.flow_user_id
 
-        await self.assignment_repository.create(assignment)
+        _ = await self.assignment_repository.create(assignment)
 
-        await self._log_activity(
+        _ = await self._log_activity(
             fulfillment_order_id,
             FulfillmentActivityType.ASSIGNMENT_ADDED,
             f"User assigned as {role.name}",
             {"user_id": str(user_id), "role": role.name},
         )
 
-        return await self.order_repository.get_with_relations(fulfillment_order_id)
+        order = await self.order_repository.get_with_relations(fulfillment_order_id)
+        if not order:
+            raise NotFoundError(f"Fulfillment order {fulfillment_order_id} not found")
+        return order
 
     async def remove_assignment(
         self,
@@ -88,16 +96,19 @@ class FulfillmentAssignmentService:
         user_id = assignment.user_id
         role = assignment.role
 
-        await self.assignment_repository.delete(assignment_id)
+        _ = await self.assignment_repository.delete(assignment_id)
 
-        await self._log_activity(
+        _ = await self._log_activity(
             fulfillment_order_id,
             FulfillmentActivityType.ASSIGNMENT_REMOVED,
             f"User removed from {role.name} assignment",
             {"user_id": str(user_id), "role": role.name},
         )
 
-        return await self.order_repository.get_with_relations(fulfillment_order_id)
+        order = await self.order_repository.get_with_relations(fulfillment_order_id)
+        if not order:
+            raise NotFoundError(f"Fulfillment order {fulfillment_order_id} not found")
+        return order
 
     async def _get_order_or_raise(self, order_id: UUID) -> FulfillmentOrder:
         order = await self.order_repository.get_with_relations(order_id)

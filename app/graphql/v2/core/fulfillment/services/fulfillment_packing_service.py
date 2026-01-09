@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import UTC, datetime
 from decimal import Decimal
 from uuid import UUID
 
@@ -101,16 +101,18 @@ class FulfillmentPackingService:
         )
         if existing:
             existing.quantity = quantity
-            await self.box_item_repository.update(existing)
+            _ = await self.box_item_repository.update(existing)
         else:
-            item = PackingBoxItem(
-                fulfillment_line_item_id=line_item_id,
-                quantity=quantity,
-            )
+            item = PackingBoxItem()
+            item.fulfillment_line_item_id = line_item_id
+            item.quantity = quantity
             item.packing_box_id = box_id
-            await self.box_item_repository.create(item)
+            _ = await self.box_item_repository.create(item)
 
-        return await self.box_repository.get_with_items(box_id)
+        result = await self.box_repository.get_with_items(box_id)
+        if not result:
+            raise NotFoundError(f"Packing box {box_id} not found")
+        return result
 
     async def remove_item_from_box(
         self,
@@ -122,7 +124,10 @@ class FulfillmentPackingService:
         )
         if existing:
             _ = await self.box_item_repository.delete(existing.id)
-        return await self.box_repository.get_with_items(box_id)
+        result = await self.box_repository.get_with_items(box_id)
+        if not result:
+            raise NotFoundError(f"Packing box {box_id} not found")
+        return result
 
     async def complete_packing(self, order_id: UUID) -> FulfillmentOrder:
         order = await self._get_order_or_raise(order_id)
@@ -131,10 +136,10 @@ class FulfillmentPackingService:
             raise ValueError("Order must be in PACKING status to complete")
 
         order.status = FulfillmentOrderStatus.SHIPPING
-        order.pack_completed_at = datetime.utcnow()
+        order.pack_completed_at = datetime.now(UTC)
 
         order = await self.order_repository.update(order)
-        await self._log_activity(
+        _ = await self._log_activity(
             order.id, FulfillmentActivityType.PACK_COMPLETED, "Packing completed"
         )
         return order

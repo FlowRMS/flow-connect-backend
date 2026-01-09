@@ -44,18 +44,19 @@ class CreateFulfillmentOrderInput(BaseInputGQL[FulfillmentOrder]):
     need_by_date: date | None = None
 
     def to_orm_model(self) -> FulfillmentOrder:
-        return FulfillmentOrder(
-            order_id=self.order_id,
-            warehouse_id=self.warehouse_id,
-            fulfillment_order_number="",  # Will be generated
+        order = FulfillmentOrder(
             fulfillment_method=self.fulfillment_method,
-            carrier_id=self.carrier_id,
             carrier_type=self.carrier_type,
             ship_to_address=self.ship_to_address.to_dict()
             if self.ship_to_address
             else None,
             need_by_date=self.need_by_date,
         )
+        order.fulfillment_order_number = ""  # Will be generated
+        order.order_id = self.order_id
+        order.warehouse_id = self.warehouse_id
+        order.carrier_id = self.carrier_id
+        return order
 
 
 @strawberry.input
@@ -75,11 +76,12 @@ class CreateFulfillmentLineItemInput(BaseInputGQL[FulfillmentOrderLineItem]):
     order_detail_id: UUID | None = None
 
     def to_orm_model(self) -> FulfillmentOrderLineItem:
-        return FulfillmentOrderLineItem(
-            product_id=self.product_id,
-            order_detail_id=self.order_detail_id,
+        item = FulfillmentOrderLineItem(
             ordered_qty=self.ordered_qty,
         )
+        item.product_id = self.product_id
+        item.order_detail_id = self.order_detail_id
+        return item
 
 
 @strawberry.input
@@ -105,14 +107,15 @@ class CreatePackingBoxInput(BaseInputGQL[PackingBox]):
     weight: Decimal | None = None
 
     def to_orm_model(self) -> PackingBox:
-        return PackingBox(
-            container_type_id=self.container_type_id,
-            box_number=0,  # Will be set by service
+        box = PackingBox(
             length=self.length,
             width=self.width,
             height=self.height,
             weight=self.weight,
         )
+        box.container_type_id = self.container_type_id
+        box.box_number = 0  # Will be set by service
+        return box
 
 
 @strawberry.input

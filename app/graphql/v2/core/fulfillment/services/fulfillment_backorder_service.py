@@ -52,9 +52,9 @@ class FulfillmentBackorderService:
             if line_item.id in line_item_ids:
                 line_item.fulfilled_by_manufacturer = True
                 line_item.manufacturer_fulfillment_status = "PENDING_MANUFACTURER"
-                await self.line_repository.update(line_item)
+                _ = await self.line_repository.update(line_item)
 
-        await self._log_activity(
+        _ = await self._log_activity(
             fulfillment_order_id,
             FulfillmentActivityType.NOTE_ADDED,
             f"Marked {len(line_item_ids)} item(s) for manufacturer fulfillment",
@@ -64,7 +64,10 @@ class FulfillmentBackorderService:
         # Check if we can continue with remaining items
         await self._update_backorder_status(order)
 
-        return await self.order_repository.get_with_relations(fulfillment_order_id)
+        result = await self.order_repository.get_with_relations(fulfillment_order_id)
+        if not result:
+            raise NotFoundError(f"Fulfillment order {fulfillment_order_id} not found")
+        return result
 
     async def split_line_item(
         self,
@@ -93,7 +96,7 @@ class FulfillmentBackorderService:
 
         line_item = await self.line_repository.update(line_item)
 
-        await self._log_activity(
+        _ = await self._log_activity(
             line_item.fulfillment_order_id,
             FulfillmentActivityType.NOTE_ADDED,
             f"Split order: {warehouse_qty} from warehouse, {manufacturer_qty} from manufacturer",
@@ -126,10 +129,10 @@ class FulfillmentBackorderService:
                 line_item.ordered_qty = line_item.ordered_qty - line_item.backorder_qty
                 line_item.backorder_qty = Decimal("0")
                 line_item.short_reason = reason
-                await self.line_repository.update(line_item)
+                _ = await self.line_repository.update(line_item)
                 cancelled_count += 1
 
-        await self._log_activity(
+        _ = await self._log_activity(
             fulfillment_order_id,
             FulfillmentActivityType.NOTE_ADDED,
             f"Cancelled backorder for {cancelled_count} item(s): {reason}",
@@ -140,23 +143,31 @@ class FulfillmentBackorderService:
         )
 
         # Check if entire order should be cancelled
-        order = await self.order_repository.get_with_relations(fulfillment_order_id)
-        total_ordered = sum(item.ordered_qty for item in order.line_items)
+        updated_order = await self.order_repository.get_with_relations(
+            fulfillment_order_id
+        )
+        if not updated_order:
+            raise NotFoundError(f"Fulfillment order {fulfillment_order_id} not found")
+
+        total_ordered = sum(item.ordered_qty for item in updated_order.line_items)
 
         if total_ordered == 0:
-            order.status = FulfillmentOrderStatus.CANCELLED
-            order.hold_reason = f"All items cancelled: {reason}"
-            await self.order_repository.update(order)
-            await self._log_activity(
+            updated_order.status = FulfillmentOrderStatus.CANCELLED
+            updated_order.hold_reason = f"All items cancelled: {reason}"
+            _ = await self.order_repository.update(updated_order)
+            _ = await self._log_activity(
                 fulfillment_order_id,
                 FulfillmentActivityType.CANCELLED,
                 "Order cancelled - all items removed",
             )
         else:
             # Update backorder status
-            await self._update_backorder_status(order)
+            await self._update_backorder_status(updated_order)
 
-        return await self.order_repository.get_with_relations(fulfillment_order_id)
+        result = await self.order_repository.get_with_relations(fulfillment_order_id)
+        if not result:
+            raise NotFoundError(f"Fulfillment order {fulfillment_order_id} not found")
+        return result
 
     async def resolve_backorder(
         self,
@@ -185,7 +196,7 @@ class FulfillmentBackorderService:
         order.has_backorder_items = False
         order = await self.order_repository.update(order)
 
-        await self._log_activity(
+        _ = await self._log_activity(
             fulfillment_order_id,
             FulfillmentActivityType.NOTE_ADDED,
             "Backorder resolved - resuming fulfillment",
@@ -208,7 +219,7 @@ class FulfillmentBackorderService:
         ):
             # Can continue with fulfillment
             order.status = FulfillmentOrderStatus.PICKING
-            await self.order_repository.update(order)
+            _ = await self.order_repository.update(order)
 
     async def _get_order_or_raise(self, order_id: UUID) -> FulfillmentOrder:
         order = await self.order_repository.get_with_relations(order_id)

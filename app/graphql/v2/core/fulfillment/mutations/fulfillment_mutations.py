@@ -15,7 +15,6 @@ from app.graphql.v2.core.fulfillment.services import (
     FulfillmentShippingService,
 )
 from app.graphql.v2.core.fulfillment.strawberry import (
-    AddAssignmentInput,
     AssignItemToBoxInput,
     BulkAssignmentInput,
     CancelBackorderInput,

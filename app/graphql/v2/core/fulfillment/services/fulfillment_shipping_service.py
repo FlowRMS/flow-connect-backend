@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import UTC, datetime
 from uuid import UUID
 
 from commons.auth import AuthInfo
@@ -52,26 +52,26 @@ class FulfillmentShippingService:
         # Capture signature if provided
         if input.signature:
             order.pickup_signature = input.signature
-            order.pickup_timestamp = datetime.utcnow()
+            order.pickup_timestamp = datetime.now(UTC)
         if input.driver_name:
             order.driver_name = input.driver_name
         if input.pickup_customer_name:
             order.pickup_customer_name = input.pickup_customer_name
 
         order.status = FulfillmentOrderStatus.SHIPPED
-        order.ship_confirmed_at = datetime.utcnow()
+        order.ship_confirmed_at = datetime.now(UTC)
 
         # Update shipped quantities
         for line_item in order.line_items:
             line_item.shipped_qty = line_item.picked_qty
 
         order = await self.order_repository.update(order)
-        await self._log_activity(
+        _ = await self._log_activity(
             order.id, FulfillmentActivityType.SHIPPED, "Shipment completed"
         )
 
         if input.signature:
-            await self._log_activity(
+            _ = await self._log_activity(
                 order.id,
                 FulfillmentActivityType.SIGNATURE_CAPTURED,
                 f"Signature captured from {input.driver_name or input.pickup_customer_name}",
@@ -89,10 +89,10 @@ class FulfillmentShippingService:
             raise ValueError("Order must be SHIPPED or COMMUNICATED to mark delivered")
 
         order.status = FulfillmentOrderStatus.DELIVERED
-        order.delivered_at = datetime.utcnow()
+        order.delivered_at = datetime.now(UTC)
 
         order = await self.order_repository.update(order)
-        await self._log_activity(
+        _ = await self._log_activity(
             order.id, FulfillmentActivityType.DELIVERED, "Delivery confirmed"
         )
         return order

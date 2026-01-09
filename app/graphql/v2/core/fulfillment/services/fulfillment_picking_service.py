@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import UTC, datetime
 from decimal import Decimal
 from uuid import UUID
 
@@ -40,10 +40,10 @@ class FulfillmentPickingService:
             raise ValueError("Order must be in RELEASED status to start picking")
 
         order.status = FulfillmentOrderStatus.PICKING
-        order.pick_started_at = datetime.utcnow()
+        order.pick_started_at = datetime.now(UTC)
 
         order = await self.order_repository.update(order)
-        await self._log_activity(
+        _ = await self._log_activity(
             order.id, FulfillmentActivityType.PICK_STARTED, "Picking started"
         )
         return order
@@ -80,10 +80,10 @@ class FulfillmentPickingService:
             raise ValueError("Not all items have been picked")
 
         order.status = FulfillmentOrderStatus.PACKING
-        order.pick_completed_at = datetime.utcnow()
+        order.pick_completed_at = datetime.now(UTC)
 
         order = await self.order_repository.update(order)
-        await self._log_activity(
+        _ = await self._log_activity(
             order.id, FulfillmentActivityType.PICK_COMPLETED, "Picking completed"
         )
         return order
@@ -104,14 +104,14 @@ class FulfillmentPickingService:
             line_item.short_reason = reason
             line_item.allocated_qty = actual_quantity
 
-            await self.line_repository.update(line_item)
+            _ = await self.line_repository.update(line_item)
 
             order = await self._get_order_or_raise(line_item.fulfillment_order_id)
             order.has_backorder_items = True
             order.status = FulfillmentOrderStatus.BACKORDER_REVIEW
             order = await self.order_repository.update(order)
 
-            await self._log_activity(
+            _ = await self._log_activity(
                 order.id,
                 FulfillmentActivityType.BACKORDER_REPORTED,
                 f"Inventory discrepancy reported: {reason}",
