@@ -3,7 +3,6 @@ from uuid import UUID
 from commons.db.v6.crm.tasks.task_assignee_model import TaskAssignee
 from commons.db.v6.crm.tasks.task_model import Task
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.orm import selectinload
 
 from app.core.processors import BaseProcessor, EntityContext, RepositoryEvent
 
@@ -29,26 +28,16 @@ class SyncTaskAssigneesProcessor(BaseProcessor[Task]):
             return
 
         task = context.entity
-        if not hasattr(task, "assignees") or task.assignees is None:
-            from sqlalchemy import select
+        assignees = await task.awaitable_attrs.assignees
 
-            result = await self.session.execute(
-                select(Task)
-                .options(selectinload(Task.assignees))
-                .where(Task.id == task_id)
-            )
-            task = result.scalar_one()
-
-        await self._sync_assignees(task, assignee_ids)
-        await self.session.flush()
-
-    async def _sync_assignees(self, task: Task, assignee_ids: list[UUID]) -> None:
-        current_ids = {ta.user_id for ta in task.assignees}
+        current_ids = {ta.user_id for ta in assignees}
         new_ids = set(assignee_ids)
 
-        for ta in list(task.assignees):
+        for ta in list(assignees):
             if ta.user_id not in new_ids:
-                task.assignees.remove(ta)
+                assignees.remove(ta)
 
         for user_id in new_ids - current_ids:
-            task.assignees.append(TaskAssignee(task_id=task.id, user_id=user_id))
+            assignees.append(TaskAssignee(task_id=task.id, user_id=user_id))
+
+        await self.session.flush()
