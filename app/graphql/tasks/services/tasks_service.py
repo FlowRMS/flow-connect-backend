@@ -41,55 +41,24 @@ class TasksService:
             raise NotFoundError(str(task_id))
         return task
 
-    async def _sync_assignees(self, task: Task, assignee_ids: list[UUID]) -> None:
-        current_ids = {ta.user_id for ta in task.assignees}
-        new_ids = set(assignee_ids)
-
-        # Remove assignees no longer in list
-        for ta in list(task.assignees):
-            if ta.user_id not in new_ids:
-                task.assignees.remove(ta)
-
-        # Add new assignees
-        for user_id in new_ids - current_ids:
-            task.assignees.append(TaskAssignee(task_id=task.id, user_id=user_id))
-
     async def create_task(self, task_input: TaskInput) -> Task:
         task = task_input.to_orm_model()
-        created = await self.repository.create(task)
-
-        # Add assignees
-        assignee_ids = task_input.get_assignee_ids()
-        if assignee_ids:
-            for user_id in assignee_ids:
-                created.assignees.append(
-                    TaskAssignee(task_id=created.id, user_id=user_id)
-                )
-            await self.repository.session.flush()
-
-        return await self.find_task_by_id(created.id)
+        self.repository.sync_assignees_processor.set_assignee_ids(
+            task.id, task_input.get_assignee_ids()
+        )
+        _ = await self.repository.create(task)
+        return await self.find_task_by_id(task.id)
 
     async def update_task(self, task_id: UUID, task_input: TaskInput) -> Task:
-        task = await self.repository.get_by_id(
-            task_id,
-            options=[selectinload(Task.assignees)],
-        )
-        if not task:
+        if not await self.repository.exists(task_id):
             raise NotFoundError(str(task_id))
 
-        updated_task = task_input.to_orm_model()
-        updated_task.id = task_id
-        _ = await self.repository.update(updated_task)
-
-        # Sync assignees
-        task = await self.repository.get_by_id(
-            task_id,
-            options=[selectinload(Task.assignees)],
+        task = task_input.to_orm_model()
+        task.id = task_id
+        self.repository.sync_assignees_processor.set_assignee_ids(
+            task_id, task_input.get_assignee_ids()
         )
-        if task:
-            await self._sync_assignees(task, task_input.get_assignee_ids())
-            await self.repository.session.flush()
-
+        _ = await self.repository.update(task)
         return await self.find_task_by_id(task_id)
 
     async def delete_task(self, task_id: UUID | str) -> bool:

@@ -19,7 +19,9 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import aliased, joinedload, lazyload, selectinload
 
 from app.core.context_wrapper import ContextWrapper
+from app.core.processors import ProcessorExecutor
 from app.graphql.base_repository import BaseRepository
+from app.graphql.tasks.processors import SyncTaskAssigneesProcessor
 from app.graphql.tasks.strawberry.task_landing_page_response import (
     TaskLandingPageResponse,
 )
@@ -29,8 +31,21 @@ class TasksRepository(BaseRepository[Task]):
     landing_model = TaskLandingPageResponse
     rbac_resource: RbacResourceEnum | None = RbacResourceEnum.TASK
 
-    def __init__(self, context_wrapper: ContextWrapper, session: AsyncSession) -> None:
-        super().__init__(session, context_wrapper, Task)
+    def __init__(
+        self,
+        context_wrapper: ContextWrapper,
+        session: AsyncSession,
+        processor_executor: ProcessorExecutor,
+        sync_assignees_processor: SyncTaskAssigneesProcessor,
+    ) -> None:
+        super().__init__(
+            session,
+            context_wrapper,
+            Task,
+            processor_executor=processor_executor,
+            processor_executor_classes=[sync_assignees_processor],
+        )
+        self.sync_assignees_processor = sync_assignees_processor
 
     def paginated_stmt(self) -> Select[Any]:
         # Lazy import to avoid circular dependency
