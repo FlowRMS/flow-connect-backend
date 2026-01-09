@@ -100,10 +100,9 @@ class FulfillmentOrderService:
         order.released_at = datetime.utcnow()
 
         # Auto-assign current user as manager
-        assignment = FulfillmentAssignment(
-            user_id=self.auth_info.flow_user_id,
-            role=FulfillmentAssignmentRole.MANAGER,
-        )
+        assignment = FulfillmentAssignment()
+        assignment.user_id = self.auth_info.flow_user_id
+        assignment.role = FulfillmentAssignmentRole.MANAGER
         order.assignments.append(assignment)
 
         order = await self.repository.update(order)
@@ -129,27 +128,25 @@ class FulfillmentOrderService:
             order = await self._get_or_raise(order_id)
 
             if input.manager_ids:
-                for user_id in input.manager_ids:
+                for uid in input.manager_ids:
                     existing = await self.assignment_repository.get_by_order_and_user(
-                        order.id, user_id
+                        order.id, uid
                     )
                     if not existing:
-                        assignment = FulfillmentAssignment(
-                            user_id=user_id,
-                            role=FulfillmentAssignmentRole.MANAGER,
-                        )
+                        assignment = FulfillmentAssignment()
+                        assignment.user_id = uid
+                        assignment.role = FulfillmentAssignmentRole.MANAGER
                         order.assignments.append(assignment)
 
             if input.worker_ids:
-                for user_id in input.worker_ids:
+                for uid in input.worker_ids:
                     existing = await self.assignment_repository.get_by_order_and_user(
-                        order.id, user_id
+                        order.id, uid
                     )
                     if not existing:
-                        assignment = FulfillmentAssignment(
-                            user_id=user_id,
-                            role=FulfillmentAssignmentRole.WORKER,
-                        )
+                        assignment = FulfillmentAssignment()
+                        assignment.user_id = uid
+                        assignment.role = FulfillmentAssignmentRole.WORKER
                         order.assignments.append(assignment)
 
             order = await self.repository.update(order)
