@@ -131,11 +131,15 @@ class DocumentExecutorService:
                 entity_mappings=entity_mappings,
                 pending_document=pending_document,
                 batch_size=batch_size,
-                link_callback=self._link_file_to_entity,
             )
 
             self.session.add_all(processing_records)
             await self.session.flush()
+
+            created_entity_ids = [
+                r.entity_id for r in processing_records if r.entity_id is not None
+            ]
+            await self._link_file_to_entities(pending_document, created_entity_ids)
 
             pending_document.workflow_status = WorkflowStatus.COMPLETED
             return processing_records
@@ -160,12 +164,12 @@ class DocumentExecutorService:
         loaded_dtos = await converter.parse_dtos_from_json(pending_document)
         return [converter.dto_class.model_validate(d) for d in loaded_dtos.dtos]
 
-    async def _link_file_to_entity(
+    async def _link_file_to_entities(
         self,
         pending_document: PendingDocument,
-        entity_id: UUID,
+        entity_ids: list[UUID],
     ) -> None:
-        if not pending_document.entity_type:
+        if not entity_ids or not pending_document.entity_type:
             return
 
         link_entity_type = DOCUMENT_TO_LINK_ENTITY_TYPE.get(
@@ -178,14 +182,14 @@ class DocumentExecutorService:
             return
 
         try:
-            _ = await self.links_service.create_link(
+            links = await self.links_service.bulk_create_links(
                 source_type=EntityType.FILE,
                 source_id=pending_document.file_id,
                 target_type=link_entity_type,
-                target_id=entity_id,
+                target_ids=entity_ids,
             )
             logger.info(
-                f"Linked file {pending_document.file_id} to {link_entity_type.name} {entity_id}"
+                f"Linked file {pending_document.file_id} to {len(links)} {link_entity_type.name} entities"
             )
         except Exception as e:
-            logger.warning(f"Failed to link file to entity: {e}")
+            logger.warning(f"Failed to bulk link file to entities: {e}")
