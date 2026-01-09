@@ -13,7 +13,7 @@ from .entity_mapping import EntityMapping
 from .invoice_converter import InvoiceConverter
 from .order_converter import OrderConverter
 
-type DTOType = OrderDTO | InvoiceDTO | CheckDetailDTO
+type DTOType = OrderDTO  | CheckDetailDTO
 
 
 class SetForCreationService:
@@ -33,22 +33,16 @@ class SetForCreationService:
     async def process_set_for_creation(
         self,
         pending_entities: list[PendingEntity],
-        dtos: list[DTOType],
         entity_mappings: dict[UUID, EntityMapping],
     ) -> None:
-        dto_by_id: dict[UUID, DTOType] = {
-            dto.internal_uuid: dto for dto in dtos if dto.internal_uuid is not None
-        }
-
-        await self._create_orders(pending_entities, dto_by_id, entity_mappings)
-        await self._create_invoices(pending_entities, dto_by_id, entity_mappings)
-        await self._create_credits(pending_entities, dto_by_id, entity_mappings)
-        await self._create_adjustments(pending_entities, dto_by_id, entity_mappings)
+        await self._create_orders(pending_entities, entity_mappings)
+        await self._create_invoices(pending_entities, entity_mappings)
+        await self._create_credits(pending_entities, entity_mappings)
+        await self._create_adjustments(pending_entities, entity_mappings)
 
     async def _create_orders(
         self,
         pending_entities: list[PendingEntity],
-        dto_by_id: dict[UUID, DTOType],
         entity_mappings: dict[UUID, EntityMapping],
     ) -> None:
         order_entities = [
@@ -60,7 +54,7 @@ class SetForCreationService:
 
         for pe in order_entities:
             order_id = await self._create_order_for_pending_entity(
-                pe, dto_by_id, entity_mappings
+                pe, entity_mappings
             )
             if order_id:
                 self._update_mappings_with_order_id(entity_mappings, pe, order_id)
@@ -68,7 +62,6 @@ class SetForCreationService:
     async def _create_order_for_pending_entity(
         self,
         pe: PendingEntity,
-        dto_by_id: dict[UUID, DTOType],
         entity_mappings: dict[UUID, EntityMapping],
     ) -> UUID | None:
         if not pe.dto_ids:
@@ -76,16 +69,7 @@ class SetForCreationService:
             return None
 
         dto_id = pe.dto_ids[0]
-        dto = dto_by_id.get(dto_id)
-
-        if not dto:
-            logger.warning(f"DTO {dto_id} not found for PendingEntity {pe.id}")
-            return None
-
-        if not isinstance(dto, OrderDTO):
-            logger.warning(f"DTO {dto_id} is not an OrderDTO for order creation")
-            return None
-
+        dto = OrderDTO.model_validate(pe.extracted_data)
         mapping = entity_mappings.get(dto_id, EntityMapping())
 
         try:
@@ -103,7 +87,6 @@ class SetForCreationService:
     async def _create_invoices(
         self,
         pending_entities: list[PendingEntity],
-        dto_by_id: dict[UUID, DTOType],
         entity_mappings: dict[UUID, EntityMapping],
     ) -> None:
         invoice_entities = [
@@ -115,7 +98,7 @@ class SetForCreationService:
 
         for pe in invoice_entities:
             invoice_id = await self._create_invoice_for_pending_entity(
-                pe, dto_by_id, entity_mappings
+                pe, entity_mappings
             )
             if invoice_id:
                 self._update_mappings_with_invoice_id(entity_mappings, pe, invoice_id)
@@ -123,7 +106,6 @@ class SetForCreationService:
     async def _create_invoice_for_pending_entity(
         self,
         pe: PendingEntity,
-        dto_by_id: dict[UUID, DTOType],
         entity_mappings: dict[UUID, EntityMapping],
     ) -> UUID | None:
         if not pe.dto_ids:
@@ -131,16 +113,7 @@ class SetForCreationService:
             return None
 
         dto_id = pe.dto_ids[0]
-        dto = dto_by_id.get(dto_id)
-
-        if not dto:
-            logger.warning(f"DTO {dto_id} not found for PendingEntity {pe.id}")
-            return None
-
-        if not isinstance(dto, InvoiceDTO):
-            logger.warning(f"DTO {dto_id} is not an InvoiceDTO for invoice creation")
-            return None
-
+        dto = InvoiceDTO.model_validate(pe.extracted_data)
         mapping = entity_mappings.get(dto_id, EntityMapping())
 
         try:
@@ -182,7 +155,6 @@ class SetForCreationService:
     async def _create_credits(
         self,
         pending_entities: list[PendingEntity],
-        dto_by_id: dict[UUID, DTOType],
         entity_mappings: dict[UUID, EntityMapping],
     ) -> None:
         credit_entities = [
@@ -194,7 +166,7 @@ class SetForCreationService:
 
         for pe in credit_entities:
             credit_id = await self._create_credit_for_pending_entity(
-                pe, dto_by_id, entity_mappings
+                pe, entity_mappings
             )
             if credit_id:
                 self._update_mappings_with_credit_id(entity_mappings, pe, credit_id)
@@ -202,7 +174,6 @@ class SetForCreationService:
     async def _create_credit_for_pending_entity(
         self,
         pe: PendingEntity,
-        dto_by_id: dict[UUID, DTOType],
         entity_mappings: dict[UUID, EntityMapping],
     ) -> UUID | None:
         if not pe.dto_ids:
@@ -210,11 +181,7 @@ class SetForCreationService:
             return None
 
         dto_id = pe.dto_ids[0]
-        dto = dto_by_id.get(dto_id)
-
-        if not dto:
-            logger.warning(f"DTO {dto_id} not found for PendingEntity {pe.id}")
-            return None
+        dto = CheckDetailDTO.model_validate(pe.extracted_data)
 
         if not isinstance(dto, CheckDetailDTO):
             logger.warning(f"DTO {dto_id} is not a CheckDetailDTO for credit creation")
@@ -248,7 +215,6 @@ class SetForCreationService:
     async def _create_adjustments(
         self,
         pending_entities: list[PendingEntity],
-        dto_by_id: dict[UUID, DTOType],
         entity_mappings: dict[UUID, EntityMapping],
     ) -> None:
         adjustment_entities = [
@@ -260,7 +226,7 @@ class SetForCreationService:
 
         for pe in adjustment_entities:
             adjustment_id = await self._create_adjustment_for_pending_entity(
-                pe, dto_by_id, entity_mappings
+                pe, entity_mappings
             )
             if adjustment_id:
                 self._update_mappings_with_adjustment_id(
@@ -270,7 +236,6 @@ class SetForCreationService:
     async def _create_adjustment_for_pending_entity(
         self,
         pe: PendingEntity,
-        dto_by_id: dict[UUID, DTOType],
         entity_mappings: dict[UUID, EntityMapping],
     ) -> UUID | None:
         if not pe.dto_ids:
@@ -278,18 +243,7 @@ class SetForCreationService:
             return None
 
         dto_id = pe.dto_ids[0]
-        dto = dto_by_id.get(dto_id)
-
-        if not dto:
-            logger.warning(f"DTO {dto_id} not found for PendingEntity {pe.id}")
-            return None
-
-        if not isinstance(dto, CheckDetailDTO):
-            logger.warning(
-                f"DTO {dto_id} is not a CheckDetailDTO for adjustment creation"
-            )
-            return None
-
+        dto = CheckDetailDTO.model_validate(pe.extracted_data)
         mapping = entity_mappings.get(dto_id, EntityMapping())
 
         try:
