@@ -31,6 +31,12 @@ class QuoteDetailInput(BaseInputGQL[QuoteDetail]):
     commission_discount_rate: Decimal = Decimal("0")
     outside_split_rates: list[QuoteSplitRateInput] | None = None
     inside_split_rates: list[QuoteInsideRepInput] | None = None
+    # Overage fields
+    overage_commission_rate: Decimal | None = None
+    overage_commission: Decimal | None = None
+    overage_unit_price: Decimal | None = None
+    # Fixture schedule
+    fixture_schedule: str | None = None
 
     def to_orm_model(self) -> QuoteDetail:
         subtotal = self.quantity * self.unit_price
@@ -75,6 +81,10 @@ class QuoteDetailInput(BaseInputGQL[QuoteDetail]):
                 if self.inside_split_rates
                 else []
             ),
+            overage_commission_rate=self.overage_commission_rate,
+            overage_commission=self.overage_commission,
+            overage_unit_price=self.overage_unit_price,
+            fixture_schedule=self.fixture_schedule,
         )
         if self.id:
             detail.id = self.id
