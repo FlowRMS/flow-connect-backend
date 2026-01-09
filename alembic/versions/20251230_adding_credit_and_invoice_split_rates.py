@@ -1,3 +1,11 @@
+"""adding credit and invoice split rates
+
+Revision ID: a1b2c3d4e5f6
+Revises: 62e4315e9e63
+Create Date: 2025-12-30 12:00:00.000000
+
+"""
+
 from collections.abc import Sequence
 
 import sqlalchemy as sa
@@ -5,7 +13,7 @@ from sqlalchemy.dialects import postgresql
 
 from alembic import op
 
-revision: str = "3e110b309bef"
+revision: str = "a1b2c3d4e5f6"
 down_revision: str | None = "62e4315e9e63"
 branch_labels: str | Sequence[str] | None = None
 depends_on: str | Sequence[str] | None = None

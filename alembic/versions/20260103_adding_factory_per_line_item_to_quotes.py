@@ -1,11 +1,19 @@
+"""adding factory_per_line_item to quotes
+
+Revision ID: 4d002e14da98
+Revises: add_user_ids_001
+Create Date: 2026-01-03 19:47:16.582595
+
+"""
+
 from collections.abc import Sequence
 
 import sqlalchemy as sa
 
 from alembic import op
 
-revision: str = "06f9eafc78e0"
-down_revision: str | None = "21588c21d093"
+revision: str = "factory_plitem_quotes"
+down_revision: str | None = "add_user_ids_001"
 branch_labels: str | Sequence[str] | None = None
 depends_on: str | Sequence[str] | None = None
 

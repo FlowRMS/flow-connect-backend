@@ -1,3 +1,11 @@
+"""add unique constraints
+
+Revision ID: 5a8b3c2d1e0f
+Revises: 44932ca0481e
+Create Date: 2025-12-24 16:00:00.000000
+
+"""
+
 from collections.abc import Sequence
 
 from alembic import op

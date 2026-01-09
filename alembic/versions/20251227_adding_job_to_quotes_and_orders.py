@@ -1,3 +1,11 @@
+"""adding job to quotes and orders
+
+Revision ID: cd1f6cbd8751
+Revises: 7a8b9c0d1e2f
+Create Date: 2025-12-27 15:02:46.305301
+
+"""
+
 from collections.abc import Sequence
 
 import sqlalchemy as sa

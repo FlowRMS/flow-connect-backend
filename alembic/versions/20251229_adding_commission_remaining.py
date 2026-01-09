@@ -1,3 +1,11 @@
+"""adding commission remaining
+
+Revision ID: 62e4315e9e63
+Revises: 983952e7b210
+Create Date: 2025-12-29 23:13:12.379014
+
+"""
+
 from collections.abc import Sequence
 
 import sqlalchemy as sa

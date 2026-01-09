@@ -1,3 +1,11 @@
+"""init commit
+
+Revision ID: 44932ca0481e
+Revises:
+Create Date: 2025-12-24 14:04:27.673657
+
+"""
+
 from collections.abc import Sequence
 
 import sqlalchemy as sa

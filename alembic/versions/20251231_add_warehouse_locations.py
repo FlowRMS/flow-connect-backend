@@ -1,8 +1,8 @@
 """add warehouse locations tables
 
 Revision ID: warehouse_locations_001
-Revises: organizations_001
-Create Date: 2026-01-07
+Revises: warehouse_settings_001
+Create Date: 2025-12-31
 
 """
 
@@ -15,14 +15,14 @@ from alembic import op
 
 # revision identifiers, used by Alembic.
 revision: str = "warehouse_locations_001"
-down_revision: str | None = "organizations_001"
+down_revision: str | None = "warehouse_settings_001"
 branch_labels: str | Sequence[str] | None = None
 depends_on: str | Sequence[str] | None = None
 
 
 def upgrade() -> None:
     # Create warehouse_locations table in pywarehouse schema
-    _ = op.create_table(
+    op.create_table(
         "warehouse_locations",
         sa.Column("id", postgresql.UUID(as_uuid=True), nullable=False),
         sa.Column("warehouse_id", postgresql.UUID(as_uuid=True), nullable=False),
@@ -76,7 +76,7 @@ def upgrade() -> None:
     )
 
     # Create location_product_assignments table in pywarehouse schema
-    _ = op.create_table(
+    op.create_table(
         "location_product_assignments",
         sa.Column("id", postgresql.UUID(as_uuid=True), nullable=False),
         sa.Column("location_id", postgresql.UUID(as_uuid=True), nullable=False),

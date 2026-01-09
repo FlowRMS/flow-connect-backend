@@ -1,3 +1,11 @@
+"""adding quotes
+
+Revision ID: b57a72ba9d00
+Revises: 5a8b3c2d1e0f
+Create Date: 2025-12-24 19:26:53.312502
+
+"""
+
 from collections.abc import Sequence
 
 import sqlalchemy as sa

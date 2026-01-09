@@ -1,3 +1,11 @@
+"""adding pending_document_processings table
+
+Revision ID: pending_doc_proc_001
+Revises: factory_plitem_quotes
+Create Date: 2026-01-06
+
+"""
+
 from collections.abc import Sequence
 
 import sqlalchemy as sa
@@ -5,8 +13,8 @@ from sqlalchemy.dialects import postgresql
 
 from alembic import op
 
-revision: str = "71ad17a08c48"
-down_revision: str | None = "06f9eafc78e0"
+revision: str = "pending_doc_proc_001"
+down_revision: str | None = "factory_plitem_quotes"
 branch_labels: str | Sequence[str] | None = None
 depends_on: str | Sequence[str] | None = None
 
