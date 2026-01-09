@@ -2393,6 +2393,7 @@ type Query {
   contactSearch(searchTerm: String!, limit: Int! = 20): [ContactResponse!]!
   contactRelatedEntities(contactId: UUID!): ContactRelatedEntitiesResponse! @deprecated(reason: "Use related_entities(source_type: CONTACTS, entity_id: UUID)")
   credit(id: UUID!): CreditResponse!
+  creditsByOrderId(orderId: UUID!): [CreditLiteResponse!]!
   creditSearch(searchTerm: String!, limit: Int! = 20, openOnly: Boolean! = false, unlockedOnly: Boolean! = false): [CreditLiteResponse!]!
   pendingDocumentProcessings(pendingDocumentId: UUID!): [PendingDocumentProcessingType!]!
   gmailAuthUrl(state: String = null): String!
