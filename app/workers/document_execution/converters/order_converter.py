@@ -68,7 +68,7 @@ class OrderConverter(BaseEntityConverter[OrderDTO, OrderInput, Order]):
 
         details: list[OrderDetailInput] = []
         for detail in dto.details:
-            if detail.flow_index in entity_mapping.skipped_product_indices:
+            if detail.flow_detail_index in entity_mapping.skipped_product_indices:
                 continue
             detail_result = self._convert_detail(
                 detail=detail,
@@ -104,12 +104,12 @@ class OrderConverter(BaseEntityConverter[OrderDTO, OrderInput, Order]):
         default_commission_discount: Decimal,
         default_discount_rate: Decimal,
     ) -> ConversionResult[OrderDetailInput]:
-        flow_index = detail.flow_index
-        product_id = entity_mapping.get_product_id(flow_index)
-        end_user_id = entity_mapping.get_end_user_id(flow_index)
+        flow_detail_index = detail.flow_detail_index
+        product_id = entity_mapping.get_product_id(flow_detail_index)
+        end_user_id = entity_mapping.get_end_user_id(flow_detail_index)
 
         if not end_user_id:
-            return ConversionResult.fail(EndUserRequiredError(flow_index))
+            return ConversionResult.fail(EndUserRequiredError(flow_detail_index))
 
         commission_rate = (
             detail.commission_rate

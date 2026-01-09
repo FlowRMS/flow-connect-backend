@@ -1,7 +1,7 @@
 import json
 import polars as pl
 from app.auth.workos_auth_service import WorkOSAuthService
-from app.core.config.base_settings import  get_settings_local
+from app.core.config.base_settings import  get_settings_local, load_dotenv_once
 from app.core.config.workos_settings import WorkOSSettings
 
 
@@ -40,6 +40,7 @@ async def generate_token(tenant: str, env: str, role: str) -> str:
 if __name__ == "__main__":
     import asyncio
     import argparse
+    
 
     parser = argparse.ArgumentParser(description="Generate JWT token for a user")
     _ = parser.add_argument("--tenant", type=str, required=True, help="Tenant name")
@@ -51,6 +52,7 @@ if __name__ == "__main__":
     )
 
     args = parser.parse_args()
+    load_dotenv_once(f".env.{args.env}")
     token = asyncio.run(generate_token(args.tenant, args.env, args.role))
     print(
         json.dumps(

@@ -22,6 +22,7 @@ class UserResponse(DTOMixin[User]):
     auth_provider_id: str
     inside: bool | None
     outside: bool | None
+    visible: bool | None
 
     @classmethod
     def from_orm_model(cls, model: User) -> Self:
@@ -38,6 +39,7 @@ class UserResponse(DTOMixin[User]):
             auth_provider_id=model.auth_provider_id,
             inside=model.inside,
             outside=model.outside,
+            visible=model.visible,
         )
 
 

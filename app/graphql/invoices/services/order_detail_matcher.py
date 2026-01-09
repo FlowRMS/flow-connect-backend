@@ -110,29 +110,38 @@ class OrderDetailMatcherService:
         def either_match(c: dict) -> bool:
             return fpn_match(c) or cpn_match(c)
 
-        def qty_match(c: dict) -> bool:
-            return quantity <= Decimal(str(c["shipping_balance"]))
-
-        def exact_qty_match(c: dict) -> bool:
-            return Decimal(str(c["shipping_balance"])) == quantity
-
         def item_match(c: dict) -> bool:
             return c["item_number"] == item_number
 
         def open_status(c: dict) -> bool:
             return c["status"] == OrderStatus.OPEN
 
+        def quantity_valid(c: dict) -> bool:
+            return Decimal(str(c["quantity"])) >= quantity
+
         return [
-            (lambda c: item_match(c) and fpn_match(c) and open_status(c), False),
-            (lambda c: exact_qty_match(c) and price_match(c) and fpn_match(c), True),
-            (lambda c: qty_match(c) and price_match(c) and fpn_match(c), True),
-            (lambda c: qty_match(c) and price_match(c) and fpn_match(c), False),
-            (lambda c: qty_match(c) and price_match(c) and cpn_match(c), False),
-            (lambda c: price_match(c) and either_match(c), True),
-            (lambda c: price_match(c) and either_match(c), False),
-            (lambda c: qty_match(c) and either_match(c), False),
-            (lambda c: item_match(c) and either_match(c), False),
-            (lambda c: price_match(c) and qty_match(c), True),
-            (lambda c: item_match(c), False),
-            (lambda c: True, False),
+            (
+                lambda c: item_match(c)
+                and fpn_match(c)
+                and open_status(c)
+                and quantity_valid(c),
+                False,
+            ),
+            (
+                lambda c: price_match(c)
+                and fpn_match(c)
+                and open_status(c)
+                and quantity_valid(c),
+                False,
+            ),
+            (lambda c: price_match(c) and fpn_match(c) and quantity_valid(c), True),
+            (lambda c: price_match(c) and fpn_match(c) and quantity_valid(c), False),
+            (lambda c: price_match(c) and cpn_match(c) and quantity_valid(c), False),
+            (lambda c: price_match(c) and either_match(c) and quantity_valid(c), True),
+            (lambda c: price_match(c) and either_match(c) and quantity_valid(c), False),
+            (lambda c: either_match(c) and quantity_valid(c), False),
+            (lambda c: item_match(c) and either_match(c) and quantity_valid(c), False),
+            (lambda c: price_match(c) and quantity_valid(c), True),
+            (lambda c: item_match(c) and quantity_valid(c), False),
+            (lambda c: quantity_valid(c), False),
         ]

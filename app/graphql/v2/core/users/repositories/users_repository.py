@@ -1,4 +1,5 @@
 from commons.db.v6.user import User
+from graphql import GraphQLError
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -9,6 +10,28 @@ from app.graphql.base_repository import BaseRepository
 class UsersRepository(BaseRepository[User]):
     def __init__(self, context_wrapper: ContextWrapper, session: AsyncSession) -> None:
         super().__init__(session, context_wrapper, User)
+
+    async def check_active_user(self) -> None:
+        user_id = self.auth_info.flow_user_id
+        user = await self.get_by_id(user_id)
+
+        if not user:
+            raise GraphQLError(
+                message=str("User not found in the system."),
+                extensions={
+                    "statusCode": 401,
+                    "type": "UserNotFoundError",
+                },
+            )
+
+        if not user.enabled:
+            raise GraphQLError(
+                message=str("User is disabled."),
+                extensions={
+                    "statusCode": 401,
+                    "type": "UserDisabledError",
+                },
+            )
 
     async def get_by_email(self, email: str) -> User | None:
         stmt = select(User).where(User.email == email)
@@ -40,6 +63,7 @@ class UsersRepository(BaseRepository[User]):
                 | (User.last_name.ilike(f"%{search_term}%"))
                 | (User.email.ilike(f"%{search_term}%"))
             )
+            .where(User.visible.is_not(False))
             .limit(limit)
         )
 
@@ -52,5 +76,12 @@ class UsersRepository(BaseRepository[User]):
         if is_outside is not None and is_outside:
             stmt = stmt.where(User.outside.is_(True))
 
+        result = await self.session.execute(stmt)
+        return list(result.scalars().all())
+
+    async def list_users(self, limit: int | None = None, offset: int = 0) -> list[User]:
+        stmt = select(User).where(User.visible.is_not(False)).offset(offset)
+        if limit is not None:
+            stmt = stmt.limit(limit)
         result = await self.session.execute(stmt)
         return list(result.scalars().all())

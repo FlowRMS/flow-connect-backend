@@ -46,7 +46,8 @@
       "Bash(git -C /Users/jsaied/projects/flowrms/flow-py-backend log --oneline -5 -- app/workers/document_execution/converters/invoice_converter.py)",
       "Bash(git -C /Users/jsaied/projects/flowrms/flow-py-backend show 883e267 -- app/workers/document_execution/converters/invoice_converter.py)",
       "Bash(git -C /Users/jsaied/projects/flowrms/flow-py-backend show 0f9e2ae -- app/workers/document_execution/converters/invoice_converter.py)",
-      "Bash(uv pip list:*)"
+      "Bash(uv pip list:*)",
+      "Bash(gh run view:*)"
     ]
   },
   "enableAllProjectMcpServers": true,

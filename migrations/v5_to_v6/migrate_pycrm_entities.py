@@ -99,7 +99,7 @@ async def migrate_link_relations(
     """Migrate link relations from pycrm.link_relations using SELECT *."""
     logger.info("Starting link relations migration...")
 
-    links = await source.fetch("SELECT * FROM pycrm.link_relations")
+    links = await source.fetch("""SELECT l.* FROM pycrm.link_relations l JOIN "user".users ON l.created_by_id = users.id""")
 
     if not links:
         logger.info("No link relations to migrate")

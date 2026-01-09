@@ -40,6 +40,10 @@ class UserService:
         return await self.repository.get_by_keycloak_id(auth_provider_id)
 
     async def create(self, user_input: UserInput) -> User:
+        existing_user = await self.repository.get_by_email(user_input.email)
+        if existing_user:
+            raise ValueError(f"User with email {user_input.email} already exists")
+
         user_model = user_input.to_orm_model()
         auth_user = await self._create_workos_user(user_input)
         if not auth_user:
@@ -118,4 +122,4 @@ class UserService:
         )
 
     async def list_all(self, limit: int | None = None, offset: int = 0) -> list[User]:
-        return await self.repository.list_all(limit, offset)
+        return await self.repository.list_users(limit, offset)

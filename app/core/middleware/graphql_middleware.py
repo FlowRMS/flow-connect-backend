@@ -4,6 +4,8 @@ from typing import override
 from commons.auth import AuthInfo, AuthService
 from commons.db.controller import MultiTenantController
 from commons.db.v6 import RbacRoleSetting
+from commons.db.v6.user import User
+from graphql import GraphQLError
 from loguru import logger
 from sqlalchemy import select
 from starlette.websockets import WebSocket
@@ -67,6 +69,28 @@ class GraphQLMiddleware(SchemaExtension):
                 multi_tenant_controller,
                 auth_info,
             ) as session:
+                user = await session.get(
+                    User,
+                    auth_info.flow_user_id,
+                )
+
+                if not user:
+                    raise GraphQLError(
+                        message=str("User not found in the system."),
+                        extensions={
+                            "statusCode": 401,
+                            "type": "UserNotFoundError",
+                        },
+                    )
+
+                if not user.enabled:
+                    raise GraphQLError(
+                        message=str("User is disabled."),
+                        extensions={
+                            "statusCode": 401,
+                            "type": "UserDisabledError",
+                        },
+                    )
                 primary_role = roles[0]
                 stmt = select(RbacRoleSetting.commission).where(
                     RbacRoleSetting.role == primary_role
@@ -75,6 +99,8 @@ class GraphQLMiddleware(SchemaExtension):
                 commission = result.scalar_one_or_none()
 
                 return commission if commission is not None else True
+        except GraphQLError:
+            raise
         except Exception as e:
             logger.exception(f"Error fetching commission visibility: {e}")
             return True

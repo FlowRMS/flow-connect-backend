@@ -16,7 +16,7 @@ from app.graphql.schemas.decimal_scalar import DecimalScalar
 from app.graphql.schemas.id_scalar import IdScalar
 from app.graphql.schemas.json_scalar import JsonScalar
 
-schema = strawberry.Schema(
+schema = strawberry.federation.Schema(
     query=TenantsQueries,
     mutation=TenantsMutations,
     extensions=[
@@ -33,4 +33,5 @@ schema = strawberry.Schema(
         decimal.Decimal: DecimalScalar,
         strawberry.scalars.JSON: JsonScalar,
     },
+    federation_version="2.0",
 )
