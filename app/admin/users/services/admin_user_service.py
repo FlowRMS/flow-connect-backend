@@ -52,7 +52,7 @@ class AdminUserService:
     ) -> list[AdminUserData]:
         results: list[AdminUserData] = []
         try:
-            async with self.controller.scoped_session(tenant.url) as session:
+            async with self.controller.transient_session(tenant.url) as session:
                 stmt = select(User).order_by(User.email).limit(limit).offset(offset)
                 result = await session.execute(stmt)
                 users = result.scalars().all()
@@ -98,7 +98,7 @@ class AdminUserService:
             return None
 
         try:
-            async with self.controller.scoped_session(tenant.url) as session:
+            async with self.controller.transient_session(tenant.url) as session:
                 stmt = select(User).where(User.id == user_id)
                 result = await session.execute(stmt)
                 user = result.scalar_one_or_none()
@@ -116,7 +116,7 @@ class AdminUserService:
 
     async def _check_user_exists_by_email(self, tenant: Tenant, email: str) -> bool:
         try:
-            async with self.controller.scoped_session(tenant.url) as session:
+            async with self.controller.transient_session(tenant.url) as session:
                 stmt = select(User).where(User.email == email)
                 result = await session.execute(stmt)
                 return result.scalar_one_or_none() is not None
@@ -192,7 +192,7 @@ class AdminUserService:
         outside: bool | None = None,
         visible: bool | None = True,
     ) -> User:
-        async with self.controller.scoped_session(tenant.url) as session:
+        async with self.controller.transient_session(tenant.url) as session:
             async with session.begin():
                 user = User(
                     username=username,
@@ -221,7 +221,7 @@ class AdminUserService:
         tenant = await self.tenants_repository.get_by_id(tenant_id)
         if not tenant:
             raise ValueError(f"Tenant {tenant_id} not found")
-        async with self.controller.scoped_session(tenant.url) as session:
+        async with self.controller.transient_session(tenant.url) as session:
             async with session.begin():
                 stmt = select(User).where(User.id == user_id)
                 result = await session.execute(stmt)

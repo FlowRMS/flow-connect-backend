@@ -204,7 +204,7 @@ class WorkOSAuthService:
                 first_name=auth_user_input.first_name,
                 last_name=auth_user_input.last_name,
                 metadata=auth_user_input.metadata,
-                external_id=str(auth_user_input.external_id)
+                external_id=str(auth_user_input.external_id),
             )
             return self._build_auth_user(response)
         except Exception as e:
