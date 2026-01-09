@@ -25,7 +25,6 @@ def upgrade() -> None:
         sa.Column(
             "id", postgresql.UUID(as_uuid=True), nullable=False, primary_key=True
         ),
-        sa.Column("tenant_id", postgresql.UUID(as_uuid=True), nullable=False),
         sa.Column("task_id", postgresql.UUID(as_uuid=True), nullable=False),
         sa.Column("user_id", postgresql.UUID(as_uuid=True), nullable=False),
         sa.Column(
@@ -54,10 +53,9 @@ def upgrade() -> None:
 
     # Migrate existing assigned_to_id data to new table
     op.execute("""
-        INSERT INTO pycrm.task_assignees (id, tenant_id, task_id, user_id, created_at)
+        INSERT INTO pycrm.task_assignees (id, task_id, user_id, created_at)
         SELECT
             gen_random_uuid(),
-            tenant_id,
             id,
             assigned_to_id,
             now()
