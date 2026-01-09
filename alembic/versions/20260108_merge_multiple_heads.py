@@ -6,16 +6,15 @@ Create Date: 2026-01-08 19:36:23.921272
 
 """
 
-import os
 from collections.abc import Sequence
-
-import sqlalchemy as sa
-
-from alembic import op
 
 # revision identifiers, used by Alembic.
 revision: str = "211a23a26864"
-down_revision: str | None = ("22af57481162", "20260106_carrier_type", "896105b07ca6")
+down_revision: tuple[str, ...] = (
+    "22af57481162",
+    "20260106_carrier_type",
+    "896105b07ca6",
+)
 branch_labels: str | Sequence[str] | None = None
 depends_on: str | Sequence[str] | None = None
 
