@@ -3,14 +3,13 @@ from uuid import UUID
 import strawberry
 from aioinject import Injected
 
+from app.core.constants import DEFAULT_QUERY_LIMIT, DEFAULT_QUERY_OFFSET
 from app.graphql.inject import inject
 from app.graphql.v2.core.backorders.services.backorder_service import BackorderService
 from app.graphql.v2.core.backorders.strawberry.backorder_response import (
     BackorderResponse,
 )
 
-
-from app.core.constants import DEFAULT_QUERY_LIMIT, DEFAULT_QUERY_OFFSET
 
 @strawberry.type
 class BackorderQueries:

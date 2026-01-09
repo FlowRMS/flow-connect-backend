@@ -1,27 +1,26 @@
+import uuid
+from datetime import datetime
 from uuid import UUID
 
 from commons.db.v6.warehouse.shipment_requests.shipment_request import (
-    ShipmentRequest,
-    ShipmentRequestStatus,
     ShipmentMethod,
     ShipmentPriority,
+    ShipmentRequest,
+    ShipmentRequestStatus,
 )
 from commons.db.v6.warehouse.shipment_requests.shipment_request_item import (
     ShipmentRequestItem,
 )
-import uuid
-from datetime import datetime
-from app.graphql.v2.core.shipment_requests.strawberry.shipment_request_input import (
-    ShipmentRequestItemInput,
-)
 
+from app.core.constants import DEFAULT_QUERY_LIMIT, DEFAULT_QUERY_OFFSET
 from app.errors.common_errors import NotFoundError
 from app.graphql.v2.core.shipment_requests.repositories.shipment_request_repository import (
     ShipmentRequestRepository,
 )
+from app.graphql.v2.core.shipment_requests.strawberry.shipment_request_input import (
+    ShipmentRequestItemInput,
+)
 
-
-from app.core.constants import DEFAULT_QUERY_LIMIT, DEFAULT_QUERY_OFFSET
 
 class ShipmentRequestService:
     def __init__(
@@ -112,11 +111,11 @@ class ShipmentRequestService:
         items: list[ShipmentRequestItemInput],
     ) -> ShipmentRequest:
         request_number = await self.generate_request_number()
-        
+
         # Ensure request_date is naive (no timezone) for DateTime(timezone=False) column
         if request_date and request_date.tzinfo:
             request_date = request_date.replace(tzinfo=None)
-        
+
         request = ShipmentRequest(
             request_number=request_number,
             warehouse_id=warehouse_id,
@@ -138,7 +137,6 @@ class ShipmentRequestService:
             )
 
         return await self.repository.create(request)
-
 
     async def generate_request_number(self) -> str:
         # Simple generation strategy: SR-{YYYY}-{RANDOM/SEQ}

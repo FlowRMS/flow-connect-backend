@@ -1,10 +1,9 @@
 from uuid import UUID
 
+from commons.db.v6.fulfillment import FulfillmentOrderLineItem
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
-
-from commons.db.v6.fulfillment import FulfillmentOrderLineItem
 
 from app.core.context_wrapper import ContextWrapper
 from app.graphql.base_repository import BaseRepository

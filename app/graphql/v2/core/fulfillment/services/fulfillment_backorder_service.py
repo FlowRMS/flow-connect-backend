@@ -202,7 +202,10 @@ class FulfillmentBackorderService:
 
         order.has_backorder_items = has_unresolved_backorders
 
-        if not has_unresolved_backorders and order.status == FulfillmentOrderStatus.BACKORDER_REVIEW:
+        if (
+            not has_unresolved_backorders
+            and order.status == FulfillmentOrderStatus.BACKORDER_REVIEW
+        ):
             # Can continue with fulfillment
             order.status = FulfillmentOrderStatus.PICKING
             await self.order_repository.update(order)

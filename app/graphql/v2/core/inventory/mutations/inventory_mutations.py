@@ -4,8 +4,14 @@ import strawberry
 from aioinject import Injected
 
 from app.graphql.inject import inject
+from app.graphql.v2.core.inventory.services.inventory_file_service import (
+    InventoryFileService,
+)
 from app.graphql.v2.core.inventory.services.inventory_item_service import (
     InventoryItemService,
+)
+from app.graphql.v2.core.inventory.strawberry.inventory_import_summary import (
+    InventoryImportSummary,
 )
 from app.graphql.v2.core.inventory.strawberry.inventory_input import (
     AddInventoryItemInput,
@@ -13,14 +19,6 @@ from app.graphql.v2.core.inventory.strawberry.inventory_input import (
 )
 from app.graphql.v2.core.inventory.strawberry.inventory_item_response import (
     InventoryItemResponse,
-)
-
-
-from app.graphql.v2.core.inventory.services.inventory_file_service import (
-    InventoryFileService,
-)
-from app.graphql.v2.core.inventory.strawberry.inventory_import_summary import (
-    InventoryImportSummary,
 )
 
 

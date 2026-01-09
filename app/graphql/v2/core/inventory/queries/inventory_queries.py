@@ -2,6 +2,7 @@ from uuid import UUID
 
 import strawberry
 from aioinject import Injected
+from commons.db.v6.warehouse.inventory.inventory_item import InventoryItemStatus
 
 from app.graphql.inject import inject
 from app.graphql.v2.core.inventory.services.inventory_service import InventoryService
@@ -11,7 +12,6 @@ from app.graphql.v2.core.inventory.strawberry.inventory_response import (
 from app.graphql.v2.core.inventory.strawberry.inventory_stats_response import (
     InventoryStatsResponse,
 )
-from commons.db.v6.warehouse.inventory.inventory_item import InventoryItemStatus
 
 
 @strawberry.type
@@ -22,12 +22,15 @@ class InventoryStatusOption:
 
 from app.core.constants import DEFAULT_QUERY_LIMIT, DEFAULT_QUERY_OFFSET
 
+
 @strawberry.type
 class InventoryQueries:
     @strawberry.field
     def inventory_statuses(self) -> list[InventoryStatusOption]:
         return [
-            InventoryStatusOption(label=status.name.replace("_", " ").title(), value=status.name)
+            InventoryStatusOption(
+                label=status.name.replace("_", " ").title(), value=status.name
+            )
             for status in InventoryItemStatus
         ]
 

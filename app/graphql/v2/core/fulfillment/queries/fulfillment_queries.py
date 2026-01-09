@@ -2,7 +2,6 @@ from uuid import UUID
 
 import strawberry
 from aioinject import Injected
-
 from commons.db.v6.fulfillment import FulfillmentOrderStatus
 
 from app.graphql.inject import inject

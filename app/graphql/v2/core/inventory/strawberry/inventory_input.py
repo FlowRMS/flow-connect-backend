@@ -3,7 +3,6 @@ from decimal import Decimal
 from uuid import UUID
 
 import strawberry
-
 from commons.db.v6.warehouse.inventory import InventoryItem, InventoryItemStatus
 
 

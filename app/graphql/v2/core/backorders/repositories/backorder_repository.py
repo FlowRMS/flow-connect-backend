@@ -10,11 +10,10 @@ from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
+from app.core.constants import DEFAULT_QUERY_LIMIT, DEFAULT_QUERY_OFFSET
 from app.core.context_wrapper import ContextWrapper
 from app.graphql.base_repository import BaseRepository
 
-
-from app.core.constants import DEFAULT_QUERY_LIMIT, DEFAULT_QUERY_OFFSET
 
 class BackorderRepository(BaseRepository[OrderDetail]):
     def __init__(
@@ -83,9 +82,7 @@ class BackorderRepository(BaseRepository[OrderDetail]):
                 inventory_subquery,
                 OrderDetail.product_id == inventory_subquery.c.product_id,
             )
-            .where(
-                Order.status.in_([OrderStatus.OPEN, OrderStatus.PARTIAL_SHIPPED])
-            )
+            .where(Order.status.in_([OrderStatus.OPEN, OrderStatus.PARTIAL_SHIPPED]))
         )
 
         if customer_id:

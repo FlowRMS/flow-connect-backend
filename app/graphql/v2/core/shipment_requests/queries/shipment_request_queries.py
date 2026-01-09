@@ -21,12 +21,15 @@ class ShipmentRequestStatusOption:
 
 from app.core.constants import DEFAULT_QUERY_LIMIT, DEFAULT_QUERY_OFFSET
 
+
 @strawberry.type
 class ShipmentRequestQueries:
     @strawberry.field
     def shipment_request_statuses(self) -> list[ShipmentRequestStatusOption]:
         return [
-            ShipmentRequestStatusOption(label=status.name.replace("_", " ").title(), value=status.name)
+            ShipmentRequestStatusOption(
+                label=status.name.replace("_", " ").title(), value=status.name
+            )
             for status in ShipmentRequestStatus
         ]
 

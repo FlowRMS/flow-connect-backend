@@ -17,6 +17,9 @@ from app.graphql.v2.core.inventory.repositories.inventory_item_repository import
 from app.graphql.v2.core.inventory.repositories.inventory_repository import (
     InventoryRepository,
 )
+from app.graphql.v2.core.inventory.services.inventory_item_service import (
+    InventoryItemService,
+)
 from app.graphql.v2.core.products.repositories.products_repository import (
     ProductsRepository,
 )
@@ -24,10 +27,6 @@ from app.graphql.v2.core.warehouses.repositories.warehouse_location_repository i
     WarehouseLocationRepository,
 )
 
-
-from app.graphql.v2.core.inventory.services.inventory_item_service import (
-    InventoryItemService,
-)
 
 class InventoryFileService:
     def __init__(
@@ -53,14 +52,17 @@ class InventoryFileService:
         )
 
         output = io.StringIO()
-        writer = csv.DictWriter(output, fieldnames=[
-            "SKU",
-            "Product Name",
-            "Location",
-            "Quantity",
-            "Status",
-            "Lot Number"
-        ])
+        writer = csv.DictWriter(
+            output,
+            fieldnames=[
+                "SKU",
+                "Product Name",
+                "Location",
+                "Quantity",
+                "Status",
+                "Lot Number",
+            ],
+        )
         writer.writeheader()
 
         for inventory in inventory_list:
@@ -73,19 +75,21 @@ class InventoryFileService:
                 if inventory.product:
                     product_name = inventory.product.description or "N/A"
                     sku = inventory.product.factory_part_number
-                
+
                 location_name = "N/A"
                 if item.location:
                     location_name = item.location.name
-                
-                writer.writerow({
-                    "SKU": sku,
-                    "Product Name": product_name,
-                    "Location": location_name,
-                    "Quantity": str(item.quantity),
-                    "Status": item.status.name,
-                    "Lot Number": item.lot_number or ""
-                })
+
+                writer.writerow(
+                    {
+                        "SKU": sku,
+                        "Product Name": product_name,
+                        "Location": location_name,
+                        "Quantity": str(item.quantity),
+                        "Status": item.status.name,
+                        "Lot Number": item.lot_number or "",
+                    }
+                )
 
         csv_content = output.getvalue()
         return base64.b64encode(csv_content.encode("utf-8")).decode("utf-8")
@@ -99,14 +103,8 @@ class InventoryFileService:
             raise ValueError(f"Invalid Base64 encoded file content: {e}") from e
 
         reader = csv.DictReader(io.StringIO(decoded_content))
-        
-        stats = {
-            "processed": 0,
-            "created": 0,
-            "updated": 0,
-            "errors": 0,
-            "skipped": 0
-        }
+
+        stats = {"processed": 0, "created": 0, "updated": 0, "errors": 0, "skipped": 0}
 
         for row in reader:
             stats["processed"] += 1
@@ -141,23 +139,27 @@ class InventoryFileService:
                 if not location:
                     stats["errors"] += 1
                     continue
-            
+
             # 3. Find/Create Inventory
             inventory = await self.inventory_repository.find_by_product_id(
                 warehouse_id, product.id
             )
-            
+
             if not inventory:
-                inventory = await self.inventory_repository.create(Inventory(
-                    warehouse_id=warehouse_id,
-                    product_id=product.id,
-                    total_quantity=Decimal(0),
-                    available_quantity=Decimal(0),
-                ))
+                inventory = await self.inventory_repository.create(
+                    Inventory(
+                        warehouse_id=warehouse_id,
+                        product_id=product.id,
+                        total_quantity=Decimal(0),
+                        available_quantity=Decimal(0),
+                    )
+                )
                 # New inventory has no items yet
                 existing_items = []
             else:
-                existing_items = await self.item_repository.find_by_inventory_id(inventory.id)
+                existing_items = await self.item_repository.find_by_inventory_id(
+                    inventory.id
+                )
 
             status_enum = InventoryItemStatus.AVAILABLE
             try:
@@ -171,12 +173,11 @@ class InventoryFileService:
                 lot_number,
                 status_enum,
             )
-            
+
             if target_item:
                 new_qty = target_item.quantity + quantity
                 _ = await self.item_service.update_item(
-                    item_id=target_item.id,
-                    quantity=new_qty
+                    item_id=target_item.id, quantity=new_qty
                 )
                 stats["updated"] += 1
             else:
@@ -185,7 +186,7 @@ class InventoryFileService:
                     location_id=location.id if location else None,
                     quantity=quantity,
                     status=status_enum,
-                    lot_number=lot_number
+                    lot_number=lot_number,
                 )
                 _ = await self.item_service.add_item(new_item)
                 stats["created"] += 1

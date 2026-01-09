@@ -1,12 +1,10 @@
+from typing import Any
 from uuid import UUID
 
-from typing import Any
-
+from commons.db.v6.fulfillment import FulfillmentOrder, FulfillmentOrderStatus
 from sqlalchemy import Select, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
-
-from commons.db.v6.fulfillment import FulfillmentOrder, FulfillmentOrderStatus
 
 from app.core.context_wrapper import ContextWrapper
 from app.graphql.base_repository import BaseRepository
@@ -80,20 +78,24 @@ class FulfillmentOrderRepository(BaseRepository[FulfillmentOrder]):
         )
 
         in_progress_result = await self.session.execute(
-            build_count_query([
-                FulfillmentOrderStatus.RELEASED,
-                FulfillmentOrderStatus.PICKING,
-                FulfillmentOrderStatus.PACKING,
-                FulfillmentOrderStatus.SHIPPING,
-            ])
+            build_count_query(
+                [
+                    FulfillmentOrderStatus.RELEASED,
+                    FulfillmentOrderStatus.PICKING,
+                    FulfillmentOrderStatus.PACKING,
+                    FulfillmentOrderStatus.SHIPPING,
+                ]
+            )
         )
 
         completed_result = await self.session.execute(
-            build_count_query([
-                FulfillmentOrderStatus.SHIPPED,
-                FulfillmentOrderStatus.DELIVERED,
-                FulfillmentOrderStatus.COMMUNICATED,
-            ])
+            build_count_query(
+                [
+                    FulfillmentOrderStatus.SHIPPED,
+                    FulfillmentOrderStatus.DELIVERED,
+                    FulfillmentOrderStatus.COMMUNICATED,
+                ]
+            )
         )
 
         backorder_result = await self.session.execute(

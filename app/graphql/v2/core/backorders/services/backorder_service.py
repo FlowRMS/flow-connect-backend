@@ -3,12 +3,12 @@ from uuid import UUID
 from commons.db.v6.commission.orders.order_detail import OrderDetail
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.core.constants import DEFAULT_QUERY_LIMIT, DEFAULT_QUERY_OFFSET
 from app.core.context_wrapper import ContextWrapper
 from app.graphql.v2.core.backorders.repositories.backorder_repository import (
     BackorderRepository,
 )
 
-from app.core.constants import DEFAULT_QUERY_LIMIT, DEFAULT_QUERY_OFFSET
 
 class BackorderService:
     def __init__(
@@ -35,4 +35,3 @@ class BackorderService:
             limit=limit,
             offset=offset,
         )
-

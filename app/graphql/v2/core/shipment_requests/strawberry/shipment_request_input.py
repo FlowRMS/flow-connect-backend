@@ -37,4 +37,3 @@ class UpdateShipmentRequestInput:
     status: ShipmentRequestStatus | None = None
     notes: str | None = None
     items: list[ShipmentRequestItemInput] | None = None
-

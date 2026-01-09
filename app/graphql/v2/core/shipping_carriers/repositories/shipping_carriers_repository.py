@@ -34,9 +34,7 @@ class ShippingCarriersRepository(BaseRepository[ShippingCarrier]):
         """List carriers filtered by type (PARCEL or FREIGHT)."""
         # Convert string to CarrierType enum
         carrier_type = (
-            CarrierType.PARCEL
-            if carrier_type_str == "PARCEL"
-            else CarrierType.FREIGHT
+            CarrierType.PARCEL if carrier_type_str == "PARCEL" else CarrierType.FREIGHT
         )
 
         stmt = select(ShippingCarrier).where(

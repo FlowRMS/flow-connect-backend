@@ -4,7 +4,6 @@ from typing import Self
 from uuid import UUID
 
 import strawberry
-
 from commons.db.v6.fulfillment import (
     CarrierType,
     FulfillmentActivity,
