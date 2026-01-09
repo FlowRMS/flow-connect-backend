@@ -15,7 +15,7 @@ from pydantic import BaseModel
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from .exceptions import ConversionError
+from app.workers.document_execution.converters.exceptions import ConversionError
 
 if TYPE_CHECKING:
     from .entity_mapping import EntityMapping

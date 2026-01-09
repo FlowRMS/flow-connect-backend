@@ -52,6 +52,11 @@ tasks:
         --output admin.schema.graphql
         app.admin.schemas.schema
 
+  worker-prod:
+    desc: Run taskiq worker with a specified environment
+    cmds:
+      - export $(grep -v '^#' .env.production | xargs) && uv run taskiq worker app.workers.broker:broker -r
+
   all:
     desc: Run the standard set of checks performed in CI
     cmds:
