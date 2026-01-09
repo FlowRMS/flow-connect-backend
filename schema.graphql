@@ -144,6 +144,29 @@ enum AdjustmentStatus {
   POSTED
 }
 
+enum BulkDeleteEntityType {
+  FACTORIES
+  CUSTOMERS
+  PRODUCTS
+  ORDERS
+  INVOICES
+  QUOTES
+  CHECKS
+  PRE_OPS
+}
+
+type BulkDeleteFailure {
+  entityId: UUID!
+  error: String!
+}
+
+type BulkDeleteResult {
+  entityType: BulkDeleteEntityType!
+  deletedCount: Int!
+  failedCount: Int!
+  failures: [BulkDeleteFailure!]!
+}
+
 input BulkWarehouseLocationInput {
   level: WarehouseStructureCode!
   name: String!
@@ -1434,6 +1457,7 @@ type Mutation {
   updateCheck(input: CheckInput!): CheckResponse!
   deleteCheck(id: UUID!): Boolean!
   unpostCheck(checkId: UUID!): CheckResponse!
+  bulkDelete(entityType: BulkDeleteEntityType!, entityIds: [UUID!]!): BulkDeleteResult!
   createCompany(input: CompanyInput!): CompanyResponse!
   deleteCompany(id: UUID!): Boolean!
   updateCompany(id: UUID!, input: CompanyInput!): CompanyResponse!
@@ -2369,6 +2393,7 @@ type Query {
   contactSearch(searchTerm: String!, limit: Int! = 20): [ContactResponse!]!
   contactRelatedEntities(contactId: UUID!): ContactRelatedEntitiesResponse! @deprecated(reason: "Use related_entities(source_type: CONTACTS, entity_id: UUID)")
   credit(id: UUID!): CreditResponse!
+  creditsByOrderId(orderId: UUID!): [CreditLiteResponse!]!
   creditSearch(searchTerm: String!, limit: Int! = 20, openOnly: Boolean! = false, unlockedOnly: Boolean! = false): [CreditLiteResponse!]!
   pendingDocumentProcessings(pendingDocumentId: UUID!): [PendingDocumentProcessingType!]!
   gmailAuthUrl(state: String = null): String!

@@ -48,7 +48,7 @@ class CreditConverter(BaseEntityConverter[CheckDetailDTO, CreditInput, Credit]):
         dto: CheckDetailDTO,
         entity_mapping: EntityMapping,
     ) -> ConversionResult[CreditInput]:
-        order_id = entity_mapping.order_id
+        order_id = entity_mapping.get_order_id(dto.flow_detail_index)
 
         if not order_id:
             return ConversionResult.fail(OrderRequiredError())

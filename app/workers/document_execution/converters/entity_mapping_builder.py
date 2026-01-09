@@ -59,6 +59,7 @@ class EntityMappingBuilder:
 
     def _apply_entity_to_mapping(self, pe: PendingEntity, entity_id: UUID) -> None:
         mapping = EntityMapping()
+        flow_idx = pe.flow_index_detail if pe.flow_index_detail is not None else 0
 
         match pe.entity_type:
             case EntityPendingType.FACTORIES:
@@ -68,13 +69,13 @@ class EntityMappingBuilder:
             case EntityPendingType.BILL_TO_CUSTOMERS:
                 mapping.bill_to_customer_id = entity_id
             case EntityPendingType.ORDERS:
-                mapping.order_id = entity_id
+                mapping.orders[flow_idx] = entity_id
             case EntityPendingType.INVOICES:
-                mapping.invoice_id = entity_id
+                mapping.invoices[flow_idx] = entity_id
             case EntityPendingType.CREDITS:
-                mapping.credit_id = entity_id
+                mapping.credits[flow_idx] = entity_id
             case EntityPendingType.ADJUSTMENTS:
-                mapping.adjustment_id = entity_id
+                mapping.adjustments[flow_idx] = entity_id
             case EntityPendingType.PRODUCTS:
                 if pe.flow_index_detail is not None:
                     mapping.products[pe.flow_index_detail] = entity_id
@@ -94,14 +95,10 @@ class EntityMappingBuilder:
                 existing.sold_to_customer_id = source.sold_to_customer_id
             if source.bill_to_customer_id:
                 existing.bill_to_customer_id = source.bill_to_customer_id
-            if source.order_id:
-                existing.order_id = source.order_id
-            if source.invoice_id:
-                existing.invoice_id = source.invoice_id
-            if source.credit_id:
-                existing.credit_id = source.credit_id
-            if source.adjustment_id:
-                existing.adjustment_id = source.adjustment_id
+            existing.orders.update(source.orders)
+            existing.invoices.update(source.invoices)
+            existing.credits.update(source.credits)
+            existing.adjustments.update(source.adjustments)
             existing.products.update(source.products)
             existing.end_users.update(source.end_users)
             existing.skipped_product_indices.update(source.skipped_product_indices)

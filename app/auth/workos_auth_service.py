@@ -203,7 +203,6 @@ class WorkOSAuthService:
                 user_id=user_id,
                 first_name=auth_user_input.first_name,
                 last_name=auth_user_input.last_name,
-                email_verified=auth_user_input.email_verified,
                 metadata=auth_user_input.metadata,
             )
             return self._build_auth_user(response)

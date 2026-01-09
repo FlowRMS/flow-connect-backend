@@ -60,3 +60,6 @@ class CreditService:
 
     async def find_credits_by_job_id(self, job_id: UUID) -> list[Credit]:
         return await self.repository.find_by_job_id(job_id)
+
+    async def find_credits_by_order_id(self, order_id: UUID) -> list[Credit]:
+        return await self.repository.find_by_order_id(order_id)
