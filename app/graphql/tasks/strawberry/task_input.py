@@ -11,19 +11,17 @@ from app.core.strawberry.inputs import BaseInputGQL
 
 @strawberry.input
 class TaskInput(BaseInputGQL[Task]):
-    """GraphQL input type for creating/updating tasks."""
-
     title: str
     status: TaskStatus
     priority: TaskPriority
     description: str | None = strawberry.UNSET
-    assigned_to_id: UUID | None = strawberry.UNSET
+    assigned_to_id: UUID | None = strawberry.UNSET  # Deprecated: use assignee_ids
+    assignee_ids: list[UUID] | None = strawberry.UNSET
     due_date: date | None = strawberry.UNSET
     reminder_date: date | None = strawberry.UNSET
     tags: list[str] | None = strawberry.UNSET
 
     def to_orm_model(self) -> Task:
-        """Convert input to ORM model."""
         return Task(
             title=self.title,
             status=self.status,
@@ -34,3 +32,11 @@ class TaskInput(BaseInputGQL[Task]):
             reminder_date=self.optional_field(self.reminder_date),
             tags=self.optional_field(self.tags) or [],
         )
+
+    def get_assignee_ids(self) -> list[UUID]:
+        assignee_ids = self.optional_field(self.assignee_ids) or []
+        # Backwards compatibility: include assigned_to_id if provided and not in list
+        assigned_to = self.optional_field(self.assigned_to_id)
+        if assigned_to and assigned_to not in assignee_ids:
+            assignee_ids.append(assigned_to)
+        return assignee_ids
