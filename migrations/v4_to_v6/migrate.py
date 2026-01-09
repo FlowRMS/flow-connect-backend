@@ -1,5 +1,6 @@
 import asyncio
 import logging
+import uuid
 from dataclasses import dataclass
 
 import asyncpg
@@ -12,6 +13,7 @@ logger = logging.getLogger(__name__)
 class MigrationConfig:
     source_dsn: str
     dest_dsn: str
+    default_user_id: uuid.UUID
     batch_size: int = 500
 
 
@@ -26,7 +28,7 @@ async def migrate_users(source: asyncpg.Connection, dest: asyncpg.Connection) ->
             u.firstname as first_name,
             u.lastname as last_name,
             u.email,
-            NULL as auth_provider_id,
+            gen_random_uuid()::text as auth_provider_id,
             CASE
                 WHEN u.keycloak_role = 1 THEN 1
                 WHEN u.keycloak_role = 2 THEN 2
@@ -79,7 +81,11 @@ async def migrate_users(source: asyncpg.Connection, dest: asyncpg.Connection) ->
     return len(users)
 
 
-async def migrate_customers(source: asyncpg.Connection, dest: asyncpg.Connection) -> int:
+async def migrate_customers(
+    source: asyncpg.Connection,
+    dest: asyncpg.Connection,
+    default_user_id: uuid.UUID,
+) -> int:
     """Migrate customers from v4 (public.customers) to v6 (pycore.customers)."""
     logger.info("Starting customer migration...")
 
@@ -95,6 +101,10 @@ async def migrate_customers(source: asyncpg.Connection, dest: asyncpg.Connection
         FROM public.customers c
         WHERE c.parent_id IS NULL
     """)
+
+    # Get valid user IDs from destination to check created_by references
+    valid_users = await dest.fetch("SELECT id FROM pyuser.users")
+    valid_user_ids = {u["id"] for u in valid_users}
 
     if parent_customers:
         await dest.executemany(
@@ -112,7 +122,7 @@ async def migrate_customers(source: asyncpg.Connection, dest: asyncpg.Connection
                 c["company_name"],
                 c["published"],
                 c["is_parent"],
-                c["created_by_id"],
+                c["created_by_id"] if c["created_by_id"] in valid_user_ids else default_user_id,
                 c["created_at"],
             ) for c in parent_customers],
         )
@@ -150,7 +160,7 @@ async def migrate_customers(source: asyncpg.Connection, dest: asyncpg.Connection
                 c["parent_id"],
                 c["published"],
                 c["is_parent"],
-                c["created_by_id"],
+                c["created_by_id"] if c["created_by_id"] in valid_user_ids else default_user_id,
                 c["created_at"],
             ) for c in child_customers],
         )
@@ -160,7 +170,11 @@ async def migrate_customers(source: asyncpg.Connection, dest: asyncpg.Connection
     return total
 
 
-async def migrate_factories(source: asyncpg.Connection, dest: asyncpg.Connection) -> int:
+async def migrate_factories(
+    source: asyncpg.Connection,
+    dest: asyncpg.Connection,
+    default_user_id: uuid.UUID,
+) -> int:
     """Migrate factories from v4 (public.factories) to v6 (pycore.factories)."""
     logger.info("Starting factory migration...")
 
@@ -196,6 +210,10 @@ async def migrate_factories(source: asyncpg.Connection, dest: asyncpg.Connection
     if not factories:
         logger.info("No factories to migrate")
         return 0
+
+    # Get valid user IDs from destination
+    valid_users = await dest.fetch("SELECT id FROM pyuser.users")
+    valid_user_ids = {u["id"] for u in valid_users}
 
     await dest.executemany(
         """
@@ -241,7 +259,7 @@ async def migrate_factories(source: asyncpg.Connection, dest: asyncpg.Connection
             f["published"],
             f["freight_discount_type"],
             f["creation_type"],
-            f["created_by_id"],
+            f["created_by_id"] if f["created_by_id"] in valid_user_ids else default_user_id,
             f["created_at"],
         ) for f in factories],
     )
@@ -338,7 +356,11 @@ async def migrate_product_categories(source: asyncpg.Connection, dest: asyncpg.C
     return len(categories)
 
 
-async def migrate_products(source: asyncpg.Connection, dest: asyncpg.Connection) -> int:
+async def migrate_products(
+    source: asyncpg.Connection,
+    dest: asyncpg.Connection,
+    default_user_id: uuid.UUID,
+) -> int:
     """Migrate products from v4 (public.products) to v6 (pycore.products)."""
     logger.info("Starting product migration...")
 
@@ -375,6 +397,10 @@ async def migrate_products(source: asyncpg.Connection, dest: asyncpg.Connection)
     if not products:
         logger.info("No products to migrate")
         return 0
+
+    # Get valid user IDs from destination
+    valid_users = await dest.fetch("SELECT id FROM pyuser.users")
+    valid_user_ids = {u["id"] for u in valid_users}
 
     await dest.executemany(
         """
@@ -418,7 +444,7 @@ async def migrate_products(source: asyncpg.Connection, dest: asyncpg.Connection)
             p["description"],
             p["creation_type"],
             p["created_at"],
-            p["created_by_id"],
+            p["created_by_id"] if p["created_by_id"] in valid_user_ids else default_user_id,
             p["upc"],
             p["min_order_qty"],
             p["lead_time"],
@@ -585,7 +611,11 @@ async def migrate_customer_factory_sales_reps(source: asyncpg.Connection, dest: 
     return len(sales_reps)
 
 
-async def migrate_orders(source: asyncpg.Connection, dest: asyncpg.Connection) -> int:
+async def migrate_orders(
+    source: asyncpg.Connection,
+    dest: asyncpg.Connection,
+    default_user_id: uuid.UUID,
+) -> int:
     """Migrate orders from v4 (public.orders) to v6 (pycommission.orders)."""
     logger.info("Starting order migration...")
 
@@ -618,6 +648,10 @@ async def migrate_orders(source: asyncpg.Connection, dest: asyncpg.Connection) -
     if not orders:
         logger.info("No orders to migrate")
         return 0
+
+    # Get valid user IDs from destination
+    valid_users = await dest.fetch("SELECT id FROM pyuser.users")
+    valid_user_ids = {u["id"] for u in valid_users}
 
     await dest.executemany(
         """
@@ -663,7 +697,7 @@ async def migrate_orders(source: asyncpg.Connection, dest: asyncpg.Connection) -
             o["mark_number"],
             o["ship_date"],
             o["fact_so_number"],
-            o["created_by_id"],
+            o["created_by_id"] if o["created_by_id"] in valid_user_ids else default_user_id,
             o["created_at"],
         ) for o in orders],
     )
@@ -747,7 +781,11 @@ async def migrate_order_details(source: asyncpg.Connection, dest: asyncpg.Connec
     return len(details)
 
 
-async def migrate_quotes(source: asyncpg.Connection, dest: asyncpg.Connection) -> int:
+async def migrate_quotes(
+    source: asyncpg.Connection,
+    dest: asyncpg.Connection,
+    default_user_id: uuid.UUID,
+) -> int:
     """Migrate quotes from v4 (public.quotes) to v6 (pycrm.quotes)."""
     logger.info("Starting quote migration...")
 
@@ -777,6 +815,10 @@ async def migrate_quotes(source: asyncpg.Connection, dest: asyncpg.Connection) -
     if not quotes:
         logger.info("No quotes to migrate")
         return 0
+
+    # Get valid user IDs from destination
+    valid_users = await dest.fetch("SELECT id FROM pyuser.users")
+    valid_user_ids = {u["id"] for u in valid_users}
 
     await dest.executemany(
         """
@@ -819,7 +861,7 @@ async def migrate_quotes(source: asyncpg.Connection, dest: asyncpg.Connection) -
             q["revise_date"],
             q["accept_date"],
             q["blanket"],
-            q["created_by_id"],
+            q["created_by_id"] if q["created_by_id"] in valid_user_ids else default_user_id,
             q["created_at"],
         ) for q in quotes],
     )
@@ -903,7 +945,11 @@ async def migrate_quote_details(source: asyncpg.Connection, dest: asyncpg.Connec
     return len(details)
 
 
-async def migrate_invoices(source: asyncpg.Connection, dest: asyncpg.Connection) -> int:
+async def migrate_invoices(
+    source: asyncpg.Connection,
+    dest: asyncpg.Connection,
+    default_user_id: uuid.UUID,
+) -> int:
     """Migrate invoices from v4 to v6."""
     logger.info("Starting invoice migration...")
 
@@ -937,6 +983,10 @@ async def migrate_invoices(source: asyncpg.Connection, dest: asyncpg.Connection)
     if not invoices:
         logger.info("No invoices to migrate")
         return 0
+
+    # Get valid user IDs from destination
+    valid_users = await dest.fetch("SELECT id FROM pyuser.users")
+    valid_user_ids = {u["id"] for u in valid_users}
 
     await dest.executemany(
         """
@@ -980,7 +1030,7 @@ async def migrate_invoices(source: asyncpg.Connection, dest: asyncpg.Connection)
             inv["order_id"],
             inv["factory_id"],
             inv["customer_id"],
-            inv["created_by_id"],
+            inv["created_by_id"] if inv["created_by_id"] in valid_user_ids else default_user_id,
             inv["created_at"],
             inv["batch_id"],
         ) for inv in invoices],
@@ -1088,20 +1138,21 @@ async def run_migration(config: MigrationConfig) -> dict[str, int]:
 
     try:
         # Order matters due to foreign key dependencies
+        default_user_id = config.default_user_id
         results["users"] = await migrate_users(source, dest)
-        results["customers"] = await migrate_customers(source, dest)
-        results["factories"] = await migrate_factories(source, dest)
+        results["customers"] = await migrate_customers(source, dest, default_user_id)
+        results["factories"] = await migrate_factories(source, dest, default_user_id)
         results["product_uoms"] = await migrate_product_uoms(source, dest)
         results["product_categories"] = await migrate_product_categories(source, dest)
-        results["products"] = await migrate_products(source, dest)
+        results["products"] = await migrate_products(source, dest, default_user_id)
         results["product_cpns"] = await migrate_product_cpns(source, dest)
         results["customer_split_rates"] = await migrate_customer_split_rates(source, dest)
         results["customer_factory_sales_reps"] = await migrate_customer_factory_sales_reps(source, dest)
-        results["orders"] = await migrate_orders(source, dest)
+        results["orders"] = await migrate_orders(source, dest, default_user_id)
         results["order_details"] = await migrate_order_details(source, dest)
-        results["quotes"] = await migrate_quotes(source, dest)
+        results["quotes"] = await migrate_quotes(source, dest, default_user_id)
         results["quote_details"] = await migrate_quote_details(source, dest)
-        results["invoices"] = await migrate_invoices(source, dest)
+        results["invoices"] = await migrate_invoices(source, dest, default_user_id)
         results["invoice_details"] = await migrate_invoice_details(source, dest)
 
         logger.info("Migration completed successfully!")
@@ -1122,11 +1173,13 @@ async def run_migration_for_tenant(
     source_base_url: str,
     dest_tenant: str,
     dest_base_url: str,
+    default_user_id: uuid.UUID,
 ) -> dict[str, int]:
     """Run migration for a specific tenant."""
     config = MigrationConfig(
         source_dsn=f"{source_base_url}/{source_tenant}",
         dest_dsn=f"{dest_base_url}/{dest_tenant}",
+        default_user_id=default_user_id,
     )
     logger.info(f"Running migration for tenant: {source_tenant} to {dest_tenant}")
     return await run_migration(config)
@@ -1162,6 +1215,11 @@ if __name__ == "__main__":
         action="store_true",
         help="Print what would be migrated without making changes",
     )
+    _ = parser.add_argument(
+        "--default-user-id",
+        required=True,
+        help="Default user UUID to use when created_by references a non-existent user",
+    )
     args = parser.parse_args()
 
     if not args.source_url or not args.dest_url:
@@ -1172,4 +1230,5 @@ if __name__ == "__main__":
         dest_tenant=args.dest_tenant,
         source_base_url=args.source_url,
         dest_base_url=args.dest_url,
+        default_user_id=uuid.UUID(args.default_user_id),
     ))

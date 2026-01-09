@@ -139,6 +139,10 @@ class LinkRelationsRepository(BaseRepository[LinkRelation]):
     async def bulk_create(self, links: list[LinkRelation]) -> list[LinkRelation]:
         if not links:
             return []
+
+        for link in links:
+            link.created_by_id = self.auth_info.flow_user_id
+
         self.session.add_all(links)
         await self.session.flush(links)
         return links
