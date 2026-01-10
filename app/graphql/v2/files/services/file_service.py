@@ -117,6 +117,7 @@ class FileService:
             file_entity_type=file_entity_type,
         )
         file = await self.repository.create(new_file)
+        await self.vectorize_file(content, file)
         return await self.get_by_id(file.id)
 
     async def upload_files(
