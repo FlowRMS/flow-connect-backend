@@ -86,6 +86,7 @@ class QuoteConverter(BaseEntityConverter[QuoteDTO, QuoteInput, Quote]):
                 freight_terms=dto.freight_terms,
                 exp_date=dto.expiration_date,
                 details=details,
+                published=True,
             )
         )
 

@@ -93,6 +93,7 @@ class OrderConverter(BaseEntityConverter[OrderDTO, OrderInput, Order]):
                 ship_date=dto.ship_date,
                 mark_number=dto.mark_number,
                 details=details,
+                published=True,
             )
         )
 
