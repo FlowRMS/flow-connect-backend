@@ -10,15 +10,18 @@ from commons.db.v6.crm.jobs.jobs_model import Job
 from commons.db.v6.crm.links.entity_type import EntityType
 from commons.db.v6.crm.links.link_relation_model import LinkRelation
 from commons.db.v6.crm.pre_opportunities.pre_opportunity_model import PreOpportunity
+from commons.db.v6.crm.tasks.task_assignee_model import TaskAssignee
 from commons.db.v6.crm.tasks.task_model import Task
 from commons.db.v6.user import User
 from sqlalchemy import Select, case, func, literal, or_, select
 from sqlalchemy.dialects.postgresql import JSONB, array
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.orm import aliased, joinedload, lazyload
+from sqlalchemy.orm import aliased, joinedload, lazyload, selectinload
 
 from app.core.context_wrapper import ContextWrapper
+from app.core.processors import ProcessorExecutor
 from app.graphql.base_repository import BaseRepository
+from app.graphql.tasks.processors import SyncTaskAssigneesProcessor
 from app.graphql.tasks.strawberry.task_landing_page_response import (
     TaskLandingPageResponse,
 )
@@ -28,20 +31,27 @@ class TasksRepository(BaseRepository[Task]):
     landing_model = TaskLandingPageResponse
     rbac_resource: RbacResourceEnum | None = RbacResourceEnum.TASK
 
-    def __init__(self, context_wrapper: ContextWrapper, session: AsyncSession) -> None:
-        super().__init__(session, context_wrapper, Task)
+    def __init__(
+        self,
+        context_wrapper: ContextWrapper,
+        session: AsyncSession,
+        processor_executor: ProcessorExecutor,
+        sync_assignees_processor: SyncTaskAssigneesProcessor,
+    ) -> None:
+        super().__init__(
+            session,
+            context_wrapper,
+            Task,
+            processor_executor=processor_executor,
+            processor_executor_classes=[sync_assignees_processor],
+        )
+        self.sync_assignees_processor = sync_assignees_processor
 
     def paginated_stmt(self) -> Select[Any]:
-        """
-        Build paginated query for tasks landing page.
-
-        Returns:
-            SQLAlchemy select statement with columns for landing page
-        """
         # Lazy import to avoid circular dependency
         from commons.db.v6.crm.notes.note_model import Note
 
-        assigned_to_alias = aliased(User)
+        assignee_user_alias = aliased(User)
 
         # Build a CTE that flattens link relations with entity info
         # This ensures proper handling of the bidirectional link structure
@@ -192,6 +202,28 @@ class TasksRepository(BaseRepository[Task]):
             .subquery()
         )
 
+        # Subquery to aggregate assignees for each task
+        assignees_subq = (
+            select(
+                TaskAssignee.task_id,
+                func.coalesce(
+                    func.jsonb_agg(
+                        func.jsonb_build_object(
+                            literal("id"),
+                            assignee_user_alias.id,
+                            literal("name"),
+                            assignee_user_alias.full_name,
+                        )
+                    ),
+                    literal("[]").cast(JSONB),
+                ).label("assignees"),
+            )
+            .select_from(TaskAssignee)
+            .join(assignee_user_alias, assignee_user_alias.id == TaskAssignee.user_id)
+            .group_by(TaskAssignee.task_id)
+            .subquery()
+        )
+
         return (
             select(
                 Task.id,
@@ -201,7 +233,9 @@ class TasksRepository(BaseRepository[Task]):
                 Task.status,
                 Task.priority,
                 Task.description,
-                assigned_to_alias.full_name.label("assigned_to"),
+                func.coalesce(
+                    assignees_subq.c.assignees, literal("[]").cast(JSONB)
+                ).label("assignees"),
                 Task.due_date,
                 Task.reminder_date,
                 Task.tags,
@@ -213,7 +247,7 @@ class TasksRepository(BaseRepository[Task]):
             .select_from(Task)
             .options(lazyload("*"))
             .join(User, User.id == Task.created_by_id)
-            .outerjoin(assigned_to_alias, assigned_to_alias.id == Task.assigned_to_id)
+            .outerjoin(assignees_subq, assignees_subq.c.task_id == Task.id)
             .outerjoin(linked_entities_subq, linked_entities_subq.c.task_id == Task.id)
         )
 
@@ -237,10 +271,13 @@ class TasksRepository(BaseRepository[Task]):
         entity_type: EntityType,
         entity_id: UUID,
     ) -> list[Task]:
-        """Find all tasks linked to a specific entity via link relations."""
         stmt = (
             select(Task)
-            .options(joinedload(Task.created_by), lazyload("*"))
+            .options(
+                joinedload(Task.created_by),
+                selectinload(Task.assignees).joinedload(TaskAssignee.user),
+                lazyload("*"),
+            )
             .join(
                 LinkRelation,
                 or_(
@@ -262,4 +299,4 @@ class TasksRepository(BaseRepository[Task]):
             )
         )
         result = await self.session.execute(stmt)
-        return list(result.scalars().all())
+        return list(result.unique().scalars().all())

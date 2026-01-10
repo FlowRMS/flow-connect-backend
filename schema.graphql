@@ -2935,7 +2935,7 @@ input TaskInput {
   status: TaskStatus!
   priority: TaskPriority!
   description: String
-  assignedToId: UUID
+  assigneeIds: [UUID!]
   dueDate: Date
   reminderDate: Date
   tags: [String!]
@@ -2950,7 +2950,7 @@ type TaskLandingPage implements LandingPageInterfaceBase {
   status: TaskStatus!
   priority: TaskPriority!
   description: String
-  assignedTo: String
+  assignees: [String!]!
   dueDate: Date
   reminderDate: Date
   tags: [String!]
@@ -2993,11 +2993,11 @@ type TaskType {
   status: TaskStatus!
   priority: TaskPriority!
   description: String
-  assignedToId: UUID
   dueDate: Date
   reminderDate: Date
   tags: [String!]
   createdBy: UserResponse!
+  assignees: [UserResponse!]!
 }
 
 scalar UUID
