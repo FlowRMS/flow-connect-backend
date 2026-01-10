@@ -44,6 +44,7 @@ class NoteType(DTOMixin[Note]):
     content: str
     tags: list[str] | None
     mentions: list[UUID] | None
+    is_public: bool
 
     @classmethod
     def from_orm_model(cls, model: Note) -> Self:
@@ -55,6 +56,7 @@ class NoteType(DTOMixin[Note]):
             content=model.content,
             tags=model.tags,
             mentions=model.mentions,
+            is_public=model.is_public,
         )
 
     @strawberry.field

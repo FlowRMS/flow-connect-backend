@@ -35,7 +35,6 @@ class DocumentBatchProcessor:
         entity_mappings: dict[UUID, EntityMapping],
         pending_document: PendingDocument,
         batch_size: int,
-        link_callback: Any,
     ) -> list[PendingDocumentProcessing]:
         processing_records: list[PendingDocumentProcessing] = []
 
@@ -60,7 +59,6 @@ class DocumentBatchProcessor:
                 dtos=batch_dtos,
                 mappings=batch_mappings,
                 pending_document=pending_document,
-                link_callback=link_callback,
             )
             processing_records.extend(batch_records)
 
@@ -72,7 +70,6 @@ class DocumentBatchProcessor:
         dtos: list[Any],
         mappings: list[EntityMapping],
         pending_document: PendingDocument,
-        link_callback: Any,
     ) -> list[PendingDocumentProcessing]:
         records: list[PendingDocumentProcessing] = []
         conversion_errors: dict[int, str] = {}
@@ -134,7 +131,6 @@ class DocumentBatchProcessor:
                 else:
                     entity = bulk_result.created[created_idx]
                     created_idx += 1
-                    await link_callback(pending_document, entity.id)
                     records.append(
                         PendingDocumentProcessing(
                             pending_document_id=pending_document.id,

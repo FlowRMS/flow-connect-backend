@@ -11,7 +11,12 @@ from app.core.processors import (
     RepositoryEvent,
     validate_split_rates_sum_to_100,
 )
-from app.errors.common_errors import ValidationError
+from app.errors.split_rate_errors import (
+    DuplicateUserInSplitRatesError,
+    InvalidInsideRepError,
+    InvalidOutsideRepError,
+    UserNotFoundInSplitRateError,
+)
 
 
 class ValidateSplitRatesProcessor(BaseProcessor[Customer]):
@@ -32,6 +37,7 @@ class ValidateSplitRatesProcessor(BaseProcessor[Customer]):
             return
 
         user_ids = [rate.user_id for rate in split_rates]
+        self._validate_unique_user_ids(user_ids)
         users = await self._get_users_by_ids(user_ids)
         user_map = {user.id: user for user in users}
 
@@ -41,7 +47,7 @@ class ValidateSplitRatesProcessor(BaseProcessor[Customer]):
         for rate in split_rates:
             user = user_map.get(rate.user_id)
             if not user:
-                raise ValidationError(f"User with ID '{rate.user_id}' not found")
+                raise UserNotFoundInSplitRateError(rate.user_id)
 
             self._validate_rep_type(user, rate.rep_type)
 
@@ -58,15 +64,19 @@ class ValidateSplitRatesProcessor(BaseProcessor[Customer]):
         result = await self.session.execute(stmt)
         return result.scalars().all()
 
+    def _validate_unique_user_ids(self, user_ids: list[UUID]) -> None:
+        seen: set[UUID] = set()
+        duplicates: set[UUID] = set()
+        for user_id in user_ids:
+            if user_id in seen:
+                duplicates.add(user_id)
+            seen.add(user_id)
+        if duplicates:
+            raise DuplicateUserInSplitRatesError(duplicates)
+
     def _validate_rep_type(self, user: User, rep_type: RepTypeEnum) -> None:
         if rep_type == RepTypeEnum.INSIDE and not user.inside:
-            raise ValidationError(
-                f"User '{user.first_name} {user.last_name}' cannot be an inside rep "
-                "(inside flag is not set)"
-            )
+            raise InvalidInsideRepError(user.first_name, user.last_name)
 
         if rep_type == RepTypeEnum.OUTSIDE and not user.outside:
-            raise ValidationError(
-                f"User '{user.first_name} {user.last_name}' cannot be an outside rep "
-                "(outside flag is not set)"
-            )
+            raise InvalidOutsideRepError(user.first_name, user.last_name)

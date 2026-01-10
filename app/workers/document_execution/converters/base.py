@@ -4,6 +4,7 @@ from decimal import Decimal
 from typing import TYPE_CHECKING, Any, Generic, TypeVar
 from uuid import UUID
 
+from commons.db.v6 import RepTypeEnum
 from commons.db.v6.ai.documents import PendingDocument
 from commons.db.v6.ai.documents.enums.entity_type import DocumentEntityType
 from commons.db.v6.core.factories.factory import Factory
@@ -14,7 +15,7 @@ from pydantic import BaseModel
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from .exceptions import ConversionError
+from app.workers.document_execution.converters.exceptions import ConversionError
 
 if TYPE_CHECKING:
     from .entity_mapping import EntityMapping
@@ -78,7 +79,7 @@ class BaseEntityConverter(ABC, Generic[TDto, TInput, TOutput]):
         self.session = session
         self.dto_loader_service = dto_loader_service
         self._factory_cache: dict[UUID, Factory] = {}
-        self._user_cache: dict[str, User | None] = {}
+        self._user_cache: dict[tuple[str, RepTypeEnum | None], User | None] = {}
 
     @abstractmethod
     async def create_entity(
@@ -151,16 +152,26 @@ class BaseEntityConverter(ABC, Generic[TDto, TInput, TOutput]):
             return factory.overall_discount_rate
         return Decimal("0")
 
-    async def get_user_by_full_name(self, full_name: str) -> User | None:
-        cache_key = full_name.lower().strip()
+    async def get_user_by_full_name(
+        self, full_name: str, rep_type: RepTypeEnum | None = None
+    ) -> User | None:
+        normalized_name = full_name.lower().strip()
+        cache_key = (normalized_name, rep_type)
         if cache_key in self._user_cache:
             return self._user_cache[cache_key]
 
         stmt = select(User).where(
-            (func.lower(func.concat(User.first_name, " ", User.last_name)) == cache_key)
-            | (func.lower(User.first_name) == cache_key)
-            | (func.lower(User.last_name) == cache_key)
+            (
+                func.lower(func.concat(User.first_name, " ", User.last_name))
+                == normalized_name
+            )
+            | (func.lower(User.first_name) == normalized_name)
+            | (func.lower(User.last_name) == normalized_name)
         )
+        if rep_type == RepTypeEnum.INSIDE:
+            stmt = stmt.where(User.inside.is_(True))
+        elif rep_type == RepTypeEnum.OUTSIDE:
+            stmt = stmt.where(User.outside.is_(True))
         result = await self.session.execute(stmt)
         user = result.scalars().first()
 
