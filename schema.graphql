@@ -1609,6 +1609,7 @@ input NoteInput {
   content: String!
   tags: [String!]
   mentions: [UUID!]
+  isPublic: Boolean! = false
 }
 
 type NoteLandingPage implements LandingPageInterfaceBase {
@@ -1620,6 +1621,7 @@ type NoteLandingPage implements LandingPageInterfaceBase {
   content: String!
   tags: [String!]
   mentions: [UUID!]
+  isPublic: Boolean!
   linkedEntities: [LinkedEntity!]!
 }
 
@@ -1645,6 +1647,7 @@ type NoteType {
   content: String!
   tags: [String!]
   mentions: [UUID!]
+  isPublic: Boolean!
   createdBy: UserResponse!
   mentionedUsers: [UserResponse!]!
 }
