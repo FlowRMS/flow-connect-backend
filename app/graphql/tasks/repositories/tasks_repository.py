@@ -262,7 +262,16 @@ class TasksRepository(BaseRepository[Task]):
         Returns:
             List of Task objects matching the search criteria
         """
-        stmt = select(Task).where(Task.title.ilike(f"%{search_term}%")).limit(limit)
+        stmt = (
+            select(Task)
+            .options(
+                joinedload(Task.created_by),
+                selectinload(Task.assignees).joinedload(TaskAssignee.user),
+                lazyload("*"),
+            )
+            .where(Task.title.ilike(f"%{search_term}%"))
+            .limit(limit)
+        )
         result = await self.session.execute(stmt)
         return list(result.scalars().all())
 

@@ -55,7 +55,7 @@ class TasksQueries:
         service: Injected[TasksService],
     ) -> TaskType:
         """Get a task by ID."""
-        return TaskType.from_orm_model(await service.get_task(id))
+        return TaskType.from_orm_model(await service.find_task_by_id(id))
 
     @strawberry.field
     @inject
@@ -114,9 +114,6 @@ class TasksQueries:
         product_service: Injected[ProductService],
         customer_service: Injected[CustomerService],
     ) -> TaskRelatedEntitiesResponse:
-        # Verify task exists
-        _ = await tasks_service.get_task(task_id)
-
         # Fetch related entities
         jobs = await jobs_service.get_jobs_by_task(task_id)
         contacts = await contacts_service.find_contacts_by_task_id(task_id)

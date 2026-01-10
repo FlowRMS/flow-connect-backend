@@ -41,6 +41,33 @@ class OrderService:
         order = order_input.to_orm_model()
         return await self.repository.create_with_balance(order)
 
+    async def create_orders_bulk(self, order_inputs: list[OrderInput]) -> list[Order]:
+        if not order_inputs:
+            return []
+
+        order_customer_pairs = [
+            (inp.order_number, inp.sold_to_customer_id) for inp in order_inputs
+        ]
+        existing = await self.repository.order_numbers_exist_bulk(order_customer_pairs)
+
+        valid_inputs = [
+            inp
+            for inp in order_inputs
+            if (inp.order_number, inp.sold_to_customer_id) not in existing
+        ]
+
+        if not valid_inputs:
+            return []
+
+        orders = [inp.to_orm_model() for inp in valid_inputs]
+        details_list = [order.details for order in orders]
+        balances = await self.repository.create_balances_bulk(details_list)
+
+        for order, balance in zip(orders, balances, strict=True):
+            order.balance_id = balance.id
+
+        return await self.repository.create_bulk(orders)
+
     async def update_order(self, order_input: OrderInput) -> Order:
         if order_input.id is None:
             raise ValueError("ID must be provided for update")
