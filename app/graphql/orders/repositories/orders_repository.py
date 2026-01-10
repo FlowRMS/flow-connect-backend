@@ -19,6 +19,9 @@ from app.core.context_wrapper import ContextWrapper
 from app.core.exceptions import NotFoundError
 from app.core.processors import ProcessorExecutor
 from app.graphql.base_repository import BaseRepository
+from app.graphql.orders.processors.default_rep_split_processor import (
+    OrderDefaultRepSplitProcessor,
+)
 from app.graphql.orders.processors.set_shipping_balance_processor import (
     SetShippingBalanceProcessor,
 )
@@ -50,6 +53,7 @@ class OrdersRepository(BaseRepository[Order]):
         processor_executor: ProcessorExecutor,
         validate_rep_split_processor: ValidateRepSplitProcessor,
         set_shipping_balance_processor: SetShippingBalanceProcessor,
+        order_default_rep_split_processor: OrderDefaultRepSplitProcessor,
     ) -> None:
         super().__init__(
             session,
@@ -58,6 +62,7 @@ class OrdersRepository(BaseRepository[Order]):
             rbac_filter_service,
             processor_executor,
             processor_executor_classes=[
+                order_default_rep_split_processor,
                 validate_rep_split_processor,
                 set_shipping_balance_processor,
             ],

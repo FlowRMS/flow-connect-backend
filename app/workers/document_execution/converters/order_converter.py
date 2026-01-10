@@ -1,7 +1,8 @@
-from datetime import date, datetime, timezone
+from datetime import date
 from decimal import Decimal
 from typing import override
 
+import pendulum
 from commons.db.v6.ai.documents.enums.entity_type import DocumentEntityType
 from commons.db.v6.models import Order
 from commons.dtos.common.dto_loader_service import DTOLoaderService
@@ -159,5 +160,6 @@ class OrderConverter(BaseEntityConverter[OrderDTO, OrderInput, Order]):
 
     @staticmethod
     def _generate_order_number() -> str:
-        timestamp = datetime.now(timezone.utc).strftime("%Y%m%d%H%M%S")
+        epoch = pendulum.now(tz="UTC").int_timestamp
+        timestamp = epoch * 1000 + pendulum.now(tz="UTC").microsecond // 1000
         return f"ORD-{timestamp}"
