@@ -3,7 +3,7 @@ directive @rolePermissionAccess on FIELD_DEFINITION
 input AddressInput {
   sourceId: UUID!
   sourceType: AddressSourceTypeEnum!
-  addressType: AddressTypeEnum! = OTHER
+  addressTypes: [AddressTypeEnum!]!
   line1: String!
   city: String!
   country: String!
@@ -19,7 +19,7 @@ type AddressResponse {
   createdAt: datetime!
   sourceId: UUID!
   sourceType: AddressSourceTypeEnum!
-  addressType: AddressTypeEnum!
+  addressTypes: [AddressTypeEnum!]!
   line1: String!
   line2: String
   city: String!
@@ -645,6 +645,7 @@ enum CreditType {
   PRICE_ADJUSTMENT
   DEFECTIVE
   OTHER
+  SHORT_SHIP
 }
 
 input CriteriaConditionInput {
@@ -1818,6 +1819,7 @@ type OrderDetailResponse {
   insideSplitRates: [OrderInsideRepResponse!]!
   product: ProductLiteResponse
   uom: ProductUomResponse
+  acknowledgements: [OrderAcknowledgementResponse!]!
 }
 
 enum OrderHeaderStatus {
