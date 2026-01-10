@@ -247,8 +247,7 @@ class OrdersRepository(BaseRepository[Order]):
 
     async def create_bulk(self, orders: list[Order]) -> list[Order]:
         for order in orders:
-            order.user_ids = self.compute_user_ids(order)
-            await self._run_processors(RepositoryEvent.PRE_CREATE, order)
+            order = await self.prepare_create(order)
 
         self.session.add_all(orders)
         await self.session.flush(orders)
