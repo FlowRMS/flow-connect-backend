@@ -1,4 +1,5 @@
 from datetime import date, datetime
+from typing import Self
 from uuid import UUID
 
 import strawberry
@@ -11,7 +12,7 @@ from app.graphql.v2.core.users.strawberry.user_response import UserResponse
 
 
 @strawberry.type
-class TaskType(DTOMixin[Task]):
+class TaskLiteType(DTOMixin[Task]):
     _instance: strawberry.Private[Task]
     id: UUID
     created_at: datetime
@@ -24,7 +25,7 @@ class TaskType(DTOMixin[Task]):
     tags: list[str] | None
 
     @classmethod
-    def from_orm_model(cls, model: Task) -> "TaskType":
+    def from_orm_model(cls, model: Task) -> Self:
         return cls(
             _instance=model,
             id=model.id,
@@ -38,6 +39,9 @@ class TaskType(DTOMixin[Task]):
             tags=model.tags,
         )
 
+
+@strawberry.type
+class TaskType(TaskLiteType):
     @strawberry.field
     def created_by(self) -> UserResponse:
         return UserResponse.from_orm_model(self._instance.created_by)

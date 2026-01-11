@@ -433,8 +433,21 @@ type ContactLandingPage implements LandingPageInterfaceBase {
   tags: [String!]
 }
 
+type ContactLiteResponse {
+  id: UUID!
+  createdAt: datetime!
+  firstName: String!
+  lastName: String!
+  email: String
+  phone: String
+  role: String
+  territory: String
+  tags: [String!]
+  notes: String
+}
+
 type ContactRelatedEntitiesResponse {
-  companies: [CompanyResponse!]!
+  companies: [CompanyLiteResponse!]!
 }
 
 type ContactResponse {
@@ -702,6 +715,7 @@ input CustomerInput {
   published: Boolean! = false
   isParent: Boolean! = false
   parentId: UUID = null
+  buyingGroupId: UUID = null
 }
 
 type CustomerLandingPage implements LandingPageInterfaceBase {
@@ -712,6 +726,8 @@ type CustomerLandingPage implements LandingPageInterfaceBase {
   companyName: String!
   published: Boolean!
   isParent: Boolean!
+  buyingGroup: String
+  parent: String
   insideReps: [String!]!
   outsideReps: [String!]!
 }
@@ -722,6 +738,7 @@ type CustomerLiteResponse {
   published: Boolean!
   isParent: Boolean!
   parentId: UUID
+  buyingGroupId: UUID
 }
 
 type CustomerResponse {
@@ -730,9 +747,12 @@ type CustomerResponse {
   published: Boolean!
   isParent: Boolean!
   parentId: UUID
+  buyingGroupId: UUID
   createdBy: UserResponse!
   outsideReps: [CustomerSplitRateResponse!]!
   insideReps: [CustomerSplitRateResponse!]!
+  parent: CustomerLiteResponse
+  buyingGroup: CustomerLiteResponse
 }
 
 type CustomerSplitRateResponse {
@@ -1325,7 +1345,7 @@ type JobLiteType {
 
 type JobRelatedEntitiesResponse {
   preOpportunities: [PreOpportunityLiteResponse!]!
-  contacts: [ContactResponse!]!
+  contacts: [ContactLiteResponse!]!
   companies: [CompanyLiteResponse!]!
   quotes: [QuoteLiteResponse!]!
   orders: [OrderLiteResponse!]!
@@ -1625,19 +1645,29 @@ type NoteLandingPage implements LandingPageInterfaceBase {
   linkedEntities: [LinkedEntity!]!
 }
 
+type NoteLiteType {
+  id: UUID!
+  createdAt: datetime!
+  title: String!
+  content: String!
+  tags: [String!]
+  mentions: [UUID!]
+  isPublic: Boolean!
+}
+
 type NoteRelatedEntitiesResponse {
-  jobs: [JobType!]!
-  tasks: [TaskType!]!
-  contacts: [ContactResponse!]!
-  companies: [CompanyResponse!]!
+  jobs: [JobLiteType!]!
+  tasks: [TaskLiteType!]!
+  contacts: [ContactLiteResponse!]!
+  companies: [CompanyLiteResponse!]!
   preOpportunities: [PreOpportunityLiteResponse!]!
-  quotes: [QuoteResponse!]!
-  orders: [OrderResponse!]!
+  quotes: [QuoteLiteResponse!]!
+  orders: [OrderLiteResponse!]!
   invoices: [InvoiceLiteResponse!]!
-  checks: [CheckResponse!]!
-  factories: [FactoryResponse!]!
-  products: [ProductResponse!]!
-  customers: [CustomerResponse!]!
+  checks: [CheckLiteResponse!]!
+  factories: [FactoryLiteResponse!]!
+  products: [ProductLiteResponse!]!
+  customers: [CustomerLiteResponse!]!
 }
 
 type NoteType {
@@ -2453,6 +2483,8 @@ type Query {
   listCustomerFactorySalesReps(customerId: UUID = null, factoryId: UUID = null): [CustomerFactorySalesRepResponse!]!
   customer(id: UUID!): CustomerResponse!
   customerSearch(searchTerm: String!, published: Boolean! = true, limit: Int! = 20): [CustomerResponse!]!
+  customerChildren(parentId: UUID!): [CustomerLiteResponse!]!
+  customerBuyingGroupMembers(buyingGroupId: UUID!): [CustomerLiteResponse!]!
   factory(id: UUID!): FactoryResponse!
   factorySearch(searchTerm: String!, published: Boolean! = true, limit: Int! = 20, useCustomOrder: Boolean! = false): [FactoryResponse!]!
   productCategories(factoryId: UUID, parentId: UUID, grandparentId: UUID): [ProductCategoryResponse!]!
@@ -2960,6 +2992,18 @@ type TaskLandingPage implements LandingPageInterfaceBase {
   linkedEntities: [LinkedEntity!]!
 }
 
+type TaskLiteType {
+  id: UUID!
+  createdAt: datetime!
+  title: String!
+  status: TaskStatus!
+  priority: TaskPriority!
+  description: String
+  dueDate: Date
+  reminderDate: Date
+  tags: [String!]
+}
+
 enum TaskPriority {
   LOW
   NORMAL
@@ -2968,18 +3012,18 @@ enum TaskPriority {
 }
 
 type TaskRelatedEntitiesResponse {
-  jobs: [JobType!]!
-  contacts: [ContactResponse!]!
-  companies: [CompanyResponse!]!
-  notes: [NoteType!]!
+  jobs: [JobLiteType!]!
+  contacts: [ContactLiteResponse!]!
+  companies: [CompanyLiteResponse!]!
+  notes: [NoteLiteType!]!
   preOpportunities: [PreOpportunityLiteResponse!]!
-  quotes: [QuoteResponse!]!
-  orders: [OrderResponse!]!
+  quotes: [QuoteLiteResponse!]!
+  orders: [OrderLiteResponse!]!
   invoices: [InvoiceLiteResponse!]!
-  checks: [CheckResponse!]!
-  factories: [FactoryResponse!]!
-  products: [ProductResponse!]!
-  customers: [CustomerResponse!]!
+  checks: [CheckLiteResponse!]!
+  factories: [FactoryLiteResponse!]!
+  products: [ProductLiteResponse!]!
+  customers: [CustomerLiteResponse!]!
 }
 
 enum TaskStatus {
