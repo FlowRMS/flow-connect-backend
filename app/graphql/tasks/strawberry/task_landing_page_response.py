@@ -1,5 +1,3 @@
-"""Landing page response type for Tasks entity."""
-
 from datetime import date
 from typing import Any, Self
 from uuid import UUID
@@ -16,13 +14,11 @@ from app.graphql.common.linked_entity import LinkedEntity
 
 @strawberry.type(name="TaskLandingPage")
 class TaskLandingPageResponse(LandingPageInterfaceBase):
-    """Landing page response for tasks with key fields for list views."""
-
     title: str
     status: TaskStatus
     priority: TaskPriority
     description: str | None
-    assigned_to: str | None
+    assignees: list[str]
     due_date: date | None
     reminder_date: date | None
     tags: list[str] | None
@@ -30,7 +26,6 @@ class TaskLandingPageResponse(LandingPageInterfaceBase):
 
     @classmethod
     def from_orm_model(cls, row: Row[Any]) -> Self:
-        """Create an instance from a SQLAlchemy Row result."""
         data = cls.unpack_row(row)
         linked_entities_data = data.pop("linked_entities", [])
         data["linked_entities"] = [
@@ -40,5 +35,9 @@ class TaskLandingPageResponse(LandingPageInterfaceBase):
                 entity_type=EntityType(item["entity_type"]),
             )
             for item in linked_entities_data
+        ]
+        assignees_data = data.pop("assignees", []) or []
+        data["assignees"] = [
+            item["name"] for item in assignees_data if item.get("name")
         ]
         return cls(**data)

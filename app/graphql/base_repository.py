@@ -176,7 +176,7 @@ class BaseRepository(Generic[T]):
         result = await self.session.execute(query)
         return list(result.scalars().all())
 
-    async def create(self, entity: T) -> T:
+    async def prepare_create(self, entity: T) -> T:
         if hasattr(entity, "created_by_id"):
             setattr(entity, "created_by_id", self.context.auth_info.flow_user_id)
 
@@ -189,6 +189,10 @@ class BaseRepository(Generic[T]):
 
         await self._run_processors(RepositoryEvent.PRE_CREATE, entity)
 
+        return entity
+
+    async def create(self, entity: T) -> T:
+        entity = await self.prepare_create(entity)
         self.session.add(entity)
         await self.session.flush()
 

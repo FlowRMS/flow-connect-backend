@@ -8,13 +8,14 @@ from commons.db.v6.models import Order
 from commons.dtos.common.dto_loader_service import DTOLoaderService
 from commons.dtos.order.order_detail_dto import OrderDetailDTO
 from commons.dtos.order.order_dto import OrderDTO
+from loguru import logger
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.graphql.orders.services.order_service import OrderService
 from app.graphql.orders.strawberry.order_detail_input import OrderDetailInput
 from app.graphql.orders.strawberry.order_input import OrderInput
 
-from .base import BaseEntityConverter, ConversionResult
+from .base import BaseEntityConverter, BulkCreateResult, ConversionResult
 from .entity_mapping import EntityMapping
 from .exceptions import (
     EndUserRequiredError,
@@ -163,3 +164,20 @@ class OrderConverter(BaseEntityConverter[OrderDTO, OrderInput, Order]):
         epoch = pendulum.now(tz="UTC").int_timestamp
         timestamp = epoch * 1000 + pendulum.now(tz="UTC").microsecond // 1000
         return f"ORD-{timestamp}"
+
+    @override
+    async def create_entities_bulk(
+        self,
+        inputs: list[OrderInput],
+    ) -> BulkCreateResult[Order]:
+        if not inputs:
+            return BulkCreateResult(created=[], skipped_indices=[])
+
+        try:
+            created = await self.order_service.create_orders_bulk(inputs)
+            skipped_count = len(inputs) - len(created)
+            skipped_indices = list(range(len(created), len(created) + skipped_count))
+            return BulkCreateResult(created=created, skipped_indices=skipped_indices)
+        except Exception as e:
+            logger.error(f"Bulk order creation failed: {e}, falling back to sequential")
+            return await super().create_entities_bulk(inputs)

@@ -52,35 +52,36 @@ class SetForCreationService:
             and pe.entity_type == EntityPendingType.ORDERS
         ]
 
+        if not order_entities:
+            return
+
+        dtos: list[OrderDTO] = []
+        mappings: list[EntityMapping] = []
+        valid_pending_entities: list[PendingEntity] = []
+
         for pe in order_entities:
-            order_id = await self._create_order_for_pending_entity(pe, entity_mappings)
-            if order_id:
-                self._update_mappings_with_order_id(entity_mappings, pe, order_id)
+            if not pe.dto_ids:
+                logger.warning(f"PendingEntity {pe.id} has no dto_ids")
+                continue
+            dto_id = pe.dto_ids[0]
+            dto = OrderDTO.model_validate(pe.extracted_data)
+            mapping = entity_mappings.get(dto_id, EntityMapping())
+            dtos.append(dto)
+            mappings.append(mapping)
+            valid_pending_entities.append(pe)
 
-    async def _create_order_for_pending_entity(
-        self,
-        pe: PendingEntity,
-        entity_mappings: dict[UUID, EntityMapping],
-    ) -> UUID | None:
-        if not pe.dto_ids:
-            logger.warning(f"PendingEntity {pe.id} has no dto_ids for SET_FOR_CREATION")
-            return None
+        if not dtos:
+            return
 
-        dto_id = pe.dto_ids[0]
-        dto = OrderDTO.model_validate(pe.extracted_data)
-        mapping = entity_mappings.get(dto_id, EntityMapping())
+        inputs = await self._order_converter.to_inputs_bulk(dtos, mappings)
+        if not inputs:
+            return
 
-        try:
-            result = await self._order_converter.to_input(dto, mapping)
-            if result.is_error() or result.value is None:
-                logger.error(f"Failed to convert order: {result.unwrap_error()}")
-                return None
-            order = await self._order_converter.create_entity(result.unwrap())
+        result = await self._order_converter.create_entities_bulk(inputs)
+
+        for order, pe in zip(result.created, valid_pending_entities, strict=False):
+            self._update_mappings_with_order_id(entity_mappings, pe, order.id)
             logger.info(f"Created order {order.id} for SET_FOR_CREATION")
-            return order.id
-        except Exception as e:
-            logger.error(f"Failed to create order for SET_FOR_CREATION: {e}")
-            return None
 
     async def _create_invoices(
         self,

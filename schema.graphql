@@ -3,7 +3,7 @@ directive @rolePermissionAccess on FIELD_DEFINITION
 input AddressInput {
   sourceId: UUID!
   sourceType: AddressSourceTypeEnum!
-  addressType: AddressTypeEnum! = OTHER
+  addressTypes: [AddressTypeEnum!]!
   line1: String!
   city: String!
   country: String!
@@ -19,7 +19,7 @@ type AddressResponse {
   createdAt: datetime!
   sourceId: UUID!
   sourceType: AddressSourceTypeEnum!
-  addressType: AddressTypeEnum!
+  addressTypes: [AddressTypeEnum!]!
   line1: String!
   line2: String
   city: String!
@@ -405,6 +405,31 @@ type CompanyResponse {
 enum CompanyType {
   CUSTOMER
   MANUFACTURER
+  ENGINEERING_FIRM
+  CONSULTING_ENGINEER
+  ELECTRICAL_ENGINEER
+  MEP_ENGINEER
+  ARCHITECT
+  LIGHTING_DESIGNER
+  SPECIFIER
+  ELECTRICAL_CONTRACTOR
+  GENERAL_CONTRACTOR
+  DESIGN_BUILD_FIRM
+  EPC
+  SYSTEMS_INTEGRATOR
+  CONTROLS_CONTRACTOR
+  LOW_VOLTAGE_CONTRACTOR
+  BUILDING_OWNER
+  DEVELOPER
+  PROPERTY_MANAGEMENT_COMPANY
+  FACILITY_MANAGEMENT_COMPANY
+  UTILITY_COMPANY
+  MUNICIPALITY_PUBLIC_AUTHORITY
+  AHJ
+  COMMISSIONING_AGENT
+  TESTING_INSPECTION_AGENCY
+  ENERGY_PROGRAM_ADMINISTRATOR
+  TRADE_ASSOCIATION
 }
 
 input ContactInput {
@@ -433,8 +458,21 @@ type ContactLandingPage implements LandingPageInterfaceBase {
   tags: [String!]
 }
 
+type ContactLiteResponse {
+  id: UUID!
+  createdAt: datetime!
+  firstName: String!
+  lastName: String!
+  email: String
+  phone: String
+  role: String
+  territory: String
+  tags: [String!]
+  notes: String
+}
+
 type ContactRelatedEntitiesResponse {
-  companies: [CompanyResponse!]!
+  companies: [CompanyLiteResponse!]!
 }
 
 type ContactResponse {
@@ -645,6 +683,7 @@ enum CreditType {
   PRICE_ADJUSTMENT
   DEFECTIVE
   OTHER
+  SHORT_SHIP
 }
 
 input CriteriaConditionInput {
@@ -701,6 +740,7 @@ input CustomerInput {
   published: Boolean! = false
   isParent: Boolean! = false
   parentId: UUID = null
+  buyingGroupId: UUID = null
 }
 
 type CustomerLandingPage implements LandingPageInterfaceBase {
@@ -711,6 +751,8 @@ type CustomerLandingPage implements LandingPageInterfaceBase {
   companyName: String!
   published: Boolean!
   isParent: Boolean!
+  buyingGroup: String
+  parent: String
   insideReps: [String!]!
   outsideReps: [String!]!
 }
@@ -721,6 +763,7 @@ type CustomerLiteResponse {
   published: Boolean!
   isParent: Boolean!
   parentId: UUID
+  buyingGroupId: UUID
 }
 
 type CustomerResponse {
@@ -729,9 +772,12 @@ type CustomerResponse {
   published: Boolean!
   isParent: Boolean!
   parentId: UUID
+  buyingGroupId: UUID
   createdBy: UserResponse!
   outsideReps: [CustomerSplitRateResponse!]!
   insideReps: [CustomerSplitRateResponse!]!
+  parent: CustomerLiteResponse
+  buyingGroup: CustomerLiteResponse
 }
 
 type CustomerSplitRateResponse {
@@ -1324,7 +1370,7 @@ type JobLiteType {
 
 type JobRelatedEntitiesResponse {
   preOpportunities: [PreOpportunityLiteResponse!]!
-  contacts: [ContactResponse!]!
+  contacts: [ContactLiteResponse!]!
   companies: [CompanyLiteResponse!]!
   quotes: [QuoteLiteResponse!]!
   orders: [OrderLiteResponse!]!
@@ -1608,6 +1654,7 @@ input NoteInput {
   content: String!
   tags: [String!]
   mentions: [UUID!]
+  isPublic: Boolean! = false
 }
 
 type NoteLandingPage implements LandingPageInterfaceBase {
@@ -1619,22 +1666,33 @@ type NoteLandingPage implements LandingPageInterfaceBase {
   content: String!
   tags: [String!]
   mentions: [UUID!]
+  isPublic: Boolean!
   linkedEntities: [LinkedEntity!]!
 }
 
+type NoteLiteType {
+  id: UUID!
+  createdAt: datetime!
+  title: String!
+  content: String!
+  tags: [String!]
+  mentions: [UUID!]
+  isPublic: Boolean!
+}
+
 type NoteRelatedEntitiesResponse {
-  jobs: [JobType!]!
-  tasks: [TaskType!]!
-  contacts: [ContactResponse!]!
-  companies: [CompanyResponse!]!
+  jobs: [JobLiteType!]!
+  tasks: [TaskLiteType!]!
+  contacts: [ContactLiteResponse!]!
+  companies: [CompanyLiteResponse!]!
   preOpportunities: [PreOpportunityLiteResponse!]!
-  quotes: [QuoteResponse!]!
-  orders: [OrderResponse!]!
+  quotes: [QuoteLiteResponse!]!
+  orders: [OrderLiteResponse!]!
   invoices: [InvoiceLiteResponse!]!
-  checks: [CheckResponse!]!
-  factories: [FactoryResponse!]!
-  products: [ProductResponse!]!
-  customers: [CustomerResponse!]!
+  checks: [CheckLiteResponse!]!
+  factories: [FactoryLiteResponse!]!
+  products: [ProductLiteResponse!]!
+  customers: [CustomerLiteResponse!]!
 }
 
 type NoteType {
@@ -1644,6 +1702,7 @@ type NoteType {
   content: String!
   tags: [String!]
   mentions: [UUID!]
+  isPublic: Boolean!
   createdBy: UserResponse!
   mentionedUsers: [UserResponse!]!
 }
@@ -1818,6 +1877,7 @@ type OrderDetailResponse {
   insideSplitRates: [OrderInsideRepResponse!]!
   product: ProductLiteResponse
   uom: ProductUomResponse
+  acknowledgements: [OrderAcknowledgementResponse!]!
 }
 
 enum OrderHeaderStatus {
@@ -2448,6 +2508,8 @@ type Query {
   listCustomerFactorySalesReps(customerId: UUID = null, factoryId: UUID = null): [CustomerFactorySalesRepResponse!]!
   customer(id: UUID!): CustomerResponse!
   customerSearch(searchTerm: String!, published: Boolean! = true, limit: Int! = 20): [CustomerResponse!]!
+  customerChildren(parentId: UUID!): [CustomerLiteResponse!]!
+  customerBuyingGroupMembers(buyingGroupId: UUID!): [CustomerLiteResponse!]!
   factory(id: UUID!): FactoryResponse!
   factorySearch(searchTerm: String!, published: Boolean! = true, limit: Int! = 20, useCustomOrder: Boolean! = false): [FactoryResponse!]!
   productCategories(factoryId: UUID, parentId: UUID, grandparentId: UUID): [ProductCategoryResponse!]!
@@ -2933,7 +2995,7 @@ input TaskInput {
   status: TaskStatus!
   priority: TaskPriority!
   description: String
-  assignedToId: UUID
+  assigneeIds: [UUID!]
   dueDate: Date
   reminderDate: Date
   tags: [String!]
@@ -2948,11 +3010,23 @@ type TaskLandingPage implements LandingPageInterfaceBase {
   status: TaskStatus!
   priority: TaskPriority!
   description: String
-  assignedTo: String
+  assignees: [String!]!
   dueDate: Date
   reminderDate: Date
   tags: [String!]
   linkedEntities: [LinkedEntity!]!
+}
+
+type TaskLiteType {
+  id: UUID!
+  createdAt: datetime!
+  title: String!
+  status: TaskStatus!
+  priority: TaskPriority!
+  description: String
+  dueDate: Date
+  reminderDate: Date
+  tags: [String!]
 }
 
 enum TaskPriority {
@@ -2963,18 +3037,18 @@ enum TaskPriority {
 }
 
 type TaskRelatedEntitiesResponse {
-  jobs: [JobType!]!
-  contacts: [ContactResponse!]!
-  companies: [CompanyResponse!]!
-  notes: [NoteType!]!
+  jobs: [JobLiteType!]!
+  contacts: [ContactLiteResponse!]!
+  companies: [CompanyLiteResponse!]!
+  notes: [NoteLiteType!]!
   preOpportunities: [PreOpportunityLiteResponse!]!
-  quotes: [QuoteResponse!]!
-  orders: [OrderResponse!]!
+  quotes: [QuoteLiteResponse!]!
+  orders: [OrderLiteResponse!]!
   invoices: [InvoiceLiteResponse!]!
-  checks: [CheckResponse!]!
-  factories: [FactoryResponse!]!
-  products: [ProductResponse!]!
-  customers: [CustomerResponse!]!
+  checks: [CheckLiteResponse!]!
+  factories: [FactoryLiteResponse!]!
+  products: [ProductLiteResponse!]!
+  customers: [CustomerLiteResponse!]!
 }
 
 enum TaskStatus {
@@ -2991,11 +3065,11 @@ type TaskType {
   status: TaskStatus!
   priority: TaskPriority!
   description: String
-  assignedToId: UUID
   dueDate: Date
   reminderDate: Date
   tags: [String!]
   createdBy: UserResponse!
+  assignees: [UserResponse!]!
 }
 
 scalar UUID

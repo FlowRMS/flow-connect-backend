@@ -25,12 +25,12 @@ class ShippingCarrierAddressInput:
     line_1: str
     city: str
     country: str
+    address_types: list[AddressTypeEnum]
     line_2: str | None = None
     state: str | None = None
     zip_code: str | None = None
     notes: str | None = None
     is_primary: bool = True
-    address_type: AddressTypeEnum = AddressTypeEnum.BILLING
 
 
 @strawberry.type
