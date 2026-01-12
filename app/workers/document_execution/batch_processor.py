@@ -107,7 +107,7 @@ class DocumentBatchProcessor:
                 valid_inputs.append(result.unwrap())
                 valid_indices.append(i)
             except Exception as e:
-                logger.error(f"Error converting DTO {i}: {e}")
+                logger.exception(f"Error converting DTO {i}: {e}")
                 conversion_errors[i] = str(e)
 
         for i in user_skipped_indices:
