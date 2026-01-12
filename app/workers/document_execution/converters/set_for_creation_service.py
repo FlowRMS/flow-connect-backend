@@ -3,12 +3,12 @@ from uuid import UUID
 from commons.db.v6.ai.entities.enums import ConfirmationStatus, EntityPendingType
 from commons.db.v6.ai.entities.pending_entity import PendingEntity
 from commons.dtos.check.check_detail_dto import CheckDetailDTO
-from commons.dtos.invoice.invoice_dto import InvoiceDTO
 from commons.dtos.order.order_dto import OrderDTO
 from loguru import logger
 
 from .adjustment_converter import AdjustmentConverter
 from .credit_converter import CreditConverter
+from .dto_grouper import GroupedInvoiceDTO, group_invoice_dtos, group_order_dtos
 from .entity_mapping import EntityMapping
 from .invoice_converter import InvoiceConverter
 from .order_converter import OrderConverter
@@ -55,20 +55,20 @@ class SetForCreationService:
         if not order_entities:
             return
 
+        grouped_orders = group_order_dtos(order_entities, entity_mappings)
+        if not grouped_orders:
+            return
+
         dtos: list[OrderDTO] = []
         mappings: list[EntityMapping] = []
-        valid_pending_entities: list[PendingEntity] = []
 
-        for pe in order_entities:
-            if not pe.dto_ids:
-                logger.warning(f"PendingEntity {pe.id} has no dto_ids")
+        for grouped in grouped_orders:
+            if not grouped.dto_ids:
                 continue
-            dto_id = pe.dto_ids[0]
-            dto = OrderDTO.model_validate(pe.extracted_data)
-            mapping = entity_mappings.get(dto_id, EntityMapping())
-            dtos.append(dto)
+            first_dto_id = grouped.dto_ids[0]
+            mapping = entity_mappings.get(first_dto_id, EntityMapping())
+            dtos.append(grouped.dto)
             mappings.append(mapping)
-            valid_pending_entities.append(pe)
 
         if not dtos:
             return
@@ -79,9 +79,13 @@ class SetForCreationService:
 
         result = await self._order_converter.create_entities_bulk(inputs)
 
-        for order, pe in zip(result.created, valid_pending_entities, strict=False):
-            self._update_mappings_with_order_id(entity_mappings, pe, order.id)
-            logger.info(f"Created order {order.id} for SET_FOR_CREATION")
+        for order, grouped in zip(result.created, grouped_orders, strict=False):
+            for pe in grouped.pending_entities:
+                self._update_mappings_with_order_id(entity_mappings, pe, order.id)
+            logger.info(
+                f"Created order {order.id} with {len(grouped.dto.details)} details "
+                f"(grouped from {len(grouped.pending_entities)} records)"
+            )
 
     async def _create_invoices(
         self,
@@ -95,33 +99,41 @@ class SetForCreationService:
             and pe.entity_type == EntityPendingType.INVOICES
         ]
 
-        for pe in invoice_entities:
-            invoice_id = await self._create_invoice_for_pending_entity(
-                pe, entity_mappings
-            )
-            if invoice_id:
-                self._update_mappings_with_invoice_id(entity_mappings, pe, invoice_id)
+        if not invoice_entities:
+            return
 
-    async def _create_invoice_for_pending_entity(
+        grouped_invoices = group_invoice_dtos(invoice_entities, entity_mappings)
+
+        for grouped in grouped_invoices:
+            invoice_id = await self._create_grouped_invoice(grouped, entity_mappings)
+            if invoice_id:
+                for pe in grouped.pending_entities:
+                    self._update_mappings_with_invoice_id(
+                        entity_mappings, pe, invoice_id
+                    )
+
+    async def _create_grouped_invoice(
         self,
-        pe: PendingEntity,
+        grouped: GroupedInvoiceDTO,
         entity_mappings: dict[UUID, EntityMapping],
     ) -> UUID | None:
-        if not pe.dto_ids:
-            logger.warning(f"PendingEntity {pe.id} has no dto_ids for SET_FOR_CREATION")
+        if not grouped.dto_ids:
+            logger.warning("Grouped invoice has no dto_ids for SET_FOR_CREATION")
             return None
 
-        dto_id = pe.dto_ids[0]
-        dto = InvoiceDTO.model_validate(pe.extracted_data)
-        mapping = entity_mappings.get(dto_id, EntityMapping())
+        first_dto_id = grouped.dto_ids[0]
+        mapping = entity_mappings.get(first_dto_id, EntityMapping())
 
         try:
-            result = await self._invoice_converter.to_input(dto, mapping)
+            result = await self._invoice_converter.to_input(grouped.dto, mapping)
             if result.is_error() or result.value is None:
                 logger.error(f"Failed to convert invoice: {result.unwrap_error()}")
                 return None
             invoice = await self._invoice_converter.create_entity(result.value)
-            logger.info(f"Created invoice {invoice.id} for SET_FOR_CREATION")
+            logger.info(
+                f"Created invoice {invoice.id} with {len(grouped.dto.details)} details "
+                f"(grouped from {len(grouped.pending_entities)} records)"
+            )
             return invoice.id
         except Exception as e:
             logger.error(f"Failed to create invoice for SET_FOR_CREATION: {e}")

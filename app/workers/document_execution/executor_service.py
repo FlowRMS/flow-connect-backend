@@ -36,12 +36,13 @@ from .batch_processor import DocumentBatchProcessor
 from .converters.base import DEFAULT_BATCH_SIZE, BaseEntityConverter
 
 DOCUMENT_TO_LINK_ENTITY_TYPE: dict[DocumentEntityType, EntityType] = {
+    DocumentEntityType.QUOTES: EntityType.QUOTE,
     DocumentEntityType.ORDERS: EntityType.ORDER,
+    DocumentEntityType.INVOICES: EntityType.INVOICE,
+    DocumentEntityType.CHECKS: EntityType.CHECK,
     DocumentEntityType.CUSTOMERS: EntityType.CUSTOMER,
     DocumentEntityType.FACTORIES: EntityType.FACTORY,
     DocumentEntityType.PRODUCTS: EntityType.PRODUCT,
-    DocumentEntityType.INVOICES: EntityType.INVOICE,
-    DocumentEntityType.CHECKS: EntityType.CHECK,
 }
 
 

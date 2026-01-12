@@ -1,4 +1,4 @@
-from datetime import datetime
+# from datetime import datetime
 from decimal import Decimal
 from typing import Self
 from uuid import UUID
@@ -13,7 +13,7 @@ from app.core.db.adapters.dto import DTOMixin
 class QuoteSplitRateResponse(DTOMixin[QuoteSplitRate]):
     _instance: strawberry.Private[QuoteSplitRate]
     id: UUID
-    created_at: datetime
+    # created_at: datetime
     quote_detail_id: UUID
     user_id: UUID
     split_rate: Decimal | None
@@ -24,7 +24,7 @@ class QuoteSplitRateResponse(DTOMixin[QuoteSplitRate]):
         return cls(
             _instance=model,
             id=model.id,
-            created_at=model.created_at,
+            # created_at=model.created_at,
             quote_detail_id=model.quote_detail_id,
             user_id=model.user_id,
             split_rate=model.split_rate,
