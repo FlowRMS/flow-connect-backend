@@ -1,5 +1,11 @@
 directive @rolePermissionAccess on FIELD_DEFINITION
 
+input AddCompanyToJobInput {
+  jobId: UUID!
+  companyId: UUID!
+  role: JobCompanyRole!
+}
+
 input AddressInput {
   sourceId: UUID!
   sourceType: AddressSourceTypeEnum!
@@ -1322,6 +1328,20 @@ enum InvoiceStatus {
 """The `JSON` scalar type represents JSON values as specified by ECMA-404"""
 scalar JSON
 
+type JobCompanyLinkResponse {
+  id: UUID!
+  jobId: UUID!
+  companyId: UUID!
+  role: JobCompanyRole!
+  createdAt: datetime!
+  company: CompanyLiteResponse!
+}
+
+enum JobCompanyRole {
+  SPECIFIER
+  AWARDEE
+}
+
 input JobInput {
   jobName: String!
   statusId: UUID!
@@ -1528,6 +1548,8 @@ type Mutation {
   updateInvoice(input: InvoiceInput!): InvoiceResponse!
   deleteInvoice(id: UUID!): Boolean!
   createInvoiceFromOrder(orderId: UUID!, invoiceNumber: String!, factoryId: UUID!, orderDetailIds: [UUID!] = null, dueDate: Date = null): InvoiceResponse!
+  addCompanyToJob(input: AddCompanyToJobInput!): JobCompanyLinkResponse!
+  removeCompanyFromJob(input: RemoveCompanyFromJobInput!): Boolean!
   createJob(input: JobInput!): JobType!
   updateJob(id: UUID!, input: JobInput!): JobType!
   deleteJob(id: UUID!): Boolean!
@@ -2466,6 +2488,9 @@ type Query {
   invoiceSearch(searchTerm: String!, limit: Int! = 20, openOnly: Boolean! = false, unlockedOnly: Boolean! = false): [InvoiceLiteResponse!]!
   searchOpenInvoices(factoryId: UUID!, startFrom: Date!): [InvoiceLiteOrderResponse!]!
   invoicesByOrderId(orderId: UUID!): [InvoiceLiteResponse!]!
+  jobCompanyLinks(jobId: UUID!): [JobCompanyLinkResponse!]!
+  jobSpecifiers(jobId: UUID!): [JobCompanyLinkResponse!]!
+  jobAwardees(jobId: UUID!): [JobCompanyLinkResponse!]!
   job(id: UUID!): JobType!
   jobStatuses: [JobStatusType!]!
   jobRelatedEntities(jobId: UUID!): JobRelatedEntitiesResponse! @deprecated(reason: "Use related_entities(source_type: JOBS, entity_id: UUID)")
@@ -2866,6 +2891,12 @@ type RelatedEntitiesResponse {
   factories: [FactoryLiteResponse!]
   products: [ProductLiteResponse!]
   customers: [CustomerLiteResponse!]
+}
+
+input RemoveCompanyFromJobInput {
+  jobId: UUID!
+  companyId: UUID!
+  role: JobCompanyRole!
 }
 
 enum RepTypeEnum {

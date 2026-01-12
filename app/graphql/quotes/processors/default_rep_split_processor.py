@@ -7,9 +7,11 @@ from commons.db.v6.core.customers.customer_split_rate import CustomerSplitRate
 from commons.db.v6.core.factories.factory_split_rate import FactorySplitRate
 from commons.db.v6.crm.quotes import Quote, QuoteDetail, QuoteInsideRep, QuoteSplitRate
 from commons.db.v6.user.rep_type import RepTypeEnum
+from loguru import logger
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.core.exceptions import OutsideRepsRequiredError
 from app.core.processors import BaseProcessor, EntityContext, RepositoryEvent
 
 
@@ -29,6 +31,19 @@ class DefaultRepSplitProcessor(BaseProcessor[Quote]):
         for detail in quote.details:
             await self._apply_default_inside_reps(detail)
             await self._apply_default_outside_reps(detail, sold_to_customer_id)
+
+        for detail in quote.details:
+            if not detail.inside_split_rates:
+                logger.error(
+                    f"Inside split rates are still empty for quote detail "
+                    f"{detail.item_number} after applying defaults."
+                )
+
+            if not detail.outside_split_rates:
+                raise OutsideRepsRequiredError(
+                    f"Outside split rates are required for quote detail "
+                    f"{detail.item_number} but none were found after applying defaults."
+                )
 
     async def _apply_default_inside_reps(self, detail: QuoteDetail) -> None:
         if detail.inside_split_rates:
@@ -59,7 +74,6 @@ class DefaultRepSplitProcessor(BaseProcessor[Quote]):
             customer_factory_reps = await self._get_customer_factory_split_rates(
                 customer_id, detail.factory_id
             )
-            print(F"Customer Factory Reps: {customer_factory_reps}")
             if customer_factory_reps:
                 detail.outside_split_rates = [
                     QuoteSplitRate(
@@ -73,7 +87,6 @@ class DefaultRepSplitProcessor(BaseProcessor[Quote]):
 
         # Fallback to customer outside reps
         customer_outside_reps = await self._get_customer_outside_reps(customer_id)
-        print(F"Customer Outside Reps: {customer_outside_reps}")
         detail.outside_split_rates = [
             QuoteSplitRate(
                 user_id=rep.user_id,
