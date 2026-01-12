@@ -1,7 +1,7 @@
 """add job_company_links table
 
 Revision ID: add_job_company_links
-Revises: uq_invoice_adjustment_number
+Revises: a345ab2dcc2e
 Create Date: 2026-01-12
 
 """
@@ -14,7 +14,7 @@ from sqlalchemy.dialects import postgresql
 from alembic import op
 
 revision: str = "add_job_company_links"
-down_revision: str | None = "uq_invoice_adjustment_number"
+down_revision: str | None = "a345ab2dcc2e"
 branch_labels: str | Sequence[str] | None = None
 depends_on: str | Sequence[str] | None = None
 
