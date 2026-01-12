@@ -2,6 +2,7 @@ import uuid
 from typing import ClassVar, Generic, TypeVar
 from uuid import UUID
 
+from loguru import logger
 import pendulum
 from commons.db.v6 import BaseModel, RbacPrivilegeTypeEnum, RbacResourceEnum
 from commons.db.v6.crm.links.entity_type import EntityType
@@ -242,7 +243,8 @@ class BaseRepository(Generic[T]):
             await self._run_processors(RepositoryEvent.POST_DELETE, entity)
 
             return True
-        except Exception:
+        except Exception as e:
+            logger.exception(f"Deletion failed: {e}")
             raise DeletionError(
                 f"Can not delete {self.model_class.__name__} as it is linked to other records"
             )

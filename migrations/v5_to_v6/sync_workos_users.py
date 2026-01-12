@@ -195,10 +195,6 @@ async def _sync_single_user(
                 f"WorkOS user {user.email} has mismatched external_id "
                 f"({external_id} != {user.id})"
             )
-            _ = await client.user_management.update_user(
-                user_id=workos_user_id,
-                external_id=str(user.id),
-            )
     else:
         logger.info(f"Creating new WorkOS user for {user.email}")
 
