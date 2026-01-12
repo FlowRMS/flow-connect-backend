@@ -12,9 +12,11 @@ from commons.db.v6.core.customers.customer_factory_sales_rep import (
 from commons.db.v6.core.customers.customer_split_rate import CustomerSplitRate
 from commons.db.v6.core.factories.factory_split_rate import FactorySplitRate
 from commons.db.v6.user.rep_type import RepTypeEnum
+from loguru import logger
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.core.exceptions import OutsideRepsRequiredError
 from app.core.processors import BaseProcessor, EntityContext, RepositoryEvent
 
 
@@ -33,10 +35,28 @@ class OrderDefaultRepSplitProcessor(BaseProcessor[Order]):
         factory_id = order.factory_id
 
         for detail in order.details:
+            logger.debug(
+                f"Applying default rep splits for order detail {detail.id} "
+                f"of order {order.id}"
+            )
             await self._apply_default_inside_reps(detail, factory_id)
             await self._apply_default_outside_reps(
                 detail, sold_to_customer_id, factory_id
             )
+
+        # now check if it is still empty and log, error if needed
+        for detail in order.details:
+            if not detail.inside_split_rates:
+                logger.error(
+                    f"Inside split rates are still empty for order detail {detail.id} "
+                    f"after applying defaults."
+                )
+
+            if not detail.outside_split_rates:
+                raise OutsideRepsRequiredError(
+                    f"Outside split rates are required for order detail {detail.id} "
+                    f"but none were found after applying defaults."
+                )
 
     async def _apply_default_inside_reps(
         self,
@@ -44,9 +64,16 @@ class OrderDefaultRepSplitProcessor(BaseProcessor[Order]):
         factory_id: UUID,
     ) -> None:
         if detail.inside_split_rates:
+            logger.debug(
+                f"Inside reps already set for order detail {detail.id}, skipping default assignment."
+            )
             return
 
         factory_split_rates = await self._get_factory_split_rates(factory_id)
+        logger.debug(
+            f"Assigning default inside reps from factory {factory_id} "
+            f"to order detail {detail.id}: {factory_split_rates}"
+        )
         detail.inside_split_rates = [
             OrderInsideRep(
                 user_id=sr.user_id,
@@ -63,6 +90,9 @@ class OrderDefaultRepSplitProcessor(BaseProcessor[Order]):
         factory_id: UUID,
     ) -> None:
         if detail.outside_split_rates:
+            logger.debug(
+                f"Outside reps already set for order detail {detail.id}, skipping default assignment."
+            )
             return
 
         customer_factory_reps = await self._get_customer_factory_split_rates(
