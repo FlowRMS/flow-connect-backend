@@ -1,15 +1,15 @@
 from uuid import UUID
 
+from commons.db.v6.crm import (
+    SidebarConfiguration,
+    SidebarConfigurationGroup,
+    SidebarConfigurationItem,
+)
 from sqlalchemy import delete, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
 from app.core.context_wrapper import ContextWrapper
-from app.graphql.v2.sidebar.models import (
-    SidebarConfiguration,
-    SidebarConfigurationGroup,
-    SidebarConfigurationItem,
-)
 
 
 class SidebarConfigurationRepository:

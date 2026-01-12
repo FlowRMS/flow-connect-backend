@@ -2,8 +2,8 @@ from dataclasses import dataclass
 
 from commons.auth import AuthInfo
 from commons.db.v6 import RbacRoleEnum
+from commons.db.v6.crm import SidebarConfiguration
 
-from app.graphql.v2.sidebar.models import SidebarConfiguration
 from app.graphql.v2.sidebar.repositories import (
     RoleSidebarRepository,
     SidebarConfigurationRepository,

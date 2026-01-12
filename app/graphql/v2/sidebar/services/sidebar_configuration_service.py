@@ -2,13 +2,13 @@ from uuid import UUID
 
 from commons.auth import AuthInfo
 from commons.db.v6 import RbacRoleEnum
-
-from app.graphql.v2.sidebar.models import (
+from commons.db.v6.crm import (
     RoleSidebarAssignment,
     SidebarConfiguration,
     SidebarConfigurationGroup,
     SidebarConfigurationItem,
 )
+
 from app.graphql.v2.sidebar.repositories import (
     RoleSidebarRepository,
     SidebarConfigurationRepository,

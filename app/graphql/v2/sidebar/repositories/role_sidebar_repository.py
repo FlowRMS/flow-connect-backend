@@ -1,16 +1,16 @@
 from uuid import UUID
 
 from commons.db.v6 import RbacRoleEnum
+from commons.db.v6.crm import (
+    RoleSidebarAssignment,
+    SidebarConfiguration,
+    UserActiveSidebar,
+)
 from sqlalchemy import delete, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
 from app.core.context_wrapper import ContextWrapper
-from app.graphql.v2.sidebar.models import (
-    RoleSidebarAssignment,
-    SidebarConfiguration,
-    UserActiveSidebar,
-)
 
 
 class RoleSidebarRepository:

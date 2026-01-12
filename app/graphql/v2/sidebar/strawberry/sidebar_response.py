@@ -4,8 +4,8 @@ from uuid import UUID
 
 import strawberry
 from commons.db.v6 import RbacRoleEnum
+from commons.db.v6.crm import RoleSidebarAssignment, SidebarConfiguration
 
-from app.graphql.v2.sidebar.models import RoleSidebarAssignment, SidebarConfiguration
 from app.graphql.v2.sidebar.services import (
     EffectiveGroup,
     EffectiveItem,
