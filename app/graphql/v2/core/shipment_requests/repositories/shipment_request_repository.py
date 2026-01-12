@@ -1,6 +1,5 @@
 from uuid import UUID
 
-
 from commons.db.v6.warehouse.shipment_requests import (
     ShipmentRequest,
     ShipmentRequestItem,
@@ -38,8 +37,9 @@ class ShipmentRequestRepository(BaseRepository[ShipmentRequest]):
             select(ShipmentRequest)
             .where(ShipmentRequest.warehouse_id == warehouse_id)
             .options(
-                joinedload(ShipmentRequest.items)
-                .joinedload(ShipmentRequestItem.product),
+                joinedload(ShipmentRequest.items).joinedload(
+                    ShipmentRequestItem.product
+                ),
                 joinedload(ShipmentRequest.factory),
             )
             .limit(limit)

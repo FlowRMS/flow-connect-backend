@@ -72,7 +72,7 @@ class UpdateShipmentRequestInput(BaseInputGQL[ShipmentRequest]):
             status=ShipmentRequestStatus.PENDING,
         )
         request.id = self.id
-        
+
         if self.factory_id:
             request.factory_id = self.factory_id
         if self.priority:
@@ -83,5 +83,5 @@ class UpdateShipmentRequestInput(BaseInputGQL[ShipmentRequest]):
             request.status = self.status
         if self.notes:
             request.notes = self.notes
-            
+
         return request

@@ -54,20 +54,24 @@ class UpdateInventoryItemInput(BaseInputGQL[InventoryItem]):
         # Note: This is an update input, so we return a model with only the fields that are set.
         # In practice, this method might not be used directly for updates if the service handles it field-by-field.
         # But we implement it to satisfy the BaseInputGQL contract.
-        
+
         # Use dummy values for required fields that are not present in update input
         item = InventoryItem(
             inventory_id=UUID(int=0),
-            quantity=self.quantity if self.quantity is not strawberry.UNSET and self.quantity is not None else Decimal(0),
-            status=self.status if self.status != strawberry.UNSET and self.status is not None else InventoryItemStatus.AVAILABLE,
+            quantity=self.quantity
+            if self.quantity is not strawberry.UNSET and self.quantity is not None
+            else Decimal(0),
+            status=self.status
+            if self.status != strawberry.UNSET and self.status is not None
+            else InventoryItemStatus.AVAILABLE,
         )
         item.id = self.id
-        
+
         if self.location_id != strawberry.UNSET:
             item.location_id = self.location_id
         if self.lot_number != strawberry.UNSET:
             item.lot_number = self.lot_number
         if self.received_date != strawberry.UNSET:
             item.received_date = self.received_date
-            
+
         return item
