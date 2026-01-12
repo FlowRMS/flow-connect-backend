@@ -120,10 +120,22 @@ class DocumentExecutorService:
             dtos = await self._parse_dtos(converter, pending_document)
             logger.info(f"Parsed {len(dtos)} DTOs from extracted_data_json")
 
-            await self.set_for_creation_service.process_set_for_creation(
-                pending_entities=pending_document.pending_entities,
-                # dtos=dtos,
-                entity_mappings=entity_mappings,
+            creation_result = (
+                await self.set_for_creation_service.process_set_for_creation(
+                    pending_entities=pending_document.pending_entities,
+                    entity_mappings=entity_mappings,
+                )
+            )
+            if creation_result.has_issues:
+                logger.warning(
+                    f"SET_FOR_CREATION completed with {len(creation_result.issues)} "
+                    f"issues: {creation_result.issues}"
+                )
+            logger.info(
+                f"SET_FOR_CREATION completed: orders={creation_result.orders_created}, "
+                f"invoices={creation_result.invoices_created}, "
+                f"credits={creation_result.credits_created}, "
+                f"adjustments={creation_result.adjustments_created}"
             )
 
             processing_records = await self._batch_processor.execute_bulk(

@@ -2,11 +2,11 @@ import uuid
 from typing import ClassVar, Generic, TypeVar
 from uuid import UUID
 
-from loguru import logger
 import pendulum
 from commons.db.v6 import BaseModel, RbacPrivilegeTypeEnum, RbacResourceEnum
 from commons.db.v6.crm.links.entity_type import EntityType
 from commons.db.v6.crm.links.link_relation_model import LinkRelation
+from loguru import logger
 from sqlalchemy import Result, Select, func, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.sql.base import ExecutableOption
