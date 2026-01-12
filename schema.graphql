@@ -2759,7 +2759,6 @@ input QuoteSplitRateInput {
 
 type QuoteSplitRateResponse {
   id: UUID!
-  createdAt: datetime!
   quoteDetailId: UUID!
   userId: UUID!
   splitRate: Decimal
