@@ -2,10 +2,14 @@ from uuid import UUID
 
 from commons.auth import AuthInfo
 from commons.db.v6.core.products.product import Product, ProductCategory
+from commons.db.v6.core.products.product_cpn import ProductCpn
 from commons.db.v6.crm.links.entity_type import EntityType
 from sqlalchemy.orm import joinedload, lazyload
 
 from app.errors.common_errors import NameAlreadyExistsError, NotFoundError
+from app.graphql.v2.core.products.repositories.product_cpn_repository import (
+    ProductCpnRepository,
+)
 from app.graphql.v2.core.products.repositories.products_repository import (
     ProductsRepository,
 )
@@ -16,10 +20,12 @@ class ProductService:
     def __init__(
         self,
         repository: ProductsRepository,
+        cpn_repository: ProductCpnRepository,
         auth_info: AuthInfo,
     ) -> None:
         super().__init__()
         self.repository = repository
+        self.cpn_repository = cpn_repository
         self.auth_info = auth_info
 
     async def get_by_id(self, product_id: UUID) -> Product:
@@ -104,7 +110,42 @@ class ProductService:
             updated_entities.append(existing_product)
 
         _ = await self.repository.bulk_update(updated_entities)
+        await self._process_cpns(inputs_with_entities)
         return updated_entities
+
+    async def _process_cpns(
+        self,
+        inputs_with_entities: list[tuple[ProductInput, Product]],
+    ) -> None:
+        cpn_pairs: list[tuple[UUID, UUID]] = []
+        for product_input, existing_product in inputs_with_entities:
+            if product_input.cpns:
+                for cpn_input in product_input.cpns:
+                    cpn_pairs.append((existing_product.id, cpn_input.customer_id))
+
+        if not cpn_pairs:
+            return
+
+        existing_cpns = await self.cpn_repository.find_existing_cpns(cpn_pairs)
+
+        cpns_to_create: list[ProductCpn] = []
+        for product_input, existing_product in inputs_with_entities:
+            if not product_input.cpns:
+                continue
+            for cpn_input in product_input.cpns:
+                key = (existing_product.id, cpn_input.customer_id)
+                existing_cpn = existing_cpns.get(key)
+                if existing_cpn:
+                    existing_cpn.customer_part_number = cpn_input.customer_part_number
+                    existing_cpn.unit_price = cpn_input.unit_price
+                    existing_cpn.commission_rate = cpn_input.commission_rate
+                else:
+                    new_cpn = cpn_input.to_orm_model()
+                    new_cpn.product_id = existing_product.id
+                    cpns_to_create.append(new_cpn)
+
+        if cpns_to_create:
+            _ = await self.cpn_repository.bulk_create(cpns_to_create)
 
     async def update(self, product_id: UUID, product_input: ProductInput) -> Product:
         product = product_input.to_orm_model()

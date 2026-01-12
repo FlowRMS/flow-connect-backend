@@ -1,6 +1,7 @@
 from typing import Any, override
 
 from commons.db.v6.commission.checks import Check
+from commons.db.v6.core.factories import Factory
 from sqlalchemy.orm import InstrumentedAttribute
 
 from app.graphql.common.builders.search_query_builder import SearchQueryBuilder
@@ -22,6 +23,14 @@ class CheckSearchQueryBuilder(SearchQueryBuilder[Check]):
     @override
     def get_alias_field(self) -> Any | None:
         return None
+
+    @override
+    def get_extra_info_field(self) -> Any | None:
+        return Factory.title
+
+    @override
+    def get_joins(self) -> list[tuple[Any, Any]]:
+        return [(Factory, Check.factory_id == Factory.id)]
 
 
 class CheckSearchStrategy(SearchQueryStrategy):

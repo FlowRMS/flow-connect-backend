@@ -2873,6 +2873,7 @@ type SearchResult {
   title: String!
   alias: String
   resultType: SourceType!
+  extraInfo: String
 }
 
 enum SendPace {
