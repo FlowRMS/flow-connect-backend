@@ -1,18 +1,19 @@
 from uuid import UUID
 
+
 from commons.db.v6.warehouse.shipment_requests import (
     ShipmentRequest,
+    ShipmentRequestItem,
     ShipmentRequestStatus,
 )
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import joinedload
 
+from app.core.constants import DEFAULT_QUERY_LIMIT, DEFAULT_QUERY_OFFSET
 from app.core.context_wrapper import ContextWrapper
 from app.graphql.base_repository import BaseRepository
 
-
-from app.core.constants import DEFAULT_QUERY_LIMIT, DEFAULT_QUERY_OFFSET
 
 class ShipmentRequestRepository(BaseRepository[ShipmentRequest]):
     def __init__(
@@ -37,7 +38,8 @@ class ShipmentRequestRepository(BaseRepository[ShipmentRequest]):
             select(ShipmentRequest)
             .where(ShipmentRequest.warehouse_id == warehouse_id)
             .options(
-                joinedload(ShipmentRequest.items),
+                joinedload(ShipmentRequest.items)
+                .joinedload(ShipmentRequestItem.product),
                 joinedload(ShipmentRequest.factory),
             )
             .limit(limit)

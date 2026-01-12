@@ -146,7 +146,9 @@ class ProductsRepository(BaseRepository[Product]):
         result = await self.session.execute(stmt)
         return list(result.scalars().all())
 
-    async def find_by_factory_part_number(self, factory_part_number: str) -> Product | None:
+    async def find_by_factory_part_number(
+        self, factory_part_number: str
+    ) -> Product | None:
         stmt = select(Product).where(Product.factory_part_number == factory_part_number)
         result = await self.session.execute(stmt)
         return result.scalars().first()

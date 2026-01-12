@@ -4,28 +4,53 @@ import strawberry
 from aioinject import Injected
 
 from app.graphql.inject import inject
+from app.graphql.v2.core.inventory.services.inventory_file_service import (
+    InventoryFileService,
+)
 from app.graphql.v2.core.inventory.services.inventory_item_service import (
     InventoryItemService,
 )
+from app.graphql.v2.core.inventory.services.inventory_service import (
+    InventoryService,
+)
+from app.graphql.v2.core.inventory.strawberry.inventory_import_summary import (
+    InventoryImportSummary,
+)
 from app.graphql.v2.core.inventory.strawberry.inventory_input import (
     AddInventoryItemInput,
+    CreateInventoryInput,
     UpdateInventoryItemInput,
 )
 from app.graphql.v2.core.inventory.strawberry.inventory_item_response import (
     InventoryItemResponse,
 )
-
-
-from app.graphql.v2.core.inventory.services.inventory_file_service import (
-    InventoryFileService,
-)
-from app.graphql.v2.core.inventory.strawberry.inventory_import_summary import (
-    InventoryImportSummary,
+from app.graphql.v2.core.inventory.strawberry.inventory_response import (
+    InventoryResponse,
 )
 
 
 @strawberry.type
 class InventoryMutations:
+    @strawberry.mutation
+    @inject
+    async def create_inventory(
+        self,
+        service: Injected[InventoryService],
+        input: CreateInventoryInput,
+    ) -> InventoryResponse:
+        inventory = input.to_orm_model()
+        created_inventory = await service.create(inventory)
+        return InventoryResponse.from_orm_model(created_inventory)
+
+    @strawberry.mutation
+    @inject
+    async def delete_inventory(
+        self,
+        service: Injected[InventoryService],
+        id: UUID,
+    ) -> bool:
+        return await service.delete(id)
+
     @strawberry.mutation
     @inject
     async def add_inventory_item(

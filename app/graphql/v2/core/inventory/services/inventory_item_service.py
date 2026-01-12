@@ -1,12 +1,13 @@
+from decimal import Decimal
 from uuid import UUID
 
-from decimal import Decimal
 import strawberry
 from commons.db.v6.warehouse.inventory.inventory_item import (
     InventoryItem,
     InventoryItemStatus,
 )
 
+from app.core.constants import DEFAULT_QUERY_LIMIT, DEFAULT_QUERY_OFFSET
 from app.errors.common_errors import NotFoundError
 from app.graphql.v2.core.inventory.repositories.inventory_item_repository import (
     InventoryItemRepository,
@@ -16,15 +17,12 @@ from app.graphql.v2.core.inventory.repositories.inventory_repository import (
 )
 
 
-from app.core.constants import DEFAULT_QUERY_LIMIT, DEFAULT_QUERY_OFFSET
-
 class InventoryItemService:
-    def __init__(
+    def __init__(  # pyright: ignore[reportMissingSuperCall]
         self,
         item_repository: InventoryItemRepository,
         inventory_repository: InventoryRepository,
     ) -> None:
-        super().__init__()
         self.item_repository = item_repository
         self.inventory_repository = inventory_repository
 
@@ -100,9 +98,15 @@ class InventoryItemService:
 
         # 3. Calculate Diffs
         total_diff = item.quantity - old_quantity
-        
-        old_available = old_quantity if old_status == InventoryItemStatus.AVAILABLE else Decimal(0)
-        new_available = item.quantity if item.status == InventoryItemStatus.AVAILABLE else Decimal(0)
+
+        old_available = (
+            old_quantity if old_status == InventoryItemStatus.AVAILABLE else Decimal(0)
+        )
+        new_available = (
+            item.quantity
+            if item.status == InventoryItemStatus.AVAILABLE
+            else Decimal(0)
+        )
         available_diff = new_available - old_available
 
         # 4. Update Inventory stats if needed

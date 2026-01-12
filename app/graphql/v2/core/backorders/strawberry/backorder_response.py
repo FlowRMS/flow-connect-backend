@@ -4,11 +4,10 @@ from typing import Self
 from uuid import UUID
 
 import strawberry
+from aioinject import Injected
 from commons.db.v6.commission.orders.order_detail import OrderDetail
 
 from app.core.db.adapters.dto import DTOMixin
-from aioinject import Injected
-
 from app.graphql.inject import inject
 from app.graphql.v2.core.backorders.repositories.backorder_repository import (
     BackorderRepository,
@@ -16,7 +15,6 @@ from app.graphql.v2.core.backorders.repositories.backorder_repository import (
 from app.graphql.v2.core.customers.strawberry.customer_response import (
     CustomerLiteResponse,
 )
-
 from app.graphql.v2.core.products.strawberry.product_response import ProductLiteResponse
 
 
@@ -31,7 +29,7 @@ class BackorderResponse(DTOMixin[OrderDetail]):
     # Computed/Related fields
     order_id: UUID
     order_number: str
-    
+
     product_id: UUID | None
     product: ProductLiteResponse | None
 
@@ -63,9 +61,7 @@ class BackorderResponse(DTOMixin[OrderDetail]):
 
     @strawberry.field
     @inject
-    async def shipped_quantity(
-        self, repo: Injected[BackorderRepository]
-    ) -> Decimal:
+    async def shipped_quantity(self, repo: Injected[BackorderRepository]) -> Decimal:
         return await repo.get_shipped_qty(self.id)
 
     @strawberry.field
@@ -75,7 +71,3 @@ class BackorderResponse(DTOMixin[OrderDetail]):
     ) -> Decimal:
         shipped = await repo.get_shipped_qty(self.id)
         return self.ordered_quantity - shipped
-
-
-
-

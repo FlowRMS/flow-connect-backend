@@ -12,11 +12,11 @@ from commons.db.v6.warehouse.shipment_requests import (
 )
 
 from app.core.db.adapters.dto import DTOMixin
-from app.graphql.v2.core.shipment_requests.strawberry.shipment_request_item_response import (
-    ShipmentRequestItemResponse,
-)
 from app.graphql.v2.core.factories.strawberry.factory_response import (
     FactoryLiteResponse,
+)
+from app.graphql.v2.core.shipment_requests.strawberry.shipment_request_item_response import (
+    ShipmentRequestItemResponse,
 )
 
 

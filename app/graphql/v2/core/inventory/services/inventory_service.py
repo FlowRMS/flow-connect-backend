@@ -2,6 +2,7 @@ from uuid import UUID
 
 from commons.db.v6.warehouse.inventory.inventory import Inventory
 
+from app.core.constants import DEFAULT_QUERY_LIMIT, DEFAULT_QUERY_OFFSET
 from app.errors.common_errors import NotFoundError
 from app.graphql.v2.core.inventory.repositories.inventory_repository import (
     InventoryRepository,
@@ -11,14 +12,11 @@ from app.graphql.v2.core.inventory.strawberry.inventory_stats_response import (
 )
 
 
-from app.core.constants import DEFAULT_QUERY_LIMIT, DEFAULT_QUERY_OFFSET
-
 class InventoryService:
-    def __init__(
+    def __init__(  # pyright: ignore[reportMissingSuperCall]
         self,
         repository: InventoryRepository,
     ) -> None:
-        super().__init__()
         self.repository = repository
 
     async def get_by_id(self, inventory_id: UUID) -> Inventory:

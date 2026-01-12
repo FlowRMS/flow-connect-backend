@@ -10,12 +10,12 @@ from app.graphql.inject import inject
 from app.graphql.v2.core.shipment_requests.services.shipment_request_service import (
     ShipmentRequestService,
 )
-from app.graphql.v2.core.shipment_requests.strawberry.shipment_request_response import (
-    ShipmentRequestResponse,
-)
 from app.graphql.v2.core.shipment_requests.strawberry.shipment_request_input import (
     CreateShipmentRequestInput,
     UpdateShipmentRequestInput,
+)
+from app.graphql.v2.core.shipment_requests.strawberry.shipment_request_response import (
+    ShipmentRequestResponse,
 )
 
 
@@ -73,4 +73,3 @@ class ShipmentRequestMutations:
             items=input.items,
         )
         return ShipmentRequestResponse.from_orm_model(request)
-
