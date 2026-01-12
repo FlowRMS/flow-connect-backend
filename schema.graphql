@@ -150,6 +150,11 @@ enum AdjustmentStatus {
   POSTED
 }
 
+input AssignSidebarToRoleInput {
+  role: RbacRoleEnum!
+  configurationId: UUID!
+}
+
 enum BulkDeleteEntityType {
   FACTORIES
   CUSTOMERS
@@ -436,6 +441,10 @@ enum CompanyType {
   TESTING_INSPECTION_AGENCY
   ENERGY_PROGRAM_ADMINISTRATOR
   TRADE_ASSOCIATION
+}
+
+type ConfigurableSidebarResponse {
+  adminHiddenItems: [String!]!
 }
 
 input ContactInput {
@@ -818,6 +827,26 @@ enum DocumentEntityType {
   FACTORIES
   PRODUCTS
   END_USERS
+}
+
+type EffectiveSidebarGroupResponse {
+  groupId: String!
+  order: Int!
+  collapsed: Boolean!
+  items: [EffectiveSidebarItemResponse!]!
+}
+
+type EffectiveSidebarItemResponse {
+  itemId: String!
+  order: Int!
+  enabled: Boolean!
+  isConfigurable: Boolean!
+}
+
+type EffectiveSidebarResponse {
+  groups: [EffectiveSidebarGroupResponse!]!
+  sourceType: String!
+  sourceName: String
 }
 
 enum EmailStatus {
@@ -1656,6 +1685,11 @@ type Mutation {
   deleteFolder(folderId: UUID!): Boolean!
   updateRbacGrid(rbacGrid: [RbacGridInput!]!): [RbacGridResponse!]!
   updateCommissionVisibility(input: UpdateCommissionVisibilityInput!): RbacRoleSettingResponse!
+  saveSidebarConfiguration(input: SaveSidebarConfigurationInput!): SidebarConfigurationResponse!
+  deleteSidebarConfiguration(id: UUID!): Boolean!
+  assignSidebarConfigurationToRole(input: AssignSidebarToRoleInput!): RoleSidebarAssignmentResponse!
+  removeRoleSidebarAssignment(role: RbacRoleEnum!): Boolean!
+  setActiveSidebarConfiguration(configurationId: UUID): Boolean!
 }
 
 input NoteConversationInput {
@@ -2577,6 +2611,11 @@ type Query {
   getRbacGrid: [RbacGridResponse!]!
   getUserRbac(resource: RbacResourceEnum!): UserRbac!
   getRoleSettings: [RbacRoleSettingResponse!]!
+  adminSidebarConfigurations: [SidebarConfigurationResponse!]!
+  userSidebarConfigurations: [SidebarConfigurationResponse!]!
+  roleSidebarAssignments: [RoleSidebarAssignmentResponse!]!
+  effectiveSidebar: EffectiveSidebarResponse!
+  configurableSidebar: ConfigurableSidebarResponse!
 }
 
 type QuoteBalanceResponse {
@@ -2904,10 +2943,24 @@ enum RepTypeEnum {
   INSIDE
 }
 
+type RoleSidebarAssignmentResponse {
+  role: RbacRoleEnum!
+  configuration: SidebarConfigurationResponse!
+  assignedAt: datetime!
+}
+
 type SalesRepSummary {
   fullName: String!
   total: Decimal!
   avgSplitRate: Decimal!
+}
+
+input SaveSidebarConfigurationInput {
+  name: String!
+  isAdminConfig: Boolean!
+  groups: [SidebarGroupInput!]!
+  id: UUID = null
+  isDefault: Boolean = null
 }
 
 type SearchResult {
@@ -2971,6 +3024,42 @@ type ShippingCarrierResponse {
   pickupLocation: String
   remarks: String
   internalNotes: String
+}
+
+type SidebarConfigurationResponse {
+  id: UUID!
+  name: String!
+  ownerType: String!
+  isDefault: Boolean!
+  createdAt: datetime!
+  updatedAt: datetime!
+  groups: [SidebarGroupResponse!]!
+}
+
+input SidebarGroupInput {
+  groupId: String!
+  order: Int!
+  collapsed: Boolean!
+  items: [SidebarItemInput!]!
+}
+
+type SidebarGroupResponse {
+  groupId: String!
+  order: Int!
+  collapsed: Boolean!
+  items: [SidebarItemResponse!]!
+}
+
+input SidebarItemInput {
+  itemId: String!
+  order: Int!
+  enabled: Boolean!
+}
+
+type SidebarItemResponse {
+  itemId: String!
+  order: Int!
+  enabled: Boolean!
 }
 
 enum SourceType {
