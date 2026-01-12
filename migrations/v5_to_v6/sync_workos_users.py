@@ -164,10 +164,10 @@ async def _sync_single_user(
     dry_run: bool,
     result: SyncResult,
 ) -> None:
-    if user.auth_provider_id:
-        logger.debug(f"User {user.email} already has auth_provider_id, skipping")
-        result.users_skipped += 1
-        return
+    # if user.auth_provider_id:
+    #     logger.debug(f"User {user.email} already has auth_provider_id, skipping")
+    #     result.users_skipped += 1
+    #     return
 
     workos_user = await find_workos_user_by_email(client, user.email)
 
