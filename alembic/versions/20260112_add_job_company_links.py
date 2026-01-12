@@ -45,7 +45,7 @@ def upgrade() -> None:
         sa.Column(
             "created_by_id",
             postgresql.UUID(as_uuid=True),
-            sa.ForeignKey("pycrm.users.id"),
+            sa.ForeignKey("pyuser.users.id"),
             nullable=False,
         ),
         sa.UniqueConstraint(
