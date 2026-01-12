@@ -67,6 +67,45 @@ class ProductService:
         created = await self.repository.bulk_create(entities)
         return created
 
+    async def get_existing_products(
+        self,
+        fpn_factory_pairs: list[tuple[str, UUID]],
+    ) -> list[Product]:
+        if not fpn_factory_pairs:
+            return []
+        return await self.repository.get_existing_products(fpn_factory_pairs)
+
+    async def bulk_update(
+        self,
+        inputs_with_entities: list[tuple[ProductInput, Product]],
+    ) -> list[Product]:
+        if not inputs_with_entities:
+            return []
+
+        updated_entities: list[Product] = []
+        for product_input, existing_product in inputs_with_entities:
+            existing_product.unit_price = product_input.unit_price
+            existing_product.default_commission_rate = (
+                product_input.default_commission_rate
+            )
+            existing_product.description = product_input.description
+            existing_product.upc = product_input.upc
+            existing_product.min_order_qty = product_input.min_order_qty
+            existing_product.lead_time = product_input.lead_time
+            existing_product.unit_price_discount_rate = (
+                product_input.unit_price_discount_rate
+            )
+            existing_product.commission_discount_rate = (
+                product_input.commission_discount_rate
+            )
+            existing_product.approval_needed = product_input.approval_needed
+            existing_product.approval_date = product_input.approval_date
+            existing_product.approval_comments = product_input.approval_comments
+            updated_entities.append(existing_product)
+
+        _ = await self.repository.bulk_update(updated_entities)
+        return updated_entities
+
     async def update(self, product_id: UUID, product_input: ProductInput) -> Product:
         product = product_input.to_orm_model()
         product.id = product_id
