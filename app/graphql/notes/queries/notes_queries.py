@@ -59,7 +59,7 @@ class NotesQueries:
         service: Injected[NotesService],
     ) -> NoteType:
         """Get a note by ID."""
-        return NoteType.from_orm_model(await service.get_note(id))
+        return NoteType.from_orm_model(await service.find_note_by_id(id))
 
     @strawberry.field
     @inject
@@ -142,10 +142,6 @@ class NotesQueries:
         product_service: Injected[ProductService],
         customer_service: Injected[CustomerService],
     ) -> NoteRelatedEntitiesResponse:
-        # Verify note exists
-        _ = await notes_service.get_note(note_id)
-
-        # Fetch related entities
         jobs = await jobs_service.get_jobs_by_note(note_id)
         tasks = await tasks_service.find_tasks_by_note_id(note_id)
         contacts = await contacts_service.find_contacts_by_note_id(note_id)

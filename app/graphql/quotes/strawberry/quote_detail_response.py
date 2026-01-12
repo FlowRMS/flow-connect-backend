@@ -13,6 +13,7 @@ from app.graphql.quotes.strawberry.quote_inside_rep_response import (
 from app.graphql.quotes.strawberry.quote_split_rate_response import (
     QuoteSplitRateResponse,
 )
+from app.graphql.v2.core.factories.strawberry.factory_response import FactoryResponse
 from app.graphql.v2.core.products.strawberry.product_response import ProductLiteResponse
 from app.graphql.v2.core.products.strawberry.product_uom_response import (
     ProductUomResponse,
@@ -88,6 +89,10 @@ class QuoteDetailResponse(DTOMixin[QuoteDetail]):
     @strawberry.field
     def product(self) -> ProductLiteResponse | None:
         return ProductLiteResponse.from_orm_model_optional(self._instance.product)
+
+    @strawberry.field
+    def factory(self) -> FactoryResponse | None:
+        return FactoryResponse.from_orm_model_optional(self._instance.factory)
 
     @strawberry.field
     def uom(self) -> ProductUomResponse | None:
