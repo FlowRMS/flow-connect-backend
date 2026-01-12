@@ -61,16 +61,11 @@ class ProductLiteResponse(DTOMixin[Product]):
         )
 
 
-
-
 @strawberry.type
 class ProductResponse(ProductLiteResponse):
-    @strawberry.field   
-    async def factory(self) -> FactoryLiteResponse | None:
-        factory = await self._instance.awaitable_attrs.factory
-        if not factory:
-            return None
-        return FactoryLiteResponse.from_orm_model(factory)
+    @strawberry.field
+    def factory(self) -> FactoryLiteResponse:
+        return FactoryLiteResponse.from_orm_model(self._instance.factory)
     
     @strawberry.field
     def category(self) -> ProductCategoryResponse | None:
