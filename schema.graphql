@@ -2487,7 +2487,7 @@ type Query {
   orderAcknowledgementsByOrderDetail(orderDetailId: UUID!): [OrderAcknowledgementResponse!]!
   order(id: UUID!): OrderResponse!
   orderSearch(searchTerm: String!, limit: Int! = 20): [OrderLiteResponse!]!
-  organization: OrganizationType @rolePermissionAccess
+  organization: OrganizationType
   preOpportunity(id: UUID!): PreOpportunityResponse!
   preOpportunitySearch(searchTerm: String!, limit: Int! = 20): [PreOpportunityLiteResponse!]!
   quote(id: UUID!): QuoteResponse!
@@ -2678,6 +2678,12 @@ type QuoteLandingPage implements LandingPageInterfaceBase {
   total: Decimal!
   commission: Decimal
   published: Boolean!
+  soldToCustomerName: String!
+  endUsers: [String!]!
+  factories: [String!]!
+  categories: [String!]
+  partNumbers: [String!]
+  salesReps: [SalesRepSummary!]!
 }
 
 type QuoteLiteResponse {
@@ -2753,7 +2759,6 @@ input QuoteSplitRateInput {
 
 type QuoteSplitRateResponse {
   id: UUID!
-  createdAt: datetime!
   quoteDetailId: UUID!
   userId: UUID!
   splitRate: Decimal
@@ -2868,11 +2873,18 @@ enum RepTypeEnum {
   INSIDE
 }
 
+type SalesRepSummary {
+  fullName: String!
+  total: Decimal!
+  avgSplitRate: Decimal!
+}
+
 type SearchResult {
   id: UUID!
   title: String!
   alias: String
   resultType: SourceType!
+  extraInfo: String
 }
 
 enum SendPace {

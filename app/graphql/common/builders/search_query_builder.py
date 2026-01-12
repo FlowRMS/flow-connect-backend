@@ -29,6 +29,12 @@ class SearchQueryBuilder(ABC, Generic[T]):
     def get_alias_field(self) -> Any | None:
         return None
 
+    def get_extra_info_field(self) -> Any | None:
+        return None
+
+    def get_joins(self) -> list[tuple[Any, Any]]:
+        return []
+
     def build_search_query(self, search_term: str) -> Any:
         search_pattern = f"%{search_term}%"
         searchable_fields = self.get_searchable_fields()
@@ -51,12 +57,25 @@ class SearchQueryBuilder(ABC, Generic[T]):
             self.get_title_field().label("title"),
             alias_column,
             func.greatest(*similarity_calculations).label("similarity"),
-        ).where(or_(*where_conditions))
+        )
+
+        for target, onclause in self.get_joins():
+            query = query.outerjoin(target, onclause)
+
+        query = query.where(or_(*where_conditions))
 
         query = query.add_columns(
             literal_column(f"'{self.source_type.value}'", type_=Integer).label(
                 "result_type"
             )
         )
+
+        extra_info_field = self.get_extra_info_field()
+        extra_info_column = (
+            extra_info_field.label("extra_info")
+            if extra_info_field is not None
+            else literal(None).label("extra_info")
+        )
+        query = query.add_columns(extra_info_column)
 
         return query

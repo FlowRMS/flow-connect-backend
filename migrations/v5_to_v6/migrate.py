@@ -48,6 +48,7 @@ from migrations.v5_to_v6.migrate_orders import (
 )
 from migrations.v5_to_v6.migrate_pycrm_entities import (
     migrate_companies,
+    migrate_file_entity_links,
     migrate_link_relations,
     migrate_notes,
     # migrate_tasks,
@@ -1075,6 +1076,7 @@ async def run_migration(config: MigrationConfig) -> dict[str, int]:
         results["notes"] = await migrate_notes(source, dest)
         # results["tasks"] = await migrate_tasks(source, dest)
         results["link_relations"] = await migrate_link_relations(source, dest)
+        results["file_entity_links"] = await migrate_file_entity_links(source, dest)
         results["companies"] = await migrate_companies(source, dest)
         results["order_balances"] = await migrate_order_balances(source, dest)
         results["orders"] = await migrate_orders(source, dest)

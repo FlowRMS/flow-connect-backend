@@ -68,6 +68,21 @@ class BulkCreateResult(Generic[TOutput]):
     skipped_indices: list[int]
 
 
+@dataclass
+class BulkOperationResult(Generic[TOutput]):
+    created: list[TOutput]
+    updated: list[TOutput]
+    skipped_indices: list[int]
+
+
+@dataclass
+class SeparatedInputs(Generic[TInput]):
+    for_creation: list[TInput]
+    for_creation_indices: list[int]
+    for_update: list[tuple[TInput, Any]]
+    for_update_indices: list[int]
+
+
 class BaseEntityConverter(ABC, Generic[TDto, TInput, TOutput]):
     entity_type: DocumentEntityType
     dto_class: type[BaseModel]
@@ -120,6 +135,23 @@ class BaseEntityConverter(ABC, Generic[TDto, TInput, TOutput]):
                 logger.warning(f"Failed to create entity at index {i}: {e}")
                 skipped.append(i)
         return BulkCreateResult(created=created, skipped_indices=skipped)
+
+    async def separate_inputs(
+        self,
+        inputs: list[TInput],
+    ) -> SeparatedInputs[TInput]:
+        return SeparatedInputs(
+            for_creation=inputs,
+            for_creation_indices=list(range(len(inputs))),
+            for_update=[],
+            for_update_indices=[],
+        )
+
+    async def update_entities_bulk(
+        self,
+        inputs_with_entities: list[tuple[TInput, TOutput]],
+    ) -> BulkCreateResult[TOutput]:
+        return BulkCreateResult(created=[], skipped_indices=[])
 
     async def get_factory(self, factory_id: UUID) -> Factory | None:
         if factory_id in self._factory_cache:

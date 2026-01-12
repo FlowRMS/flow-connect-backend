@@ -1,5 +1,6 @@
 from typing import Any, override
 
+from commons.db.v6.core.factories import Factory
 from commons.db.v6.core.products.product import Product
 from sqlalchemy.orm import InstrumentedAttribute
 
@@ -22,6 +23,14 @@ class ProductSearchQueryBuilder(SearchQueryBuilder[Product]):
     @override
     def get_alias_field(self) -> Any | None:
         return Product.description
+
+    @override
+    def get_extra_info_field(self) -> Any | None:
+        return Factory.title
+
+    @override
+    def get_joins(self) -> list[tuple[Any, Any]]:
+        return [(Factory, Product.factory_id == Factory.id)]
 
 
 class ProductSearchStrategy(SearchQueryStrategy):
