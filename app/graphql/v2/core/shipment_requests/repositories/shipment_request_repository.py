@@ -6,7 +6,7 @@ from commons.db.v6.warehouse.shipment_requests import (
 )
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.orm import joinedload
+from sqlalchemy.orm import selectinload
 
 from app.core.constants import DEFAULT_QUERY_LIMIT, DEFAULT_QUERY_OFFSET
 from app.core.context_wrapper import ContextWrapper
@@ -36,8 +36,8 @@ class ShipmentRequestRepository(BaseRepository[ShipmentRequest]):
             select(ShipmentRequest)
             .where(ShipmentRequest.warehouse_id == warehouse_id)
             .options(
-                joinedload(ShipmentRequest.items),
-                joinedload(ShipmentRequest.factory),
+                selectinload(ShipmentRequest.items),
+                selectinload(ShipmentRequest.factory),
             )
             .limit(limit)
             .offset(offset)
@@ -48,3 +48,12 @@ class ShipmentRequestRepository(BaseRepository[ShipmentRequest]):
 
         result = await self.session.execute(stmt)
         return list(result.unique().scalars().all())
+
+    async def create(self, request: ShipmentRequest) -> ShipmentRequest:
+        """Create a new shipment request with eager loading of relationships."""
+        created = await super().create(request)
+
+        # Refresh with eager loading to avoid lazy load errors
+        await self.session.refresh(created, attribute_names=["items", "factory"])
+
+        return created

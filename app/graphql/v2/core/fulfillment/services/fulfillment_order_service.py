@@ -82,14 +82,25 @@ class FulfillmentOrderService:
             and input.warehouse_id is not None
         ):
             order.warehouse_id = input.warehouse_id
+        if (
+            input.fulfillment_method is not strawberry.UNSET
+            and input.fulfillment_method is not None
+        ):
+            order.fulfillment_method = input.fulfillment_method
         if input.carrier_id is not strawberry.UNSET:
             order.carrier_id = input.carrier_id
         if input.carrier_type is not strawberry.UNSET:
             order.carrier_type = input.carrier_type
+        if input.freight_class is not strawberry.UNSET:
+            order.freight_class = input.freight_class
         if input.need_by_date is not strawberry.UNSET:
             order.need_by_date = input.need_by_date
         if input.hold_reason is not strawberry.UNSET:
             order.hold_reason = input.hold_reason
+        if input.ship_to_address is not strawberry.UNSET:
+            order.ship_to_address = (
+                input.ship_to_address.to_dict() if input.ship_to_address else None
+            )
 
         return await self.repository.update(order)
 
@@ -100,12 +111,14 @@ class FulfillmentOrderService:
             raise ValueError("Order must be in PENDING status to release")
 
         order.status = FulfillmentOrderStatus.RELEASED
-        order.released_at = datetime.now(UTC)
+        order.released_at = datetime.now(UTC).replace(tzinfo=None)
 
         # Auto-assign current user as manager
         assignment = FulfillmentAssignment()
+        assignment.fulfillment_order_id = order.id
         assignment.user_id = self.auth_info.flow_user_id
         assignment.role = FulfillmentAssignmentRole.MANAGER
+        assignment.created_by_id = self.auth_info.flow_user_id
         order.assignments.append(assignment)
 
         order = await self.repository.update(order)

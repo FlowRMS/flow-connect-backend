@@ -52,14 +52,14 @@ class FulfillmentShippingService:
         # Capture signature if provided
         if input.signature:
             order.pickup_signature = input.signature
-            order.pickup_timestamp = datetime.now(UTC)
+            order.pickup_timestamp = datetime.now(UTC).replace(tzinfo=None)
         if input.driver_name:
             order.driver_name = input.driver_name
         if input.pickup_customer_name:
             order.pickup_customer_name = input.pickup_customer_name
 
         order.status = FulfillmentOrderStatus.SHIPPED
-        order.ship_confirmed_at = datetime.now(UTC)
+        order.ship_confirmed_at = datetime.now(UTC).replace(tzinfo=None)
 
         # Update shipped quantities
         for line_item in order.line_items:
@@ -89,7 +89,7 @@ class FulfillmentShippingService:
             raise ValueError("Order must be SHIPPED or COMMUNICATED to mark delivered")
 
         order.status = FulfillmentOrderStatus.DELIVERED
-        order.delivered_at = datetime.now(UTC)
+        order.delivered_at = datetime.now(UTC).replace(tzinfo=None)
 
         order = await self.order_repository.update(order)
         _ = await self._log_activity(

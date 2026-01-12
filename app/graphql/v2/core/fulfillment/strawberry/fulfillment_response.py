@@ -10,6 +10,7 @@ from commons.db.v6.fulfillment import (
     FulfillmentActivityType,
     FulfillmentAssignment,
     FulfillmentAssignmentRole,
+    FulfillmentDocument,
     FulfillmentMethod,
     FulfillmentOrder,
     FulfillmentOrderLineItem,
@@ -23,11 +24,14 @@ from app.core.db.adapters.dto import DTOMixin
 
 @strawberry.type
 class ShipToAddressResponse:
+    name: str | None = None
     street: str | None = None
+    street_line_2: str | None = None
     city: str | None = None
     state: str | None = None
     postal_code: str | None = None
     country: str | None = None
+    phone: str | None = None
 
 
 @strawberry.type
@@ -80,6 +84,44 @@ class FulfillmentAssignmentResponse(DTOMixin[FulfillmentAssignment]):
     async def user_email(self) -> str:
         user = await self._instance.awaitable_attrs.user
         return user.email if user else ""
+
+
+@strawberry.type
+class FulfillmentDocumentResponse(DTOMixin[FulfillmentDocument]):
+    _instance: strawberry.Private[FulfillmentDocument]
+    id: UUID
+    document_type: str
+    file_name: str
+    file_url: str
+    file_size: int | None
+    mime_type: str | None
+    notes: str | None
+    uploaded_at: datetime
+    created_at: datetime
+    created_by_id: UUID
+    file_id: UUID | None
+
+    @classmethod
+    def from_orm_model(cls, model: FulfillmentDocument) -> Self:
+        return cls(
+            _instance=model,
+            id=model.id,
+            document_type=model.document_type,
+            file_name=model.file_name,
+            file_url=model.file_url,
+            file_size=model.file_size,
+            mime_type=model.mime_type,
+            notes=model.notes,
+            uploaded_at=model.uploaded_at,
+            created_at=model.created_at,
+            created_by_id=model.created_by_id,
+            file_id=model.file_id,
+        )
+
+    @strawberry.field
+    async def uploaded_by_name(self) -> str:
+        user = await self._instance.awaitable_attrs.uploaded_by_user
+        return user.full_name if user else ""
 
 
 @strawberry.type
@@ -203,6 +245,21 @@ class FulfillmentOrderLineItemResponse(DTOMixin[FulfillmentOrderLineItem]):
         items = await self._instance.awaitable_attrs.packing_box_items
         return PackingBoxItemResponse.from_orm_model_list(items)
 
+    @strawberry.field
+    async def factory_id(self) -> UUID | None:
+        """Get the product's factory/manufacturer ID."""
+        product = await self._instance.awaitable_attrs.product
+        return product.factory_id if product else None
+
+    @strawberry.field
+    async def factory_name(self) -> str | None:
+        """Get the product's factory/manufacturer name."""
+        product = await self._instance.awaitable_attrs.product
+        if product and product.factory_id:
+            factory = await product.awaitable_attrs.factory
+            return factory.title if factory else None
+        return None
+
 
 @strawberry.type
 class FulfillmentOrderResponse(DTOMixin[FulfillmentOrder]):
@@ -215,6 +272,7 @@ class FulfillmentOrderResponse(DTOMixin[FulfillmentOrder]):
     status: FulfillmentOrderStatus
     fulfillment_method: FulfillmentMethod
     carrier_type: CarrierType | None
+    freight_class: str | None
     need_by_date: date | None
     has_backorder_items: bool
     hold_reason: str | None
@@ -251,6 +309,7 @@ class FulfillmentOrderResponse(DTOMixin[FulfillmentOrder]):
             status=model.status,
             fulfillment_method=model.fulfillment_method,
             carrier_type=model.carrier_type,
+            freight_class=model.freight_class,
             need_by_date=model.need_by_date,
             has_backorder_items=model.has_backorder_items,
             hold_reason=model.hold_reason,
@@ -301,11 +360,14 @@ class FulfillmentOrderResponse(DTOMixin[FulfillmentOrder]):
         if not addr:
             return None
         return ShipToAddressResponse(
+            name=addr.get("name"),
             street=addr.get("street"),
+            street_line_2=addr.get("street_line_2"),
             city=addr.get("city"),
             state=addr.get("state"),
             postal_code=addr.get("postal_code"),
             country=addr.get("country"),
+            phone=addr.get("phone"),
         )
 
     @strawberry.field
@@ -322,6 +384,11 @@ class FulfillmentOrderResponse(DTOMixin[FulfillmentOrder]):
     async def assignments(self) -> list[FulfillmentAssignmentResponse]:
         assignments = await self._instance.awaitable_attrs.assignments
         return FulfillmentAssignmentResponse.from_orm_model_list(assignments)
+
+    @strawberry.field
+    async def documents(self) -> list[FulfillmentDocumentResponse]:
+        documents = await self._instance.awaitable_attrs.documents
+        return FulfillmentDocumentResponse.from_orm_model_list(documents)
 
     @strawberry.field
     async def activities(self) -> list[FulfillmentActivityResponse]:

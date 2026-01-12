@@ -136,7 +136,7 @@ class FulfillmentPackingService:
             raise ValueError("Order must be in PACKING status to complete")
 
         order.status = FulfillmentOrderStatus.SHIPPING
-        order.pack_completed_at = datetime.now(UTC)
+        order.pack_completed_at = datetime.now(UTC).replace(tzinfo=None)
 
         order = await self.order_repository.update(order)
         _ = await self._log_activity(

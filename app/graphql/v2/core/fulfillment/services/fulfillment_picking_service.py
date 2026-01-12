@@ -40,7 +40,7 @@ class FulfillmentPickingService:
             raise ValueError("Order must be in RELEASED status to start picking")
 
         order.status = FulfillmentOrderStatus.PICKING
-        order.pick_started_at = datetime.now(UTC)
+        order.pick_started_at = datetime.now(UTC).replace(tzinfo=None)
 
         order = await self.order_repository.update(order)
         _ = await self._log_activity(
@@ -80,7 +80,7 @@ class FulfillmentPickingService:
             raise ValueError("Not all items have been picked")
 
         order.status = FulfillmentOrderStatus.PACKING
-        order.pick_completed_at = datetime.now(UTC)
+        order.pick_completed_at = datetime.now(UTC).replace(tzinfo=None)
 
         order = await self.order_repository.update(order)
         _ = await self._log_activity(
