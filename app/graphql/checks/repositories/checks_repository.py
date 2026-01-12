@@ -84,6 +84,7 @@ class ChecksRepository(BaseRepository[Check]):
         check = await self.get_by_id(
             check_id,
             options=[
+                joinedload(Check.created_by),
                 joinedload(Check.details),
                 joinedload(Check.details).joinedload(CheckDetail.invoice),
                 joinedload(Check.details)

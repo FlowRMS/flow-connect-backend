@@ -356,6 +356,7 @@ type CheckResponse {
   creationType: CreationType!
   url: String!
   factory: FactoryLiteResponse!
+  createdBy: UserResponse!
   details: [CheckDetailResponse!]!
 }
 
@@ -2640,6 +2641,7 @@ type QuoteDetailResponse {
   outsideSplitRates: [QuoteSplitRateResponse!]!
   insideSplitRates: [QuoteInsideRepResponse!]!
   product: ProductLiteResponse
+  factory: FactoryResponse
   uom: ProductUomResponse
   order: OrderLiteResponse
 }
