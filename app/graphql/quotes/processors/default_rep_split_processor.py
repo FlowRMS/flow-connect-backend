@@ -59,7 +59,6 @@ class DefaultRepSplitProcessor(BaseProcessor[Quote]):
             customer_factory_reps = await self._get_customer_factory_split_rates(
                 customer_id, detail.factory_id
             )
-            print(F"Customer Factory Reps: {customer_factory_reps}")
             if customer_factory_reps:
                 detail.outside_split_rates = [
                     QuoteSplitRate(
@@ -73,7 +72,6 @@ class DefaultRepSplitProcessor(BaseProcessor[Quote]):
 
         # Fallback to customer outside reps
         customer_outside_reps = await self._get_customer_outside_reps(customer_id)
-        print(F"Customer Outside Reps: {customer_outside_reps}")
         detail.outside_split_rates = [
             QuoteSplitRate(
                 user_id=rep.user_id,
