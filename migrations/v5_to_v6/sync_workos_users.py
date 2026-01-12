@@ -133,7 +133,9 @@ async def sync_users_for_tenant(config: SyncConfig) -> SyncResult:
         logger.info(f"Found WorkOS org {org_id} for tenant {config.tenant_url}")
 
         async with controller.scoped_session(config.tenant_url) as session:
-            stmt = select(User).order_by(User.email)
+            stmt = select(User).order_by(User.email).where(
+                ~User.email.ilike("%@flowrms.com")
+            )
             db_result = await session.execute(stmt)
             users = list(db_result.scalars().all())
             result.total_users = len(users)

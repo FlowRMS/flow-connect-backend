@@ -68,7 +68,6 @@ class MigrationConfig:
 async def migrate_users(source: asyncpg.Connection, dest: asyncpg.Connection) -> int:
     """Migrate users from v5 (user.users) to v6 (pyuser.users)."""
     logger.info("Starting user migration...")
-
     users = await source.fetch("""
         SELECT
             u.id,
@@ -78,10 +77,14 @@ async def migrate_users(source: asyncpg.Connection, dest: asyncpg.Connection) ->
             u.email,
             u.keycloak_id::text as auth_provider_id,
             CASE
-                WHEN ur.name = 'admin' THEN 1
-                WHEN ur.name = 'manager' THEN 2
-                WHEN ur.name = 'sales_rep' THEN 3
-                ELSE 4
+                WHEN ur.name = 'warehouse_manager' THEN 5
+                WHEN ur.name = 'administrator' THEN 2
+                WHEN ur.name = 'warehouse_employee' THEN 6
+                WHEN ur.name = 'driver' THEN 7
+                WHEN ur.name = 'inside_rep' THEN 3
+                WHEN ur.name = 'outside_rep' THEN 4
+                WHEN ur.name = 'owner' THEN 1
+                ELSE 2  -- Default to ADMINISTRATOR if role is unknown
             END AS role,
             u.enabled,
             COALESCE(u.inside, false) as inside,
