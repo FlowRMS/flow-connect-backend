@@ -3,12 +3,16 @@ from uuid import UUID
 
 from commons.auth import AuthInfo
 from commons.db.v6 import Delivery
+from commons.db.v6.warehouse.deliveries.delivery_enums import DeliveryStatus
 
 from app.errors.common_errors import NotFoundError
 from app.graphql.v2.core.deliveries.repositories.deliveries_repository import (
     DeliveriesRepository,
 )
 from app.graphql.v2.core.deliveries.strawberry.delivery_input import DeliveryInput
+from app.graphql.v2.core.deliveries.services.delivery_inventory_sync_service import (
+    DeliveryInventorySyncService,
+)
 
 
 class DeliveryService:
@@ -17,10 +21,12 @@ class DeliveryService:
         self,
         repository: DeliveriesRepository,
         auth_info: AuthInfo,
+        inventory_sync_service: DeliveryInventorySyncService,
     ) -> None:
         super().__init__()
         self.repository = repository
         self.auth_info = auth_info
+        self.inventory_sync_service = inventory_sync_service
 
     async def get_by_id(self, delivery_id: UUID) -> Delivery:
         delivery = await self.repository.get_with_relations(delivery_id)
@@ -43,6 +49,11 @@ class DeliveryService:
             raise NotFoundError(f"Delivery with id {delivery_id} not found")
         delivery = input.to_orm_model()
         delivery.id = delivery_id
+        should_sync_inventory = (
+            existing.status != DeliveryStatus.RECEIVED
+            and delivery.status == DeliveryStatus.RECEIVED
+            and existing.inventory_synced_at is None
+        )
         # Preserve child collections to avoid delete-orphan wipes on update.
         delivery.items = existing.items
         delivery.status_history = existing.status_history
@@ -50,7 +61,10 @@ class DeliveryService:
         delivery.assignees = existing.assignees
         delivery.documents = existing.documents
         delivery.recurring_shipment = existing.recurring_shipment
-        return await self.repository.update(delivery)
+        updated = await self.repository.update(delivery)
+        if should_sync_inventory:
+            _ = await self.inventory_sync_service.sync_received_delivery(updated.id)
+        return updated
 
     async def delete(self, delivery_id: UUID) -> bool:
         if not await self.repository.exists(delivery_id):

@@ -6,7 +6,7 @@ from sqlalchemy.dialects import postgresql
 from alembic import op
 
 revision: str = "warehouse_deliveries_001"
-down_revision: str | None = "warehouse_locations_001"
+down_revision: str | None = "insert_default_job_statuses"
 branch_labels: str | Sequence[str] | None = None
 depends_on: str | Sequence[str] | None = None
 
@@ -73,6 +73,11 @@ def upgrade() -> None:
             "receiving_started_at", postgresql.TIMESTAMP(timezone=True), nullable=True
         ),
         sa.Column("received_at", postgresql.TIMESTAMP(timezone=True), nullable=True),
+        sa.Column(
+            "inventory_synced_at",
+            postgresql.TIMESTAMP(timezone=True),
+            nullable=True,
+        ),
         sa.Column("origin_address_id", postgresql.UUID(as_uuid=True), nullable=True),
         sa.Column(
             "destination_address_id", postgresql.UUID(as_uuid=True), nullable=True

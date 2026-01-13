@@ -7,6 +7,9 @@ from app.graphql.v2.core.deliveries.services.delivery_document_service import (
 from app.graphql.v2.core.deliveries.services.delivery_issue_service import (
     DeliveryIssueService,
 )
+from app.graphql.v2.core.deliveries.services.delivery_inventory_sync_service import (
+    DeliveryInventorySyncService,
+)
 from app.graphql.v2.core.deliveries.services.delivery_item_receipt_service import (
     DeliveryItemReceiptService,
 )
@@ -25,6 +28,7 @@ __all__ = [
     "DeliveryAssigneeService",
     "DeliveryDocumentService",
     "DeliveryIssueService",
+    "DeliveryInventorySyncService",
     "DeliveryItemReceiptService",
     "DeliveryItemService",
     "DeliveryService",

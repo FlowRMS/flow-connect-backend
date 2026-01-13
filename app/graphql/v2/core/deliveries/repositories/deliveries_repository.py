@@ -1,3 +1,4 @@
+from typing import Any
 from uuid import UUID
 
 from commons.db.v6 import Delivery, DeliveryItem
@@ -17,7 +18,7 @@ class DeliveriesRepository(BaseRepository[Delivery]):
     ) -> None:
         super().__init__(session, context_wrapper, Delivery)
 
-    def _with_relations(self, stmt: Select[Delivery]) -> Select[Delivery]:
+    def _with_relations(self, stmt: Select[Any]) -> Select[Any]:
         return stmt.options(
             selectinload(Delivery.items).selectinload(DeliveryItem.product),
             selectinload(Delivery.items).selectinload(DeliveryItem.receipts),
