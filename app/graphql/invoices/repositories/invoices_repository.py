@@ -206,7 +206,16 @@ class InvoicesRepository(BaseRepository[Invoice]):
         stmt = (
             select(Invoice)
             .options(
+                joinedload(Invoice.balance),
                 joinedload(Invoice.order),
+                joinedload(Invoice.order).joinedload(Order.sold_to_customer),
+                joinedload(Invoice.details),
+                joinedload(Invoice.details).joinedload(
+                    InvoiceDetail.outside_split_rates
+                ),
+                joinedload(Invoice.details)
+                .joinedload(InvoiceDetail.outside_split_rates)
+                .joinedload(InvoiceSplitRate.user),
                 lazyload("*"),
             )
             .where(
@@ -218,7 +227,7 @@ class InvoicesRepository(BaseRepository[Invoice]):
             .order_by(Invoice.entity_date.asc())
         )
         result = await self.session.execute(stmt)
-        return list(result.scalars().all())
+        return list(result.unique().scalars().all())
 
     async def find_by_order_id(self, order_id: UUID) -> list[Invoice]:
         stmt = (
