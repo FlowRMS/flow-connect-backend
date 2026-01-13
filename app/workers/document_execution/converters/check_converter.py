@@ -77,8 +77,10 @@ class CheckConverter(BaseEntityConverter[CheckDTO, CheckInput, Check]):
                 return ConversionResult.fail(detail_result.unwrap_error())
             details.append(detail_result.unwrap())
 
+        grouped_details = self._group_details_by_entity(details)
+
         entered_commission_amount = sum(
-            (detail.applied_amount for detail in details), Decimal("0")
+            (detail.applied_amount for detail in grouped_details), Decimal("0")
         )
 
         return ConversionResult.ok(
@@ -87,7 +89,7 @@ class CheckConverter(BaseEntityConverter[CheckDTO, CheckInput, Check]):
                 entity_date=entity_date,
                 factory_id=factory_id,
                 entered_commission_amount=entered_commission_amount,
-                details=details,
+                details=grouped_details,
                 post_date=dto.post_date,
                 commission_month=dto.commission_month,
             )
@@ -146,6 +148,33 @@ class CheckConverter(BaseEntityConverter[CheckDTO, CheckInput, Check]):
         return await self._get_or_create_adjustment_detail(
             detail, entity_mapping, applied_amount
         )
+
+    def _group_details_by_entity(
+        self,
+        details: list[CheckDetailInput],
+    ) -> list[CheckDetailInput]:
+        """
+        Groups check details by their entity (invoice, credit, or adjustment)
+        and sums the applied_amount for details referencing the same entity.
+        """
+        grouped: dict[tuple[UUID | None, UUID | None, UUID | None], Decimal] = {}
+
+        for detail in details:
+            key = (detail.invoice_id, detail.credit_id, detail.adjustment_id)
+            if key in grouped:
+                grouped[key] += detail.applied_amount
+            else:
+                grouped[key] = detail.applied_amount
+
+        return [
+            CheckDetailInput(
+                applied_amount=amount,
+                invoice_id=key[0],
+                credit_id=key[1],
+                adjustment_id=key[2],
+            )
+            for key, amount in grouped.items()
+        ]
 
     async def _get_or_create_credit_detail(
         self,
