@@ -47,10 +47,11 @@ class InvoicesQueries:
         self,
         service: Injected[InvoiceService],
         factory_id: UUID,
-        start_from: date,
+        start_from: date | None = None,
+        limit: int | None = None,
     ) -> list[InvoiceLiteCheckResponse]:
         return InvoiceLiteCheckResponse.from_orm_model_list(
-            await service.search_open_invoices(factory_id, start_from)
+            await service.search_open_invoices(factory_id, start_from, limit)
         )
 
     @strawberry.field
