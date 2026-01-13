@@ -42,8 +42,12 @@ class BackorderResponse(DTOMixin[OrderDetail]):
     due_date: date
     status: str
 
+    factory: FactoryLiteResponse | None
+
     @classmethod
     def from_orm_model(cls, model: OrderDetail) -> Self:
+        product = model.product
+        factory = product.factory if product else None
         return cls(
             _instance=model,
             id=model.id,
@@ -51,22 +55,15 @@ class BackorderResponse(DTOMixin[OrderDetail]):
             order_id=model.order_id,
             order_number=model.order.order_number,
             product_id=model.product_id,
-            product=ProductLiteResponse.from_orm_model(model.product)
-            if model.product
-            else None,
+            product=ProductLiteResponse.from_orm_model(product) if product else None,
             customer_id=model.order.sold_to_customer_id,
             customer=CustomerLiteResponse.from_orm_model(model.order.sold_to_customer)
             if model.order.sold_to_customer
             else None,
             due_date=model.order.due_date,
             status=model.order.status.name if model.order.status else "UNKNOWN",
+            factory=FactoryLiteResponse.from_orm_model(factory) if factory else None,
         )
-
-    @strawberry.field
-    def factory(self) -> FactoryLiteResponse | None:
-        if self._instance.product and self._instance.product.factory:
-            return FactoryLiteResponse.from_orm_model(self._instance.product.factory)
-        return None
 
     @strawberry.field
     @inject

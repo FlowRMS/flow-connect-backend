@@ -46,23 +46,6 @@ class InventoryRepository(BaseRepository[Inventory]):
         result = await self.session.execute(stmt)
         return result.unique().scalar_one_or_none()
 
-    async def create(self, entity: Inventory) -> Inventory:
-        entity = await self.prepare_create(entity)
-        self.session.add(entity)
-        await self.session.flush()
-        
-        # Re-fetch with relationships to avoid lazy load issues
-        stmt = (
-            select(Inventory)
-            .where(Inventory.id == entity.id)
-            .options(*self._default_options())
-        )
-        result = await self.session.execute(stmt)
-        created = result.unique().scalar_one_or_none()
-        if not created:
-            raise NotFoundError(f"Failed to create inventory {entity.id}")
-        return created
-
     async def find_by_warehouse(
         self,
         warehouse_id: UUID,
@@ -195,11 +178,5 @@ class InventoryRepository(BaseRepository[Inventory]):
         if ownership_type is not None:
             inventory.ownership_type = ownership_type
 
-        self.session.add(inventory)
-        await self.session.flush([inventory])
-        
-        updated = await self.get_by_id(inventory_id)
-        if not updated:
-            raise NotFoundError(f"Inventory with id {inventory_id} not found after update")
-        return updated
+        return await self.update(inventory)
 

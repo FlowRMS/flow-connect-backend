@@ -48,7 +48,8 @@ class InventoryService:
         return await self.repository.get_stats_by_warehouse(warehouse_id)
 
     async def create(self, inventory: Inventory) -> Inventory:
-        return await self.repository.create(inventory)
+        created = await self.repository.create(inventory)
+        return await self.get_by_id(created.id)
 
     async def update(
         self,
@@ -56,11 +57,12 @@ class InventoryService:
         abc_class: ABCClass | None = None,
         ownership_type: OwnershipType | None = None,
     ) -> Inventory:
-        return await self.repository.update_fields(
+        _ = await self.repository.update_fields(
             inventory_id=inventory_id,
             abc_class=abc_class,
             ownership_type=ownership_type,
         )
+        return await self.get_by_id(inventory_id)
 
     async def delete(self, inventory_id: UUID) -> bool:
         if not await self.repository.exists(inventory_id):

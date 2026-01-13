@@ -7,7 +7,6 @@ import strawberry
 from commons.db.v6.warehouse.inventory import ABCClass, Inventory, OwnershipType
 
 from app.core.db.adapters.dto import DTOMixin
-from app.errors.common_errors import NotFoundError
 from app.graphql.v2.core.inventory.strawberry.inventory_item_response import (
     InventoryItemResponse,
 )
@@ -53,9 +52,14 @@ class InventoryLiteResponse(DTOMixin[Inventory]):
 @strawberry.type
 class InventoryResponse(InventoryLiteResponse):
     _instance: strawberry.Private[Inventory]
+    items: list[InventoryItemResponse]
+    product: ProductLiteResponse | None
+    factory: FactoryLiteResponse | None
 
     @classmethod
     def from_orm_model(cls, model: Inventory) -> Self:
+        product = model.product
+        factory = product.factory if product else None
         return cls(
             _instance=model,
             id=model.id,
@@ -69,24 +73,7 @@ class InventoryResponse(InventoryLiteResponse):
             abc_class=model.abc_class,
             created_at=model.created_at,
             updated_at=model.updated_at,
+            items=InventoryItemResponse.from_orm_model_list(model.items),
+            product=ProductLiteResponse.from_orm_model(product) if product else None,
+            factory=FactoryLiteResponse.from_orm_model(factory) if factory else None,
         )
-
-    @strawberry.field
-    def items(self) -> list[InventoryItemResponse]:
-        return InventoryItemResponse.from_orm_model_list(self._instance.items)
-
-    @strawberry.field
-    def product(self) -> ProductLiteResponse:
-        if not self._instance.product:
-            raise NotFoundError(f"Product {self.product_id} not found")
-        return ProductLiteResponse.from_orm_model(self._instance.product)
-
-    @strawberry.field
-    def factory(self) -> FactoryLiteResponse | None:
-        product = self._instance.product
-        if not product:
-            return None
-        factory = product.factory
-        if not factory:
-            return None
-        return FactoryLiteResponse.from_orm_model(factory)

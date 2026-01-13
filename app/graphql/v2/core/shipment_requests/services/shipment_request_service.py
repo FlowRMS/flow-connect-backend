@@ -30,6 +30,12 @@ class ShipmentRequestService:
     ) -> None:
         self.repository = repository
 
+    async def get_by_id(self, request_id: UUID) -> ShipmentRequest:
+        request = await self.repository.get_by_id(request_id)
+        if not request:
+            raise NotFoundError(f"ShipmentRequest with id {request_id} not found")
+        return request
+
     async def list_by_warehouse(
         self,
         warehouse_id: UUID,
@@ -58,7 +64,8 @@ class ShipmentRequestService:
         if notes is not None:
             request.notes = notes
 
-        return await self.repository.update(request)
+        _ = await self.repository.update(request)
+        return await self.get_by_id(request_id)
 
     async def update(
         self,
@@ -95,7 +102,8 @@ class ShipmentRequestService:
                 for item_input in items
             ]
 
-        return await self.repository.update(request)
+        _ = await self.repository.update(request)
+        return await self.get_by_id(request_id)
 
     async def create(
         self,
@@ -130,7 +138,8 @@ class ShipmentRequestService:
                 )
             )
 
-        return await self.repository.create(request)
+        created = await self.repository.create(request)
+        return await self.get_by_id(created.id)
 
     async def generate_request_number(self) -> str:
         """
