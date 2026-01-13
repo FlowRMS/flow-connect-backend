@@ -21,14 +21,12 @@ from app.core.exceptions import NotFoundError
 from app.core.processors import ProcessorExecutor, ValidateCommissionRateProcessor
 from app.core.processors.events import RepositoryEvent
 from app.graphql.base_repository import BaseRepository
-from app.graphql.orders.processors.default_rep_split_processor import (
+from app.graphql.orders.processors import (
     OrderDefaultRepSplitProcessor,
+    SetShippingBalanceProcessor,
 )
 from app.graphql.orders.processors.recalculate_order_status_processor import (
     RecalculateOrderStatusProcessor,
-)
-from app.graphql.orders.processors.set_shipping_balance_processor import (
-    SetShippingBalanceProcessor,
 )
 from app.graphql.orders.repositories.order_balance_repository import (
     OrderBalanceRepository,
@@ -45,6 +43,7 @@ from app.graphql.quotes.processors.validate_rep_split_processor import (
 )
 from app.graphql.v2.rbac.services.rbac_filter_service import RbacFilterService
 from app.graphql.v2.rbac.strategies.base import RbacFilterStrategy
+from app.graphql.watchers.processors import OrderWatcherNotificationProcessor
 
 
 class OrdersRepository(BaseRepository[Order]):
@@ -64,6 +63,7 @@ class OrdersRepository(BaseRepository[Order]):
         order_default_rep_split_processor: OrderDefaultRepSplitProcessor,
         validate_commission_rate_processor: ValidateCommissionRateProcessor,
         recalculate_order_status_processor: RecalculateOrderStatusProcessor,
+        order_watcher_notification_processor: OrderWatcherNotificationProcessor,
     ) -> None:
         super().__init__(
             session,
@@ -77,6 +77,7 @@ class OrdersRepository(BaseRepository[Order]):
                 set_shipping_balance_processor,
                 validate_commission_rate_processor,
                 recalculate_order_status_processor,
+                order_watcher_notification_processor,
             ],
         )
         self.balance_repository = balance_repository

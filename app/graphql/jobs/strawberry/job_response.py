@@ -1,15 +1,17 @@
-"""Strawberry GraphQL response types for Jobs entity."""
-
 from datetime import date, datetime
 from typing import Self
 from uuid import UUID
 
 import strawberry
+from aioinject import Injected
 from commons.db.v6.crm.jobs.jobs_model import Job
+from commons.db.v6.crm.links.entity_type import EntityType
 
 from app.core.db.adapters.dto import DTOMixin
+from app.graphql.inject import inject
 from app.graphql.jobs.strawberry.status_response import JobStatusType
 from app.graphql.v2.core.users.strawberry.user_response import UserResponse
+from app.graphql.watchers.services.entity_watcher_service import EntityWatcherService
 
 
 @strawberry.type
@@ -59,3 +61,12 @@ class JobType(JobLiteType):
     @strawberry.field
     def created_by(self) -> UserResponse:
         return UserResponse.from_orm_model(self._instance.created_by)
+
+    @strawberry.field
+    @inject
+    async def watchers(
+        self,
+        watcher_service: Injected[EntityWatcherService],
+    ) -> list[UserResponse]:
+        users = await watcher_service.get_watchers(EntityType.JOB, self.id)
+        return [UserResponse.from_orm_model(u) for u in users]

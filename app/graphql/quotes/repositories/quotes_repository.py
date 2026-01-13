@@ -23,10 +23,8 @@ from app.core.context_wrapper import ContextWrapper
 from app.core.exceptions import NotFoundError
 from app.core.processors import ProcessorExecutor, ValidateCommissionRateProcessor
 from app.graphql.base_repository import BaseRepository
-from app.graphql.quotes.processors.default_rep_split_processor import (
+from app.graphql.quotes.processors import (
     DefaultRepSplitProcessor,
-)
-from app.graphql.quotes.processors.validate_rep_split_processor import (
     ValidateRepSplitProcessor,
 )
 from app.graphql.quotes.repositories.quote_balance_repository import (
@@ -41,6 +39,7 @@ from app.graphql.quotes.strawberry.quote_landing_page_response import (
 )
 from app.graphql.v2.rbac.services.rbac_filter_service import RbacFilterService
 from app.graphql.v2.rbac.strategies.base import RbacFilterStrategy
+from app.graphql.watchers.processors import QuoteWatcherNotificationProcessor
 
 
 class QuotesRepository(BaseRepository[Quote]):
@@ -58,6 +57,7 @@ class QuotesRepository(BaseRepository[Quote]):
         default_rep_split_processor: DefaultRepSplitProcessor,
         validate_rep_split_processor: ValidateRepSplitProcessor,
         validate_commission_rate_processor: ValidateCommissionRateProcessor,
+        quote_watcher_notification_processor: QuoteWatcherNotificationProcessor,
     ) -> None:
         super().__init__(
             session,
@@ -69,6 +69,7 @@ class QuotesRepository(BaseRepository[Quote]):
                 default_rep_split_processor,
                 validate_rep_split_processor,
                 validate_commission_rate_processor,
+                quote_watcher_notification_processor,
             ],
         )
         self.balance_repository = balance_repository
