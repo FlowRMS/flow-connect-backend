@@ -87,6 +87,20 @@ class AdjustmentsRepository(BaseRepository[Adjustment]):
         result = await self.session.execute(stmt)
         return list(result.scalars().all())
 
+    async def find_by_adjustment_number(
+        self, factory_id: UUID, adjustment_number: str
+    ) -> Adjustment | None:
+        stmt = (
+            select(Adjustment)
+            .options(lazyload("*"))
+            .where(
+                Adjustment.factory_id == factory_id,
+                Adjustment.adjustment_number == adjustment_number,
+            )
+        )
+        result = await self.session.execute(stmt)
+        return result.scalar_one_or_none()
+
     async def search_by_reason(
         self,
         search_term: str,

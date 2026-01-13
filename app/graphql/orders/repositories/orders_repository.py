@@ -166,6 +166,20 @@ class OrdersRepository(BaseRepository[Order]):
         result = await self.session.execute(stmt)
         return result.scalar_one() > 0
 
+    async def find_by_order_number(
+        self, order_number: str, customer_id: UUID
+    ) -> Order | None:
+        stmt = (
+            select(Order)
+            .options(lazyload("*"))
+            .where(
+                Order.order_number == order_number,
+                Order.sold_to_customer_id == customer_id,
+            )
+        )
+        result = await self.session.execute(stmt)
+        return result.scalar_one_or_none()
+
     async def search_by_order_number(
         self, search_term: str, limit: int = 20
     ) -> list[Order]:

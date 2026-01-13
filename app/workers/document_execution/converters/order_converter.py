@@ -38,10 +38,20 @@ class OrderConverter(BaseEntityConverter[OrderDTO, OrderInput, Order]):
         self.order_service = order_service
 
     @override
+    async def find_existing(self, input_data: OrderInput) -> Order | None:
+        return await self.order_service.find_by_order_number(
+            input_data.order_number,
+            input_data.sold_to_customer_id,
+        )
+
+    @override
     async def create_entity(
         self,
         input_data: OrderInput,
     ) -> Order:
+        existing = await self.find_existing(input_data)
+        if existing:
+            return existing
         return await self.order_service.create_order(input_data)
 
     @override
