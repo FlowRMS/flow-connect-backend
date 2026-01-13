@@ -83,6 +83,10 @@ class InventoryResponse(InventoryLiteResponse):
 
     @strawberry.field
     def factory(self) -> FactoryLiteResponse | None:
-        if self._instance.product and self._instance.product.factory:
-            return FactoryLiteResponse.from_orm_model(self._instance.product.factory)
-        return None
+        product = self._instance.product
+        if not product:
+            return None
+        factory = product.factory
+        if not factory:
+            return None
+        return FactoryLiteResponse.from_orm_model(factory)
