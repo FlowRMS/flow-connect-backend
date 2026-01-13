@@ -1,6 +1,7 @@
 from uuid import UUID
 
 from commons.db.v6.core.products.product import Product
+from commons.db.v6.warehouse.inventory import ABCClass, OwnershipType
 from commons.db.v6.warehouse.inventory.inventory import Inventory
 from commons.db.v6.warehouse.inventory.inventory_item import InventoryItem
 from sqlalchemy import func, select
@@ -182,11 +183,9 @@ class InventoryRepository(BaseRepository[Inventory]):
     async def update_fields(
         self,
         inventory_id: UUID,
-        abc_class: "ABCClass | None" = None,
-        ownership_type: "OwnershipType | None" = None,
+        abc_class: ABCClass | None = None,
+        ownership_type: OwnershipType | None = None,
     ) -> Inventory:
-        from commons.db.v6.warehouse.inventory import ABCClass, OwnershipType
-
         inventory = await self.get_by_id(inventory_id)
         if not inventory:
             raise NotFoundError(f"Inventory with id {inventory_id} not found")
