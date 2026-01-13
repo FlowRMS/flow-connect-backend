@@ -13,6 +13,7 @@ from commons.db.v6.warehouse.shipment_requests.shipment_request_item import (
 )
 
 from app.core.constants import DEFAULT_QUERY_LIMIT, DEFAULT_QUERY_OFFSET
+from app.core.utils.datetime import make_naive
 from app.errors.common_errors import NotFoundError
 from app.graphql.v2.core.shipment_requests.repositories.shipment_request_repository import (
     ShipmentRequestRepository,
@@ -85,8 +86,6 @@ class ShipmentRequestService:
             request.notes = notes
 
         if items is not None:
-            # Replace existing items with new ones
-            # SQLAlchemy will handle deleting orphans due to cascade="all, delete-orphan"
             request.items = [
                 ShipmentRequestItem(
                     request_id=request.id,
@@ -111,15 +110,11 @@ class ShipmentRequestService:
     ) -> ShipmentRequest:
         request_number = await self.generate_request_number()
 
-        # Ensure request_date is naive (no timezone) for DateTime(timezone=False) column
-        if request_date and request_date.tzinfo:
-            request_date = request_date.replace(tzinfo=None)
-
         request = ShipmentRequest(
             request_number=request_number,
             warehouse_id=warehouse_id,
             factory_id=factory_id,
-            request_date=request_date,
+            request_date=make_naive(request_date),
             priority=priority,
             method=method,
             status=status,
@@ -138,8 +133,13 @@ class ShipmentRequestService:
         return await self.repository.create(request)
 
     async def generate_request_number(self) -> str:
-        # Simple generation strategy: SR-{YYYY}-{RANDOM/SEQ}
+        """
+        Generate a shipment request number.
+
+        Format: SR-{YEAR}-{8-CHAR-HEX}
+        Note: 8-char UUID hex provides ~4 billion combinations. At high volume,
+        consider using a database sequence for guaranteed uniqueness.
+        """
         year = datetime.now().year
-        # Using 8 chars of UUID for uniqueness without DB locking
         unique_suffix = uuid.uuid4().hex[:8].upper()
         return f"SR-{year}-{unique_suffix}"

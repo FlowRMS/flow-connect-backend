@@ -50,8 +50,11 @@ class InventoryMutations:
         service: Injected[InventoryService],
         input: UpdateInventoryInput,
     ) -> InventoryResponse:
-        inventory = input.to_orm_model()
-        updated_inventory = await service.update(inventory)
+        updated_inventory = await service.update(
+            inventory_id=input.id,
+            abc_class=input.abc_class if input.abc_class is not strawberry.UNSET else None,
+            ownership_type=input.ownership_type if input.ownership_type is not strawberry.UNSET else None,
+        )
         return InventoryResponse.from_orm_model(updated_inventory)
 
     @strawberry.mutation

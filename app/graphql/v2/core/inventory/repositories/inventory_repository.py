@@ -9,6 +9,7 @@ from sqlalchemy.orm import contains_eager, joinedload
 
 from app.core.constants import DEFAULT_QUERY_LIMIT, DEFAULT_QUERY_OFFSET
 from app.core.context_wrapper import ContextWrapper
+from app.errors.common_errors import NotFoundError
 from app.graphql.base_repository import BaseRepository
 from app.graphql.v2.core.inventory.strawberry.inventory_stats_response import (
     InventoryStatsResponse,
@@ -26,6 +27,40 @@ class InventoryRepository(BaseRepository[Inventory]):
             context_wrapper,
             Inventory,
         )
+
+    def _default_options(self) -> list:
+        return [
+            joinedload(Inventory.items).joinedload(InventoryItem.location),
+            joinedload(Inventory.product).joinedload(Product.factory),
+        ]
+
+    async def get_by_id(self, entity_id: UUID | str) -> Inventory | None:
+        if isinstance(entity_id, str):
+            entity_id = UUID(entity_id)
+        stmt = (
+            select(Inventory)
+            .where(Inventory.id == entity_id)
+            .options(*self._default_options())
+        )
+        result = await self.session.execute(stmt)
+        return result.unique().scalar_one_or_none()
+
+    async def create(self, entity: Inventory) -> Inventory:
+        entity = await self.prepare_create(entity)
+        self.session.add(entity)
+        await self.session.flush()
+        
+        # Re-fetch with relationships to avoid lazy load issues
+        stmt = (
+            select(Inventory)
+            .where(Inventory.id == entity.id)
+            .options(*self._default_options())
+        )
+        result = await self.session.execute(stmt)
+        created = result.unique().scalar_one_or_none()
+        if not created:
+            raise NotFoundError(f"Failed to create inventory {entity.id}")
+        return created
 
     async def find_by_warehouse(
         self,
@@ -143,3 +178,29 @@ class InventoryRepository(BaseRepository[Inventory]):
             out_of_stock_count=out_of_stock_count,
             total_value=total_value,
         )
+
+    async def update_fields(
+        self,
+        inventory_id: UUID,
+        abc_class: "ABCClass | None" = None,
+        ownership_type: "OwnershipType | None" = None,
+    ) -> Inventory:
+        from commons.db.v6.warehouse.inventory import ABCClass, OwnershipType
+
+        inventory = await self.get_by_id(inventory_id)
+        if not inventory:
+            raise NotFoundError(f"Inventory with id {inventory_id} not found")
+
+        if abc_class is not None:
+            inventory.abc_class = abc_class
+        if ownership_type is not None:
+            inventory.ownership_type = ownership_type
+
+        self.session.add(inventory)
+        await self.session.flush([inventory])
+        
+        updated = await self.get_by_id(inventory_id)
+        if not updated:
+            raise NotFoundError(f"Inventory with id {inventory_id} not found after update")
+        return updated
+

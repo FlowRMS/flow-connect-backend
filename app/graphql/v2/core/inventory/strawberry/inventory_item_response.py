@@ -6,12 +6,7 @@ from uuid import UUID
 import strawberry
 from commons.db.v6.warehouse.inventory import InventoryItem, InventoryItemStatus
 
-from aioinject import Injected
-from app.graphql.inject import inject
 from app.core.db.adapters.dto import DTOMixin
-from app.graphql.v2.core.warehouses.services.warehouse_location_service import (
-    WarehouseLocationService,
-)
 
 
 @strawberry.type
@@ -41,17 +36,5 @@ class InventoryItemResponse(DTOMixin[InventoryItem]):
         )
 
     @strawberry.field
-    @inject
-    async def location_name(
-        self, service: Injected[WarehouseLocationService]
-    ) -> str | None:
-        if self._instance.location:
-             return self._instance.location.name
-        
-        if self.location_id:
-            try:
-                location = await service.get_by_id(self.location_id)
-                return location.name
-            except Exception:
-                pass
-        return None
+    def location_name(self) -> str | None:
+        return self._instance.location.name if self._instance.location else None
