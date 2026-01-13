@@ -1,5 +1,5 @@
 
-from datetime import date, datetime
+from datetime import date, datetime, timezone
 from uuid import UUID
 
 import strawberry
@@ -146,7 +146,7 @@ class DeliveryStatusHistoryInput(BaseInputGQL[DeliveryStatusHistory]):
         return DeliveryStatusHistory(
             delivery_id=self.delivery_id,
             status=DeliveryStatus(self.status.value),
-            timestamp=self.timestamp or datetime.utcnow(),
+            timestamp=self.timestamp or datetime.now(timezone.utc),
             user_id=self.user_id,
             note=self.note,
         )

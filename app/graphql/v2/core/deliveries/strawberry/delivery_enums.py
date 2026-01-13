@@ -9,14 +9,10 @@ class DeliveryStatusGQL(IntEnum):
     DRAFT = 1
     PENDING = 2
     CONFIRMED = 3
-    IN_TRANSIT = 4
-    ARRIVED = 5
-    RECEIVING = 6
-    PROCESSING = 7
-    SHIPPED = 8
-    DELIVERED = 9
-    RECEIVED = 10
-    CANCELLED = 11
+    ARRIVED = 4
+    RECEIVING = 5
+    RECEIVED = 6
+    CANCELLED = 7
 
 
 @strawberry.enum

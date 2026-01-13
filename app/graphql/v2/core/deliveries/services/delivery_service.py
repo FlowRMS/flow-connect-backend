@@ -12,7 +12,6 @@ from app.graphql.v2.core.deliveries.strawberry.delivery_input import DeliveryInp
 
 
 class DeliveryService:
-    """Service for delivery operations."""
 
     def __init__(
         self,
