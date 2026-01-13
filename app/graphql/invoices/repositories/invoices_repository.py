@@ -155,6 +155,20 @@ class InvoicesRepository(BaseRepository[Invoice]):
         )
         return result.scalar_one() > 0
 
+    async def find_by_invoice_number(
+        self, order_id: UUID, invoice_number: str
+    ) -> Invoice | None:
+        stmt = (
+            select(Invoice)
+            .options(lazyload("*"))
+            .where(
+                Invoice.order_id == order_id,
+                Invoice.invoice_number == invoice_number,
+            )
+        )
+        result = await self.session.execute(stmt)
+        return result.scalar_one_or_none()
+
     async def search_by_invoice_number(
         self,
         search_term: str,

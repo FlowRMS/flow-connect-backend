@@ -39,7 +39,20 @@ class InvoiceConverter(BaseEntityConverter[InvoiceDTO, InvoiceInput, Invoice]):
         self.order_detail_matcher = order_detail_matcher
 
     @override
-    async def create_entity(self, input_data: InvoiceInput) -> Invoice:
+    async def find_existing(self, input_data: InvoiceInput) -> Invoice | None:
+        return await self.invoice_service.find_by_invoice_number(
+            input_data.order_id,
+            input_data.invoice_number,
+        )
+
+    @override
+    async def create_entity(
+        self,
+        input_data: InvoiceInput,
+    ) -> Invoice:
+        existing = await self.find_existing(input_data)
+        if existing:
+            return existing
         return await self.invoice_service.create_invoice(input_data)
 
     @override

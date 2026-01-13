@@ -29,6 +29,11 @@ class OrderService:
     ) -> bool:
         return await self.repository.order_number_exists(order_number, customer_id)
 
+    async def find_by_order_number(
+        self, order_number: str, customer_id: UUID
+    ) -> Order | None:
+        return await self.repository.find_by_order_number(order_number, customer_id)
+
     async def find_order_by_id(self, order_id: UUID) -> Order:
         return await self.repository.find_order_by_id(order_id)
 
