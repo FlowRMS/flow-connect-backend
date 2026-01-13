@@ -14,7 +14,7 @@ from app.graphql.v2.core.users.strawberry.user_response import UserResponse
 
 
 @strawberry.type
-class OrderForCheckResponse(OrderLiteResponse):
+class OrderSemiLiteResponse(OrderLiteResponse):
     @strawberry.field
     def sold_to_customer(self) -> CustomerLiteResponse:
         return CustomerLiteResponse.from_orm_model(self._instance.sold_to_customer)

@@ -21,6 +21,7 @@ class SyncConfig:
     tenant_url: str
     workos_api_key: str
     workos_client_id: str
+    workos_org_id: str
     dry_run: bool = False
 
 
@@ -42,6 +43,7 @@ async def get_workos_org_id(
     client: AsyncWorkOSClient, tenant_name: str
 ) -> str | None:
     orgs = await client.organizations.list_organizations()
+    print(f"Orgs: {orgs}")
     for org in orgs.data:
         if org.name == tenant_name:
             return org.id
@@ -125,12 +127,7 @@ async def sync_users_for_tenant(config: SyncConfig) -> SyncResult:
     await controller.load_data_sources()
 
     try:
-        org_id = await get_workos_org_id(client, config.tenant_url)
-        if not org_id:
-            result.errors.append(f"WorkOS org not found for tenant: {config.tenant_url}")
-            return result
-
-        logger.info(f"Found WorkOS org {org_id} for tenant {config.tenant_url}")
+        logger.info(f"Found WorkOS org {config.workos_org_id} for tenant {config.tenant_url}")
 
         async with controller.scoped_session(config.tenant_url) as session:
             stmt = select(User).order_by(User.email).where(
@@ -144,7 +141,7 @@ async def sync_users_for_tenant(config: SyncConfig) -> SyncResult:
             for user in users:
                 try:
                     await _sync_single_user(
-                        client, session, user, org_id, config.dry_run, result
+                        client, session, user, config.workos_org_id, config.dry_run, result
                     )
                 except Exception as e:
                     logger.error(f"Error syncing user {user.email}: {e}")
@@ -258,6 +255,11 @@ if __name__ == "__main__":
         help="WorkOS client ID",
     )
     _ = parser.add_argument(
+        "--workos-org-id",
+        default=os.environ.get("WORKOS_ORG_ID"),
+        help="WorkOS organization ID",
+    )
+    _ = parser.add_argument(
         "--dry-run",
         action="store_true",
         help="Run without making changes",
@@ -270,13 +272,16 @@ if __name__ == "__main__":
         parser.error("--workos-api-key is required (or set WORKOS_API_KEY)")
     if not args.workos_client_id:
         parser.error("--workos-client-id is required (or set WORKOS_CLIENT_ID)")
-
+    if not args.workos_org_id:
+        parser.error("--workos-org-id is required (or set WORKOS_ORG_ID)")
+        
     config = SyncConfig(
         pg_url=args.pg_url,
         tenant_url=args.tenant,
         workos_api_key=args.workos_api_key,
         workos_client_id=args.workos_client_id,
         dry_run=args.dry_run,
+        workos_org_id=args.workos_org_id,
     )
 
     _ = asyncio.run(run_sync(config))
