@@ -15,6 +15,9 @@ from app.graphql.v2.core.backorders.repositories.backorder_repository import (
 from app.graphql.v2.core.customers.strawberry.customer_response import (
     CustomerLiteResponse,
 )
+from app.graphql.v2.core.factories.strawberry.factory_response import (
+    FactoryLiteResponse,
+)
 from app.graphql.v2.core.products.strawberry.product_response import ProductLiteResponse
 
 
@@ -58,6 +61,12 @@ class BackorderResponse(DTOMixin[OrderDetail]):
             due_date=model.order.due_date,
             status=model.order.status.name if model.order.status else "UNKNOWN",
         )
+
+    @strawberry.field
+    def factory(self) -> FactoryLiteResponse | None:
+        if self._instance.product and self._instance.product.factory:
+            return FactoryLiteResponse.from_orm_model(self._instance.product.factory)
+        return None
 
     @strawberry.field
     @inject

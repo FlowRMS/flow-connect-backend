@@ -13,6 +13,12 @@ from app.graphql.v2.core.inventory.strawberry.inventory_item_response import (
 from app.graphql.v2.core.products.strawberry.product_response import (
     ProductLiteResponse,
 )
+from app.graphql.v2.core.factories.strawberry.factory_response import (
+    FactoryLiteResponse,
+)
+from app.graphql.v2.core.products.services.product_service import ProductService
+from app.graphql.inject import inject
+from aioinject import Injected
 
 
 @strawberry.type
@@ -72,5 +78,26 @@ class InventoryResponse(InventoryLiteResponse):
         return InventoryItemResponse.from_orm_model_list(self._instance.items)
 
     @strawberry.field
-    def product(self) -> ProductLiteResponse:
-        return ProductLiteResponse.from_orm_model(self._instance.product)
+    @inject
+    async def product(
+        self, product_service: Injected[ProductService]
+    ) -> ProductLiteResponse:
+        product = await product_service.get_by_id(self.product_id)
+        if not product:
+            # Should conceptually not happen if FK is valid, but handle gracefully
+            raise Exception(f"Product {self.product_id} not found")
+        return ProductLiteResponse.from_orm_model(product)
+
+    @strawberry.field
+    @inject
+    async def factory(
+        self, product_service: Injected[ProductService]
+    ) -> FactoryLiteResponse | None:
+        try:
+             product = await product_service.get_by_id(self.product_id)
+             if product and product.factory:
+                 return FactoryLiteResponse.from_orm_model(product.factory)
+        except Exception:
+             # Return None if product or factory not found to avoid crashing
+             pass
+        return None

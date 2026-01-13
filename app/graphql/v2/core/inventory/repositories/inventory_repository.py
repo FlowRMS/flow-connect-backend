@@ -2,6 +2,7 @@ from uuid import UUID
 
 from commons.db.v6.core.products.product import Product
 from commons.db.v6.warehouse.inventory.inventory import Inventory
+from commons.db.v6.warehouse.inventory.inventory_item import InventoryItem
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import contains_eager, joinedload
@@ -40,8 +41,8 @@ class InventoryRepository(BaseRepository[Inventory]):
             .join(Inventory.product)
             .where(Inventory.warehouse_id == warehouse_id)
             .options(
-                joinedload(Inventory.items),
-                contains_eager(Inventory.product),
+                joinedload(Inventory.items).joinedload(InventoryItem.location),
+                contains_eager(Inventory.product).joinedload(Product.factory),
             )
             .limit(limit)
             .offset(offset)
