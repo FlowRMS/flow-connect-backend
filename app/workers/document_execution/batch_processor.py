@@ -1,3 +1,4 @@
+from dataclasses import dataclass
 from typing import Any
 from uuid import UUID
 
@@ -17,6 +18,15 @@ from .converters.skipped_entity_handler import (
     is_dto_skipped_for_invoice,
     is_dto_skipped_for_order,
 )
+
+
+@dataclass
+class BatchProcessingResult:
+    records: list[PendingDocumentProcessing]
+    created_count: int
+    updated_count: int
+    skipped_count: int
+    error_count: int
 
 
 class DocumentBatchProcessor:
@@ -97,7 +107,7 @@ class DocumentBatchProcessor:
                 valid_inputs.append(result.unwrap())
                 valid_indices.append(i)
             except Exception as e:
-                logger.error(f"Error converting DTO {i}: {e}")
+                logger.exception(f"Error converting DTO {i}: {e}")
                 conversion_errors[i] = str(e)
 
         for i in user_skipped_indices:
@@ -112,34 +122,69 @@ class DocumentBatchProcessor:
             )
 
         if valid_inputs:
-            bulk_result = await converter.create_entities_bulk(valid_inputs)
+            separated = await converter.separate_inputs(valid_inputs)
 
-            skipped_set = set(bulk_result.skipped_indices)
+            create_result = await converter.create_entities_bulk(separated.for_creation)
+            update_result = await converter.update_entities_bulk(separated.for_update)
+
+            create_skipped_set = set(create_result.skipped_indices)
+            update_skipped_set = set(update_result.skipped_indices)
+
             created_idx = 0
+            updated_idx = 0
+
             for list_pos, original_idx in enumerate(valid_indices):
                 dto = dtos[original_idx]
-                if list_pos in skipped_set:
-                    records.append(
-                        PendingDocumentProcessing(
-                            pending_document_id=pending_document.id,
-                            entity_id=None,
-                            status=ProcessingResultStatus.SKIPPED,
-                            dto_json=dto.model_dump(mode="json"),
-                            error_message="Duplicate or could not be created",
+
+                if list_pos in separated.for_creation_indices:
+                    create_pos = separated.for_creation_indices.index(list_pos)
+                    if create_pos in create_skipped_set:
+                        records.append(
+                            PendingDocumentProcessing(
+                                pending_document_id=pending_document.id,
+                                entity_id=None,
+                                status=ProcessingResultStatus.SKIPPED,
+                                dto_json=dto.model_dump(mode="json"),
+                                error_message="Duplicate or could not be created",
+                            )
                         )
-                    )
-                else:
-                    entity = bulk_result.created[created_idx]
-                    created_idx += 1
-                    records.append(
-                        PendingDocumentProcessing(
-                            pending_document_id=pending_document.id,
-                            entity_id=entity.id,
-                            status=ProcessingResultStatus.CREATED,
-                            dto_json=dto.model_dump(mode="json"),
-                            error_message=None,
+                    else:
+                        entity = create_result.created[created_idx]
+                        created_idx += 1
+                        records.append(
+                            PendingDocumentProcessing(
+                                pending_document_id=pending_document.id,
+                                entity_id=entity.id,
+                                status=ProcessingResultStatus.CREATED,
+                                dto_json=dto.model_dump(mode="json"),
+                                error_message=None,
+                            )
                         )
-                    )
+
+                elif list_pos in separated.for_update_indices:
+                    update_pos = separated.for_update_indices.index(list_pos)
+                    if update_pos in update_skipped_set:
+                        records.append(
+                            PendingDocumentProcessing(
+                                pending_document_id=pending_document.id,
+                                entity_id=None,
+                                status=ProcessingResultStatus.SKIPPED,
+                                dto_json=dto.model_dump(mode="json"),
+                                error_message="Could not be updated",
+                            )
+                        )
+                    else:
+                        entity = update_result.created[updated_idx]
+                        updated_idx += 1
+                        records.append(
+                            PendingDocumentProcessing(
+                                pending_document_id=pending_document.id,
+                                entity_id=entity.id,
+                                status=ProcessingResultStatus.CREATED,
+                                dto_json=dto.model_dump(mode="json"),
+                                error_message=None,
+                            )
+                        )
 
         for i, error in conversion_errors.items():
             records.append(

@@ -48,9 +48,10 @@ from migrations.v5_to_v6.migrate_orders import (
 )
 from migrations.v5_to_v6.migrate_pycrm_entities import (
     migrate_companies,
+    migrate_file_entity_links,
     migrate_link_relations,
     migrate_notes,
-    migrate_tasks,
+    # migrate_tasks,
 )
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
@@ -67,7 +68,6 @@ class MigrationConfig:
 async def migrate_users(source: asyncpg.Connection, dest: asyncpg.Connection) -> int:
     """Migrate users from v5 (user.users) to v6 (pyuser.users)."""
     logger.info("Starting user migration...")
-
     users = await source.fetch("""
         SELECT
             u.id,
@@ -77,10 +77,14 @@ async def migrate_users(source: asyncpg.Connection, dest: asyncpg.Connection) ->
             u.email,
             u.keycloak_id::text as auth_provider_id,
             CASE
-                WHEN ur.name = 'admin' THEN 1
-                WHEN ur.name = 'manager' THEN 2
-                WHEN ur.name = 'sales_rep' THEN 3
-                ELSE 4
+                WHEN ur.name = 'warehouse_manager' THEN 5
+                WHEN ur.name = 'administrator' THEN 2
+                WHEN ur.name = 'warehouse_employee' THEN 6
+                WHEN ur.name = 'driver' THEN 7
+                WHEN ur.name = 'inside_rep' THEN 3
+                WHEN ur.name = 'outside_rep' THEN 4
+                WHEN ur.name = 'owner' THEN 1
+                ELSE 2  -- Default to ADMINISTRATOR if role is unknown
             END AS role,
             u.enabled,
             COALESCE(u.inside, false) as inside,
@@ -1051,8 +1055,8 @@ async def run_migration(config: MigrationConfig) -> dict[str, int]:
         # results["users"] = await migrate_users(source, dest)
         # results["folders"] = await migrate_folders(source, dest)
         # results["files"] = await migrate_files(source, dest)
-        # results["customers"] = await migrate_customers(source, dest)
-        # results["factories"] = await migrate_factories(source, dest)
+        results["customers"] = await migrate_customers(source, dest)
+        results["factories"] = await migrate_factories(source, dest)
         # results["product_uoms"] = await migrate_product_uoms(source, dest)
         # results["product_categories"] = await migrate_product_categories(source, dest)
         # results["products"] = await migrate_products(source, dest)
@@ -1066,15 +1070,16 @@ async def run_migration(config: MigrationConfig) -> dict[str, int]:
         # results["quote_split_rates"] = await migrate_quote_split_rates(source, dest)
         # results["quote_inside_reps"] = await migrate_quote_inside_reps(source, dest)
         # results["customer_factory_sales_reps"] = await migrate_customer_factory_sales_reps(source, dest)
-        # results["inside_customer_split_rates"] = await migrate_inside_customer_split_rates(source, dest)
-        # results["customer_split_rates"] = await migrate_customer_split_rates(source, dest)
-        # results["factory_split_rates"] = await migrate_factory_split_rates(source, dest)
+        results["inside_customer_split_rates"] = await migrate_inside_customer_split_rates(source, dest)
+        results["customer_split_rates"] = await migrate_customer_split_rates(source, dest)
+        results["factory_split_rates"] = await migrate_factory_split_rates(source, dest)
         # results["addresses"] = await migrate_addresses(source, dest)
         # results["contacts"] = await migrate_contacts(source, dest)
         # results["contact_links"] = await migrate_contact_links(source, dest)
         # results["notes"] = await migrate_notes(source, dest)
         # results["tasks"] = await migrate_tasks(source, dest)
         # results["link_relations"] = await migrate_link_relations(source, dest)
+        # results["file_entity_links"] = await migrate_file_entity_links(source, dest)
         # results["companies"] = await migrate_companies(source, dest)
         # results["order_balances"] = await migrate_order_balances(source, dest)
         # results["orders"] = await migrate_orders(source, dest)
@@ -1086,18 +1091,18 @@ async def run_migration(config: MigrationConfig) -> dict[str, int]:
         # results["invoices"] = await migrate_invoices(source, dest)
         # results["invoice_details"] = await migrate_invoice_details(source, dest)
         # results["invoice_split_rates"] = await migrate_invoice_split_rates(source, dest)
-        results["credit_balances"] = await migrate_credit_balances(source, dest)
-        results["credits"] = await migrate_credits(source, dest)
-        results["credit_details"] = await migrate_credit_details(source, dest)
-        results["credit_split_rates"] = await migrate_credit_split_rates(source, dest)
-        results["adjustments"] = await migrate_adjustments(source, dest)
-        results["adjustment_split_rates"] = await migrate_adjustment_split_rates(source, dest)
-        results["checks"] = await migrate_checks(source, dest)
-        results["check_details"] = await migrate_check_details(source, dest)
+        # results["credit_balances"] = await migrate_credit_balances(source, dest)
+        # results["credits"] = await migrate_credits(source, dest)
+        # results["credit_details"] = await migrate_credit_details(source, dest)
+        # results["credit_split_rates"] = await migrate_credit_split_rates(source, dest)
+        # results["adjustments"] = await migrate_adjustments(source, dest)
+        # results["adjustment_split_rates"] = await migrate_adjustment_split_rates(source, dest)
+        # results["checks"] = await migrate_checks(source, dest)
+        # results["check_details"] = await migrate_check_details(source, dest)
 
-        # AI tables (same schema in both source and dest)
-        for table in AI_TABLES:
-            results[table] = await migrate_ai_table(source, dest, table)
+        # # AI tables (same schema in both source and dest)
+        # for table in AI_TABLES:
+        #     results[table] = await migrate_ai_table(source, dest, table)
 
         logger.info("Migration completed successfully!")
         logger.info(f"Results: {results}")

@@ -62,6 +62,13 @@ tasks:
     cmds:
       - task: lint
       - task: typecheck-basedpy
+      - task: gql
+
+  all-ci:
+    desc: Run the standard set of checks performed in CI
+    cmds:
+      - task: lint
+      - task: typecheck-basedpy
 
   lints:
     desc: Run linting and type-checking

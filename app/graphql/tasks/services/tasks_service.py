@@ -66,12 +66,6 @@ class TasksService:
             raise NotFoundError(str(task_id))
         return await self.repository.delete(task_id)
 
-    async def get_task(self, task_id: UUID | str) -> Task:
-        task = await self.repository.get_by_id(task_id)
-        if not task:
-            raise NotFoundError(str(task_id))
-        return task
-
     async def add_conversation(
         self, conversation_input: TaskConversationInput
     ) -> TaskConversation:

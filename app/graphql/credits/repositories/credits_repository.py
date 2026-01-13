@@ -2,7 +2,13 @@ from typing import Any
 from uuid import UUID
 
 from commons.db.v6 import RbacResourceEnum, User
-from commons.db.v6.commission import Credit, CreditBalance, CreditDetail, Order
+from commons.db.v6.commission import (
+    Credit,
+    CreditBalance,
+    CreditDetail,
+    CreditSplitRate,
+    Order,
+)
 from commons.db.v6.commission.credits.enums import CreditStatus
 from commons.db.v6.crm.links.entity_type import EntityType
 from commons.db.v6.crm.links.link_relation_model import LinkRelation
@@ -89,6 +95,9 @@ class CreditsRepository(BaseRepository[Credit]):
             options=[
                 joinedload(Credit.details),
                 joinedload(Credit.details).joinedload(CreditDetail.outside_split_rates),
+                joinedload(Credit.details)
+                .joinedload(CreditDetail.outside_split_rates)
+                .joinedload(CreditSplitRate.user),
                 joinedload(Credit.balance),
                 joinedload(Credit.order),
                 joinedload(Credit.created_by),

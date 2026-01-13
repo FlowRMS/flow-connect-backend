@@ -67,6 +67,26 @@ class ProductsRepository(BaseRepository[Product]):
         result = await self.session.execute(stmt)
         return {(row[0], row[1]) for row in result.all()}
 
+    async def get_existing_products(
+        self, fpn_factory_pairs: list[tuple[str, UUID]]
+    ) -> list[Product]:
+        if not fpn_factory_pairs:
+            return []
+
+        stmt = select(Product).where(
+            tuple_(Product.factory_part_number, Product.factory_id).in_(
+                fpn_factory_pairs
+            )
+        )
+        result = await self.session.execute(stmt)
+        return list(result.scalars().all())
+
+    async def bulk_update(self, entities: list[Product]) -> list[Product]:
+        if not entities:
+            return []
+        await self.session.flush(entities)
+        return entities
+
     def paginated_stmt(self) -> Select[Any]:
         return (
             select(
