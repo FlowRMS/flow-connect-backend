@@ -1,9 +1,30 @@
 directive @rolePermissionAccess on FIELD_DEFINITION
 
+enum ABCClass {
+  A
+  B
+  C
+}
+
+input AddCompanyToJobInput {
+  jobId: UUID!
+  companyId: UUID!
+  role: JobCompanyRole!
+}
+
+input AddInventoryItemInput {
+  inventoryId: UUID!
+  locationId: UUID = null
+  quantity: Decimal! = "0.0000"
+  lotNumber: String = null
+  status: InventoryItemStatus! = AVAILABLE
+  receivedDate: datetime = null
+}
+
 input AddressInput {
   sourceId: UUID!
   sourceType: AddressSourceTypeEnum!
-  addressType: AddressTypeEnum! = OTHER
+  addressTypes: [AddressTypeEnum!]!
   line1: String!
   city: String!
   country: String!
@@ -19,7 +40,7 @@ type AddressResponse {
   createdAt: datetime!
   sourceId: UUID!
   sourceType: AddressSourceTypeEnum!
-  addressType: AddressTypeEnum!
+  addressTypes: [AddressTypeEnum!]!
   line1: String!
   line2: String
   city: String!
@@ -142,6 +163,44 @@ type AdjustmentSplitRateResponse {
 enum AdjustmentStatus {
   PENDING
   POSTED
+}
+
+type BackorderResponse {
+  id: UUID!
+  orderedQuantity: Decimal!
+  orderId: UUID!
+  orderNumber: String!
+  productId: UUID
+  product: ProductLiteResponse
+  customerId: UUID
+  customer: CustomerLiteResponse
+  dueDate: Date!
+  status: String!
+  shippedQuantity: Decimal!
+  backorderedQuantity: Decimal!
+}
+
+enum BulkDeleteEntityType {
+  FACTORIES
+  CUSTOMERS
+  PRODUCTS
+  ORDERS
+  INVOICES
+  QUOTES
+  CHECKS
+  PRE_OPS
+}
+
+type BulkDeleteFailure {
+  entityId: UUID!
+  error: String!
+}
+
+type BulkDeleteResult {
+  entityType: BulkDeleteEntityType!
+  deletedCount: Int!
+  failedCount: Int!
+  failures: [BulkDeleteFailure!]!
 }
 
 input BulkWarehouseLocationInput {
@@ -327,6 +386,7 @@ type CheckResponse {
   creationType: CreationType!
   url: String!
   factory: FactoryLiteResponse!
+  createdBy: UserResponse!
   details: [CheckDetailResponse!]!
 }
 
@@ -382,6 +442,31 @@ type CompanyResponse {
 enum CompanyType {
   CUSTOMER
   MANUFACTURER
+  ENGINEERING_FIRM
+  CONSULTING_ENGINEER
+  ELECTRICAL_ENGINEER
+  MEP_ENGINEER
+  ARCHITECT
+  LIGHTING_DESIGNER
+  SPECIFIER
+  ELECTRICAL_CONTRACTOR
+  GENERAL_CONTRACTOR
+  DESIGN_BUILD_FIRM
+  EPC
+  SYSTEMS_INTEGRATOR
+  CONTROLS_CONTRACTOR
+  LOW_VOLTAGE_CONTRACTOR
+  BUILDING_OWNER
+  DEVELOPER
+  PROPERTY_MANAGEMENT_COMPANY
+  FACILITY_MANAGEMENT_COMPANY
+  UTILITY_COMPANY
+  MUNICIPALITY_PUBLIC_AUTHORITY
+  AHJ
+  COMMISSIONING_AGENT
+  TESTING_INSPECTION_AGENCY
+  ENERGY_PROGRAM_ADMINISTRATOR
+  TRADE_ASSOCIATION
 }
 
 input ContactInput {
@@ -410,8 +495,21 @@ type ContactLandingPage implements LandingPageInterfaceBase {
   tags: [String!]
 }
 
+type ContactLiteResponse {
+  id: UUID!
+  createdAt: datetime!
+  firstName: String!
+  lastName: String!
+  email: String
+  phone: String
+  role: String
+  territory: String
+  tags: [String!]
+  notes: String
+}
+
 type ContactRelatedEntitiesResponse {
-  companies: [CompanyResponse!]!
+  companies: [CompanyLiteResponse!]!
 }
 
 type ContactResponse {
@@ -458,6 +556,22 @@ input CreateHighlightVersionInput {
   name: String!
   description: String = null
   regions: [HighlightRegionInput!]!
+}
+
+input CreateInventoryInput {
+  warehouseId: UUID!
+  productId: UUID!
+}
+
+input CreateShipmentRequestInput {
+  warehouseId: UUID!
+  factoryId: UUID!
+  requestDate: datetime!
+  priority: ShipmentPriority! = STANDARD
+  method: ShipmentMethod = null
+  status: ShipmentRequestStatus! = PENDING
+  notes: String = null
+  items: [ShipmentRequestItemInput!]! = []
 }
 
 input CreateSpecSheetInput {
@@ -622,6 +736,7 @@ enum CreditType {
   PRICE_ADJUSTMENT
   DEFECTIVE
   OTHER
+  SHORT_SHIP
 }
 
 input CriteriaConditionInput {
@@ -678,6 +793,7 @@ input CustomerInput {
   published: Boolean! = false
   isParent: Boolean! = false
   parentId: UUID = null
+  buyingGroupId: UUID = null
 }
 
 type CustomerLandingPage implements LandingPageInterfaceBase {
@@ -688,6 +804,8 @@ type CustomerLandingPage implements LandingPageInterfaceBase {
   companyName: String!
   published: Boolean!
   isParent: Boolean!
+  buyingGroup: String
+  parent: String
   insideReps: [String!]!
   outsideReps: [String!]!
 }
@@ -698,6 +816,7 @@ type CustomerLiteResponse {
   published: Boolean!
   isParent: Boolean!
   parentId: UUID
+  buyingGroupId: UUID
 }
 
 type CustomerResponse {
@@ -706,9 +825,12 @@ type CustomerResponse {
   published: Boolean!
   isParent: Boolean!
   parentId: UUID
+  buyingGroupId: UUID
   createdBy: UserResponse!
   outsideReps: [CustomerSplitRateResponse!]!
   insideReps: [CustomerSplitRateResponse!]!
+  parent: CustomerLiteResponse
+  buyingGroup: CustomerLiteResponse
 }
 
 type CustomerSplitRateResponse {
@@ -1079,6 +1201,66 @@ input InsideSplitRateInput {
   id: UUID = null
 }
 
+type InventoryImportSummary {
+  processed: Int!
+  created: Int!
+  updated: Int!
+  errors: Int!
+  skipped: Int!
+}
+
+type InventoryItemResponse {
+  id: UUID!
+  inventoryId: UUID!
+  locationId: UUID
+  quantity: Decimal!
+  lotNumber: String
+  status: InventoryItemStatus!
+  receivedDate: datetime
+  createdAt: datetime!
+  locationName: String
+}
+
+enum InventoryItemStatus {
+  AVAILABLE
+  RESERVED
+  PICKING
+  DAMAGED
+  QUARANTINE
+}
+
+type InventoryResponse {
+  id: UUID!
+  productId: UUID!
+  warehouseId: UUID!
+  totalQuantity: Decimal!
+  availableQuantity: Decimal!
+  reservedQuantity: Decimal!
+  pickingQuantity: Decimal!
+  ownershipType: OwnershipType!
+  abcClass: ABCClass
+  createdAt: datetime!
+  updatedAt: datetime!
+  items: [InventoryItemResponse!]!
+  product: ProductLiteResponse!
+}
+
+type InventoryStatsResponse {
+  totalProducts: Int!
+  totalQuantity: Decimal!
+  availableQuantity: Decimal!
+  reservedQuantity: Decimal!
+  lowStockCount: Int!
+  pickingQuantity: Decimal!
+  outOfStockCount: Int!
+  totalValue: Decimal!
+}
+
+type InventoryStatusOption {
+  label: String!
+  value: String!
+}
+
 type InvoiceBalanceResponse {
   id: UUID!
   quantity: Decimal!
@@ -1253,6 +1435,20 @@ enum InvoiceStatus {
 """The `JSON` scalar type represents JSON values as specified by ECMA-404"""
 scalar JSON
 
+type JobCompanyLinkResponse {
+  id: UUID!
+  jobId: UUID!
+  companyId: UUID!
+  role: JobCompanyRole!
+  createdAt: datetime!
+  company: CompanyLiteResponse!
+}
+
+enum JobCompanyRole {
+  SPECIFIER
+  AWARDEE
+}
+
 input JobInput {
   jobName: String!
   statusId: UUID!
@@ -1301,7 +1497,7 @@ type JobLiteType {
 
 type JobRelatedEntitiesResponse {
   preOpportunities: [PreOpportunityLiteResponse!]!
-  contacts: [ContactResponse!]!
+  contacts: [ContactLiteResponse!]!
   companies: [CompanyLiteResponse!]!
   quotes: [QuoteLiteResponse!]!
   orders: [OrderLiteResponse!]!
@@ -1434,6 +1630,7 @@ type Mutation {
   updateCheck(input: CheckInput!): CheckResponse!
   deleteCheck(id: UUID!): Boolean!
   unpostCheck(checkId: UUID!): CheckResponse!
+  bulkDelete(entityType: BulkDeleteEntityType!, entityIds: [UUID!]!): BulkDeleteResult!
   createCompany(input: CompanyInput!): CompanyResponse!
   deleteCompany(id: UUID!): Boolean!
   updateCompany(id: UUID!, input: CompanyInput!): CompanyResponse!
@@ -1458,6 +1655,8 @@ type Mutation {
   updateInvoice(input: InvoiceInput!): InvoiceResponse!
   deleteInvoice(id: UUID!): Boolean!
   createInvoiceFromOrder(orderId: UUID!, invoiceNumber: String!, factoryId: UUID!, orderDetailIds: [UUID!] = null, dueDate: Date = null): InvoiceResponse!
+  addCompanyToJob(input: AddCompanyToJobInput!): JobCompanyLinkResponse!
+  removeCompanyFromJob(input: RemoveCompanyFromJobInput!): Boolean!
   createJob(input: JobInput!): JobType!
   updateJob(id: UUID!, input: JobInput!): JobType!
   deleteJob(id: UUID!): Boolean!
@@ -1518,6 +1717,13 @@ type Mutation {
   updateFactory(id: UUID!, input: FactoryInput!): FactoryResponse!
   deleteFactory(id: UUID!): Boolean!
   updateManufacturerOrder(factoryIds: [UUID!]!): Int!
+  createInventory(input: CreateInventoryInput!): InventoryResponse!
+  deleteInventory(id: UUID!): Boolean!
+  addInventoryItem(input: AddInventoryItemInput!): InventoryItemResponse!
+  deleteInventoryItem(id: UUID!): Boolean!
+  updateInventoryItem(input: UpdateInventoryItemInput!): InventoryItemResponse!
+  exportInventory(warehouseId: UUID!): String!
+  importInventory(warehouseId: UUID!, file: String!): InventoryImportSummary!
   createProductCategory(input: ProductCategoryInput!): ProductCategoryResponse!
   updateProductCategory(id: UUID!, input: ProductCategoryInput!): ProductCategoryResponse!
   deleteProductCategory(id: UUID!): Boolean!
@@ -1533,6 +1739,9 @@ type Mutation {
   createProduct(input: ProductInput!): ProductResponse!
   updateProduct(id: UUID!, input: ProductInput!): ProductResponse!
   deleteProduct(id: UUID!): Boolean!
+  updateShipmentRequestStatus(id: UUID!, status: ShipmentRequestStatus!, notes: String = null): ShipmentRequestResponse!
+  updateShipmentRequest(input: UpdateShipmentRequestInput!): ShipmentRequestResponse!
+  createShipmentRequest(input: CreateShipmentRequestInput!): ShipmentRequestResponse!
   createShippingCarrier(input: ShippingCarrierInput!): ShippingCarrierResponse!
   updateShippingCarrier(id: UUID!, input: ShippingCarrierInput!): ShippingCarrierResponse!
   deleteShippingCarrier(id: UUID!): Boolean!
@@ -1584,6 +1793,7 @@ input NoteInput {
   content: String!
   tags: [String!]
   mentions: [UUID!]
+  isPublic: Boolean! = false
 }
 
 type NoteLandingPage implements LandingPageInterfaceBase {
@@ -1595,22 +1805,33 @@ type NoteLandingPage implements LandingPageInterfaceBase {
   content: String!
   tags: [String!]
   mentions: [UUID!]
+  isPublic: Boolean!
   linkedEntities: [LinkedEntity!]!
 }
 
+type NoteLiteType {
+  id: UUID!
+  createdAt: datetime!
+  title: String!
+  content: String!
+  tags: [String!]
+  mentions: [UUID!]
+  isPublic: Boolean!
+}
+
 type NoteRelatedEntitiesResponse {
-  jobs: [JobType!]!
-  tasks: [TaskType!]!
-  contacts: [ContactResponse!]!
-  companies: [CompanyResponse!]!
+  jobs: [JobLiteType!]!
+  tasks: [TaskLiteType!]!
+  contacts: [ContactLiteResponse!]!
+  companies: [CompanyLiteResponse!]!
   preOpportunities: [PreOpportunityLiteResponse!]!
-  quotes: [QuoteResponse!]!
-  orders: [OrderResponse!]!
+  quotes: [QuoteLiteResponse!]!
+  orders: [OrderLiteResponse!]!
   invoices: [InvoiceLiteResponse!]!
-  checks: [CheckResponse!]!
-  factories: [FactoryResponse!]!
-  products: [ProductResponse!]!
-  customers: [CustomerResponse!]!
+  checks: [CheckLiteResponse!]!
+  factories: [FactoryLiteResponse!]!
+  products: [ProductLiteResponse!]!
+  customers: [CustomerLiteResponse!]!
 }
 
 type NoteType {
@@ -1620,6 +1841,7 @@ type NoteType {
   content: String!
   tags: [String!]
   mentions: [UUID!]
+  isPublic: Boolean!
   createdBy: UserResponse!
   mentionedUsers: [UserResponse!]!
 }
@@ -1794,6 +2016,7 @@ type OrderDetailResponse {
   insideSplitRates: [OrderInsideRepResponse!]!
   product: ProductLiteResponse
   uom: ProductUomResponse
+  acknowledgements: [OrderAcknowledgementResponse!]!
 }
 
 enum OrderHeaderStatus {
@@ -1992,6 +2215,12 @@ input OutsideSplitRateInput {
   splitRate: Decimal!
   position: Int!
   id: UUID = null
+}
+
+enum OwnershipType {
+  CONSIGNMENT
+  OWNED
+  THIRD_PARTY
 }
 
 type PendingDocumentLandingPage {
@@ -2198,6 +2427,7 @@ type ProductCategoryResponse {
   commissionRate: Decimal
   parent: ProductCategoryLiteResponse
   grandparent: ProductCategoryLiteResponse
+  children: [ProductCategoryLiteResponse!]!
 }
 
 input ProductCpnInput {
@@ -2368,6 +2598,7 @@ type Query {
   contactSearch(searchTerm: String!, limit: Int! = 20): [ContactResponse!]!
   contactRelatedEntities(contactId: UUID!): ContactRelatedEntitiesResponse! @deprecated(reason: "Use related_entities(source_type: CONTACTS, entity_id: UUID)")
   credit(id: UUID!): CreditResponse!
+  creditsByOrderId(orderId: UUID!): [CreditLiteResponse!]!
   creditSearch(searchTerm: String!, limit: Int! = 20, openOnly: Boolean! = false, unlockedOnly: Boolean! = false): [CreditLiteResponse!]!
   pendingDocumentProcessings(pendingDocumentId: UUID!): [PendingDocumentProcessingType!]!
   gmailAuthUrl(state: String = null): String!
@@ -2380,6 +2611,9 @@ type Query {
   invoiceSearch(searchTerm: String!, limit: Int! = 20, openOnly: Boolean! = false, unlockedOnly: Boolean! = false): [InvoiceLiteResponse!]!
   searchOpenInvoices(factoryId: UUID!, startFrom: Date!): [InvoiceLiteOrderResponse!]!
   invoicesByOrderId(orderId: UUID!): [InvoiceLiteResponse!]!
+  jobCompanyLinks(jobId: UUID!): [JobCompanyLinkResponse!]!
+  jobSpecifiers(jobId: UUID!): [JobCompanyLinkResponse!]!
+  jobAwardees(jobId: UUID!): [JobCompanyLinkResponse!]!
   job(id: UUID!): JobType!
   jobStatuses: [JobStatusType!]!
   jobRelatedEntities(jobId: UUID!): JobRelatedEntitiesResponse! @deprecated(reason: "Use related_entities(source_type: JOBS, entity_id: UUID)")
@@ -2401,7 +2635,7 @@ type Query {
   orderAcknowledgementsByOrderDetail(orderDetailId: UUID!): [OrderAcknowledgementResponse!]!
   order(id: UUID!): OrderResponse!
   orderSearch(searchTerm: String!, limit: Int! = 20): [OrderLiteResponse!]!
-  organization: OrganizationType @rolePermissionAccess
+  organization: OrganizationType
   preOpportunity(id: UUID!): PreOpportunityResponse!
   preOpportunitySearch(searchTerm: String!, limit: Int! = 20): [PreOpportunityLiteResponse!]!
   quote(id: UUID!): QuoteResponse!
@@ -2416,15 +2650,23 @@ type Query {
   taskSearch(searchTerm: String!, limit: Int! = 20): [TaskType!]!
   taskRelatedEntities(taskId: UUID!): TaskRelatedEntitiesResponse! @deprecated(reason: "Use related_entities(source_type: TASKS, entity_id: UUID)")
   tasksByEntity(entityType: EntityType!, entityId: UUID!): [TaskType!]!
+  backorders(customerId: UUID = null, productId: UUID = null, limit: Int! = 100, offset: Int! = 0): [BackorderResponse!]!
   containerTypes: [ContainerTypeResponse!]!
   containerType(id: UUID!): ContainerTypeResponse!
   customerFactorySalesRep(id: UUID!): CustomerFactorySalesRepResponse!
   listCustomerFactorySalesReps(customerId: UUID = null, factoryId: UUID = null): [CustomerFactorySalesRepResponse!]!
   customer(id: UUID!): CustomerResponse!
   customerSearch(searchTerm: String!, published: Boolean! = true, limit: Int! = 20): [CustomerResponse!]!
+  customerChildren(parentId: UUID!): [CustomerLiteResponse!]!
+  customerBuyingGroupMembers(buyingGroupId: UUID!): [CustomerLiteResponse!]!
   factory(id: UUID!): FactoryResponse!
   factorySearch(searchTerm: String!, published: Boolean! = true, limit: Int! = 20, useCustomOrder: Boolean! = false): [FactoryResponse!]!
+  inventoryStatuses: [InventoryStatusOption!]!
+  inventories(warehouseId: UUID!, factoryId: UUID = null, status: String = null, search: String = null, limit: Int! = 100, offset: Int! = 0): [InventoryResponse!]!
+  inventoryStats(warehouseId: UUID!): InventoryStatsResponse!
+  inventoryById(id: UUID!): InventoryResponse!
   productCategories(factoryId: UUID, parentId: UUID, grandparentId: UUID): [ProductCategoryResponse!]!
+  rootProductCategories(factoryId: UUID): [ProductCategoryResponse!]!
   productCpn(id: UUID!): ProductCpnResponse!
   listProductCpnsByProductId(productId: UUID!): [ProductCpnResponse!]!
   productCpnByProductIdAndCustomerId(productId: UUID!, customerId: UUID!): ProductCpnLiteResponse
@@ -2434,6 +2676,8 @@ type Query {
   product(id: UUID!): ProductResponse!
   productSearch(searchTerm: String!, productCategoryIds: [UUID!] = null, factoryId: UUID, limit: Int! = 20): [ProductLiteResponse!]!
   productCategorySearch(searchTerm: String!, factoryId: UUID, limit: Int! = 20): [ProductCategoryLiteResponse!]!
+  shipmentRequestStatuses: [ShipmentRequestStatusOption!]!
+  shipmentRequests(warehouseId: UUID!, status: ShipmentRequestStatus = null, limit: Int! = 100, offset: Int! = 0): [ShipmentRequestResponse!]!
   shippingCarriers(activeOnly: Boolean! = false): [ShippingCarrierResponse!]!
   shippingCarrier(id: UUID!): ShippingCarrierResponse!
   shippingCarrierSearch(searchTerm: String!, limit: Int! = 20): [ShippingCarrierResponse!]!
@@ -2526,6 +2770,7 @@ type QuoteDetailResponse {
   outsideSplitRates: [QuoteSplitRateResponse!]!
   insideSplitRates: [QuoteInsideRepResponse!]!
   product: ProductLiteResponse
+  factory: FactoryResponse
   uom: ProductUomResponse
   order: OrderLiteResponse
 }
@@ -2589,6 +2834,12 @@ type QuoteLandingPage implements LandingPageInterfaceBase {
   total: Decimal!
   commission: Decimal
   published: Boolean!
+  soldToCustomerName: String!
+  endUsers: [String!]!
+  factories: [String!]!
+  categories: [String!]
+  partNumbers: [String!]
+  salesReps: [SalesRepSummary!]!
 }
 
 type QuoteLiteResponse {
@@ -2664,7 +2915,6 @@ input QuoteSplitRateInput {
 
 type QuoteSplitRateResponse {
   id: UUID!
-  createdAt: datetime!
   quoteDetailId: UUID!
   userId: UUID!
   splitRate: Decimal
@@ -2774,9 +3024,21 @@ type RelatedEntitiesResponse {
   customers: [CustomerLiteResponse!]
 }
 
+input RemoveCompanyFromJobInput {
+  jobId: UUID!
+  companyId: UUID!
+  role: JobCompanyRole!
+}
+
 enum RepTypeEnum {
   OUTSIDE
   INSIDE
+}
+
+type SalesRepSummary {
+  fullName: String!
+  total: Decimal!
+  avgSplitRate: Decimal!
 }
 
 type SearchResult {
@@ -2784,6 +3046,7 @@ type SearchResult {
   title: String!
   alias: String
   resultType: SourceType!
+  extraInfo: String
 }
 
 enum SendPace {
@@ -2795,6 +3058,66 @@ enum SendPace {
 type SendTestEmailResponse {
   success: Boolean!
   error: String
+}
+
+enum ShipmentMethod {
+  EMAIL
+  PHONE_CALL
+  MANUFACTURER_SYSTEM
+}
+
+enum ShipmentPriority {
+  STANDARD
+  EXPEDITED
+  URGENT
+}
+
+input ShipmentRequestItemInput {
+  productId: UUID!
+  quantity: Decimal!
+}
+
+type ShipmentRequestItemResponse {
+  id: UUID!
+  requestId: UUID!
+  productId: UUID!
+  quantity: Decimal!
+  createdAt: datetime!
+  product: ProductLiteResponse!
+}
+
+type ShipmentRequestResponse {
+  id: UUID!
+  requestNumber: String!
+  warehouseId: UUID
+  factoryId: UUID
+  status: ShipmentRequestStatus!
+  method: ShipmentMethod
+  priority: ShipmentPriority!
+  notes: String
+  requestDate: datetime
+  isActive: Boolean!
+  createdAt: datetime!
+  updatedAt: datetime!
+  items: [ShipmentRequestItemResponse!]!
+  totalQuantity: Decimal!
+  factory: FactoryLiteResponse
+}
+
+enum ShipmentRequestStatus {
+  PENDING
+  CONFIRMED
+  SENT
+  REJECTED
+  IN_PROGRESS
+  SHIPPED
+  CANCELLED
+  DRAFT
+}
+
+type ShipmentRequestStatusOption {
+  label: String!
+  value: String!
 }
 
 input ShippingCarrierInput {
@@ -2906,7 +3229,7 @@ input TaskInput {
   status: TaskStatus!
   priority: TaskPriority!
   description: String
-  assignedToId: UUID
+  assigneeIds: [UUID!]
   dueDate: Date
   reminderDate: Date
   tags: [String!]
@@ -2921,11 +3244,23 @@ type TaskLandingPage implements LandingPageInterfaceBase {
   status: TaskStatus!
   priority: TaskPriority!
   description: String
-  assignedTo: String
+  assignees: [String!]!
   dueDate: Date
   reminderDate: Date
   tags: [String!]
   linkedEntities: [LinkedEntity!]!
+}
+
+type TaskLiteType {
+  id: UUID!
+  createdAt: datetime!
+  title: String!
+  status: TaskStatus!
+  priority: TaskPriority!
+  description: String
+  dueDate: Date
+  reminderDate: Date
+  tags: [String!]
 }
 
 enum TaskPriority {
@@ -2936,18 +3271,18 @@ enum TaskPriority {
 }
 
 type TaskRelatedEntitiesResponse {
-  jobs: [JobType!]!
-  contacts: [ContactResponse!]!
-  companies: [CompanyResponse!]!
-  notes: [NoteType!]!
+  jobs: [JobLiteType!]!
+  contacts: [ContactLiteResponse!]!
+  companies: [CompanyLiteResponse!]!
+  notes: [NoteLiteType!]!
   preOpportunities: [PreOpportunityLiteResponse!]!
-  quotes: [QuoteResponse!]!
-  orders: [OrderResponse!]!
+  quotes: [QuoteLiteResponse!]!
+  orders: [OrderLiteResponse!]!
   invoices: [InvoiceLiteResponse!]!
-  checks: [CheckResponse!]!
-  factories: [FactoryResponse!]!
-  products: [ProductResponse!]!
-  customers: [CustomerResponse!]!
+  checks: [CheckLiteResponse!]!
+  factories: [FactoryLiteResponse!]!
+  products: [ProductLiteResponse!]!
+  customers: [CustomerLiteResponse!]!
 }
 
 enum TaskStatus {
@@ -2964,11 +3299,11 @@ type TaskType {
   status: TaskStatus!
   priority: TaskPriority!
   description: String
-  assignedToId: UUID
   dueDate: Date
   reminderDate: Date
   tags: [String!]
   createdBy: UserResponse!
+  assignees: [UserResponse!]!
 }
 
 scalar UUID
@@ -2996,6 +3331,25 @@ input UpdateHighlightVersionInput {
   isActive: Boolean = null
 }
 
+input UpdateInventoryItemInput {
+  id: UUID!
+  locationId: UUID
+  quantity: Decimal
+  lotNumber: String
+  status: InventoryItemStatus
+  receivedDate: datetime
+}
+
+input UpdateShipmentRequestInput {
+  id: UUID!
+  factoryId: UUID = null
+  priority: ShipmentPriority = null
+  method: ShipmentMethod = null
+  status: ShipmentRequestStatus = null
+  notes: String = null
+  items: [ShipmentRequestItemInput!] = null
+}
+
 input UpdateSpecSheetInput {
   displayName: String
   categories: [String!]
@@ -3016,6 +3370,7 @@ input UserInput {
   enabled: Boolean! = true
   inside: Boolean = null
   outside: Boolean = null
+  visible: Boolean = true
 }
 
 type UserRbac {
@@ -3035,6 +3390,7 @@ type UserResponse {
   authProviderId: String!
   inside: Boolean
   outside: Boolean
+  visible: Boolean
 }
 
 input WarehouseInput {

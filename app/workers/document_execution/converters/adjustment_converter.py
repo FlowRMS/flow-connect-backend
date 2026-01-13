@@ -3,6 +3,7 @@ from decimal import Decimal
 from typing import override
 from uuid import UUID
 
+from commons.auth import AuthInfo
 from commons.db.v6.commission import Adjustment
 from commons.db.v6.commission.checks.enums import AdjustmentAllocationMethod
 from commons.db.v6.common.creation_type import CreationType
@@ -28,14 +29,14 @@ class AdjustmentConverter(
 
     def __init__(
         self,
+        auth_info: AuthInfo,
         session: AsyncSession,
         dto_loader_service: DTOLoaderService,
         adjustment_service: AdjustmentService,
-        auth_user_id: UUID | None = None,
     ) -> None:
         super().__init__(session, dto_loader_service)
+        self.auth_info = auth_info
         self.adjustment_service = adjustment_service
-        self.auth_user_id = auth_user_id
 
     @override
     async def create_entity(self, input_data: AdjustmentInput) -> Adjustment:
@@ -84,12 +85,9 @@ class AdjustmentConverter(
         return AdjustmentAllocationMethod.REP_SPLIT
 
     def _build_split_rates(self) -> list[AdjustmentSplitRateInput]:
-        if not self.auth_user_id:
-            return []
-
         return [
             AdjustmentSplitRateInput(
-                user_id=self.auth_user_id,
+                user_id=self.auth_info.flow_user_id,
                 split_rate=Decimal("100"),
                 position=1,
             )

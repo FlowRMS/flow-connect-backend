@@ -39,13 +39,14 @@ from .batch_processor import DocumentBatchProcessor
 from .converters.base import DEFAULT_BATCH_SIZE, BaseEntityConverter
 
 DOCUMENT_TO_LINK_ENTITY_TYPE: dict[DocumentEntityType, EntityType] = {
+    DocumentEntityType.QUOTES: EntityType.QUOTE,
     DocumentEntityType.ORDERS: EntityType.ORDER,
+    DocumentEntityType.INVOICES: EntityType.INVOICE,
+    DocumentEntityType.CHECKS: EntityType.CHECK,
     DocumentEntityType.CUSTOMERS: EntityType.CUSTOMER,
     DocumentEntityType.FACTORIES: EntityType.FACTORY,
     DocumentEntityType.PRODUCTS: EntityType.PRODUCT,
-    DocumentEntityType.INVOICES: EntityType.INVOICE,
     DocumentEntityType.DELIVERIES: EntityType.DELIVERY,
-    DocumentEntityType.CHECKS: EntityType.CHECK,
 }
 
 
@@ -127,10 +128,22 @@ class DocumentExecutorService:
             dtos = await self._parse_dtos(converter, pending_document)
             logger.info(f"Parsed {len(dtos)} DTOs from extracted_data_json")
 
-            await self.set_for_creation_service.process_set_for_creation(
-                pending_entities=pending_document.pending_entities,
-                dtos=dtos,
-                entity_mappings=entity_mappings,
+            creation_result = (
+                await self.set_for_creation_service.process_set_for_creation(
+                    pending_entities=pending_document.pending_entities,
+                    entity_mappings=entity_mappings,
+                )
+            )
+            if creation_result.has_issues:
+                logger.warning(
+                    f"SET_FOR_CREATION completed with {len(creation_result.issues)} "
+                    f"issues: {creation_result.issues}"
+                )
+            logger.info(
+                f"SET_FOR_CREATION completed: orders={creation_result.orders_created}, "
+                f"invoices={creation_result.invoices_created}, "
+                f"credits={creation_result.credits_created}, "
+                f"adjustments={creation_result.adjustments_created}"
             )
 
             processing_records = await self._batch_processor.execute_bulk(
@@ -139,11 +152,15 @@ class DocumentExecutorService:
                 entity_mappings=entity_mappings,
                 pending_document=pending_document,
                 batch_size=batch_size,
-                link_callback=self._link_file_to_entity,
             )
 
             self.session.add_all(processing_records)
             await self.session.flush()
+
+            created_entity_ids = [
+                r.entity_id for r in processing_records if r.entity_id is not None
+            ]
+            await self._link_file_to_entities(pending_document, created_entity_ids)
 
             pending_document.workflow_status = WorkflowStatus.COMPLETED
             return processing_records
@@ -168,12 +185,12 @@ class DocumentExecutorService:
         loaded_dtos = await converter.parse_dtos_from_json(pending_document)
         return [converter.dto_class.model_validate(d) for d in loaded_dtos.dtos]
 
-    async def _link_file_to_entity(
+    async def _link_file_to_entities(
         self,
         pending_document: PendingDocument,
-        entity_id: UUID,
+        entity_ids: list[UUID],
     ) -> None:
-        if not pending_document.entity_type:
+        if not entity_ids or not pending_document.entity_type:
             return
 
         link_entity_type = DOCUMENT_TO_LINK_ENTITY_TYPE.get(
@@ -186,14 +203,14 @@ class DocumentExecutorService:
             return
 
         try:
-            _ = await self.links_service.create_link(
+            links = await self.links_service.bulk_create_links(
                 source_type=EntityType.FILE,
                 source_id=pending_document.file_id,
                 target_type=link_entity_type,
-                target_id=entity_id,
+                target_ids=entity_ids,
             )
             logger.info(
-                f"Linked file {pending_document.file_id} to {link_entity_type.name} {entity_id}"
+                f"Linked file {pending_document.file_id} to {len(links)} {link_entity_type.name} entities"
             )
         except Exception as e:
-            logger.warning(f"Failed to link file to entity: {e}")
+            logger.warning(f"Failed to bulk link file to entities: {e}")

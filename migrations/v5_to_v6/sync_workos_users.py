@@ -79,7 +79,6 @@ async def create_workos_user(
             organization_id=org_id,
             role_slug=user.role.name.lower(),
         )
-        _ = await client.user_management.create_password_reset(email=user.email)
         return (workos_user.id, user.id)
     except Exception as e:
         logger.error(f"Failed to create WorkOS user for {user.email}: {e}")
@@ -134,7 +133,9 @@ async def sync_users_for_tenant(config: SyncConfig) -> SyncResult:
         logger.info(f"Found WorkOS org {org_id} for tenant {config.tenant_url}")
 
         async with controller.scoped_session(config.tenant_url) as session:
-            stmt = select(User).order_by(User.email)
+            stmt = select(User).order_by(User.email).where(
+                ~User.email.ilike("%@flowrms.com")
+            )
             db_result = await session.execute(stmt)
             users = list(db_result.scalars().all())
             result.total_users = len(users)
@@ -165,10 +166,10 @@ async def _sync_single_user(
     dry_run: bool,
     result: SyncResult,
 ) -> None:
-    if user.auth_provider_id:
-        logger.debug(f"User {user.email} already has auth_provider_id, skipping")
-        result.users_skipped += 1
-        return
+    # if user.auth_provider_id:
+    #     logger.debug(f"User {user.email} already has auth_provider_id, skipping")
+    #     result.users_skipped += 1
+    #     return
 
     workos_user = await find_workos_user_by_email(client, user.email)
 
@@ -193,10 +194,6 @@ async def _sync_single_user(
             logger.warning(
                 f"WorkOS user {user.email} has mismatched external_id "
                 f"({external_id} != {user.id})"
-            )
-            _ = await client.user_management.update_user(
-                user_id=workos_user_id,
-                external_id=str(user.id),
             )
     else:
         logger.info(f"Creating new WorkOS user for {user.email}")

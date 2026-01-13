@@ -35,7 +35,7 @@ class ProductInput(BaseInputGQL[Product]):
 
     def to_orm_model(self) -> Product:
         product_cpns = self.cpns or []
-        return Product(
+        product = Product(
             factory_part_number=self.factory_part_number,
             factory_id=self.factory_id,
             product_category_id=self.product_category_id,
@@ -54,5 +54,8 @@ class ProductInput(BaseInputGQL[Product]):
             approval_date=self.approval_date,
             approval_comments=self.approval_comments,
             tags=self.tags,
-            product_cpns=[cpn.to_orm_model() for cpn in product_cpns],
+            # product_cpns=[cpn.to_orm_model() for cpn in product_cpns],
         )
+        if product_cpns:
+            product.product_cpns = [cpn.to_orm_model() for cpn in product_cpns]
+        return product

@@ -188,6 +188,72 @@ class Document(BaseModel, HasPrimaryKey, HasCreatedAt):
     )
 ```
 
+### Processor Pattern for Validation (MANDATORY)
+
+**IMPORTANT**: Do NOT add `_validate_*` functions in services. Use the Processor pattern instead.
+
+Processors are lifecycle hooks that execute during repository operations (create, update, delete). They provide:
+- **Separation of concerns**: Validation logic is decoupled from services
+- **Automatic execution**: Processors run automatically on PRE_CREATE, PRE_UPDATE, etc.
+- **Reusability**: Same validation applies regardless of how the entity is created/updated
+- **Dependency injection**: Processors receive their dependencies via aioinject
+
+```python
+# ✅ GOOD: Use Processor for validation
+from app.core.processors import BaseProcessor, EntityContext, RepositoryEvent
+from app.errors.common_errors import ValidationError
+
+class ValidateProductCategoryHierarchyProcessor(BaseProcessor[ProductCategory]):
+    def __init__(self, session: AsyncSession) -> None:
+        super().__init__()
+        self.session = session
+
+    @property
+    def events(self) -> list[RepositoryEvent]:
+        return [RepositoryEvent.PRE_CREATE, RepositoryEvent.PRE_UPDATE]
+
+    async def process(self, context: EntityContext[ProductCategory]) -> None:
+        entity = context.entity
+        if entity.parent_id:
+            parent = await self._get_parent(entity.parent_id)
+            if parent.grandparent_id is not None:
+                raise ValidationError("Maximum hierarchy depth is 3 levels.")
+
+# Repository uses processor via DI
+class ProductCategoryRepository(BaseRepository[ProductCategory]):
+    def __init__(
+        self,
+        context_wrapper: ContextWrapper,
+        session: AsyncSession,
+        processor_executor: ProcessorExecutor,
+        validate_hierarchy_processor: ValidateProductCategoryHierarchyProcessor,
+    ) -> None:
+        super().__init__(
+            session,
+            context_wrapper,
+            ProductCategory,
+            processor_executor=processor_executor,
+            processor_executor_classes=[validate_hierarchy_processor],
+        )
+```
+
+```python
+# ❌ BAD: _validate function in service
+class ProductCategoryService:
+    async def _validate_hierarchy(self, input: ProductCategoryInput) -> None:
+        # This should be a Processor, not a service method!
+        ...
+
+    async def create(self, input: ProductCategoryInput) -> ProductCategory:
+        await self._validate_hierarchy(input)  # Wrong!
+        return await self.repository.create(input.to_orm_model())
+```
+
+**Available Repository Events:**
+- `PRE_CREATE` / `POST_CREATE`
+- `PRE_UPDATE` / `POST_UPDATE`
+- `PRE_DELETE` / `POST_DELETE`
+
 ### GraphQL Resolver Pattern
 ```python
 import strawberry
@@ -223,6 +289,7 @@ Before finalizing any code, verify:
 - [ ] Proper error handling with specific exceptions
 - [ ] Repository methods use `flush()` not `commit()`
 - [ ] Service methods orchestrate, don't access DB directly
+- [ ] Validation logic uses Processors, not `_validate_*` service methods
 - [ ] Models use `Mapped[type]` syntax
 - [ ] GraphQL resolvers use `@inject` decorator
 - [ ] Enums for constants
@@ -259,6 +326,7 @@ This runs:
 9. **Synchronous I/O**: Use async/await
 10. **Magic values**: Use enums or constants
 11. **Running database migrations**: NEVER run `alembic upgrade/downgrade` - only create migration files
+12. **`_validate_*` functions in services**: Use Processor pattern instead for validation logic
 
 ## Philosophy
 

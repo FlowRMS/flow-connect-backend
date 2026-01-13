@@ -99,7 +99,7 @@ async def migrate_link_relations(
     """Migrate link relations from pycrm.link_relations using SELECT *."""
     logger.info("Starting link relations migration...")
 
-    links = await source.fetch("SELECT * FROM pycrm.link_relations")
+    links = await source.fetch("""SELECT l.* FROM pycrm.link_relations l JOIN "user".users ON l.created_by_id = users.id""")
 
     if not links:
         logger.info("No link relations to migrate")
@@ -131,6 +131,81 @@ async def migrate_link_relations(
 
     logger.info(f"Migrated {len(links)} link relations")
     return len(links)
+
+
+async def migrate_file_entity_links(
+    source: asyncpg.Connection,
+    dest: asyncpg.Connection,
+) -> int:
+    """Migrate file-entity links from files.file_entity_details to pycrm.link_relations.
+
+    v5 entity_types enum to v6 EntityType smallint mapping:
+    - quotes -> QUOTE (7)
+    - orders -> ORDER (8)
+    - invoices -> INVOICE (9)
+    - checks -> CHECK (10)
+    - products -> PRODUCT (13)
+    - customers -> CUSTOMER (12)
+    - factories -> FACTORY (11)
+    - jobs -> JOB (1)
+    - pre_opportunities -> PRE_OPPORTUNITY (6)
+
+    Creates link_relations with FILE (14) as source and the entity as target.
+    """
+    logger.info("Starting file entity link migration...")
+
+    file_links = await source.fetch("""
+        SELECT
+            gen_random_uuid() as id,
+            fed.file_id,
+            CASE fed.entity_type::text
+                WHEN 'quotes' THEN 7
+                WHEN 'orders' THEN 8
+                WHEN 'invoices' THEN 9
+                WHEN 'checks' THEN 10
+                WHEN 'products' THEN 13
+                WHEN 'customers' THEN 12
+                WHEN 'factories' THEN 11
+                WHEN 'jobs' THEN 1
+                WHEN 'pre_opportunities' THEN 6
+                ELSE NULL
+            END AS target_entity_type,
+            fed.entity_id,
+            f.created_by AS created_by_id
+        FROM files.file_entity_details fed
+        JOIN files.files f ON f.id = fed.file_id
+        JOIN "user".users u ON f.created_by = u.id
+        WHERE fed.entity_id IS NOT NULL
+          AND fed.entity_type IS NOT NULL
+    """)
+
+    # Filter out unmapped entity types
+    valid_links = [link for link in file_links if link["target_entity_type"] is not None]
+
+    if not valid_links:
+        logger.info("No file entity links to migrate")
+        return 0
+
+    await dest.executemany(
+        """
+        INSERT INTO pycrm.link_relations (
+            id, source_entity_type, source_entity_id,
+            target_entity_type, target_entity_id,
+            created_by_id, created_at
+        ) VALUES ($1, 14, $2, $3, $4, $5, now())
+        ON CONFLICT DO NOTHING
+        """,
+        [(
+            link["id"],
+            link["file_id"],
+            link["target_entity_type"],
+            link["entity_id"],
+            link["created_by_id"],
+        ) for link in valid_links],
+    )
+
+    logger.info(f"Migrated {len(valid_links)} file entity links")
+    return len(valid_links)
 
 
 async def migrate_companies(

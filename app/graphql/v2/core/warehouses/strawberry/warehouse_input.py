@@ -1,7 +1,6 @@
 """Strawberry input types for warehouses."""
 
 from decimal import Decimal
-from enum import IntEnum
 from uuid import UUID
 
 import strawberry
@@ -15,28 +14,6 @@ from commons.db.v6 import (
 )
 
 from app.core.strawberry.inputs import BaseInputGQL
-
-
-@strawberry.enum
-class WarehouseStructureCodeGQL(IntEnum):
-    """GraphQL enum for warehouse structure codes."""
-
-    SECTION = 1
-    AISLE = 2
-    SHELF = 3
-    BAY = 4
-    ROW = 5
-    BIN = 6
-
-
-@strawberry.enum
-class WarehouseMemberRoleGQL(IntEnum):
-    """GraphQL enum for warehouse member roles."""
-
-    ADMIN = 1
-    MANAGER = 2
-    WORKER = 3
-    VIEWER = 4
 
 
 @strawberry.input

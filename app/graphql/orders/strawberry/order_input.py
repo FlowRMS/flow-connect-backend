@@ -40,7 +40,7 @@ class OrderInput(BaseInputGQL[Order]):
     end_user_per_line_item: bool = False
 
     def to_orm_model(self) -> Order:
-        published = self.published if self.published != strawberry.UNSET else False
+        published = self.published if self.published != strawberry.UNSET else True
         creation_type = (
             self.creation_type
             if self.creation_type != strawberry.UNSET

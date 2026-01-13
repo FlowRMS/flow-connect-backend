@@ -1,7 +1,7 @@
 from uuid import UUID
 
 from commons.db.v6.core.products.product_cpn import ProductCpn
-from sqlalchemy import select
+from sqlalchemy import select, tuple_
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import joinedload, lazyload
 
@@ -16,6 +16,26 @@ class ProductCpnRepository(BaseRepository[ProductCpn]):
         session: AsyncSession,
     ) -> None:
         super().__init__(session, context_wrapper, ProductCpn)
+
+    async def find_existing_cpns(
+        self,
+        product_customer_pairs: list[tuple[UUID, UUID]],
+    ) -> dict[tuple[UUID, UUID], ProductCpn]:
+        if not product_customer_pairs:
+            return {}
+
+        stmt = (
+            select(ProductCpn)
+            .where(
+                tuple_(ProductCpn.product_id, ProductCpn.customer_id).in_(
+                    product_customer_pairs
+                )
+            )
+            .options(lazyload("*"))
+        )
+        result = await self.session.execute(stmt)
+        cpns = result.scalars().all()
+        return {(cpn.product_id, cpn.customer_id): cpn for cpn in cpns}
 
     async def list_by_product_id(self, product_id: UUID) -> list[ProductCpn]:
         stmt = (

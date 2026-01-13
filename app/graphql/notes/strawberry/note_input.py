@@ -17,6 +17,7 @@ class NoteInput(BaseInputGQL[Note]):
     content: str
     tags: list[str] | None = strawberry.UNSET
     mentions: list[UUID] | None = strawberry.UNSET
+    is_public: bool = False
 
     def to_orm_model(self) -> Note:
         """Convert input to ORM model."""
@@ -25,6 +26,7 @@ class NoteInput(BaseInputGQL[Note]):
             content=self.content,
             tags=self.optional_field(self.tags),
             mentions=self.optional_field(self.mentions),
+            is_public=self.is_public,
         )
 
 

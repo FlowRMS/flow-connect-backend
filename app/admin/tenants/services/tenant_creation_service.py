@@ -61,6 +61,7 @@ class TenantCreationService:
         first_name: str | None = None,
         last_name: str | None = None,
         external_id: uuid.UUID | None = None,
+        visible: bool = True,
     ) -> uuid.UUID:
         engine = create_async_engine(database_url)
         try:
@@ -81,6 +82,7 @@ class TenantCreationService:
                         email=email,
                         role=role,
                         enabled=True,
+                        visible=visible,
                     )
                     user.auth_provider_id = workos_user_id
                     if external_id:
@@ -188,6 +190,7 @@ class TenantCreationService:
                 workos_user_id=support_user.id,
                 role=RbacRoleEnum.ADMINISTRATOR,
                 external_id=support_user.external_id,
+                visible=False,
             )
         return TenantCreationResult(
             tenant=tenant,

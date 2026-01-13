@@ -15,6 +15,7 @@ class UserInput(BaseInputGQL[User]):
     enabled: bool = True
     inside: bool | None = None
     outside: bool | None = None
+    visible: bool | None = True
 
     def to_orm_model(self) -> User:
         return User(
@@ -26,4 +27,5 @@ class UserInput(BaseInputGQL[User]):
             enabled=self.enabled,
             inside=self.inside,
             outside=self.outside,
+            visible=self.visible,
         )
