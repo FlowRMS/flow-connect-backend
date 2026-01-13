@@ -28,7 +28,6 @@ from app.graphql.v2.core.inventory.strawberry.inventory_item_response import (
 from app.graphql.v2.core.inventory.strawberry.inventory_response import (
     InventoryResponse,
 )
-from app.graphql.v2.core.users.services.user_service import UserService
 
 
 @strawberry.type
@@ -38,12 +37,8 @@ class InventoryMutations:
     async def create_inventory(
         self,
         service: Injected[InventoryService],
-        user_service: Injected[UserService],
         input: CreateInventoryInput,
     ) -> InventoryResponse:
-        # Ensure user exists for CreatedBy mixin
-        await user_service.sync_current_user()
-        
         inventory = input.to_orm_model()
         created_inventory = await service.create(inventory)
         return InventoryResponse.from_orm_model(created_inventory)
@@ -73,10 +68,8 @@ class InventoryMutations:
     async def add_inventory_item(
         self,
         service: Injected[InventoryItemService],
-        user_service: Injected[UserService],
         input: AddInventoryItemInput,
     ) -> InventoryItemResponse:
-        await user_service.sync_current_user()
         item = input.to_orm_model()
         created_item = await service.add_item(item)
         return InventoryItemResponse.from_orm_model(created_item)
