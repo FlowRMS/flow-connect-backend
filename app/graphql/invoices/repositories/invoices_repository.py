@@ -119,6 +119,7 @@ class InvoicesRepository(BaseRepository[Invoice]):
                 .joinedload(InvoiceSplitRate.user),
                 joinedload(Invoice.balance),
                 joinedload(Invoice.order),
+                joinedload(Invoice.order).joinedload(Order.sold_to_customer),
                 joinedload(Invoice.factory),
                 joinedload(Invoice.created_by),
                 lazyload("*"),

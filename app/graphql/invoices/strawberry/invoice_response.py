@@ -14,8 +14,7 @@ from app.graphql.invoices.strawberry.invoice_balance_response import (
 from app.graphql.invoices.strawberry.invoice_detail_response import (
     InvoiceDetailResponse,
 )
-from app.graphql.orders.strawberry.order_lite_response import OrderLiteResponse
-from app.graphql.orders.strawberry.order_response import OrderForCheckResponse
+from app.graphql.orders.strawberry.order_response import OrderSemiLiteResponse
 from app.graphql.v2.core.factories.strawberry.factory_response import (
     FactoryLiteResponse,
 )
@@ -64,8 +63,8 @@ class InvoiceLiteResponse(DTOMixin[Invoice]):
 @strawberry.type
 class InvoiceLiteCheckResponse(InvoiceLiteResponse):
     @strawberry.field
-    def order(self) -> OrderForCheckResponse:
-        return OrderForCheckResponse.from_orm_model(self._instance.order)
+    def order(self) -> OrderSemiLiteResponse:
+        return OrderSemiLiteResponse.from_orm_model(self._instance.order)
 
     @strawberry.field
     def sales_reps(self) -> list[UserResponse]:
@@ -88,8 +87,8 @@ class InvoiceLiteCheckResponse(InvoiceLiteResponse):
 @strawberry.type
 class InvoiceResponse(InvoiceLiteResponse):
     @strawberry.field
-    def order(self) -> OrderLiteResponse:
-        return OrderLiteResponse.from_orm_model(self._instance.order)
+    def order(self) -> OrderSemiLiteResponse:
+        return OrderSemiLiteResponse.from_orm_model(self._instance.order)
 
     @strawberry.field
     def factory(self) -> FactoryLiteResponse:

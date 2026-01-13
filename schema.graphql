@@ -1263,7 +1263,7 @@ type InvoiceLiteCheckResponse {
   creationType: CreationType!
   balanceId: UUID!
   url: String!
-  order: OrderForCheckResponse!
+  order: OrderSemiLiteResponse!
   salesReps: [UserResponse!]!
   balance: InvoiceBalanceResponse!
 }
@@ -1298,7 +1298,7 @@ type InvoiceResponse {
   creationType: CreationType!
   balanceId: UUID!
   url: String!
-  order: OrderLiteResponse!
+  order: OrderSemiLiteResponse!
   factory: FactoryLiteResponse!
   createdBy: UserResponse!
   balance: InvoiceBalanceResponse!
@@ -1905,36 +1905,6 @@ type OrderDetailResponse {
   acknowledgements: [OrderAcknowledgementResponse!]!
 }
 
-type OrderForCheckResponse {
-  id: UUID!
-  createdAt: datetime!
-  createdById: UUID!
-  orderNumber: String!
-  entityDate: Date!
-  dueDate: Date!
-  status: OrderStatus!
-  headerStatus: OrderHeaderStatus!
-  orderType: OrderType!
-  published: Boolean!
-  creationType: CreationType!
-  soldToCustomerId: UUID!
-  billToCustomerId: UUID
-  factoryId: UUID
-  shippingTerms: String
-  freightTerms: String
-  markNumber: String
-  shipDate: Date
-  projectedShipDate: Date
-  factSoNumber: String
-  quoteId: UUID
-  balanceId: UUID!
-  insidePerLineItem: Boolean
-  outsidePerLineItem: Boolean
-  endUserPerLineItem: Boolean
-  url: String!
-  soldToCustomer: CustomerLiteResponse!
-}
-
 enum OrderHeaderStatus {
   OPEN
   DRAFT
@@ -2064,6 +2034,36 @@ type OrderResponse {
   factory: FactoryLiteResponse!
   details: [OrderDetailResponse!]!
   job: JobLiteType
+}
+
+type OrderSemiLiteResponse {
+  id: UUID!
+  createdAt: datetime!
+  createdById: UUID!
+  orderNumber: String!
+  entityDate: Date!
+  dueDate: Date!
+  status: OrderStatus!
+  headerStatus: OrderHeaderStatus!
+  orderType: OrderType!
+  published: Boolean!
+  creationType: CreationType!
+  soldToCustomerId: UUID!
+  billToCustomerId: UUID
+  factoryId: UUID
+  shippingTerms: String
+  freightTerms: String
+  markNumber: String
+  shipDate: Date
+  projectedShipDate: Date
+  factSoNumber: String
+  quoteId: UUID
+  balanceId: UUID!
+  insidePerLineItem: Boolean
+  outsidePerLineItem: Boolean
+  endUserPerLineItem: Boolean
+  url: String!
+  soldToCustomer: CustomerLiteResponse!
 }
 
 input OrderSplitRateInput {
