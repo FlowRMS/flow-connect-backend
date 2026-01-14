@@ -1089,9 +1089,6 @@ type GeneralSettingsResponse {
   value: JSON!
   userId: UUID
   createdAt: datetime!
-  isTenantWide: Boolean!
-  keyName: String!
-  getValue(path: String = null): JSON!
 }
 
 type GenericLandingPage {
@@ -2999,6 +2996,7 @@ enum SettingKey {
   INVOICE_SETTINGS
   CHECKS_SETTINGS
   CHAT_SETTINGS
+  SIDEBAR_SETTINGS
 }
 
 input ShippingCarrierInput {
