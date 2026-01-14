@@ -1490,9 +1490,9 @@ type LinkRelationType {
 }
 
 type LinkedEntity {
-  id: UUID!
-  title: String!
-  entityType: EntityType!
+  id: UUID
+  title: String
+  entityType: EntityType
 }
 
 type LocationProductAssignmentResponse {
