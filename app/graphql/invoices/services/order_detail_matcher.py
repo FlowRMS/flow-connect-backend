@@ -94,7 +94,7 @@ class OrderDetailMatcherService:
             if matches:
                 if allow_multiple or len(matches) == 1:
                     best = max(matches, key=lambda c: c["shipping_balance"])
-                    logger.debug(f"Matched order detail {best['id']} using clause")
+                    logger.info(f"Matched order detail {best['id']} using clause")
                     return best["id"]
 
         logger.warning(
@@ -130,10 +130,19 @@ class OrderDetailMatcherService:
         def open_status(c: dict) -> bool:
             return c["status"] == OrderStatus.OPEN
 
+        def quantity_match(c: dict) -> bool:
+            return Decimal(str(c["quantity"])).quantize(
+                Decimal("0.01")
+            ) == quantity.quantize(Decimal("0.01"))
+
         def quantity_valid(c: dict) -> bool:
             return Decimal(str(c["quantity"])) >= quantity
 
         return [
+            (
+                lambda c: fpn_match(c) and open_status(c) and quantity_match(c),
+                False,
+            ),
             (
                 lambda c: item_match(c)
                 and fpn_match(c)
@@ -155,6 +164,7 @@ class OrderDetailMatcherService:
             (lambda c: price_match(c) and either_match(c) and quantity_valid(c), False),
             (lambda c: either_match(c) and quantity_valid(c), False),
             (lambda c: item_match(c) and either_match(c) and quantity_valid(c), False),
+            (lambda c: price_match(c) and quantity_match(c), False),
             (lambda c: price_match(c) and quantity_valid(c), True),
             (lambda c: item_match(c) and quantity_valid(c), False),
             (lambda c: quantity_valid(c), False),
