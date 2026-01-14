@@ -34,6 +34,11 @@ class InvoiceService:
     async def find_invoice_by_id(self, invoice_id: UUID) -> Invoice:
         return await self.repository.find_invoice_by_id(invoice_id)
 
+    async def find_by_invoice_number(
+        self, order_id: UUID, invoice_number: str
+    ) -> Invoice | None:
+        return await self.repository.find_by_invoice_number(order_id, invoice_number)
+
     async def create_invoice(self, invoice_input: InvoiceInput) -> Invoice:
         if self.auto_number_settings_service.needs_generation(
             invoice_input.invoice_number

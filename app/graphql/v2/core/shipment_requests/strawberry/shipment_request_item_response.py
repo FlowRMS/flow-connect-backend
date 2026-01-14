@@ -20,6 +20,7 @@ class ShipmentRequestItemResponse(DTOMixin[ShipmentRequestItem]):
     id: UUID
     request_id: UUID
     product_id: UUID
+    product: ProductLiteResponse
     quantity: Decimal
     created_at: datetime
 
@@ -30,15 +31,7 @@ class ShipmentRequestItemResponse(DTOMixin[ShipmentRequestItem]):
             id=model.id,
             request_id=model.request_id,
             product_id=model.product_id,
+            product=ProductLiteResponse.from_orm_model(model.product),
             quantity=model.quantity,
             created_at=model.created_at,
         )
-
-    @strawberry.field
-    async def product(self) -> ProductLiteResponse:
-        from app.graphql.v2.core.products.strawberry.product_response import (
-            ProductLiteResponse,
-        )
-
-        product = await self._instance.awaitable_attrs.product
-        return ProductLiteResponse.from_orm_model(product)

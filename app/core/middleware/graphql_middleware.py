@@ -5,6 +5,7 @@ from commons.auth import AuthInfo, AuthService
 from commons.db.controller import MultiTenantController
 from commons.db.v6 import RbacRoleSetting
 from commons.db.v6.user import User
+from commons.logging.datadog_logger import current_tenant, current_user
 from graphql import GraphQLError
 from loguru import logger
 from sqlalchemy import select
@@ -61,7 +62,12 @@ class GraphQLMiddleware(SchemaExtension):
                 context.initialize(context_model, commission_visible=commission_visible)
                 context_wrapper = await conn_ctx.resolve(ContextWrapper)
                 wrapper_token = context_wrapper.set(context)
+
+                user_tok = current_user.set(str(context_model.auth_info.flow_user_id))
+                tenant_tok = current_tenant.set(context_model.auth_info.tenant_name)
                 yield
+                current_user.reset(user_tok)
+                current_tenant.reset(tenant_tok)
                 context_wrapper.reset(wrapper_token)
 
     async def _get_commission_visibility(
