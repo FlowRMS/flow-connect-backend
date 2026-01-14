@@ -19,8 +19,3 @@ class ValidateCreditStatusProcessor(BaseProcessor[Credit]):
             raise ValidationError(
                 f"Cannot modify credit '{original.credit_number}': credit is posted"
             )
-
-        if original.locked:
-            raise ValidationError(
-                f"Cannot modify credit '{original.credit_number}': credit is locked"
-            )
