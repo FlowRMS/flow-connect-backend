@@ -1,6 +1,7 @@
 from uuid import UUID
 
 from commons.db.v6.ai.entities.pending_entity import PendingEntity
+from loguru import logger
 
 from .adjustment_creation_handler import AdjustmentCreationHandler
 from .creation_types import CreationResult
@@ -36,10 +37,19 @@ class SetForCreationService:
         )
         if result.has_issues:
             return result
+        
+        logger.debug(
+            f"Orders created: {result.orders_created}. Proceeding to invoice creation."
+        )
 
         result.invoices_created = await self._invoice_handler.create_invoices(
             pending_entities, entity_mappings, result
         )
+        
+        logger.debug(
+            f"Invoices created: {result.invoices_created}. Proceeding to credit creation."
+        )
+        
         if result.has_issues:
             return result
 
