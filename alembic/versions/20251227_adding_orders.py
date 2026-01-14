@@ -1,3 +1,11 @@
+"""adding orders
+
+Revision ID: 7a8b9c0d1e2f
+Revises: 6e453caa5fb9
+Create Date: 2025-12-27 10:00:00.000000
+
+"""
+
 from collections.abc import Sequence
 
 import sqlalchemy as sa
@@ -6,7 +14,7 @@ from sqlalchemy.dialects import postgresql
 from alembic import op
 
 revision: str = "7a8b9c0d1e2f"
-down_revision: str | None = "b2c3d4e5f607"
+down_revision: str | None = "6e453caa5fb9"
 branch_labels: str | Sequence[str] | None = None
 depends_on: str | Sequence[str] | None = None
 

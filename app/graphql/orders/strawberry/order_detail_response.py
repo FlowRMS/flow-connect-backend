@@ -6,6 +6,9 @@ import strawberry
 from commons.db.v6.commission.orders import OrderDetail, OrderStatus
 
 from app.core.db.adapters.dto import DTOMixin
+from app.graphql.orders.strawberry.order_acknowledgement_response import (
+    OrderAcknowledgementResponse,
+)
 from app.graphql.orders.strawberry.order_inside_rep_response import (
     OrderInsideRepResponse,
 )
@@ -95,3 +98,9 @@ class OrderDetailResponse(DTOMixin[OrderDetail]):
     @strawberry.field
     def uom(self) -> ProductUomResponse | None:
         return ProductUomResponse.from_orm_model_optional(self._instance.uom)
+
+    @strawberry.field
+    def acknowledgements(self) -> list[OrderAcknowledgementResponse]:
+        return OrderAcknowledgementResponse.from_orm_model_list(
+            self._instance.acknowledgements
+        )

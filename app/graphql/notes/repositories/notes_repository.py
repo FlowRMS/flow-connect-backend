@@ -197,6 +197,7 @@ class NotesRepository(BaseRepository[Note]):
                 Note.content,
                 Note.tags,
                 Note.mentions,
+                Note.is_public,
                 func.coalesce(
                     linked_entities_subq.c.linked_entities, literal("[]").cast(JSONB)
                 ).label("linked_entities"),

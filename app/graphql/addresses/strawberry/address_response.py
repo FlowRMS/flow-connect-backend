@@ -19,7 +19,7 @@ class AddressResponse(DTOMixin[Address]):
     created_at: datetime.datetime
     source_id: UUID
     source_type: AddressSourceTypeEnum
-    address_type: AddressTypeEnum
+    address_types: list[AddressTypeEnum]
     line_1: str
     line_2: str | None
     city: str
@@ -37,7 +37,7 @@ class AddressResponse(DTOMixin[Address]):
             created_at=model.created_at,
             source_id=model.source_id,
             source_type=model.source_type,
-            address_type=model.address_type,
+            address_types=[at.type for at in model.address_types],
             line_1=model.line_1,
             line_2=model.line_2,
             city=model.city,

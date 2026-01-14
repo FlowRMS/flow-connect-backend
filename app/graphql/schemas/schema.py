@@ -41,7 +41,7 @@ Mutation = merge_types(
 )
 
 
-schema = strawberry.federation.Schema(  # pyright: ignore[reportArgumentType]
+schema = strawberry.federation.Schema(
     Query,
     mutation=Mutation,
     extensions=[
@@ -59,4 +59,5 @@ schema = strawberry.federation.Schema(  # pyright: ignore[reportArgumentType]
         decimal.Decimal: DecimalScalar,
         strawberry.scalars.JSON: JsonScalar,
     },
+    federation_version="2.0",
 )

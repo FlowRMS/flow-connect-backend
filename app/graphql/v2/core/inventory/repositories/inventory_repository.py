@@ -1,13 +1,16 @@
 from uuid import UUID
 
 from commons.db.v6.core.products.product import Product
+from commons.db.v6.warehouse.inventory import ABCClass, OwnershipType
 from commons.db.v6.warehouse.inventory.inventory import Inventory
+from commons.db.v6.warehouse.inventory.inventory_item import InventoryItem
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.orm import contains_eager, selectinload
+from sqlalchemy.orm import contains_eager, joinedload, selectinload
 
 from app.core.constants import DEFAULT_QUERY_LIMIT, DEFAULT_QUERY_OFFSET
 from app.core.context_wrapper import ContextWrapper
+from app.errors.common_errors import NotFoundError
 from app.graphql.base_repository import BaseRepository
 from app.graphql.v2.core.inventory.strawberry.inventory_stats_response import (
     InventoryStatsResponse,
@@ -26,6 +29,23 @@ class InventoryRepository(BaseRepository[Inventory]):
             Inventory,
         )
 
+    def _default_options(self) -> list:
+        return [
+            joinedload(Inventory.items).joinedload(InventoryItem.location),
+            joinedload(Inventory.product).joinedload(Product.factory),
+        ]
+
+    async def get_by_id(self, entity_id: UUID | str) -> Inventory | None:
+        if isinstance(entity_id, str):
+            entity_id = UUID(entity_id)
+        stmt = (
+            select(Inventory)
+            .where(Inventory.id == entity_id)
+            .options(*self._default_options())
+        )
+        result = await self.session.execute(stmt)
+        return result.unique().scalar_one_or_none()
+
     async def find_by_warehouse(
         self,
         warehouse_id: UUID,
@@ -40,8 +60,8 @@ class InventoryRepository(BaseRepository[Inventory]):
             .join(Inventory.product)
             .where(Inventory.warehouse_id == warehouse_id)
             .options(
-                selectinload(Inventory.items),
-                contains_eager(Inventory.product),
+                joinedload(Inventory.items).joinedload(InventoryItem.location),
+                contains_eager(Inventory.product).joinedload(Product.factory),
             )
             .limit(limit)
             .offset(offset)
@@ -176,3 +196,20 @@ class InventoryRepository(BaseRepository[Inventory]):
             out_of_stock_count=out_of_stock_count,
             total_value=total_value,
         )
+
+    async def update_fields(
+        self,
+        inventory_id: UUID,
+        abc_class: ABCClass | None = None,
+        ownership_type: OwnershipType | None = None,
+    ) -> Inventory:
+        inventory = await self.get_by_id(inventory_id)
+        if not inventory:
+            raise NotFoundError(f"Inventory with id {inventory_id} not found")
+
+        if abc_class is not None:
+            inventory.abc_class = abc_class
+        if ownership_type is not None:
+            inventory.ownership_type = ownership_type
+
+        return await self.update(inventory)

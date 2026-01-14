@@ -39,7 +39,20 @@ class InvoiceConverter(BaseEntityConverter[InvoiceDTO, InvoiceInput, Invoice]):
         self.order_detail_matcher = order_detail_matcher
 
     @override
-    async def create_entity(self, input_data: InvoiceInput) -> Invoice:
+    async def find_existing(self, input_data: InvoiceInput) -> Invoice | None:
+        return await self.invoice_service.find_by_invoice_number(
+            input_data.order_id,
+            input_data.invoice_number,
+        )
+
+    @override
+    async def create_entity(
+        self,
+        input_data: InvoiceInput,
+    ) -> Invoice:
+        existing = await self.find_existing(input_data)
+        if existing:
+            return existing
         return await self.invoice_service.create_invoice(input_data)
 
     @override
@@ -49,7 +62,8 @@ class InvoiceConverter(BaseEntityConverter[InvoiceDTO, InvoiceInput, Invoice]):
         entity_mapping: EntityMapping,
     ) -> ConversionResult[InvoiceInput]:
         factory_id = entity_mapping.factory_id
-        order_id = entity_mapping.order_id
+        first_flow_index = dto.details[0].flow_detail_index if dto.details else 0
+        order_id = entity_mapping.get_order_id(first_flow_index)
 
         if not factory_id:
             return ConversionResult.fail(FactoryRequiredError())
@@ -77,7 +91,7 @@ class InvoiceConverter(BaseEntityConverter[InvoiceDTO, InvoiceInput, Invoice]):
                 default_discount_rate=default_discount_rate,
             )
             for detail in dto.details
-            if detail.flow_index not in entity_mapping.skipped_product_indices
+            if detail.flow_detail_index not in entity_mapping.skipped_product_indices
         ]
 
         return ConversionResult.ok(
@@ -99,9 +113,9 @@ class InvoiceConverter(BaseEntityConverter[InvoiceDTO, InvoiceInput, Invoice]):
         default_commission_discount: Decimal,
         default_discount_rate: Decimal,
     ) -> InvoiceDetailInput:
-        flow_index = detail.flow_index
-        product_id = entity_mapping.get_product_id(flow_index)
-        end_user_id = entity_mapping.get_end_user_id(flow_index)
+        flow_detail_index = detail.flow_detail_index
+        product_id = entity_mapping.get_product_id(flow_detail_index)
+        end_user_id = entity_mapping.get_end_user_id(flow_detail_index)
 
         quantity = Decimal(str(detail.quantity_shipped or detail.quantity or 1))
         unit_price = detail.unit_price or Decimal("0")

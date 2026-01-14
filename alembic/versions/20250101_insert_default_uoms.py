@@ -1,11 +1,19 @@
+"""Insert default UOMs with division factors
+
+Revision ID: insert_default_uoms_001
+Revises: warehouse_settings_001
+Create Date: 2025-01-01
+
+"""
+
 from collections.abc import Sequence
 
 import sqlalchemy as sa
 
 from alembic import op
 
-revision: str = "005587d19685"
-down_revision: str | None = "d5e6f7182031"
+revision: str = "insert_default_uoms_001"
+down_revision: str | None = "warehouse_settings_001"
 branch_labels: str | Sequence[str] | None = None
 depends_on: str | Sequence[str] | None = None
 

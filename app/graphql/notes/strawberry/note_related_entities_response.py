@@ -1,36 +1,36 @@
-"""GraphQL response type for note related entities."""
-
 import strawberry
 
-from app.graphql.checks.strawberry.check_response import CheckResponse
-from app.graphql.companies.strawberry.company_response import CompanyResponse
-from app.graphql.contacts.strawberry.contact_response import ContactResponse
+from app.graphql.checks.strawberry.check_response import CheckLiteResponse
+from app.graphql.companies.strawberry.company_response import CompanyLiteResponse
+from app.graphql.contacts.strawberry.contact_response import ContactLiteResponse
 from app.graphql.invoices.strawberry.invoice_response import InvoiceLiteResponse
-from app.graphql.jobs.strawberry.job_response import JobType
-from app.graphql.orders.strawberry.order_response import OrderResponse
+from app.graphql.jobs.strawberry.job_response import JobLiteType
+from app.graphql.orders.strawberry.order_lite_response import OrderLiteResponse
 from app.graphql.pre_opportunities.strawberry.pre_opportunity_lite_response import (
     PreOpportunityLiteResponse,
 )
-from app.graphql.quotes.strawberry.quote_response import QuoteResponse
-from app.graphql.tasks.strawberry.task_response import TaskType
-from app.graphql.v2.core.customers.strawberry.customer_response import CustomerResponse
-from app.graphql.v2.core.factories.strawberry.factory_response import FactoryResponse
-from app.graphql.v2.core.products.strawberry.product_response import ProductResponse
+from app.graphql.quotes.strawberry.quote_lite_response import QuoteLiteResponse
+from app.graphql.tasks.strawberry.task_response import TaskLiteType
+from app.graphql.v2.core.customers.strawberry.customer_response import (
+    CustomerLiteResponse,
+)
+from app.graphql.v2.core.factories.strawberry.factory_response import (
+    FactoryLiteResponse,
+)
+from app.graphql.v2.core.products.strawberry.product_response import ProductLiteResponse
 
 
 @strawberry.type
 class NoteRelatedEntitiesResponse:
-    """Response containing all entities related to a note."""
-
-    jobs: list[JobType]
-    tasks: list[TaskType]
-    contacts: list[ContactResponse]
-    companies: list[CompanyResponse]
+    jobs: list[JobLiteType]
+    tasks: list[TaskLiteType]
+    contacts: list[ContactLiteResponse]
+    companies: list[CompanyLiteResponse]
     pre_opportunities: list[PreOpportunityLiteResponse]
-    quotes: list[QuoteResponse]
-    orders: list[OrderResponse]
+    quotes: list[QuoteLiteResponse]
+    orders: list[OrderLiteResponse]
     invoices: list[InvoiceLiteResponse]
-    checks: list[CheckResponse]
-    factories: list[FactoryResponse]
-    products: list[ProductResponse]
-    customers: list[CustomerResponse]
+    checks: list[CheckLiteResponse]
+    factories: list[FactoryLiteResponse]
+    products: list[ProductLiteResponse]
+    customers: list[CustomerLiteResponse]

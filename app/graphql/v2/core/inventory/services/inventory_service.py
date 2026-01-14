@@ -1,5 +1,6 @@
 from uuid import UUID
 
+from commons.db.v6.warehouse.inventory import ABCClass, OwnershipType
 from commons.db.v6.warehouse.inventory.inventory import Inventory
 
 from app.core.constants import DEFAULT_QUERY_LIMIT, DEFAULT_QUERY_OFFSET
@@ -13,11 +14,10 @@ from app.graphql.v2.core.inventory.strawberry.inventory_stats_response import (
 
 
 class InventoryService:
-    def __init__(
+    def __init__(  # pyright: ignore[reportMissingSuperCall]
         self,
         repository: InventoryRepository,
     ) -> None:
-        super().__init__()
         self.repository = repository
 
     async def get_by_id(self, inventory_id: UUID) -> Inventory:
@@ -64,10 +64,21 @@ class InventoryService:
         return await self.repository.find_by_products(product_ids, warehouse_id)
 
     async def create(self, inventory: Inventory) -> Inventory:
-        return await self.repository.create(inventory)
+        created = await self.repository.create(inventory)
+        return await self.get_by_id(created.id)
 
-    async def update(self, inventory: Inventory) -> Inventory:
-        return await self.repository.update(inventory)
+    async def update(
+        self,
+        inventory_id: UUID,
+        abc_class: ABCClass | None = None,
+        ownership_type: OwnershipType | None = None,
+    ) -> Inventory:
+        _ = await self.repository.update_fields(
+            inventory_id=inventory_id,
+            abc_class=abc_class,
+            ownership_type=ownership_type,
+        )
+        return await self.get_by_id(inventory_id)
 
     async def delete(self, inventory_id: UUID) -> bool:
         if not await self.repository.exists(inventory_id):

@@ -6,6 +6,7 @@ from commons.db.v6.core.addresses.address import (
     AddressSourceTypeEnum,
     AddressTypeEnum,
 )
+from commons.db.v6.core.addresses.address_type import AddressType
 
 from app.core.strawberry.inputs import BaseInputGQL
 
@@ -14,7 +15,7 @@ from app.core.strawberry.inputs import BaseInputGQL
 class AddressInput(BaseInputGQL[Address]):
     source_id: UUID
     source_type: AddressSourceTypeEnum
-    address_type: AddressTypeEnum = AddressTypeEnum.OTHER
+    address_types: list[AddressTypeEnum]
     line_1: str
     city: str
     country: str
@@ -28,7 +29,7 @@ class AddressInput(BaseInputGQL[Address]):
         return Address(
             source_id=self.source_id,
             source_type=self.source_type,
-            address_type=self.address_type,
+            address_types=[AddressType(type=t) for t in self.address_types],
             line_1=self.line_1,
             line_2=self.line_2,
             city=self.city,

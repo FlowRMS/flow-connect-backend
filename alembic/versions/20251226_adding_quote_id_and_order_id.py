@@ -1,3 +1,11 @@
+"""adding quote_id and order id
+
+Revision ID: c04c14e9ba47
+Revises: 8a3f2c1d5e9b
+Create Date: 2025-12-26 12:18:39.358115
+
+"""
+
 from collections.abc import Sequence
 
 import sqlalchemy as sa
@@ -6,7 +14,7 @@ from alembic import op
 
 # revision identifiers, used by Alembic.
 revision: str = "c04c14e9ba47"
-down_revision: str | None = "6b9c4d3e2f1a"
+down_revision: str | None = "8a3f2c1d5e9b"
 branch_labels: str | Sequence[str] | None = None
 depends_on: str | Sequence[str] | None = None
 

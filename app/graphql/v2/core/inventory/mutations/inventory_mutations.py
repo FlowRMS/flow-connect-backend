@@ -10,20 +10,62 @@ from app.graphql.v2.core.inventory.services.inventory_file_service import (
 from app.graphql.v2.core.inventory.services.inventory_item_service import (
     InventoryItemService,
 )
+from app.graphql.v2.core.inventory.services.inventory_service import (
+    InventoryService,
+)
 from app.graphql.v2.core.inventory.strawberry.inventory_import_summary import (
     InventoryImportSummary,
 )
 from app.graphql.v2.core.inventory.strawberry.inventory_input import (
     AddInventoryItemInput,
+    CreateInventoryInput,
     UpdateInventoryItemInput,
+    UpdateInventoryInput,
 )
 from app.graphql.v2.core.inventory.strawberry.inventory_item_response import (
     InventoryItemResponse,
+)
+from app.graphql.v2.core.inventory.strawberry.inventory_response import (
+    InventoryResponse,
 )
 
 
 @strawberry.type
 class InventoryMutations:
+    @strawberry.mutation
+    @inject
+    async def create_inventory(
+        self,
+        service: Injected[InventoryService],
+        input: CreateInventoryInput,
+    ) -> InventoryResponse:
+        inventory = input.to_orm_model()
+        created_inventory = await service.create(inventory)
+        return InventoryResponse.from_orm_model(created_inventory)
+
+    @strawberry.mutation
+    @inject
+    async def update_inventory(
+        self,
+        service: Injected[InventoryService],
+        input: UpdateInventoryInput,
+    ) -> InventoryResponse:
+        updated_inventory = await service.update(
+            inventory_id=input.id,
+            abc_class=input.abc_class if input.abc_class is not strawberry.UNSET else None,
+            ownership_type=input.ownership_type if input.ownership_type is not strawberry.UNSET else None,
+        )
+        return InventoryResponse.from_orm_model(updated_inventory)
+
+    @strawberry.mutation
+    @inject
+    async def delete_inventory(
+        self,
+        service: Injected[InventoryService],
+        id: UUID,
+    ) -> bool:
+        return await service.delete(id)
+
     @strawberry.mutation
     @inject
     async def add_inventory_item(

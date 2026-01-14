@@ -17,8 +17,15 @@ from sqlalchemy.orm import joinedload, lazyload
 
 from app.core.context_wrapper import ContextWrapper
 from app.core.exceptions import NotFoundError
-from app.core.processors import ProcessorExecutor
+from app.core.processors import ProcessorExecutor, ValidateCommissionRateProcessor
+from app.core.processors.events import RepositoryEvent
 from app.graphql.base_repository import BaseRepository
+from app.graphql.orders.processors.default_rep_split_processor import (
+    OrderDefaultRepSplitProcessor,
+)
+from app.graphql.orders.processors.set_shipping_balance_processor import (
+    SetShippingBalanceProcessor,
+)
 from app.graphql.orders.repositories.order_balance_repository import (
     OrderBalanceRepository,
 )
@@ -46,6 +53,9 @@ class OrdersRepository(BaseRepository[Order]):
         rbac_filter_service: RbacFilterService,
         processor_executor: ProcessorExecutor,
         validate_rep_split_processor: ValidateRepSplitProcessor,
+        set_shipping_balance_processor: SetShippingBalanceProcessor,
+        order_default_rep_split_processor: OrderDefaultRepSplitProcessor,
+        validate_commission_rate_processor: ValidateCommissionRateProcessor,
     ) -> None:
         super().__init__(
             session,
@@ -53,7 +63,12 @@ class OrdersRepository(BaseRepository[Order]):
             Order,
             rbac_filter_service,
             processor_executor,
-            processor_executor_classes=[validate_rep_split_processor],
+            processor_executor_classes=[
+                order_default_rep_split_processor,
+                validate_rep_split_processor,
+                set_shipping_balance_processor,
+                validate_commission_rate_processor,
+            ],
         )
         self.balance_repository = balance_repository
 
@@ -151,6 +166,20 @@ class OrdersRepository(BaseRepository[Order]):
         result = await self.session.execute(stmt)
         return result.scalar_one() > 0
 
+    async def find_by_order_number(
+        self, order_number: str, customer_id: UUID
+    ) -> Order | None:
+        stmt = (
+            select(Order)
+            .options(lazyload("*"))
+            .where(
+                Order.order_number == order_number,
+                Order.sold_to_customer_id == customer_id,
+            )
+        )
+        result = await self.session.execute(stmt)
+        return result.scalar_one_or_none()
+
     async def search_by_order_number(
         self, search_term: str, limit: int = 20
     ) -> list[Order]:
@@ -199,3 +228,47 @@ class OrdersRepository(BaseRepository[Order]):
         )
         result = await self.session.execute(stmt)
         return list(result.scalars().all())
+
+    async def order_numbers_exist_bulk(
+        self,
+        order_customer_pairs: list[tuple[str, UUID]],
+    ) -> set[tuple[str, UUID]]:
+        if not order_customer_pairs:
+            return set()
+
+        conditions = [
+            (Order.order_number == order_num) & (Order.sold_to_customer_id == cust_id)
+            for order_num, cust_id in order_customer_pairs
+        ]
+
+        stmt = select(Order).options(lazyload("*")).where(or_(*conditions))
+
+        result = await self.session.execute(stmt)
+        return {
+            (row.order_number, row.sold_to_customer_id)
+            for row in result.scalars().all()
+        }
+
+    async def create_balances_bulk(
+        self,
+        details_list: list[list[OrderDetail]],
+    ) -> list[OrderBalance]:
+        balances = [
+            self.balance_repository.calculate_balance_from_details(details)
+            for details in details_list
+        ]
+        self.session.add_all(balances)
+        await self.session.flush(balances)
+        return balances
+
+    async def create_bulk(self, orders: list[Order]) -> list[Order]:
+        for order in orders:
+            order = await self.prepare_create(order)
+
+        self.session.add_all(orders)
+        await self.session.flush(orders)
+
+        for order in orders:
+            await self._run_processors(RepositoryEvent.POST_CREATE, order)
+
+        return orders

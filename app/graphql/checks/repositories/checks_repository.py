@@ -2,7 +2,16 @@ from typing import Any, override
 from uuid import UUID
 
 from commons.db.v6 import RbacResourceEnum, User
-from commons.db.v6.commission import Adjustment, Check, CheckDetail, Credit, Invoice
+from commons.db.v6.commission import (
+    Adjustment,
+    Check,
+    CheckDetail,
+    Credit,
+    Invoice,
+    InvoiceDetail,
+    InvoiceSplitRate,
+    Order,
+)
 from commons.db.v6.core import Factory
 from commons.db.v6.crm.links.entity_type import EntityType
 from commons.db.v6.crm.links.link_relation_model import LinkRelation
@@ -84,11 +93,31 @@ class ChecksRepository(BaseRepository[Check]):
         check = await self.get_by_id(
             check_id,
             options=[
+                joinedload(Check.created_by),
                 joinedload(Check.details),
                 joinedload(Check.details).joinedload(CheckDetail.invoice),
                 joinedload(Check.details)
                 .joinedload(CheckDetail.invoice)
+                .joinedload(Invoice.balance),
+                joinedload(Check.details)
+                .joinedload(CheckDetail.invoice)
                 .joinedload(Invoice.order),
+                joinedload(Check.details)
+                .joinedload(CheckDetail.invoice)
+                .joinedload(Invoice.order)
+                .joinedload(Order.sold_to_customer),
+                joinedload(Check.details)
+                .joinedload(CheckDetail.invoice)
+                .joinedload(Invoice.details),
+                joinedload(Check.details)
+                .joinedload(CheckDetail.invoice)
+                .joinedload(Invoice.details)
+                .joinedload(InvoiceDetail.outside_split_rates),
+                joinedload(Check.details)
+                .joinedload(CheckDetail.invoice)
+                .joinedload(Invoice.details)
+                .joinedload(InvoiceDetail.outside_split_rates)
+                .joinedload(InvoiceSplitRate.user),
                 joinedload(Check.details).joinedload(CheckDetail.credit),
                 joinedload(Check.details)
                 .joinedload(CheckDetail.credit)

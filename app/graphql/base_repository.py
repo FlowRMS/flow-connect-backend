@@ -6,6 +6,7 @@ import pendulum
 from commons.db.v6 import BaseModel, RbacPrivilegeTypeEnum, RbacResourceEnum
 from commons.db.v6.crm.links.entity_type import EntityType
 from commons.db.v6.crm.links.link_relation_model import LinkRelation
+from loguru import logger
 from sqlalchemy import Result, Select, func, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.sql.base import ExecutableOption
@@ -176,7 +177,7 @@ class BaseRepository(Generic[T]):
         result = await self.session.execute(query)
         return list(result.scalars().all())
 
-    async def create(self, entity: T) -> T:
+    async def prepare_create(self, entity: T) -> T:
         if hasattr(entity, "created_by_id"):
             setattr(entity, "created_by_id", self.context.auth_info.flow_user_id)
 
@@ -189,6 +190,10 @@ class BaseRepository(Generic[T]):
 
         await self._run_processors(RepositoryEvent.PRE_CREATE, entity)
 
+        return entity
+
+    async def create(self, entity: T) -> T:
+        entity = await self.prepare_create(entity)
         self.session.add(entity)
         await self.session.flush()
 
@@ -238,7 +243,8 @@ class BaseRepository(Generic[T]):
             await self._run_processors(RepositoryEvent.POST_DELETE, entity)
 
             return True
-        except Exception:
+        except Exception as e:
+            logger.exception(f"Deletion failed: {e}")
             raise DeletionError(
                 f"Can not delete {self.model_class.__name__} as it is linked to other records"
             )

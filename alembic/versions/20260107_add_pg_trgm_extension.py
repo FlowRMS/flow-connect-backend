@@ -1,10 +1,18 @@
+"""add pg_trgm extension for similarity search
+
+Revision ID: pg_trgm_extension_001
+Revises: warehouse_locations_001
+Create Date: 2026-01-07
+
+"""
+
 from collections.abc import Sequence
 
 from alembic import op
 
 # revision identifiers, used by Alembic.
-revision: str = "e77b1b398268"
-down_revision: str | None = "17288a31ff81"
+revision: str = "pg_trgm_extension_001"
+down_revision: str | None = "warehouse_locations_001"
 branch_labels: str | Sequence[str] | None = None
 depends_on: str | Sequence[str] | None = None
 

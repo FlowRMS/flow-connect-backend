@@ -30,7 +30,7 @@ class UpdateOrderOnInvoiceProcessor(BaseProcessor[Invoice]):
         if order is None:
             return
 
-        await self._update_order_detail_statuses(order, context.event)
+        await self._update_order_detail_statuses(order, invoice, context.event)
         self._update_order_status(order)
         await self.session.flush()
 
@@ -49,16 +49,27 @@ class UpdateOrderOnInvoiceProcessor(BaseProcessor[Invoice]):
         return result.scalar_one()
 
     async def _update_order_detail_statuses(
-        self, order: Order, event: RepositoryEvent
+        self, order: Order, invoice: Invoice, event: RepositoryEvent
     ) -> None:
-        for detail in order.details:
-            invoiced_amount = await self._get_invoiced_amount_for_detail(detail.id)
-            if event == RepositoryEvent.POST_DELETE:
-                detail.shipping_balance = detail.shipping_balance + invoiced_amount
-            else:
-                detail.shipping_balance = detail.shipping_balance - invoiced_amount
+        order_detail_mapping = {detail.id: detail for detail in order.details}
+        for invoice_detail in invoice.details:
+            if invoice_detail.order_detail_id is None:
+                continue
+            order_detail = order_detail_mapping.get(invoice_detail.order_detail_id)
 
-            detail.status = self._calculate_detail_status(detail.shipping_balance)
+            if order_detail is None:
+                continue
+
+            invoiced_amount = await self._get_invoiced_amount_for_detail(
+                order_detail.id
+            )
+            if event == RepositoryEvent.POST_DELETE:
+                order_detail.shipping_balance += invoiced_amount
+            else:
+                order_detail.shipping_balance -= invoiced_amount
+            order_detail.status = self._calculate_detail_status(
+                order_detail.shipping_balance
+            )
 
     def _calculate_detail_status(self, shipping_balance: Decimal) -> OrderStatus:
         if shipping_balance < Decimal("0.00"):

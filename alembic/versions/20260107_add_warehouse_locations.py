@@ -1,3 +1,11 @@
+"""add warehouse locations tables
+
+Revision ID: warehouse_locations_001
+Revises: organizations_001
+Create Date: 2026-01-07
+
+"""
+
 from collections.abc import Sequence
 
 import sqlalchemy as sa
@@ -6,8 +14,8 @@ from sqlalchemy.dialects import postgresql
 from alembic import op
 
 # revision identifiers, used by Alembic.
-revision: str = "17288a31ff81"
-down_revision: str | None = "d264b061ab7e"
+revision: str = "warehouse_locations_001"
+down_revision: str | None = "organizations_001"
 branch_labels: str | Sequence[str] | None = None
 depends_on: str | Sequence[str] | None = None
 

@@ -1,3 +1,11 @@
+"""adding report models
+
+Revision ID: 983952e7b210
+Revises: 9d87acc00979
+Create Date: 2025-12-29 07:44:25.009824
+
+"""
+
 from collections.abc import Sequence
 
 import sqlalchemy as sa

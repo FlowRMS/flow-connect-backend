@@ -3,11 +3,39 @@ from decimal import Decimal
 from uuid import UUID
 
 import strawberry
-from commons.db.v6.warehouse.inventory import InventoryItem, InventoryItemStatus
+from commons.db.v6.warehouse.inventory import (
+    ABCClass,
+    InventoryItem,
+    InventoryItemStatus,
+    OwnershipType,
+)
+from commons.db.v6.warehouse.inventory.inventory import Inventory
+
+from app.core.strawberry.inputs import BaseInputGQL
+from app.core.utils.datetime import make_naive
 
 
 @strawberry.input
-class AddInventoryItemInput:
+class CreateInventoryInput(BaseInputGQL[Inventory]):
+    warehouse_id: UUID
+    product_id: UUID
+
+    def to_orm_model(self) -> Inventory:
+        return Inventory(
+            warehouse_id=self.warehouse_id,
+            product_id=self.product_id,
+        )
+
+
+@strawberry.input
+class UpdateInventoryInput:
+    id: UUID
+    abc_class: ABCClass | None = strawberry.UNSET
+    ownership_type: OwnershipType | None = strawberry.UNSET
+
+
+@strawberry.input
+class AddInventoryItemInput(BaseInputGQL[InventoryItem]):
     inventory_id: UUID
     location_id: UUID | None = None
     quantity: Decimal = Decimal(0)
@@ -22,7 +50,7 @@ class AddInventoryItemInput:
             quantity=self.quantity,
             lot_number=self.lot_number,
             status=self.status,
-            received_date=self.received_date,
+            received_date=make_naive(self.received_date),
         )
 
 

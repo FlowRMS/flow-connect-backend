@@ -5,20 +5,20 @@ from aioinject import Injected
 from commons.db.v6.crm.links.entity_type import EntityType
 
 from app.graphql.checks.services.check_service import CheckService
-from app.graphql.checks.strawberry.check_response import CheckResponse
+from app.graphql.checks.strawberry.check_response import CheckLiteResponse
 from app.graphql.companies.services.companies_service import CompaniesService
-from app.graphql.companies.strawberry.company_response import CompanyResponse
+from app.graphql.companies.strawberry.company_response import CompanyLiteResponse
 from app.graphql.contacts.services.contacts_service import ContactsService
-from app.graphql.contacts.strawberry.contact_response import ContactResponse
+from app.graphql.contacts.strawberry.contact_response import ContactLiteResponse
 from app.graphql.inject import inject
 from app.graphql.invoices.services.invoice_service import InvoiceService
 from app.graphql.invoices.strawberry.invoice_response import InvoiceLiteResponse
 from app.graphql.jobs.services.jobs_service import JobsService
-from app.graphql.jobs.strawberry.job_response import JobType
+from app.graphql.jobs.strawberry.job_response import JobLiteType
 from app.graphql.notes.services.notes_service import NotesService
-from app.graphql.notes.strawberry.note_response import NoteType
+from app.graphql.notes.strawberry.note_response import NoteLiteType
 from app.graphql.orders.services.order_service import OrderService
-from app.graphql.orders.strawberry.order_response import OrderResponse
+from app.graphql.orders.strawberry.order_lite_response import OrderLiteResponse
 from app.graphql.pre_opportunities.services.pre_opportunities_service import (
     PreOpportunitiesService,
 )
@@ -26,7 +26,7 @@ from app.graphql.pre_opportunities.strawberry.pre_opportunity_lite_response impo
     PreOpportunityLiteResponse,
 )
 from app.graphql.quotes.services.quote_service import QuoteService
-from app.graphql.quotes.strawberry.quote_response import QuoteResponse
+from app.graphql.quotes.strawberry.quote_lite_response import QuoteLiteResponse
 from app.graphql.tasks.services.tasks_service import TasksService
 from app.graphql.tasks.strawberry.task_conversation_response import (
     TaskConversationType,
@@ -36,11 +36,15 @@ from app.graphql.tasks.strawberry.task_related_entities_response import (
 )
 from app.graphql.tasks.strawberry.task_response import TaskType
 from app.graphql.v2.core.customers.services.customer_service import CustomerService
-from app.graphql.v2.core.customers.strawberry.customer_response import CustomerResponse
+from app.graphql.v2.core.customers.strawberry.customer_response import (
+    CustomerLiteResponse,
+)
 from app.graphql.v2.core.factories.services.factory_service import FactoryService
-from app.graphql.v2.core.factories.strawberry.factory_response import FactoryResponse
+from app.graphql.v2.core.factories.strawberry.factory_response import (
+    FactoryLiteResponse,
+)
 from app.graphql.v2.core.products.services.product_service import ProductService
-from app.graphql.v2.core.products.strawberry.product_response import ProductResponse
+from app.graphql.v2.core.products.strawberry.product_response import ProductLiteResponse
 
 
 @strawberry.type
@@ -55,7 +59,7 @@ class TasksQueries:
         service: Injected[TasksService],
     ) -> TaskType:
         """Get a task by ID."""
-        return TaskType.from_orm_model(await service.get_task(id))
+        return TaskType.from_orm_model(await service.find_task_by_id(id))
 
     @strawberry.field
     @inject
@@ -114,9 +118,6 @@ class TasksQueries:
         product_service: Injected[ProductService],
         customer_service: Injected[CustomerService],
     ) -> TaskRelatedEntitiesResponse:
-        # Verify task exists
-        _ = await tasks_service.get_task(task_id)
-
         # Fetch related entities
         jobs = await jobs_service.get_jobs_by_task(task_id)
         contacts = await contacts_service.find_contacts_by_task_id(task_id)
@@ -134,20 +135,20 @@ class TasksQueries:
         customers = await customer_service.find_by_entity(EntityType.TASK, task_id)
 
         return TaskRelatedEntitiesResponse(
-            jobs=JobType.from_orm_model_list(jobs),
-            contacts=ContactResponse.from_orm_model_list(contacts),
-            companies=CompanyResponse.from_orm_model_list(companies),
-            notes=NoteType.from_orm_model_list(notes),
+            jobs=JobLiteType.from_orm_model_list(jobs),
+            contacts=ContactLiteResponse.from_orm_model_list(contacts),
+            companies=CompanyLiteResponse.from_orm_model_list(companies),
+            notes=NoteLiteType.from_orm_model_list(notes),
             pre_opportunities=PreOpportunityLiteResponse.from_orm_model_list(
                 pre_opportunities
             ),
-            quotes=QuoteResponse.from_orm_model_list(quotes),
-            orders=OrderResponse.from_orm_model_list(orders),
+            quotes=QuoteLiteResponse.from_orm_model_list(quotes),
+            orders=OrderLiteResponse.from_orm_model_list(orders),
             invoices=InvoiceLiteResponse.from_orm_model_list(invoices),
-            checks=CheckResponse.from_orm_model_list(checks),
-            factories=FactoryResponse.from_orm_model_list(factories),
-            products=ProductResponse.from_orm_model_list(products),
-            customers=CustomerResponse.from_orm_model_list(customers),
+            checks=CheckLiteResponse.from_orm_model_list(checks),
+            factories=FactoryLiteResponse.from_orm_model_list(factories),
+            products=ProductLiteResponse.from_orm_model_list(products),
+            customers=CustomerLiteResponse.from_orm_model_list(customers),
         )
 
     @strawberry.field

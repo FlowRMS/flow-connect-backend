@@ -1,3 +1,11 @@
+"""warehouse settings - create pywarehouse schema and warehouse tables
+
+Revision ID: warehouse_settings_001
+Revises: 62e4315e9e63
+Create Date: 2024-12-30
+
+"""
+
 from collections.abc import Sequence
 
 import sqlalchemy as sa
@@ -6,8 +14,8 @@ from sqlalchemy.dialects import postgresql
 from alembic import op
 
 # revision identifiers, used by Alembic.
-revision: str = "0ce93b01f551"
-down_revision: str | None = "3e110b309bef"
+revision: str = "warehouse_settings_001"
+down_revision: str | None = "a1b2c3d4e5f6"
 branch_labels: str | Sequence[str] | None = None
 depends_on: str | Sequence[str] | None = None
 

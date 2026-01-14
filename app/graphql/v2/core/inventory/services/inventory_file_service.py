@@ -29,7 +29,7 @@ from app.graphql.v2.core.warehouses.repositories.warehouse_location_repository i
 
 
 class InventoryFileService:
-    def __init__(
+    def __init__(  # pyright: ignore[reportMissingSuperCall]
         self,
         inventory_repository: InventoryRepository,
         inventory_item_repository: InventoryItemRepository,
@@ -38,7 +38,6 @@ class InventoryFileService:
         item_service: InventoryItemService,
         auth_info: AuthInfo,
     ) -> None:
-        super().__init__()
         self.inventory_repository = inventory_repository
         self.item_repository = inventory_item_repository
         self.products_repository = products_repository

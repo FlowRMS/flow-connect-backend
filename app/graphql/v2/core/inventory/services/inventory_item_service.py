@@ -18,12 +18,11 @@ from app.graphql.v2.core.inventory.repositories.inventory_repository import (
 
 
 class InventoryItemService:
-    def __init__(
+    def __init__(  # pyright: ignore[reportMissingSuperCall]
         self,
         item_repository: InventoryItemRepository,
         inventory_repository: InventoryRepository,
     ) -> None:
-        super().__init__()
         self.item_repository = item_repository
         self.inventory_repository = inventory_repository
 

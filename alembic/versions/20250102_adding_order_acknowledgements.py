@@ -1,3 +1,11 @@
+"""adding order acknowledgements
+
+Revision ID: order_acknowledgements_001
+Revises: insert_default_uoms_001
+Create Date: 2025-01-02
+
+"""
+
 from collections.abc import Sequence
 
 import sqlalchemy as sa
@@ -5,8 +13,8 @@ from sqlalchemy.dialects import postgresql
 
 from alembic import op
 
-revision: str = "d627dc1dbf6e"
-down_revision: str | None = "005587d19685"
+revision: str = "order_acknowledgements_001"
+down_revision: str | None = "insert_default_uoms_001"
 branch_labels: str | Sequence[str] | None = None
 depends_on: str | Sequence[str] | None = None
 

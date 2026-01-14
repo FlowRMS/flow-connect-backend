@@ -14,7 +14,7 @@ from app.graphql.invoices.strawberry.invoice_balance_response import (
 from app.graphql.invoices.strawberry.invoice_detail_response import (
     InvoiceDetailResponse,
 )
-from app.graphql.orders.strawberry.order_lite_response import OrderLiteResponse
+from app.graphql.orders.strawberry.order_response import OrderSemiLiteResponse
 from app.graphql.v2.core.factories.strawberry.factory_response import (
     FactoryLiteResponse,
 )
@@ -61,14 +61,35 @@ class InvoiceLiteResponse(DTOMixin[Invoice]):
 
 
 @strawberry.type
-class InvoiceLiteOrderResponse(InvoiceLiteResponse):
+class InvoiceLiteCheckResponse(InvoiceLiteResponse):
     @strawberry.field
-    def order(self) -> OrderLiteResponse:
-        return OrderLiteResponse.from_orm_model(self._instance.order)
+    def order(self) -> OrderSemiLiteResponse:
+        return OrderSemiLiteResponse.from_orm_model(self._instance.order)
+
+    @strawberry.field
+    def sales_reps(self) -> list[UserResponse]:
+        details = self._instance.details
+        users: list[UserResponse] = []
+        user_keys = set()
+        for detail in details:
+            osrs = detail.outside_split_rates
+            for osr in osrs:
+                if osr.user_id not in user_keys:
+                    user_keys.add(osr.user_id)
+                    users.append(UserResponse.from_orm_model(osr.user))
+        return users
+
+    @strawberry.field
+    def balance(self) -> InvoiceBalanceResponse:
+        return InvoiceBalanceResponse.from_orm_model(self._instance.balance)
 
 
 @strawberry.type
-class InvoiceResponse(InvoiceLiteOrderResponse):
+class InvoiceResponse(InvoiceLiteResponse):
+    @strawberry.field
+    def order(self) -> OrderSemiLiteResponse:
+        return OrderSemiLiteResponse.from_orm_model(self._instance.order)
+
     @strawberry.field
     def factory(self) -> FactoryLiteResponse:
         return FactoryLiteResponse.from_orm_model(self._instance.factory)

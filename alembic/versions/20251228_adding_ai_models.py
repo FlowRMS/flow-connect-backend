@@ -1,3 +1,11 @@
+"""adding ai models
+
+Revision ID: 9d87acc00979
+Revises: cd1f6cbd8751
+Create Date: 2025-12-28 20:03:23.275621
+
+"""
+
 from collections.abc import Sequence
 
 import sqlalchemy as sa
@@ -18,7 +26,7 @@ def upgrade() -> None:
     _ = op.create_table(
         "chats",
         sa.Column("id", postgresql.UUID(as_uuid=True), primary_key=True),
-        sa.Column("title", sa.String(255), nullable=True),
+        sa.Column("title", sa.String(), nullable=True),
         sa.Column(
             "user_id",
             postgresql.UUID(as_uuid=True),
@@ -215,7 +223,7 @@ def upgrade() -> None:
         ),
         sa.Column("page_number", sa.Integer(), nullable=False),
         sa.Column("markdown_content", sa.Text(), nullable=False),
-        sa.Column("entity_number", sa.String(255), nullable=True),
+        sa.Column("entity_number", sa.String(), nullable=True),
         sa.Column("page_type", sa.SmallInteger(), nullable=False),
         sa.Column(
             "is_relevant_for_transactions", sa.Boolean(), nullable=False, default=False
@@ -265,7 +273,7 @@ def upgrade() -> None:
             nullable=False,
             index=True,
         ),
-        sa.Column("correction_action", sa.String(255), nullable=False),
+        sa.Column("correction_action", sa.String(), nullable=False),
         sa.Column("old_value", postgresql.JSONB(), nullable=True),
         sa.Column("new_value", postgresql.JSONB(), nullable=True),
         sa.Column(
@@ -334,7 +342,7 @@ def upgrade() -> None:
         ),
         sa.Column("flow_index_detail", sa.Integer(), nullable=True),
         sa.Column("extracted_data", postgresql.JSONB(), nullable=False),
-        sa.Column("display_name", sa.String(255), nullable=False),
+        sa.Column("display_name", sa.String(), nullable=False),
         sa.Column("source_line_numbers", postgresql.ARRAY(sa.Integer()), nullable=True),
         sa.Column("best_match_id", postgresql.UUID(as_uuid=True), nullable=True),
         sa.Column("best_match_name", sa.String(), nullable=True),
@@ -374,7 +382,7 @@ def upgrade() -> None:
             index=True,
         ),
         sa.Column("existing_entity_id", postgresql.UUID(as_uuid=True), nullable=False),
-        sa.Column("existing_entity_name", sa.String(255), nullable=False),
+        sa.Column("existing_entity_name", sa.String(), nullable=False),
         sa.Column("similarity_score", sa.DECIMAL(precision=5, scale=4), nullable=False),
         sa.Column("rank", sa.Integer(), nullable=False),
         sa.Column("match_metadata", postgresql.JSONB(), nullable=True),
@@ -461,7 +469,7 @@ def upgrade() -> None:
     _ = op.create_table(
         "workflows",
         sa.Column("id", postgresql.UUID(as_uuid=True), primary_key=True),
-        sa.Column("name", sa.String(255), nullable=False),
+        sa.Column("name", sa.String(), nullable=False),
         sa.Column("instruction", sa.Text(), nullable=False),
         sa.Column("workflow_json", postgresql.JSON(), nullable=False),
         sa.Column("status", sa.String(50), nullable=False, default="draft"),
@@ -523,7 +531,7 @@ def upgrade() -> None:
             sa.ForeignKey("ai.workflows.id"),
             nullable=False,
         ),
-        sa.Column("filename", sa.String(255), nullable=False),
+        sa.Column("filename", sa.String(), nullable=False),
         sa.Column("file_path", sa.String(500), nullable=False),
         sa.Column("file_size", sa.Integer(), nullable=False),
         sa.Column(

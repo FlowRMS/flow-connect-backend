@@ -6,8 +6,8 @@ from sqlalchemy.dialects import postgresql
 from alembic import op
 
 # revision identifiers, used by Alembic.
-revision: str = "a1b2c3d4e5f6"
-down_revision: str = "6e453caa5fb9"
+revision: str = "add_inventory"
+down_revision: str = "add_job_company_links"
 branch_labels: str | Sequence[str] | None = None
 depends_on: str | Sequence[str] | None = None
 
@@ -31,7 +31,9 @@ def upgrade() -> None:
             sa.Column("description", sa.Text, nullable=True),
             sa.Column("is_active", sa.Boolean, nullable=True, default=True),
             sa.Column(
-                "created_at", sa.DateTime(timezone=False), server_default=sa.func.now()
+                "created_at",
+                postgresql.TIMESTAMP(timezone=True),
+                server_default=sa.func.now(),
             ),
             schema="pywarehouse",
         )
@@ -68,7 +70,9 @@ def upgrade() -> None:
                 index=True,
             ),
             sa.Column(
-                "created_at", sa.DateTime(timezone=False), server_default=sa.func.now()
+                "created_at",
+                postgresql.TIMESTAMP(timezone=True),
+                server_default=sa.func.now(),
             ),
             schema="pywarehouse",
         )
@@ -109,11 +113,13 @@ def upgrade() -> None:
                 index=True,
             ),
             sa.Column(
-                "created_at", sa.DateTime(timezone=False), server_default=sa.func.now()
+                "created_at",
+                postgresql.TIMESTAMP(timezone=True),
+                server_default=sa.func.now(),
             ),
             sa.Column(
                 "updated_at",
-                sa.DateTime(timezone=False),
+                postgresql.TIMESTAMP(timezone=True),
                 server_default=sa.func.now(),
                 onupdate=sa.func.now(),
             ),
@@ -144,7 +150,9 @@ def upgrade() -> None:
             sa.Column("lot_number", sa.String(100), nullable=True),
             # IntEnum stored as Integer
             sa.Column("status", sa.Integer, nullable=False, default=1),
-            sa.Column("received_date", sa.DateTime(timezone=False), nullable=True),
+            sa.Column(
+                "received_date", postgresql.TIMESTAMP(timezone=True), nullable=True
+            ),
             # Audit columns
             sa.Column(
                 "created_by_id",
@@ -154,7 +162,9 @@ def upgrade() -> None:
                 index=True,
             ),
             sa.Column(
-                "created_at", sa.DateTime(timezone=False), server_default=sa.func.now()
+                "created_at",
+                postgresql.TIMESTAMP(timezone=True),
+                server_default=sa.func.now(),
             ),
             schema="pywarehouse",
         )
