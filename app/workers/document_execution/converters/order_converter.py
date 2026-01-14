@@ -2,7 +2,7 @@ from datetime import date
 from decimal import Decimal
 from typing import override
 
-import pendulum
+from commons.db.v6 import AutoNumberEntityType
 from commons.db.v6.ai.documents.enums.entity_type import DocumentEntityType
 from commons.db.v6.models import Order
 from commons.dtos.common.dto_loader_service import DTOLoaderService
@@ -11,6 +11,9 @@ from commons.dtos.order.order_dto import OrderDTO
 from loguru import logger
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.graphql.auto_numbers.services.auto_number_settings_service import (
+    AutoNumberSettingsService,
+)
 from app.graphql.orders.services.order_service import OrderService
 from app.graphql.orders.strawberry.order_detail_input import OrderDetailInput
 from app.graphql.orders.strawberry.order_input import OrderInput
@@ -33,9 +36,11 @@ class OrderConverter(BaseEntityConverter[OrderDTO, OrderInput, Order]):
         session: AsyncSession,
         dto_loader_service: DTOLoaderService,
         order_service: OrderService,
+        auto_number_settings_service: AutoNumberSettingsService,
     ) -> None:
         super().__init__(session, dto_loader_service)
         self.order_service = order_service
+        self.auto_number_settings_service = auto_number_settings_service
 
     @override
     async def create_entity(
@@ -64,7 +69,12 @@ class OrderConverter(BaseEntityConverter[OrderDTO, OrderInput, Order]):
         )
         default_discount_rate = await self.get_factory_discount_rate(factory_id)
 
-        order_number = dto.order_number or self._generate_order_number()
+        order_number = dto.order_number
+        if self.auto_number_settings_service.needs_generation(order_number):
+            order_number = await self.auto_number_settings_service.generate_number(
+                AutoNumberEntityType.ORDER
+            )
+        assert order_number is not None
         entity_date = dto.order_date or date.today()
         due_date = dto.due_date or entity_date
 
@@ -158,12 +168,6 @@ class OrderConverter(BaseEntityConverter[OrderDTO, OrderInput, Order]):
         if detail.description:
             return detail.description[:100]
         return None
-
-    @staticmethod
-    def _generate_order_number() -> str:
-        epoch = pendulum.now(tz="UTC").int_timestamp
-        timestamp = epoch * 1000 + pendulum.now(tz="UTC").microsecond // 1000
-        return f"ORD-{timestamp}"
 
     @override
     async def create_entities_bulk(

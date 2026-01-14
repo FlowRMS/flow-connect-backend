@@ -1,8 +1,9 @@
-from datetime import date, datetime, timezone
+from datetime import date
 from decimal import Decimal
 from typing import override
 from uuid import UUID
 
+from commons.db.v6 import AutoNumberEntityType
 from commons.db.v6.ai.documents.enums.entity_type import DocumentEntityType
 from commons.db.v6.commission import Adjustment, Check, Credit, Invoice
 from commons.dtos.check.check_detail_dto import CheckDetailDTO
@@ -12,6 +13,9 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import lazyload
 
+from app.graphql.auto_numbers.services.auto_number_settings_service import (
+    AutoNumberSettingsService,
+)
 from app.graphql.checks.services.check_service import CheckService
 from app.graphql.checks.strawberry.check_detail_input import CheckDetailInput
 from app.graphql.checks.strawberry.check_input import CheckInput
@@ -39,11 +43,13 @@ class CheckConverter(BaseEntityConverter[CheckDTO, CheckInput, Check]):
         check_service: CheckService,
         credit_converter: CreditConverter,
         adjustment_converter: AdjustmentConverter,
+        auto_number_settings_service: AutoNumberSettingsService,
     ) -> None:
         super().__init__(session, dto_loader_service)
         self.check_service = check_service
         self.credit_converter = credit_converter
         self.adjustment_converter = adjustment_converter
+        self.auto_number_settings_service = auto_number_settings_service
         self._invoice_cache: dict[tuple[str, UUID], Invoice | None] = {}
         self._credit_cache: dict[tuple[str, UUID], Credit | None] = {}
         self._adjustment_cache: dict[tuple[str, UUID], Adjustment | None] = {}
@@ -63,7 +69,12 @@ class CheckConverter(BaseEntityConverter[CheckDTO, CheckInput, Check]):
         if not factory_id:
             return ConversionResult.fail(FactoryRequiredError())
 
-        check_number = dto.check_number or self._generate_check_number()
+        check_number = dto.check_number
+        if self.auto_number_settings_service.needs_generation(check_number):
+            check_number = await self.auto_number_settings_service.generate_number(
+                AutoNumberEntityType.CHECK
+            )
+        assert check_number is not None
         entity_date = dto.check_date or date.today()
 
         details: list[CheckDetailInput] = []
@@ -325,7 +336,3 @@ class CheckConverter(BaseEntityConverter[CheckDTO, CheckInput, Check]):
         self._adjustment_cache[cache_key] = adjustment
         return adjustment
 
-    @staticmethod
-    def _generate_check_number() -> str:
-        timestamp = datetime.now(timezone.utc).strftime("%Y%m%d%H%M%S")
-        return f"CHK-{timestamp}"
