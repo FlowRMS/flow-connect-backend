@@ -325,7 +325,7 @@ type CheckDetailResponse {
   adjustmentId: UUID
   creditId: UUID
   appliedAmount: Decimal!
-  invoice: InvoiceLiteOrderResponse
+  invoice: InvoiceLiteCheckResponse
   adjustment: AdjustmentCheckResponse
   credit: CreditCheckResponse
 }
@@ -1355,7 +1355,7 @@ type InvoiceLandingPage implements LandingPageInterfaceBase {
   factoryName: String!
 }
 
-type InvoiceLiteOrderResponse {
+type InvoiceLiteCheckResponse {
   id: UUID!
   createdAt: datetime!
   createdById: UUID!
@@ -1369,7 +1369,9 @@ type InvoiceLiteOrderResponse {
   creationType: CreationType!
   balanceId: UUID!
   url: String!
-  order: OrderLiteResponse!
+  order: OrderSemiLiteResponse!
+  salesReps: [UserResponse!]!
+  balance: InvoiceBalanceResponse!
 }
 
 type InvoiceLiteResponse {
@@ -1402,7 +1404,7 @@ type InvoiceResponse {
   creationType: CreationType!
   balanceId: UUID!
   url: String!
-  order: OrderLiteResponse!
+  order: OrderSemiLiteResponse!
   factory: FactoryLiteResponse!
   createdBy: UserResponse!
   balance: InvoiceBalanceResponse!
@@ -2150,6 +2152,36 @@ type OrderResponse {
   job: JobLiteType
 }
 
+type OrderSemiLiteResponse {
+  id: UUID!
+  createdAt: datetime!
+  createdById: UUID!
+  orderNumber: String!
+  entityDate: Date!
+  dueDate: Date!
+  status: OrderStatus!
+  headerStatus: OrderHeaderStatus!
+  orderType: OrderType!
+  published: Boolean!
+  creationType: CreationType!
+  soldToCustomerId: UUID!
+  billToCustomerId: UUID
+  factoryId: UUID
+  shippingTerms: String
+  freightTerms: String
+  markNumber: String
+  shipDate: Date
+  projectedShipDate: Date
+  factSoNumber: String
+  quoteId: UUID
+  balanceId: UUID!
+  insidePerLineItem: Boolean
+  outsidePerLineItem: Boolean
+  endUserPerLineItem: Boolean
+  url: String!
+  soldToCustomer: CustomerLiteResponse!
+}
+
 input OrderSplitRateInput {
   userId: UUID!
   splitRate: Decimal!
@@ -2609,7 +2641,7 @@ type Query {
   o365CalendarEventsInRange(startDate: datetime!, endDate: datetime!, top: Int! = 100): O365CalendarEventsResultType!
   invoice(id: UUID!): InvoiceResponse!
   invoiceSearch(searchTerm: String!, limit: Int! = 20, openOnly: Boolean! = false, unlockedOnly: Boolean! = false): [InvoiceLiteResponse!]!
-  searchOpenInvoices(factoryId: UUID!, startFrom: Date!): [InvoiceLiteOrderResponse!]!
+  searchOpenInvoices(factoryId: UUID!, startFrom: Date = null, limit: Int = null): [InvoiceLiteCheckResponse!]!
   invoicesByOrderId(orderId: UUID!): [InvoiceLiteResponse!]!
   jobCompanyLinks(jobId: UUID!): [JobCompanyLinkResponse!]!
   jobSpecifiers(jobId: UUID!): [JobCompanyLinkResponse!]!

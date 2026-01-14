@@ -35,9 +35,14 @@ class ShipmentRequestResponse(DTOMixin[ShipmentRequest]):
     is_active: bool
     created_at: datetime
     updated_at: datetime
+    items: list[ShipmentRequestItemResponse]
+    total_quantity: Decimal
+    factory: FactoryLiteResponse | None
 
     @classmethod
     def from_orm_model(cls, model: ShipmentRequest) -> Self:
+        items = model.items
+        factory = model.factory
         return cls(
             _instance=model,
             id=model.id,
@@ -52,19 +57,7 @@ class ShipmentRequestResponse(DTOMixin[ShipmentRequest]):
             is_active=model.is_active,
             created_at=model.created_at,
             updated_at=model.updated_at,
+            items=ShipmentRequestItemResponse.from_orm_model_list(items),
+            total_quantity=sum((item.quantity for item in items), Decimal("0")),
+            factory=FactoryLiteResponse.from_orm_model(factory) if factory else None,
         )
-
-    @strawberry.field
-    def items(self) -> list[ShipmentRequestItemResponse]:
-        return ShipmentRequestItemResponse.from_orm_model_list(self._instance.items)
-
-    @strawberry.field
-    def total_quantity(self) -> Decimal:
-        return sum((item.quantity for item in self._instance.items), Decimal("0"))
-
-    @strawberry.field
-    def factory(self) -> FactoryLiteResponse | None:
-        factory = self._instance.factory
-        if not factory:
-            return None
-        return FactoryLiteResponse.from_orm_model(factory)

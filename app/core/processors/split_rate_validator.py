@@ -3,9 +3,12 @@ from collections.abc import Sequence
 from decimal import ROUND_DOWN, Decimal
 from typing import Any, TypeVar
 
+from commons.db.v6.common.base_detail import BaseDetail
 from commons.db.v6.common.base_split_rate import BaseSplitRate
 
-T = TypeVar("T", bound=BaseSplitRate)
+from app.errors.common_errors import ValidationError
+
+T = TypeVar("T", bound=BaseDetail)
 
 
 def distribute_split_rates(count: int) -> list[Decimal]:
@@ -80,4 +83,21 @@ def validate_split_rate_range[T](
             ctx = f" {context}" if context else ""
             raise ValidationError(
                 f"{label.capitalize()} cannot exceed 100%{ctx}. Got: {split_rate}%"
+            )
+
+
+MAX_COMMISSION_RATE = Decimal("25")
+
+
+def validate_commission_rate_max(
+    items: Sequence[T],
+    *,
+    max_rate: Decimal = MAX_COMMISSION_RATE,
+    label: str = "commission rate",
+) -> None:
+    for item in items:
+        commission_rate = item.commission_rate
+        if commission_rate > max_rate:
+            raise ValidationError(
+                f"{label.capitalize()} cannot exceed {max_rate}%. Got: {commission_rate}%"
             )

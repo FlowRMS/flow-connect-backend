@@ -17,7 +17,7 @@ from sqlalchemy.orm import joinedload, lazyload
 
 from app.core.context_wrapper import ContextWrapper
 from app.core.exceptions import NotFoundError
-from app.core.processors import ProcessorExecutor
+from app.core.processors import ProcessorExecutor, ValidateCommissionRateProcessor
 from app.core.processors.events import RepositoryEvent
 from app.graphql.base_repository import BaseRepository
 from app.graphql.orders.processors.default_rep_split_processor import (
@@ -55,6 +55,7 @@ class OrdersRepository(BaseRepository[Order]):
         validate_rep_split_processor: ValidateRepSplitProcessor,
         set_shipping_balance_processor: SetShippingBalanceProcessor,
         order_default_rep_split_processor: OrderDefaultRepSplitProcessor,
+        validate_commission_rate_processor: ValidateCommissionRateProcessor,
     ) -> None:
         super().__init__(
             session,
@@ -66,6 +67,7 @@ class OrdersRepository(BaseRepository[Order]):
                 order_default_rep_split_processor,
                 validate_rep_split_processor,
                 set_shipping_balance_processor,
+                validate_commission_rate_processor,
             ],
         )
         self.balance_repository = balance_repository
@@ -163,6 +165,20 @@ class OrdersRepository(BaseRepository[Order]):
 
         result = await self.session.execute(stmt)
         return result.scalar_one() > 0
+
+    async def find_by_order_number(
+        self, order_number: str, customer_id: UUID
+    ) -> Order | None:
+        stmt = (
+            select(Order)
+            .options(lazyload("*"))
+            .where(
+                Order.order_number == order_number,
+                Order.sold_to_customer_id == customer_id,
+            )
+        )
+        result = await self.session.execute(stmt)
+        return result.scalar_one_or_none()
 
     async def search_by_order_number(
         self, search_term: str, limit: int = 20

@@ -89,7 +89,6 @@ def group_order_dtos(
         grouped.dto_ids.extend(pe.dto_ids or [])
 
         for detail in dto.details:
-            detail.flow_detail_index = len(grouped.dto.details)
             grouped.dto.details.append(detail)
 
     return list(groups.values())
@@ -132,7 +131,6 @@ def group_invoice_dtos(
         grouped.dto_ids.extend(pe.dto_ids or [])
 
         for detail in dto.details:
-            detail.flow_detail_index = len(grouped.dto.details)
             grouped.dto.details.append(detail)
 
         if dto.invoice_amount and grouped.dto.invoice_amount:

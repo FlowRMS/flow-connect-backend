@@ -134,6 +134,20 @@ class CreditsRepository(BaseRepository[Credit]):
         )
         return result.scalar_one() > 0
 
+    async def find_by_credit_number(
+        self, order_id: UUID, credit_number: str
+    ) -> Credit | None:
+        stmt = (
+            select(Credit)
+            .options(lazyload("*"))
+            .where(
+                Credit.order_id == order_id,
+                Credit.credit_number == credit_number,
+            )
+        )
+        result = await self.session.execute(stmt)
+        return result.scalar_one_or_none()
+
     async def search_by_credit_number(
         self,
         search_term: str,

@@ -20,7 +20,7 @@ from sqlalchemy.orm import joinedload, lazyload
 
 from app.core.context_wrapper import ContextWrapper
 from app.core.exceptions import NotFoundError
-from app.core.processors import ProcessorExecutor
+from app.core.processors import ProcessorExecutor, ValidateCommissionRateProcessor
 from app.graphql.base_repository import BaseRepository
 from app.graphql.invoices.processors.update_order_on_invoice_processor import (
     UpdateOrderOnInvoiceProcessor,
@@ -53,6 +53,7 @@ class InvoicesRepository(BaseRepository[Invoice]):
         validate_status_processor: ValidateInvoiceStatusProcessor,
         validate_split_rate_processor: ValidateInvoiceSplitRateProcessor,
         update_order_processor: UpdateOrderOnInvoiceProcessor,
+        validate_commission_rate_processor: ValidateCommissionRateProcessor,
     ) -> None:
         super().__init__(
             session,
@@ -63,6 +64,7 @@ class InvoicesRepository(BaseRepository[Invoice]):
                 validate_status_processor,
                 validate_split_rate_processor,
                 update_order_processor,
+                validate_commission_rate_processor,
             ],
         )
         self.balance_repository = balance_repository
@@ -117,6 +119,7 @@ class InvoicesRepository(BaseRepository[Invoice]):
                 .joinedload(InvoiceSplitRate.user),
                 joinedload(Invoice.balance),
                 joinedload(Invoice.order),
+                joinedload(Invoice.order).joinedload(Order.sold_to_customer),
                 joinedload(Invoice.factory),
                 joinedload(Invoice.created_by),
                 lazyload("*"),
@@ -151,6 +154,20 @@ class InvoicesRepository(BaseRepository[Invoice]):
             )
         )
         return result.scalar_one() > 0
+
+    async def find_by_invoice_number(
+        self, order_id: UUID, invoice_number: str
+    ) -> Invoice | None:
+        stmt = (
+            select(Invoice)
+            .options(lazyload("*"))
+            .where(
+                Invoice.order_id == order_id,
+                Invoice.invoice_number == invoice_number,
+            )
+        )
+        result = await self.session.execute(stmt)
+        return result.scalar_one_or_none()
 
     async def search_by_invoice_number(
         self,
@@ -201,24 +218,38 @@ class InvoicesRepository(BaseRepository[Invoice]):
     async def search_open_invoices(
         self,
         factory_id: UUID,
-        start_from: date,
+        start_from: date | None = None,
+        limit: int | None = None,
     ) -> list[Invoice]:
         stmt = (
             select(Invoice)
             .options(
+                joinedload(Invoice.balance),
                 joinedload(Invoice.order),
+                joinedload(Invoice.order).joinedload(Order.sold_to_customer),
+                joinedload(Invoice.details),
+                joinedload(Invoice.details).joinedload(
+                    InvoiceDetail.outside_split_rates
+                ),
+                joinedload(Invoice.details)
+                .joinedload(InvoiceDetail.outside_split_rates)
+                .joinedload(InvoiceSplitRate.user),
                 lazyload("*"),
             )
             .where(
                 Invoice.factory_id == factory_id,
-                Invoice.entity_date >= start_from,
                 Invoice.status == InvoiceStatus.OPEN,
                 Invoice.locked.is_(False),
             )
             .order_by(Invoice.entity_date.asc())
         )
+        if start_from:
+            stmt = stmt.where(Invoice.entity_date >= start_from)
+
+        if limit:
+            stmt = stmt.limit(limit)
         result = await self.session.execute(stmt)
-        return list(result.scalars().all())
+        return list(result.unique().scalars().all())
 
     async def find_by_order_id(self, order_id: UUID) -> list[Invoice]:
         stmt = (

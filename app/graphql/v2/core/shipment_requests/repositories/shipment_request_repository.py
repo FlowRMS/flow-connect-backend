@@ -26,6 +26,23 @@ class ShipmentRequestRepository(BaseRepository[ShipmentRequest]):
             ShipmentRequest,
         )
 
+    def _default_options(self) -> list:
+        return [
+            joinedload(ShipmentRequest.items).joinedload(ShipmentRequestItem.product),
+            joinedload(ShipmentRequest.factory),
+        ]
+
+    async def get_by_id(self, entity_id: UUID | str) -> ShipmentRequest | None:
+        if isinstance(entity_id, str):
+            entity_id = UUID(entity_id)
+        stmt = (
+            select(ShipmentRequest)
+            .where(ShipmentRequest.id == entity_id)
+            .options(*self._default_options())
+        )
+        result = await self.session.execute(stmt)
+        return result.unique().scalar_one_or_none()
+
     async def find_by_warehouse(
         self,
         warehouse_id: UUID,
