@@ -13,7 +13,7 @@ from alembic import op
 
 # revision identifiers, used by Alembic.
 revision = "20260107_documents"
-down_revision = "211a23a26864"  # Points to merge migration
+down_revision = "20260106_carrier_type"
 branch_labels = None
 depends_on = None
 
