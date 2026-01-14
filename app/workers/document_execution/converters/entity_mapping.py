@@ -36,7 +36,7 @@ class EntityMapping:
 
     def get_order_id(self, flow_detail_index: int | None) -> UUID | None:
         if flow_detail_index is None:
-            return None
+            return self.orders.get(0)
         return self.orders.get(flow_detail_index)
 
     def get_invoice_id(self, flow_detail_index: int | None) -> UUID | None:

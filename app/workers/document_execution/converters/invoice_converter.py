@@ -4,7 +4,7 @@ from typing import override
 from uuid import UUID
 
 from commons.db.v6.ai.documents.enums.entity_type import DocumentEntityType
-from commons.db.v6.commission import Invoice, Order
+from commons.db.v6.commission import Invoice, Order, OrderDetail
 from commons.dtos.common.dto_loader_service import DTOLoaderService
 from commons.dtos.invoice.invoice_detail_dto import InvoiceDetailDTO
 from commons.dtos.invoice.invoice_dto import InvoiceDTO
@@ -80,11 +80,13 @@ class InvoiceConverter(BaseEntityConverter[InvoiceDTO, InvoiceInput, Invoice]):
 
         invoice_number = dto.invoice_number or self._generate_invoice_number()
         entity_date = dto.invoice_date or date.today()
+        order_detail_dict = {detail.id: detail for detail in order.details}
 
         details = [
             await self._convert_detail(
                 detail=detail,
                 order=order,
+                order_detail_dict=order_detail_dict,
                 entity_mapping=entity_mapping,
                 default_commission_rate=default_commission_rate,
                 default_commission_discount=default_commission_discount,
@@ -108,6 +110,7 @@ class InvoiceConverter(BaseEntityConverter[InvoiceDTO, InvoiceInput, Invoice]):
         self,
         detail: InvoiceDetailDTO,
         order: Order,
+        order_detail_dict: dict[UUID, OrderDetail],
         entity_mapping: EntityMapping,
         default_commission_rate: Decimal,
         default_commission_discount: Decimal,
@@ -129,6 +132,10 @@ class InvoiceConverter(BaseEntityConverter[InvoiceDTO, InvoiceInput, Invoice]):
             item_number=item_number,
         )
 
+        order_detail = (
+            order_detail_dict.get(order_detail_id) if order_detail_id else None
+        )
+
         commission_rate = (
             detail.commission_rate
             if detail.commission_rate is not None
@@ -145,10 +152,27 @@ class InvoiceConverter(BaseEntityConverter[InvoiceDTO, InvoiceInput, Invoice]):
             else default_discount_rate
         )
 
+        uom_id = None
+
+        if order_detail:
+            commission_rate = (
+                commission_rate or order_detail.commission_rate or Decimal("0")
+            )
+            commission_discount_rate = (
+                commission_discount_rate
+                or order_detail.commission_discount_rate
+                or Decimal("0")
+            )
+            discount_rate = discount_rate or order_detail.discount_rate or Decimal("0")
+            product_id = product_id or order_detail.product_id
+            end_user_id = end_user_id or order_detail.end_user_id
+            uom_id = order_detail.uom_id
+
         return InvoiceDetailInput(
             item_number=item_number,
             quantity=quantity,
             unit_price=unit_price,
+            uom_id=uom_id,
             order_detail_id=order_detail_id,
             end_user_id=end_user_id,
             product_id=product_id,

@@ -7,7 +7,7 @@ from alembic import op
 
 # revision identifiers, used by Alembic.
 revision: str = "add_inventory"
-down_revision: str = "add_job_company_links"
+down_revision: str | None = "add_job_company_links"
 branch_labels: str | Sequence[str] | None = None
 depends_on: str | Sequence[str] | None = None
 

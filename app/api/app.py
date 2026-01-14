@@ -32,6 +32,7 @@ def create_app() -> FastAPI:
                 setup_logging(
                     environment=settings.environment,
                     datadog_settings=settings.datadog,
+                    echo_sqlalchemy=False,
                 )
 
             if not broker.is_worker_process:
