@@ -1077,6 +1077,23 @@ type FolderWithChildrenResponse {
   parent: FolderLiteResponse
 }
 
+input GeneralSettingsInput {
+  key: SettingKey!
+  value: JSON!
+  userId: UUID = null
+}
+
+type GeneralSettingsResponse {
+  id: UUID!
+  key: SettingKey!
+  value: JSON!
+  userId: UUID
+  createdAt: datetime!
+  isTenantWide: Boolean!
+  keyName: String!
+  getValue(path: String = null): JSON!
+}
+
 type GenericLandingPage {
   records: [LandingRecord!]!
   total: Int!
@@ -1628,6 +1645,13 @@ type Mutation {
   createProduct(input: ProductInput!): ProductResponse!
   updateProduct(id: UUID!, input: ProductInput!): ProductResponse!
   deleteProduct(id: UUID!): Boolean!
+  createGeneralSetting(input: GeneralSettingsInput!): GeneralSettingsResponse!
+  updateGeneralSetting(id: UUID!, value: JSON!): GeneralSettingsResponse!
+  createMySetting(key: SettingKey!, value: JSON!): GeneralSettingsResponse!
+  createTenantSetting(key: SettingKey!, value: JSON!): GeneralSettingsResponse!
+  deleteGeneralSetting(key: SettingKey!, userId: UUID): Boolean!
+  deleteMySetting(key: SettingKey!): Boolean!
+  deleteTenantSetting(key: SettingKey!): Boolean!
   createShippingCarrier(input: ShippingCarrierInput!): ShippingCarrierResponse!
   updateShippingCarrier(id: UUID!, input: ShippingCarrierInput!): ShippingCarrierResponse!
   deleteShippingCarrier(id: UUID!): Boolean!
@@ -2581,6 +2605,12 @@ type Query {
   product(id: UUID!): ProductResponse!
   productSearch(searchTerm: String!, productCategoryIds: [UUID!] = null, factoryId: UUID, limit: Int! = 20): [ProductLiteResponse!]!
   productCategorySearch(searchTerm: String!, factoryId: UUID, limit: Int! = 20): [ProductCategoryLiteResponse!]!
+  generalSetting(key: SettingKey!, userId: UUID): GeneralSettingsResponse
+  mySetting(key: SettingKey!): GeneralSettingsResponse
+  tenantSetting(key: SettingKey!): GeneralSettingsResponse
+  mySettings: [GeneralSettingsResponse!]!
+  tenantSettings: [GeneralSettingsResponse!]!
+  userSettings(userId: UUID!): [GeneralSettingsResponse!]!
   shippingCarriers(activeOnly: Boolean! = false): [ShippingCarrierResponse!]!
   shippingCarrier(id: UUID!): ShippingCarrierResponse!
   shippingCarrierSearch(searchTerm: String!, limit: Int! = 20): [ShippingCarrierResponse!]!
@@ -2961,6 +2991,14 @@ enum SendPace {
 type SendTestEmailResponse {
   success: Boolean!
   error: String
+}
+
+enum SettingKey {
+  QUOTE_SETTINGS
+  ORDER_SETTINGS
+  INVOICE_SETTINGS
+  CHECKS_SETTINGS
+  CHAT_SETTINGS
 }
 
 input ShippingCarrierInput {
