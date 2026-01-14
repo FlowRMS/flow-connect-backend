@@ -98,9 +98,9 @@ class DeliveryItemInput(BaseInputGQL[DeliveryItem]):
         return DeliveryItem(
             delivery_id=self.delivery_id,
             product_id=self.product_id,
-            expected_qty=self.expected_qty,
-            received_qty=self.received_qty,
-            damaged_qty=self.damaged_qty,
+            expected_quantity=self.expected_qty,
+            received_quantity=self.received_qty,
+            damaged_quantity=self.damaged_qty,
             status=DeliveryItemStatus(self.status.value),
             discrepancy_notes=self.discrepancy_notes,
         )
@@ -123,8 +123,8 @@ class DeliveryItemReceiptInput(BaseInputGQL[DeliveryItemReceipt]):
         return DeliveryItemReceipt(
             delivery_item_id=self.delivery_item_id,
             receipt_type=DeliveryReceiptType(self.receipt_type.value),
-            received_qty=self.received_qty,
-            damaged_qty=self.damaged_qty,
+            received_quantity=self.received_qty,
+            damaged_quantity=self.damaged_qty,
             location_id=self.location_id,
             received_by_id=self.received_by_id,
             received_at=self.received_at,
@@ -174,7 +174,7 @@ class DeliveryIssueInput(BaseInputGQL[DeliveryIssue]):
             receipt_id=self.receipt_id,
             issue_type=DeliveryIssueType(self.issue_type.value),
             custom_issue_type=self.custom_issue_type,
-            qty=self.qty,
+            quantity=self.qty,
             status=DeliveryIssueStatus(self.status.value),
             description=self.description,
             notes=self.notes,
@@ -187,22 +187,16 @@ class DeliveryDocumentInput(BaseInputGQL[DeliveryDocument]):
     """Input type for creating/updating delivery documents."""
 
     delivery_id: UUID
-    name: str
+    file_id: UUID
     doc_type: DeliveryDocumentTypeGQL
-    file_url: str
-    mime_type: str
-    file_size: int | None = None
     uploaded_by_id: UUID | None = None
     notes: str | None = None
 
     def to_orm_model(self) -> DeliveryDocument:
         return DeliveryDocument(
             delivery_id=self.delivery_id,
-            name=self.name,
+            file_id=self.file_id,
             doc_type=DeliveryDocumentType(self.doc_type.value),
-            file_url=self.file_url,
-            mime_type=self.mime_type,
-            file_size=self.file_size,
             uploaded_by_id=self.uploaded_by_id,
             notes=self.notes,
         )

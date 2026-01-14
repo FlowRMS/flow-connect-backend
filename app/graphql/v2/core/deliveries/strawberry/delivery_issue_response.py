@@ -40,7 +40,7 @@ class DeliveryIssueResponse(DTOMixin[DeliveryIssue]):
             receipt_id=model.receipt_id,
             issue_type=DeliveryIssueTypeGQL(model.issue_type.value),
             custom_issue_type=model.custom_issue_type,
-            qty=model.qty,
+            qty=model.quantity,
             status=DeliveryIssueStatusGQL(model.status.value),
             description=model.description,
             notes=model.notes,

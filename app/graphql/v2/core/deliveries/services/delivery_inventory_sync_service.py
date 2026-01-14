@@ -86,7 +86,7 @@ class DeliveryInventorySyncService:
         delivery: Delivery,
         item: DeliveryItem,
     ) -> None:
-        if item.received_qty <= 0 and item.damaged_qty <= 0:
+        if item.received_quantity <= 0 and item.damaged_quantity <= 0:
             return
 
         inventory = await self._get_or_create_inventory(
@@ -95,8 +95,8 @@ class DeliveryInventorySyncService:
         )
         receipt = DeliveryItemReceipt(
             delivery_item_id=item.id,
-            received_qty=item.received_qty,
-            damaged_qty=item.damaged_qty,
+            received_quantity=item.received_quantity,
+            damaged_quantity=item.damaged_quantity,
             location_id=None,
             received_at=delivery.received_at,
         )
@@ -113,18 +113,18 @@ class DeliveryInventorySyncService:
         received_at: datetime | None,
     ) -> None:
         received_at = self._normalize_received_date(received_at)
-        if receipt.received_qty > 0:
+        if receipt.received_quantity > 0:
             await self._create_inventory_item(
                 inventory=inventory,
-                quantity=receipt.received_qty,
+                quantity=receipt.received_quantity,
                 status=InventoryItemStatus.AVAILABLE,
                 location_id=receipt.location_id,
                 received_at=received_at,
             )
-        if receipt.damaged_qty > 0:
+        if receipt.damaged_quantity > 0:
             await self._create_inventory_item(
                 inventory=inventory,
-                quantity=receipt.damaged_qty,
+                quantity=receipt.damaged_quantity,
                 status=InventoryItemStatus.DAMAGED,
                 location_id=receipt.location_id,
                 received_at=received_at,

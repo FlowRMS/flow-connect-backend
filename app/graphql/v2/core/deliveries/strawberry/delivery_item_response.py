@@ -36,9 +36,9 @@ class DeliveryItemResponse(DTOMixin[DeliveryItem]):
             id=model.id,
             delivery_id=model.delivery_id,
             product_id=model.product_id,
-            expected_qty=model.expected_qty,
-            received_qty=model.received_qty,
-            damaged_qty=model.damaged_qty,
+            expected_qty=model.expected_quantity,
+            received_qty=model.received_quantity,
+            damaged_qty=model.damaged_quantity,
             status=DeliveryItemStatusGQL(model.status.value),
             discrepancy_notes=model.discrepancy_notes,
         )

@@ -125,8 +125,8 @@ class DeliveryConverter(
         return DeliveryItemDraft(
             product_id=product_id,
             expected_qty=detail.quantity or 0,
-            received_qty=detail.received_qty or 0,
-            damaged_qty=detail.damaged_qty or 0,
+            received_qty=detail.received_quantity or 0,
+            damaged_qty=detail.damaged_quantity or 0,
             discrepancy_notes=detail.description,
         )
 
