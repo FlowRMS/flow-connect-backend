@@ -28,16 +28,21 @@ class ShipToAddressInput:
     country: str | None = None
     phone: str | None = None
 
-    def to_dict(self) -> dict:
+    def to_address_fields(self) -> dict:
+        """Return fields for creating/updating an Address record.
+
+        Maps ShipToAddressInput fields to Address model fields:
+        - street -> line_1
+        - street_line_2 -> line_2
+        - postal_code -> zip_code
+        """
         return {
-            "name": self.name,
-            "street": self.street,
-            "street_line_2": self.street_line_2,
-            "city": self.city,
+            "line_1": self.street or "",
+            "line_2": self.street_line_2,
+            "city": self.city or "",
             "state": self.state,
-            "postal_code": self.postal_code,
-            "country": self.country,
-            "phone": self.phone,
+            "zip_code": self.postal_code,
+            "country": self.country or "",
         }
 
 
@@ -55,15 +60,13 @@ class CreateFulfillmentOrderInput(BaseInputGQL[FulfillmentOrder]):
         order = FulfillmentOrder(
             fulfillment_method=self.fulfillment_method,
             carrier_type=self.carrier_type,
-            ship_to_address=self.ship_to_address.to_dict()
-            if self.ship_to_address
-            else None,
             need_by_date=self.need_by_date,
         )
         order.fulfillment_order_number = ""  # Will be generated
         order.order_id = self.order_id
         order.warehouse_id = self.warehouse_id
         order.carrier_id = self.carrier_id
+        # ship_to_address is handled by the service layer
         return order
 
 

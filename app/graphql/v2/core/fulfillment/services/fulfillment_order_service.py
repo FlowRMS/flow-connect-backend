@@ -3,6 +3,7 @@ from uuid import UUID
 
 import strawberry
 from commons.auth import AuthInfo
+from commons.db.v6.core.addresses.address import Address, AddressSourceTypeEnum
 from commons.db.v6.fulfillment import (
     FulfillmentActivity,
     FulfillmentActivityType,
@@ -13,6 +14,7 @@ from commons.db.v6.fulfillment import (
 )
 
 from app.errors.common_errors import NotFoundError
+from app.graphql.addresses.repositories.address_repository import AddressRepository
 from app.graphql.v2.core.fulfillment.repositories import (
     FulfillmentActivityRepository,
     FulfillmentAssignmentRepository,
@@ -31,12 +33,14 @@ class FulfillmentOrderService:
         repository: FulfillmentOrderRepository,
         activity_repository: FulfillmentActivityRepository,
         assignment_repository: FulfillmentAssignmentRepository,
+        address_repository: AddressRepository,
         auth_info: AuthInfo,
     ) -> None:
         super().__init__()
         self.repository = repository
         self.activity_repository = activity_repository
         self.assignment_repository = assignment_repository
+        self.address_repository = address_repository
         self.auth_info = auth_info
 
     async def get_by_id(self, order_id: UUID) -> FulfillmentOrder | None:
@@ -66,7 +70,26 @@ class FulfillmentOrderService:
         next_number = await self.repository.get_next_order_number()
         order.fulfillment_order_number = f"FO-{next_number:06d}"
 
+        # Handle ship_to_address if provided
+        if input.ship_to_address:
+            order.ship_to_name = input.ship_to_address.name
+            order.ship_to_phone = input.ship_to_address.phone
+
         order = await self.repository.create(order)
+
+        # Create Address record after order is created (need order.id for source_id)
+        if input.ship_to_address:
+            address_fields = input.ship_to_address.to_address_fields()
+            address = Address(
+                source_id=order.id,
+                source_type=AddressSourceTypeEnum.FULFILLMENT_ORDER,
+                is_primary=True,
+                **address_fields,
+            )
+            address = await self.address_repository.create(address)
+            order.ship_to_address_id = address.id
+            order = await self.repository.update(order)
+
         _ = await self._log_activity(
             order.id, FulfillmentActivityType.CREATED, "Fulfillment order created"
         )
@@ -98,9 +121,40 @@ class FulfillmentOrderService:
         if input.hold_reason is not strawberry.UNSET:
             order.hold_reason = input.hold_reason
         if input.ship_to_address is not strawberry.UNSET:
-            order.ship_to_address = (
-                input.ship_to_address.to_dict() if input.ship_to_address else None
-            )
+            if input.ship_to_address is None:
+                # Clear the address reference
+                order.ship_to_address_id = None
+                order.ship_to_name = None
+                order.ship_to_phone = None
+            else:
+                # Update name and phone on the order
+                order.ship_to_name = input.ship_to_address.name
+                order.ship_to_phone = input.ship_to_address.phone
+                address_fields = input.ship_to_address.to_address_fields()
+
+                if order.ship_to_address_id:
+                    # Update existing address
+                    existing_address = await self.address_repository.get_by_id(
+                        order.ship_to_address_id
+                    )
+                    if existing_address:
+                        existing_address.line_1 = address_fields["line_1"]
+                        existing_address.line_2 = address_fields["line_2"]
+                        existing_address.city = address_fields["city"]
+                        existing_address.state = address_fields["state"]
+                        existing_address.zip_code = address_fields["zip_code"]
+                        existing_address.country = address_fields["country"]
+                        await self.address_repository.update(existing_address)
+                else:
+                    # Create new address
+                    address = Address(
+                        source_id=order.id,
+                        source_type=AddressSourceTypeEnum.FULFILLMENT_ORDER,
+                        is_primary=True,
+                        **address_fields,
+                    )
+                    address = await self.address_repository.create(address)
+                    order.ship_to_address_id = address.id
 
         return await self.repository.update(order)
 

@@ -356,18 +356,18 @@ class FulfillmentOrderResponse(DTOMixin[FulfillmentOrder]):
 
     @strawberry.field
     async def ship_to_address(self) -> ShipToAddressResponse | None:
-        addr = self._instance.ship_to_address
-        if not addr:
+        address = await self._instance.awaitable_attrs.ship_to_address
+        if not address:
             return None
         return ShipToAddressResponse(
-            name=addr.get("name"),
-            street=addr.get("street"),
-            street_line_2=addr.get("street_line_2"),
-            city=addr.get("city"),
-            state=addr.get("state"),
-            postal_code=addr.get("postal_code"),
-            country=addr.get("country"),
-            phone=addr.get("phone"),
+            name=self._instance.ship_to_name,
+            street=address.line_1,
+            street_line_2=address.line_2,
+            city=address.city,
+            state=address.state,
+            postal_code=address.zip_code,
+            country=address.country,
+            phone=self._instance.ship_to_phone,
         )
 
     @strawberry.field
