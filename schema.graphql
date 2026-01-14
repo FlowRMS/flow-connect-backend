@@ -854,6 +854,7 @@ enum EntityType {
   PRODUCT
   FILE
   SHIPPING_CARRIER
+  ORDER_ACKNOWLEDGEMENT
 }
 
 type EstimateRecipientsResponse {
@@ -2197,6 +2198,44 @@ enum PipelineStage {
   CLOSED_LOST
 }
 
+type PostedStatementDetailResponse {
+  entityNumber: String!
+  entityType: String!
+  expectedCommission: Decimal!
+  commissionReceived: Decimal!
+  outsideSalesRepId: UUID!
+  outsideSalesRepName: String!
+  factoryName: String!
+  postedMonth: Date
+  commissionMonth: Date
+  orderNumber: String
+  salesAmount: Decimal!
+}
+
+type PostedStatementHeaderResponse {
+  checkNumber: String!
+  postDate: Date!
+  entityDate: Date!
+  commissionMonth: Date
+  commissionAmount: Decimal
+  factoryId: UUID!
+  factoryName: String!
+}
+
+type PostedStatementRepSummaryResponse {
+  outsideSalesRepId: UUID!
+  outsideSalesRepName: String!
+  expectedCommission: Decimal!
+  commissionReceived: Decimal!
+}
+
+type PostedStatementResponse {
+  header: PostedStatementHeaderResponse!
+  repSummaries: [PostedStatementRepSummaryResponse!]!
+  details: [PostedStatementDetailResponse!]!
+  presignedUrl: String!
+}
+
 type PreOpportunityBalanceResponse {
   id: UUID!
   subtotal: Decimal!
@@ -2518,6 +2557,7 @@ type Query {
   check(id: UUID!): CheckResponse!
   checkSearch(searchTerm: String!, limit: Int! = 20): [CheckLiteResponse!]!
   checksByFactory(factoryId: UUID!): [CheckLiteResponse!]!
+  postedStatement(checkId: UUID!): PostedStatementResponse!
   entity(sourceType: EntitySourceType!, entityId: UUID!): EntityResponse!
   findLandingPages(sourceType: LandingSourceType!, filters: [Filter!] = null, orderBy: [OrderBy!] = null, limit: Int = 10, offset: Int = 0): GenericLandingPage!
   relatedEntities(sourceType: LandingSourceType!, entityId: UUID!): RelatedEntitiesResponse!

@@ -58,8 +58,16 @@ class OrderDetailMatcherService:
             }
 
             if part_number:
-                fpn = detail.product.factory_part_number if detail.product else detail.product_name_adhoc or ""
-                desc = detail.product.description if detail.product else detail.product_description_adhoc or ""
+                fpn = (
+                    detail.product.factory_part_number
+                    if detail.product
+                    else detail.product_name_adhoc or ""
+                )
+                desc = (
+                    detail.product.description
+                    if detail.product
+                    else detail.product_description_adhoc or ""
+                )
                 desc = desc or ""
                 candidate["similarity_fpn"] = fuzz.ratio(
                     part_number.lower(), fpn.lower()

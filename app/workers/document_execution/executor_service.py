@@ -125,7 +125,9 @@ class DocumentExecutorService:
             logger.info(f"Built entity mapping: {entity_mappings}")
 
             converter = self.get_converter(pending_document.entity_type)
-            logger.info(f"Using converter {converter.__class__.__name__} for entity type {pending_document.entity_type.name}")
+            logger.info(
+                f"Using converter {converter.__class__.__name__} for entity type {pending_document.entity_type.name}"
+            )
             dtos = await self._parse_dtos(converter, pending_document)
             logger.info(f"Parsed {len(dtos)} DTOs from extracted_data_json")
 
