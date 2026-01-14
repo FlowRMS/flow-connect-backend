@@ -866,6 +866,7 @@ enum DocumentEntityType {
   FACTORIES
   PRODUCTS
   END_USERS
+  DELIVERIES
 }
 
 enum EmailStatus {
@@ -902,6 +903,7 @@ enum EntityType {
   FILE
   SHIPPING_CARRIER
   ORDER_ACKNOWLEDGEMENT
+  DELIVERY
 }
 
 type EstimateRecipientsResponse {
@@ -2044,6 +2046,7 @@ type OrderDetailResponse {
   product: ProductLiteResponse
   uom: ProductUomResponse
   acknowledgements: [OrderAcknowledgementResponse!]!
+  invoice: InvoiceLiteResponse
 }
 
 enum OrderHeaderStatus {
@@ -2168,9 +2171,9 @@ type OrderResponse {
   outsidePerLineItem: Boolean
   endUserPerLineItem: Boolean
   url: String!
-  createdBy: UserResponse!
   soldToCustomer: CustomerLiteResponse!
   billToCustomer: CustomerLiteResponse
+  createdBy: UserResponse!
   balance: OrderBalanceResponse!
   factory: FactoryLiteResponse!
   details: [OrderDetailResponse!]!
@@ -2205,6 +2208,7 @@ type OrderSemiLiteResponse {
   endUserPerLineItem: Boolean
   url: String!
   soldToCustomer: CustomerLiteResponse!
+  billToCustomer: CustomerLiteResponse
 }
 
 input OrderSplitRateInput {
