@@ -1,7 +1,7 @@
 """Migrate fulfillment_order ship_to_address JSONB to FK
 
 Revision ID: fulfillment_address_fk
-Revises: insert_default_job_statuses
+Revises: 20260107_freight_class
 Create Date: 2026-01-14
 
 """
@@ -14,7 +14,7 @@ from sqlalchemy.dialects import postgresql
 from alembic import op
 
 revision: str = "fulfillment_address_fk"
-down_revision: str | None = "insert_default_job_statuses"
+down_revision: str | None = "20260107_freight_class"
 branch_labels: str | Sequence[str] | None = None
 depends_on: str | Sequence[str] | None = None
 
