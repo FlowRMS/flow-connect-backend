@@ -3,11 +3,15 @@
 from uuid import UUID
 
 from commons.auth import AuthInfo
+from commons.db.v6 import AutoNumberEntityType
 from commons.db.v6.crm.jobs.jobs_model import Job
 from commons.db.v6.crm.links.entity_type import EntityType
 from sqlalchemy.orm import joinedload, lazyload
 
 from app.errors.common_errors import NameAlreadyExistsError, NotFoundError
+from app.graphql.auto_numbers.services.auto_number_settings_service import (
+    AutoNumberSettingsService,
+)
 from app.graphql.checks.services.check_service import CheckService
 from app.graphql.checks.strawberry.check_response import CheckLiteResponse
 from app.graphql.companies.services.companies_service import CompaniesService
@@ -54,6 +58,7 @@ class JobsService:
         self,
         repository: JobsRepository,
         auth_info: AuthInfo,
+        auto_number_settings_service: AutoNumberSettingsService,
         companies_service: CompaniesService,
         contacts_service: ContactsService,
         pre_opportunities_service: PreOpportunitiesService,
@@ -68,6 +73,7 @@ class JobsService:
         super().__init__()
         self.repository = repository
         self.auth_info = auth_info
+        self.auto_number_settings_service = auto_number_settings_service
         self.companies_service = companies_service
         self.contacts_service = contacts_service
         self.pre_opportunities_service = pre_opportunities_service
@@ -108,6 +114,13 @@ class JobsService:
         Raises:
             NameAlreadyExistsError: If a job with the same name already exists
         """
+        if self.auto_number_settings_service.needs_generation(job_input.job_name):
+            job_input.job_name = (
+                await self.auto_number_settings_service.generate_number(
+                    AutoNumberEntityType.JOB
+                )
+            )
+
         if await self.repository.name_exists(job_input.job_name):
             raise NameAlreadyExistsError(job_input.job_name)
 
