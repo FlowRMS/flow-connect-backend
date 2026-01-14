@@ -7,6 +7,7 @@ from commons.db.v6.crm import (
     SidebarConfiguration,
     SidebarConfigurationGroup,
     SidebarConfigurationItem,
+    SidebarOwnerType,
 )
 
 from app.graphql.v2.sidebar.repositories import (
@@ -50,7 +51,9 @@ class SidebarConfigurationService:
         user_id = self.auth_info.flow_user_id
 
         # Determine owner based on config type
-        owner_type = "admin" if input.is_admin_config else "user"
+        owner_type = (
+            SidebarOwnerType.ADMIN if input.is_admin_config else SidebarOwnerType.USER
+        )
         owner_id = None if input.is_admin_config else user_id
 
         # Build groups and items from input

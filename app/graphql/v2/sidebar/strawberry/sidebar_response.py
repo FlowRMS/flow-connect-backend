@@ -79,7 +79,7 @@ class SidebarConfigurationResponse:
         return cls(
             id=model.id,
             name=model.name,
-            owner_type=model.owner_type,
+            owner_type=model.owner_type.name.lower(),
             is_default=model.is_default,
             created_at=model.created_at,
             updated_at=model.updated_at,
