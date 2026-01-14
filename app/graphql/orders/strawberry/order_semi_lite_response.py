@@ -11,3 +11,9 @@ class OrderSemiLiteResponse(OrderLiteResponse):
     @strawberry.field
     def sold_to_customer(self) -> CustomerLiteResponse:
         return CustomerLiteResponse.from_orm_model(self._instance.sold_to_customer)
+
+    @strawberry.field
+    def bill_to_customer(self) -> CustomerLiteResponse | None:
+        return CustomerLiteResponse.from_orm_model_optional(
+            self._instance.bill_to_customer
+        )

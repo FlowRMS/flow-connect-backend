@@ -108,6 +108,10 @@ class ChecksRepository(BaseRepository[Check]):
                 .joinedload(Order.sold_to_customer),
                 joinedload(Check.details)
                 .joinedload(CheckDetail.invoice)
+                .joinedload(Invoice.order)
+                .joinedload(Order.bill_to_customer),
+                joinedload(Check.details)
+                .joinedload(CheckDetail.invoice)
                 .joinedload(Invoice.details),
                 joinedload(Check.details)
                 .joinedload(CheckDetail.invoice)

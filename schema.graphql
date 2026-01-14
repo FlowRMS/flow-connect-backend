@@ -2053,8 +2053,8 @@ type OrderResponse {
   endUserPerLineItem: Boolean
   url: String!
   soldToCustomer: CustomerLiteResponse!
-  createdBy: UserResponse!
   billToCustomer: CustomerLiteResponse
+  createdBy: UserResponse!
   balance: OrderBalanceResponse!
   factory: FactoryLiteResponse!
   details: [OrderDetailResponse!]!
@@ -2089,6 +2089,7 @@ type OrderSemiLiteResponse {
   endUserPerLineItem: Boolean
   url: String!
   soldToCustomer: CustomerLiteResponse!
+  billToCustomer: CustomerLiteResponse
 }
 
 input OrderSplitRateInput {
