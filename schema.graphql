@@ -176,6 +176,7 @@ type BackorderResponse {
   customer: CustomerLiteResponse
   dueDate: Date!
   status: String!
+  factory: FactoryLiteResponse
   shippedQuantity: Decimal!
   backorderedQuantity: Decimal!
 }
@@ -900,6 +901,7 @@ enum EntityType {
   PRODUCT
   FILE
   SHIPPING_CARRIER
+  ORDER_ACKNOWLEDGEMENT
 }
 
 type EstimateRecipientsResponse {
@@ -1123,6 +1125,20 @@ type FolderWithChildrenResponse {
   parent: FolderLiteResponse
 }
 
+input GeneralSettingsInput {
+  key: SettingKey!
+  value: JSON!
+  userId: UUID = null
+}
+
+type GeneralSettingsResponse {
+  id: UUID!
+  key: SettingKey!
+  value: JSON!
+  userId: UUID
+  createdAt: datetime!
+}
+
 type GenericLandingPage {
   records: [LandingRecord!]!
   total: Int!
@@ -1213,12 +1229,12 @@ type InventoryItemResponse {
   id: UUID!
   inventoryId: UUID!
   locationId: UUID
+  locationName: String
   quantity: Decimal!
   lotNumber: String
   status: InventoryItemStatus!
   receivedDate: datetime
   createdAt: datetime!
-  locationName: String
 }
 
 enum InventoryItemStatus {
@@ -1242,7 +1258,8 @@ type InventoryResponse {
   createdAt: datetime!
   updatedAt: datetime!
   items: [InventoryItemResponse!]!
-  product: ProductLiteResponse!
+  product: ProductLiteResponse
+  factory: FactoryLiteResponse
 }
 
 type InventoryStatsResponse {
@@ -1581,9 +1598,9 @@ type LinkRelationType {
 }
 
 type LinkedEntity {
-  id: UUID!
-  title: String!
-  entityType: EntityType!
+  id: UUID
+  title: String
+  entityType: EntityType
 }
 
 type LocationProductAssignmentResponse {
@@ -1720,6 +1737,7 @@ type Mutation {
   deleteFactory(id: UUID!): Boolean!
   updateManufacturerOrder(factoryIds: [UUID!]!): Int!
   createInventory(input: CreateInventoryInput!): InventoryResponse!
+  updateInventory(input: UpdateInventoryInput!): InventoryResponse!
   deleteInventory(id: UUID!): Boolean!
   addInventoryItem(input: AddInventoryItemInput!): InventoryItemResponse!
   deleteInventoryItem(id: UUID!): Boolean!
@@ -1741,6 +1759,13 @@ type Mutation {
   createProduct(input: ProductInput!): ProductResponse!
   updateProduct(id: UUID!, input: ProductInput!): ProductResponse!
   deleteProduct(id: UUID!): Boolean!
+  createGeneralSetting(input: GeneralSettingsInput!): GeneralSettingsResponse!
+  updateGeneralSetting(id: UUID!, value: JSON!): GeneralSettingsResponse!
+  createMySetting(key: SettingKey!, value: JSON!): GeneralSettingsResponse!
+  createTenantSetting(key: SettingKey!, value: JSON!): GeneralSettingsResponse!
+  deleteGeneralSetting(key: SettingKey!, userId: UUID): Boolean!
+  deleteMySetting(key: SettingKey!): Boolean!
+  deleteTenantSetting(key: SettingKey!): Boolean!
   updateShipmentRequestStatus(id: UUID!, status: ShipmentRequestStatus!, notes: String = null): ShipmentRequestResponse!
   updateShipmentRequest(input: UpdateShipmentRequestInput!): ShipmentRequestResponse!
   createShipmentRequest(input: CreateShipmentRequestInput!): ShipmentRequestResponse!
@@ -2298,6 +2323,44 @@ enum PipelineStage {
   CLOSED_LOST
 }
 
+type PostedStatementDetailResponse {
+  entityNumber: String!
+  entityType: String!
+  expectedCommission: Decimal!
+  commissionReceived: Decimal!
+  outsideSalesRepId: UUID!
+  outsideSalesRepName: String!
+  factoryName: String!
+  postedMonth: Date
+  commissionMonth: Date
+  orderNumber: String
+  salesAmount: Decimal!
+}
+
+type PostedStatementHeaderResponse {
+  checkNumber: String!
+  postDate: Date!
+  entityDate: Date!
+  commissionMonth: Date
+  commissionAmount: Decimal
+  factoryId: UUID!
+  factoryName: String!
+}
+
+type PostedStatementRepSummaryResponse {
+  outsideSalesRepId: UUID!
+  outsideSalesRepName: String!
+  expectedCommission: Decimal!
+  commissionReceived: Decimal!
+}
+
+type PostedStatementResponse {
+  header: PostedStatementHeaderResponse!
+  repSummaries: [PostedStatementRepSummaryResponse!]!
+  details: [PostedStatementDetailResponse!]!
+  presignedUrl: String!
+}
+
 type PreOpportunityBalanceResponse {
   id: UUID!
   subtotal: Decimal!
@@ -2619,6 +2682,7 @@ type Query {
   check(id: UUID!): CheckResponse!
   checkSearch(searchTerm: String!, limit: Int! = 20): [CheckLiteResponse!]!
   checksByFactory(factoryId: UUID!): [CheckLiteResponse!]!
+  postedStatement(checkId: UUID!): PostedStatementResponse!
   entity(sourceType: EntitySourceType!, entityId: UUID!): EntityResponse!
   findLandingPages(sourceType: LandingSourceType!, filters: [Filter!] = null, orderBy: [OrderBy!] = null, limit: Int = 10, offset: Int = 0): GenericLandingPage!
   relatedEntities(sourceType: LandingSourceType!, entityId: UUID!): RelatedEntitiesResponse!
@@ -2708,6 +2772,12 @@ type Query {
   product(id: UUID!): ProductResponse!
   productSearch(searchTerm: String!, productCategoryIds: [UUID!] = null, factoryId: UUID, limit: Int! = 20): [ProductLiteResponse!]!
   productCategorySearch(searchTerm: String!, factoryId: UUID, limit: Int! = 20): [ProductCategoryLiteResponse!]!
+  generalSetting(key: SettingKey!, userId: UUID): GeneralSettingsResponse
+  mySetting(key: SettingKey!): GeneralSettingsResponse
+  tenantSetting(key: SettingKey!): GeneralSettingsResponse
+  mySettings: [GeneralSettingsResponse!]!
+  tenantSettings: [GeneralSettingsResponse!]!
+  userSettings(userId: UUID!): [GeneralSettingsResponse!]!
   shipmentRequestStatuses: [ShipmentRequestStatusOption!]!
   shipmentRequests(warehouseId: UUID!, status: ShipmentRequestStatus = null, limit: Int! = 100, offset: Int! = 0): [ShipmentRequestResponse!]!
   shippingCarriers(activeOnly: Boolean! = false): [ShippingCarrierResponse!]!
@@ -3092,6 +3162,15 @@ type SendTestEmailResponse {
   error: String
 }
 
+enum SettingKey {
+  QUOTE_SETTINGS
+  ORDER_SETTINGS
+  INVOICE_SETTINGS
+  CHECKS_SETTINGS
+  CHAT_SETTINGS
+  SIDEBAR_SETTINGS
+}
+
 enum ShipmentMethod {
   EMAIL
   PHONE_CALL
@@ -3113,9 +3192,9 @@ type ShipmentRequestItemResponse {
   id: UUID!
   requestId: UUID!
   productId: UUID!
+  product: ProductLiteResponse!
   quantity: Decimal!
   createdAt: datetime!
-  product: ProductLiteResponse!
 }
 
 type ShipmentRequestResponse {
@@ -3361,6 +3440,12 @@ input UpdateHighlightVersionInput {
   name: String = null
   description: String = null
   isActive: Boolean = null
+}
+
+input UpdateInventoryInput {
+  id: UUID!
+  abcClass: ABCClass
+  ownershipType: OwnershipType
 }
 
 input UpdateInventoryItemInput {

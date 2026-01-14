@@ -22,6 +22,9 @@ from app.core.context_wrapper import ContextWrapper
 from app.core.exceptions import NotFoundError
 from app.core.processors import ProcessorExecutor, ValidateCommissionRateProcessor
 from app.graphql.base_repository import BaseRepository
+from app.graphql.invoices.processors.default_rep_split_processor import (
+    InvoiceDefaultRepSplitProcessor,
+)
 from app.graphql.invoices.processors.update_order_on_invoice_processor import (
     UpdateOrderOnInvoiceProcessor,
 )
@@ -54,6 +57,7 @@ class InvoicesRepository(BaseRepository[Invoice]):
         validate_split_rate_processor: ValidateInvoiceSplitRateProcessor,
         update_order_processor: UpdateOrderOnInvoiceProcessor,
         validate_commission_rate_processor: ValidateCommissionRateProcessor,
+        default_rep_split_processor: InvoiceDefaultRepSplitProcessor,
     ) -> None:
         super().__init__(
             session,
@@ -61,6 +65,7 @@ class InvoicesRepository(BaseRepository[Invoice]):
             Invoice,
             processor_executor=processor_executor,
             processor_executor_classes=[
+                default_rep_split_processor,
                 validate_status_processor,
                 validate_split_rate_processor,
                 update_order_processor,

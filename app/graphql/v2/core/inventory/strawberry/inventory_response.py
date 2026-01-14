@@ -7,14 +7,14 @@ import strawberry
 from commons.db.v6.warehouse.inventory import ABCClass, Inventory, OwnershipType
 
 from app.core.db.adapters.dto import DTOMixin
+from app.graphql.v2.core.factories.strawberry.factory_response import (
+    FactoryLiteResponse,
+)
 from app.graphql.v2.core.inventory.strawberry.inventory_item_response import (
     InventoryItemResponse,
 )
 from app.graphql.v2.core.products.strawberry.product_response import (
     ProductLiteResponse,
-)
-from app.graphql.v2.core.factories.strawberry.factory_response import (
-    FactoryLiteResponse,
 )
 
 
