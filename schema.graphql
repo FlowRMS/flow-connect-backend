@@ -2431,7 +2431,7 @@ type PreOpportunityLandingPage implements LandingPageInterfaceBase {
   createdBy: String!
   userIds: [UUID!]!
   entityNumber: String!
-  status: String!
+  status: PreOpportunityStatus!
   entityDate: Date!
   expDate: Date
   total: Decimal!

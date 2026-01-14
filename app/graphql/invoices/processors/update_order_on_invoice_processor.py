@@ -21,7 +21,7 @@ class UpdateOrderOnInvoiceProcessor(BaseProcessor[Invoice]):
         return [
             RepositoryEvent.POST_CREATE,
             RepositoryEvent.POST_UPDATE,
-            RepositoryEvent.PRE_DELETE,
+            RepositoryEvent.POST_DELETE,
         ]
 
     async def process(self, context: EntityContext[Invoice]) -> None:
@@ -41,7 +41,7 @@ class UpdateOrderOnInvoiceProcessor(BaseProcessor[Invoice]):
         )
         return result.unique().scalar_one_or_none()
 
-    async def get_order_detail_totals(self, invoice_id: UUID) -> dict[UUID, Decimal]:
+    async def get_order_detail_totals(self, order_id: UUID) -> dict[UUID, Decimal]:
         result = await self.session.execute(
             select(
                 InvoiceDetail.order_detail_id,
@@ -49,7 +49,9 @@ class UpdateOrderOnInvoiceProcessor(BaseProcessor[Invoice]):
                     "total"
                 ),
             )
-            .where(InvoiceDetail.invoice_id == invoice_id)
+            .select_from(InvoiceDetail)
+            .join(Invoice, Invoice.id == InvoiceDetail.invoice_id)
+            .where(Invoice.order_id == order_id)
             .group_by(InvoiceDetail.order_detail_id)
         )
         return {row.order_detail_id: row.total for row in result.fetchall()}
@@ -58,7 +60,7 @@ class UpdateOrderOnInvoiceProcessor(BaseProcessor[Invoice]):
         self, order: Order, invoice: Invoice, event: RepositoryEvent
     ) -> None:
         order_detail_mapping = {detail.id: detail for detail in order.details}
-        invoice_detail_totals = await self.get_order_detail_totals(invoice.id)
+        invoice_detail_totals = await self.get_order_detail_totals(order.id)
         logger.debug(
             f"Updating Order {order.id} details based on Invoice {invoice.id} event {event.name}"
         )
@@ -73,10 +75,11 @@ class UpdateOrderOnInvoiceProcessor(BaseProcessor[Invoice]):
             logger.info(
                 f"Updating OrderDetail {order_detail.id} with current balance {order_detail.shipping_balance} for Order {order.id} based on Invoice {invoice.id} event {event.name} with invoiced amount {invoiced_amount}"
             )
-            if event == RepositoryEvent.PRE_DELETE:
-                order_detail.shipping_balance += invoiced_amount
+            if event == RepositoryEvent.POST_DELETE:
+                order_detail.shipping_balance = order_detail.total + invoiced_amount
             else:
-                order_detail.shipping_balance -= invoiced_amount
+                order_detail.shipping_balance = order_detail.total - invoiced_amount
+
             order_detail.status = self._calculate_detail_status(
                 order_detail.shipping_balance, order_detail.total
             )
