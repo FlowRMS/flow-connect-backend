@@ -1800,8 +1800,8 @@ type Mutation {
   updateFolder(input: UpdateFolderInput!): FolderResponse!
   archiveFolder(folderId: UUID!): Boolean!
   deleteFolder(folderId: UUID!): Boolean!
-  updateRbacGrid(rbacGrid: [RbacGridInput!]!): [RbacGridResponse!]!
-  updateCommissionVisibility(input: UpdateCommissionVisibilityInput!): RbacRoleSettingResponse!
+  updateRbacGrid(rbacGrid: [RbacGridInput!]!): [RbacGridResponse!]! @rolePermissionAccess
+  updateCommissionVisibility(input: UpdateCommissionVisibilityInput!): RbacRoleSettingResponse! @rolePermissionAccess
 }
 
 input NoteConversationInput {
@@ -2810,9 +2810,9 @@ type Query {
   searchFolders(searchTerm: String!, limit: Int! = 20): [FolderResponse!]!
   foldersByParent(parentId: UUID = null): [FolderResponse!]!
   rootFolders: [FolderResponse!]!
-  getRbacGrid: [RbacGridResponse!]!
+  getRbacGrid: [RbacGridResponse!]! @rolePermissionAccess
   getUserRbac(resource: RbacResourceEnum!): UserRbac!
-  getRoleSettings: [RbacRoleSettingResponse!]!
+  getRoleSettings: [RbacRoleSettingResponse!]! @rolePermissionAccess
 }
 
 type QuoteBalanceResponse {
