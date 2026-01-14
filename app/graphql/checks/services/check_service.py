@@ -1,15 +1,11 @@
 from uuid import UUID
 
 from commons.auth import AuthInfo
-from commons.db.v6 import AutoNumberEntityType
 from commons.db.v6.commission import Check
 from commons.db.v6.commission.checks.enums import CheckStatus
 from commons.db.v6.crm.links.entity_type import EntityType
 
 from app.errors.common_errors import NameAlreadyExistsError, NotFoundError
-from app.graphql.auto_numbers.services.auto_number_settings_service import (
-    AutoNumberSettingsService,
-)
 from app.graphql.checks.repositories.checks_repository import ChecksRepository
 from app.graphql.checks.strawberry.check_input import CheckInput
 
@@ -18,26 +14,16 @@ class CheckService:
     def __init__(
         self,
         repository: ChecksRepository,
-        auto_number_settings_service: AutoNumberSettingsService,
         auth_info: AuthInfo,
     ) -> None:
         super().__init__()
         self.repository = repository
-        self.auto_number_settings_service = auto_number_settings_service
         self.auth_info = auth_info
 
     async def find_check_by_id(self, check_id: UUID) -> Check:
         return await self.repository.find_check_by_id(check_id)
 
     async def create_check(self, check_input: CheckInput) -> Check:
-        if self.auto_number_settings_service.needs_generation(
-            check_input.check_number
-        ):
-            check_input.check_number = (
-                await self.auto_number_settings_service.generate_number(
-                    AutoNumberEntityType.CHECK
-                )
-            )
         if await self.repository.check_number_exists(
             check_input.factory_id, check_input.check_number
         ):

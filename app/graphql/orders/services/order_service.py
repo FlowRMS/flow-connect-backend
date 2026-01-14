@@ -2,14 +2,10 @@ from datetime import date
 from uuid import UUID
 
 from commons.auth import AuthInfo
-from commons.db.v6 import AutoNumberEntityType
 from commons.db.v6.commission.orders import Order
 from commons.db.v6.crm.links.entity_type import EntityType
 
 from app.errors.common_errors import NameAlreadyExistsError, NotFoundError
-from app.graphql.auto_numbers.services.auto_number_settings_service import (
-    AutoNumberSettingsService,
-)
 from app.graphql.orders.factories.order_factory import OrderFactory
 from app.graphql.orders.repositories.orders_repository import OrdersRepository
 from app.graphql.orders.strawberry.order_input import OrderInput
@@ -21,13 +17,11 @@ class OrderService:
         self,
         repository: OrdersRepository,
         quotes_repository: QuotesRepository,
-        auto_number_settings_service: AutoNumberSettingsService,
         auth_info: AuthInfo,
     ) -> None:
         super().__init__()
         self.repository = repository
         self.quotes_repository = quotes_repository
-        self.auto_number_settings_service = auto_number_settings_service
         self.auth_info = auth_info
 
     async def check_order_exists(
@@ -44,12 +38,6 @@ class OrderService:
         return await self.repository.find_order_by_id(order_id)
 
     async def create_order(self, order_input: OrderInput) -> Order:
-        if self.auto_number_settings_service.needs_generation(order_input.order_number):
-            order_input.order_number = (
-                await self.auto_number_settings_service.generate_number(
-                    AutoNumberEntityType.ORDER
-                )
-            )
         if await self.repository.order_number_exists(
             order_input.order_number, order_input.sold_to_customer_id
         ):
@@ -142,10 +130,6 @@ class OrderService:
     ) -> Order:
         quote = await self.quotes_repository.find_quote_by_id(quote_id)
 
-        if self.auto_number_settings_service.needs_generation(order_number):
-            order_number = await self.auto_number_settings_service.generate_number(
-                AutoNumberEntityType.ORDER
-            )
         if await self.repository.order_number_exists(
             order_number, quote.sold_to_customer_id
         ):

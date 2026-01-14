@@ -1,14 +1,10 @@
 from uuid import UUID
 
 from commons.auth import AuthInfo
-from commons.db.v6 import AutoNumberEntityType
 from commons.db.v6.crm import Quote
 from commons.db.v6.crm.links.entity_type import EntityType
 
 from app.errors.common_errors import NameAlreadyExistsError, NotFoundError
-from app.graphql.auto_numbers.services.auto_number_settings_service import (
-    AutoNumberSettingsService,
-)
 from app.graphql.pre_opportunities.repositories.pre_opportunities_repository import (
     PreOpportunitiesRepository,
 )
@@ -22,27 +18,17 @@ class QuoteService:
         self,
         repository: QuotesRepository,
         pre_opportunity_repository: PreOpportunitiesRepository,
-        auto_number_settings_service: AutoNumberSettingsService,
         auth_info: AuthInfo,
     ) -> None:
         super().__init__()
         self.repository = repository
         self.pre_opportunity_repository = pre_opportunity_repository
-        self.auto_number_settings_service = auto_number_settings_service
         self.auth_info = auth_info
 
     async def find_quote_by_id(self, quote_id: UUID) -> Quote:
         return await self.repository.find_quote_by_id(quote_id)
 
     async def create_quote(self, quote_input: QuoteInput) -> Quote:
-        if self.auto_number_settings_service.needs_generation(
-            quote_input.quote_number
-        ):
-            quote_input.quote_number = (
-                await self.auto_number_settings_service.generate_number(
-                    AutoNumberEntityType.QUOTE
-                )
-            )
         if await self.repository.quote_number_exists(quote_input.quote_number):
             raise NameAlreadyExistsError(quote_input.quote_number)
 
@@ -72,10 +58,6 @@ class QuoteService:
         if not pre_opp:
             raise NotFoundError(str(pre_opportunity_id))
 
-        if self.auto_number_settings_service.needs_generation(quote_number):
-            quote_number = await self.auto_number_settings_service.generate_number(
-                AutoNumberEntityType.QUOTE
-            )
         if await self.repository.quote_number_exists(quote_number):
             raise NameAlreadyExistsError(quote_number)
 
