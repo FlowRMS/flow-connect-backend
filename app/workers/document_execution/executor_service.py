@@ -25,6 +25,9 @@ from app.workers.document_execution.converters.entity_mapping_builder import (
 )
 from app.workers.document_execution.converters.factory_converter import FactoryConverter
 from app.workers.document_execution.converters.invoice_converter import InvoiceConverter
+from app.workers.document_execution.converters.order_ack_converter import (
+    OrderAckConverter,
+)
 from app.workers.document_execution.converters.order_converter import OrderConverter
 from app.workers.document_execution.converters.product_converter import ProductConverter
 from app.workers.document_execution.converters.quote_converter import QuoteConverter
@@ -60,6 +63,7 @@ class DocumentExecutorService:
         product_converter: ProductConverter,
         invoice_converter: InvoiceConverter,
         check_converter: CheckConverter,
+        order_ack_converter: OrderAckConverter,
         set_for_creation_service: SetForCreationService,
     ) -> None:
         super().__init__()
@@ -74,6 +78,7 @@ class DocumentExecutorService:
         self.product_converter = product_converter
         self.invoice_converter = invoice_converter
         self.check_converter = check_converter
+        self.order_ack_converter = order_ack_converter
         self.set_for_creation_service = set_for_creation_service
         self._batch_processor = DocumentBatchProcessor()
 
@@ -96,6 +101,8 @@ class DocumentExecutorService:
                 return self.invoice_converter
             case DocumentEntityType.CHECKS:
                 return self.check_converter
+            case DocumentEntityType.ORDER_ACKNOWLEDGEMENTS:
+                return self.order_ack_converter
             case _:
                 raise ValueError(f"Unsupported entity type: {entity_type}")
 
