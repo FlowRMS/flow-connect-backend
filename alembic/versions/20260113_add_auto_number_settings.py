@@ -20,7 +20,7 @@ depends_on: str | Sequence[str] | None = None
 
 
 def upgrade() -> None:
-    op.create_table(
+    _ = op.create_table(
         "auto_number_settings",
         sa.Column("entity_type", sa.SmallInteger(), nullable=False),
         sa.Column(

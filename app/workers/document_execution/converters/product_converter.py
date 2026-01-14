@@ -155,7 +155,11 @@ class ProductConverter(BaseEntityConverter[ProductDTO, ProductInput, Product]):
             published=dto.published or True,
             description=dto.description,
             upc=dto.upc,
-            min_order_qty=Decimal(dto.min_order_qty) if dto.min_order_qty else None,
+            min_order_qty=(
+                Decimal(dto.min_order_quantity)
+                if dto.min_order_quantity is not None
+                else None
+            ),
             lead_time=self._parse_lead_time(dto.lead_time),
             unit_price_discount_rate=dto.overall_discount_rate,
             commission_discount_rate=dto.commission_discount_rate,
