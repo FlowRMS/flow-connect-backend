@@ -75,11 +75,15 @@ class WarehouseLocationResponse(DTOMixin[WarehouseLocation]):
         )
 
     @strawberry.field
-    async def children(self) -> list["WarehouseLocationResponse"]:
-        children = await self._instance.awaitable_attrs.children
-        return WarehouseLocationResponse.from_orm_model_list(children)
+    def children(self) -> list["WarehouseLocationResponse"]:
+        # Access children directly since they are eagerly loaded via joinedload
+        # Using awaitable_attrs causes lazy loading errors when session is closed
+        return WarehouseLocationResponse.from_orm_model_list(self._instance.children)
 
     @strawberry.field
-    async def product_assignments(self) -> list[LocationProductAssignmentResponse]:
-        assignments = await self._instance.awaitable_attrs.product_assignments
-        return LocationProductAssignmentResponse.from_orm_model_list(assignments)
+    def product_assignments(self) -> list[LocationProductAssignmentResponse]:
+        # Access product_assignments directly since they are eagerly loaded via joinedload
+        # Using awaitable_attrs causes lazy loading errors when session is closed
+        return LocationProductAssignmentResponse.from_orm_model_list(
+            self._instance.product_assignments
+        )

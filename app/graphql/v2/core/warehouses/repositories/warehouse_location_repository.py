@@ -3,10 +3,28 @@ from uuid import UUID
 from commons.db.v6 import LocationProductAssignment, WarehouseLocation
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.orm import joinedload
+from sqlalchemy.orm import joinedload, selectinload
 
 from app.core.context_wrapper import ContextWrapper
 from app.graphql.base_repository import BaseRepository
+
+
+def _recursive_children_loader(depth: int = 6):
+    """
+    Create recursive eager loading options for WarehouseLocation children.
+    Loads children and product_assignments at each level up to the specified depth.
+    Default depth of 6 covers: section -> aisle -> shelf -> bay -> row -> bin
+    """
+    if depth <= 0:
+        # At the deepest level, still load product_assignments but don't recurse further
+        return selectinload(WarehouseLocation.children).options(
+            selectinload(WarehouseLocation.product_assignments),
+        )
+
+    return selectinload(WarehouseLocation.children).options(
+        selectinload(WarehouseLocation.product_assignments),
+        _recursive_children_loader(depth - 1),
+    )
 
 
 class WarehouseLocationRepository(BaseRepository[WarehouseLocation]):
@@ -27,8 +45,8 @@ class WarehouseLocationRepository(BaseRepository[WarehouseLocation]):
         stmt = (
             select(WarehouseLocation)
             .options(
-                joinedload(WarehouseLocation.children),
-                joinedload(WarehouseLocation.product_assignments),
+                selectinload(WarehouseLocation.product_assignments),
+                _recursive_children_loader(),
             )
             .where(WarehouseLocation.id == location_id)
         )
@@ -38,11 +56,15 @@ class WarehouseLocationRepository(BaseRepository[WarehouseLocation]):
     async def list_by_warehouse(self, warehouse_id: UUID) -> list[WarehouseLocation]:
         stmt = (
             select(WarehouseLocation)
+            .options(
+                selectinload(WarehouseLocation.product_assignments),
+                _recursive_children_loader(),
+            )
             .where(WarehouseLocation.warehouse_id == warehouse_id)
             .order_by(WarehouseLocation.level, WarehouseLocation.sort_order)
         )
         result = await self.session.execute(stmt)
-        return list(result.scalars().all())
+        return list(result.unique().scalars().all())
 
     async def list_by_warehouse_with_children(
         self, warehouse_id: UUID
@@ -50,10 +72,10 @@ class WarehouseLocationRepository(BaseRepository[WarehouseLocation]):
         stmt = (
             select(WarehouseLocation)
             .options(
-                joinedload(WarehouseLocation.children),
-                joinedload(WarehouseLocation.product_assignments).joinedload(
+                selectinload(WarehouseLocation.product_assignments).joinedload(
                     LocationProductAssignment.product
                 ),
+                _recursive_children_loader(),
             )
             .where(WarehouseLocation.warehouse_id == warehouse_id)
             .order_by(WarehouseLocation.level, WarehouseLocation.sort_order)
@@ -65,8 +87,8 @@ class WarehouseLocationRepository(BaseRepository[WarehouseLocation]):
         stmt = (
             select(WarehouseLocation)
             .options(
-                joinedload(WarehouseLocation.children),
-                joinedload(WarehouseLocation.product_assignments),
+                selectinload(WarehouseLocation.product_assignments),
+                _recursive_children_loader(),
             )
             .where(
                 WarehouseLocation.warehouse_id == warehouse_id,
@@ -81,8 +103,8 @@ class WarehouseLocationRepository(BaseRepository[WarehouseLocation]):
         stmt = (
             select(WarehouseLocation)
             .options(
-                joinedload(WarehouseLocation.children),
-                joinedload(WarehouseLocation.product_assignments),
+                selectinload(WarehouseLocation.product_assignments),
+                _recursive_children_loader(),
             )
             .where(WarehouseLocation.parent_id == parent_id)
             .order_by(WarehouseLocation.sort_order)

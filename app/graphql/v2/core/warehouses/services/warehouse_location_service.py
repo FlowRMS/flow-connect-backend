@@ -2,6 +2,8 @@ from decimal import Decimal
 from uuid import UUID
 
 from commons.db.v6 import WarehouseLocation, WarehouseStructureCode
+from commons.db.v6.warehouse.inventory.inventory_item import InventoryItem
+from sqlalchemy import select
 
 from app.errors.common_errors import NotFoundError, ValidationError
 from app.graphql.v2.core.warehouses.repositories import (
@@ -86,6 +88,10 @@ class WarehouseLocationService:
         Handles creates, updates, and implicit deletes. Locations not in input are deleted.
         Supports temp_id/temp_parent_id for newly created hierarchical locations.
         """
+        import logging
+
+        logger = logging.getLogger(__name__)
+
         if not await self.warehouse_repository.exists(warehouse_id):
             raise NotFoundError(f"Warehouse with id {warehouse_id} not found")
 
@@ -94,6 +100,17 @@ class WarehouseLocationService:
         input_ids: set[UUID] = set()
         result: list[WarehouseLocation] = []
         temp_id_map: dict[str, UUID] = {}
+
+        # Debug logging
+        logger.info(f"Bulk save: existing_ids count = {len(existing_ids)}")
+        logger.info(f"Bulk save: input locations count = {len(locations)}")
+        input_location_ids = {loc.id for loc in locations if loc.id}
+        logger.info(f"Bulk save: input location IDs with real IDs = {len(input_location_ids)}")
+        missing_from_input = existing_ids - input_location_ids
+        logger.info(f"Bulk save: locations that would be deleted = {len(missing_from_input)}")
+        if missing_from_input:
+            missing_names = [loc.name for loc in existing if loc.id in missing_from_input]
+            logger.warning(f"Bulk save: locations to delete: {missing_names[:10]}...")  # First 10
 
         with_real_parent = [loc for loc in locations if not loc.temp_parent_id]
         with_temp_parent = [loc for loc in locations if loc.temp_parent_id]
@@ -113,10 +130,69 @@ class WarehouseLocationService:
             )
             result.append(saved)
 
-        for loc_id in existing_ids - input_ids:
-            _ = await self.location_repository.delete(loc_id)
+        # Note: We no longer implicitly delete locations not in the input.
+        # The visual builder may not return all locations (e.g., orphaned locations
+        # or locations not visible in the tree). Implicit deletion was causing
+        # foreign key errors when locations had inventory items.
+        #
+        # To delete locations, use the explicit delete mutation instead.
+        locations_not_in_input = existing_ids - input_ids
+        if locations_not_in_input:
+            logger.info(
+                f"Bulk save: {len(locations_not_in_input)} existing locations not in input "
+                f"(will NOT be deleted - use explicit delete if needed)"
+            )
 
         return result
+
+    async def _get_all_descendant_ids(
+        self, location_ids: set[UUID]
+    ) -> set[UUID]:
+        """Get all descendant location IDs (children, grandchildren, etc.)."""
+        all_ids = set(location_ids)
+        to_check = list(location_ids)
+
+        while to_check:
+            current_id = to_check.pop()
+            stmt = select(WarehouseLocation.id).where(
+                WarehouseLocation.parent_id == current_id
+            )
+            result = await self.location_repository.session.execute(stmt)
+            child_ids = {row[0] for row in result.fetchall()}
+            new_ids = child_ids - all_ids
+            all_ids.update(new_ids)
+            to_check.extend(new_ids)
+
+        return all_ids
+
+    async def _get_locations_with_inventory(
+        self, location_ids: set[UUID]
+    ) -> set[UUID]:
+        """Check which locations (or their descendants) have inventory items assigned."""
+        if not location_ids:
+            return set()
+
+        # Get all descendants of the locations being deleted
+        all_affected_ids = await self._get_all_descendant_ids(location_ids)
+
+        # Check if any of these have inventory items
+        stmt = (
+            select(InventoryItem.location_id)
+            .where(InventoryItem.location_id.in_(all_affected_ids))
+            .distinct()
+        )
+        result = await self.location_repository.session.execute(stmt)
+        locations_with_items = {row[0] for row in result.fetchall()}
+
+        # Return the top-level locations that would cause issues
+        # (locations from the original set whose descendants have inventory)
+        affected_top_level: set[UUID] = set()
+        for loc_id in location_ids:
+            descendants = await self._get_all_descendant_ids({loc_id})
+            if descendants & locations_with_items:
+                affected_top_level.add(loc_id)
+
+        return affected_top_level
 
     async def _save_location(
         self,
