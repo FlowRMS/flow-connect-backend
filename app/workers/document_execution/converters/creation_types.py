@@ -7,6 +7,7 @@ from commons.db.v6.ai.entities.enums import EntityPendingType
 @dataclass
 class CreationIssue:
     entity_type: EntityPendingType
+    dto_json: dict
     pending_entity_id: UUID | None
     error_message: str
 

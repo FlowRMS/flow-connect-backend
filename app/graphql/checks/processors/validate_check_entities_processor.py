@@ -54,7 +54,7 @@ class ValidateCheckEntitiesProcessor(BaseProcessor[Check]):
         result = await self.session.execute(
             select(Invoice.invoice_number).where(
                 Invoice.id.in_(new_ids),
-                or_(Invoice.locked.is_(True), Invoice.status.is_(InvoiceStatus.PAID)),
+                or_(Invoice.locked == True, Invoice.status == InvoiceStatus.PAID),  # noqa: E712
             )
         )
         invalid = list(result.scalars().all())
@@ -75,7 +75,7 @@ class ValidateCheckEntitiesProcessor(BaseProcessor[Check]):
         result = await self.session.execute(
             select(Credit.credit_number).where(
                 Credit.id.in_(new_ids),
-                or_(Credit.locked.is_(True), Credit.status.is_(CreditStatus.POSTED)),
+                or_(Credit.locked == True, Credit.status == CreditStatus.POSTED),  # noqa: E712
             )
         )
         invalid = list(result.scalars().all())
@@ -99,8 +99,8 @@ class ValidateCheckEntitiesProcessor(BaseProcessor[Check]):
             select(Adjustment.adjustment_number).where(
                 Adjustment.id.in_(new_ids),
                 or_(
-                    Adjustment.locked.is_(True),
-                    Adjustment.status.is_(AdjustmentStatus.POSTED),
+                    Adjustment.locked == True,  # noqa: E712
+                    Adjustment.status == AdjustmentStatus.POSTED,
                 ),
             )
         )

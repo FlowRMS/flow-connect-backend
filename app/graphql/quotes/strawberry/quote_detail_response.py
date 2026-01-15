@@ -13,6 +13,9 @@ from app.graphql.quotes.strawberry.quote_inside_rep_response import (
 from app.graphql.quotes.strawberry.quote_split_rate_response import (
     QuoteSplitRateResponse,
 )
+from app.graphql.v2.core.customers.strawberry.customer_response import (
+    CustomerLiteResponse,
+)
 from app.graphql.v2.core.factories.strawberry.factory_response import FactoryResponse
 from app.graphql.v2.core.products.strawberry.product_response import ProductLiteResponse
 from app.graphql.v2.core.products.strawberry.product_uom_response import (
@@ -73,6 +76,10 @@ class QuoteDetailResponse(DTOMixin[QuoteDetail]):
             note=model.note,
             status=model.status,
         )
+
+    @strawberry.field
+    def end_user(self) -> CustomerLiteResponse | None:
+        return CustomerLiteResponse.from_orm_model_optional(self._instance.end_user)
 
     @strawberry.field
     def outside_split_rates(self) -> list[QuoteSplitRateResponse]:
