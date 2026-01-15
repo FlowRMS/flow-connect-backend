@@ -10,9 +10,15 @@ from app.core.strawberry.inputs import BaseInputGQL
 
 
 @strawberry.input
+class OrderAcknowledgementDetailInput:
+    order_detail_id: UUID
+    id: UUID | None = strawberry.UNSET
+
+
+@strawberry.input
 class OrderAcknowledgementInput(BaseInputGQL[OrderAcknowledgement]):
     order_id: UUID
-    order_detail_ids: list[UUID]
+    details: list[OrderAcknowledgementDetailInput]
     order_acknowledgement_number: str
     entity_date: date
     quantity: Decimal
@@ -21,8 +27,8 @@ class OrderAcknowledgementInput(BaseInputGQL[OrderAcknowledgement]):
     creation_type: CreationType = strawberry.UNSET
 
     def to_orm_model(self) -> OrderAcknowledgement:
-        if not self.order_detail_ids:
-            raise ValueError("At least one order_detail_id is required")
+        if not self.details:
+            raise ValueError("At least one detail is required")
 
         creation_type = (
             self.creation_type
