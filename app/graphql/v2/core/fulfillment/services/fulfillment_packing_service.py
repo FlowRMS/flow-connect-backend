@@ -58,24 +58,20 @@ class FulfillmentPackingService:
         box_id: UUID,
         input: UpdatePackingBoxInput,
     ) -> PackingBox:
-        import strawberry
-
         box = await self.box_repository.get_with_items(box_id)
         if not box:
             raise NotFoundError(f"Packing box {box_id} not found")
 
-        if input.container_type_id is not strawberry.UNSET:
-            box.container_type_id = input.container_type_id
-        if input.length is not strawberry.UNSET:
-            box.length = input.length
-        if input.width is not strawberry.UNSET:
-            box.width = input.width
-        if input.height is not strawberry.UNSET:
-            box.height = input.height
-        if input.weight is not strawberry.UNSET:
-            box.weight = input.weight
-        if input.tracking_number is not strawberry.UNSET:
-            box.tracking_number = input.tracking_number
+        box.container_type_id = input.optional_field(
+            input.container_type_id, box.container_type_id
+        )
+        box.length = input.optional_field(input.length, box.length)
+        box.width = input.optional_field(input.width, box.width)
+        box.height = input.optional_field(input.height, box.height)
+        box.weight = input.optional_field(input.weight, box.weight)
+        box.tracking_number = input.optional_field(
+            input.tracking_number, box.tracking_number
+        )
 
         return await self.box_repository.update(box)
 
