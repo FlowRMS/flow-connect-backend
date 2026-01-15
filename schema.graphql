@@ -340,7 +340,6 @@ input CheckInput {
   id: UUID
   postDate: Date
   commissionMonth: Date
-  status: CheckStatus!
   creationType: CreationType!
 }
 
@@ -1651,6 +1650,7 @@ type Mutation {
   updateCheck(input: CheckInput!): CheckResponse!
   deleteCheck(id: UUID!): Boolean!
   unpostCheck(checkId: UUID!): CheckResponse!
+  postCheck(checkId: UUID!): CheckResponse!
   bulkDelete(entityType: BulkDeleteEntityType!, entityIds: [UUID!]!): BulkDeleteResult!
   createCompany(input: CompanyInput!): CompanyResponse!
   deleteCompany(id: UUID!): Boolean!

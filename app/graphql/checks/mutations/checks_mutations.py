@@ -49,3 +49,13 @@ class ChecksMutations:
     ) -> CheckResponse:
         check = await service.unpost_check(check_id=check_id)
         return CheckResponse.from_orm_model(check)
+
+    @strawberry.mutation
+    @inject
+    async def post_check(
+        self,
+        check_id: UUID,
+        service: Injected[CheckService],
+    ) -> CheckResponse:
+        check = await service.post_check(check_id=check_id)
+        return CheckResponse.from_orm_model(check)

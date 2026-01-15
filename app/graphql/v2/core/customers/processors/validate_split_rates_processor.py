@@ -1,4 +1,3 @@
-from collections.abc import Sequence
 from uuid import UUID
 
 from commons.db.v6 import Customer, CustomerSplitRate, RepTypeEnum, User
@@ -23,6 +22,7 @@ class ValidateSplitRatesProcessor(BaseProcessor[Customer]):
     def __init__(self, session: AsyncSession) -> None:
         super().__init__()
         self.session = session
+        self._user_cache: dict[UUID, User] = {}
 
     @property
     def events(self) -> list[RepositoryEvent]:
@@ -59,10 +59,14 @@ class ValidateSplitRatesProcessor(BaseProcessor[Customer]):
         validate_split_rates_sum_to_100(inside_rates, label="inside split rates")
         validate_split_rates_sum_to_100(outside_rates, label="outside split rates")
 
-    async def _get_users_by_ids(self, user_ids: list[UUID]) -> Sequence[User]:
-        stmt = select(User).where(User.id.in_(user_ids))
-        result = await self.session.execute(stmt)
-        return result.scalars().all()
+    async def _get_users_by_ids(self, user_ids: list[UUID]) -> list[User]:
+        missing_ids = [uid for uid in user_ids if uid not in self._user_cache]
+        if missing_ids:
+            stmt = select(User).where(User.id.in_(missing_ids))
+            result = await self.session.execute(stmt)
+            for user in result.scalars().all():
+                self._user_cache[user.id] = user
+        return [self._user_cache[uid] for uid in user_ids if uid in self._user_cache]
 
     def _validate_unique_user_ids(self, user_ids: list[UUID]) -> None:
         seen: set[UUID] = set()
