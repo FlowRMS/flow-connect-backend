@@ -28,6 +28,8 @@ dependencies = [
     "taskiq-fastapi>=0.3.0",
     "taskiq-redis>=1.0.0",
     "resend>=2.19.0",
+    "reportlab>=4.0.0",
+    "pypdf>=4.0.0",
 ]
 
 [dependency-groups]
@@ -50,4 +52,4 @@ dev = [
 ]
 
 [tool.uv.sources]
-flow-py-commons = { git = "ssh://git@github.com/FlowRMS/flowbot-commons.git", tag = "1.28.00" }
+flow-py-commons = { path = "../flowbot-commons", editable = true }
