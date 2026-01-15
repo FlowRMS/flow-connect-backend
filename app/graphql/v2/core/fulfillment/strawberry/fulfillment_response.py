@@ -11,6 +11,7 @@ from commons.db.v6.fulfillment import (
     FulfillmentAssignment,
     FulfillmentAssignmentRole,
     FulfillmentDocument,
+    FulfillmentDocumentType,
     FulfillmentMethod,
     FulfillmentOrder,
     FulfillmentOrderLineItem,
@@ -90,7 +91,7 @@ class FulfillmentAssignmentResponse(DTOMixin[FulfillmentAssignment]):
 class FulfillmentDocumentResponse(DTOMixin[FulfillmentDocument]):
     _instance: strawberry.Private[FulfillmentDocument]
     id: UUID
-    document_type: str
+    document_type: FulfillmentDocumentType
     file_name: str
     file_url: str
     file_size: int | None

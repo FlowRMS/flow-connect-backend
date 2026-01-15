@@ -7,6 +7,7 @@ import strawberry
 from commons.db.v6.fulfillment import (
     CarrierType,
     FulfillmentAssignmentRole,
+    FulfillmentDocumentType,
     FulfillmentMethod,
     FulfillmentOrder,
     FulfillmentOrderLineItem,
@@ -15,35 +16,7 @@ from commons.db.v6.fulfillment import (
 from strawberry.file_uploads import Upload
 
 from app.core.strawberry.inputs import BaseInputGQL
-
-
-@strawberry.input
-class ShipToAddressInput:
-    name: str | None = None
-    street: str | None = None
-    street_line_2: str | None = None
-    city: str | None = None
-    state: str | None = None
-    postal_code: str | None = None
-    country: str | None = None
-    phone: str | None = None
-
-    def to_address_fields(self) -> dict:
-        """Return fields for creating/updating an Address record.
-
-        Maps ShipToAddressInput fields to Address model fields:
-        - street -> line_1
-        - street_line_2 -> line_2
-        - postal_code -> zip_code
-        """
-        return {
-            "line_1": self.street or "",
-            "line_2": self.street_line_2,
-            "city": self.city or "",
-            "state": self.state,
-            "zip_code": self.postal_code,
-            "country": self.country or "",
-        }
+from app.graphql.addresses.strawberry.address_input import AddressInput
 
 
 @strawberry.input
@@ -53,7 +26,9 @@ class CreateFulfillmentOrderInput(BaseInputGQL[FulfillmentOrder]):
     fulfillment_method: FulfillmentMethod = FulfillmentMethod.SHIP
     carrier_id: UUID | None = None
     carrier_type: CarrierType | None = None
-    ship_to_address: ShipToAddressInput | None = None
+    ship_to_address: AddressInput | None = None
+    ship_to_name: str | None = None
+    ship_to_phone: str | None = None
     need_by_date: date | None = None
 
     def to_orm_model(self) -> FulfillmentOrder:
@@ -77,7 +52,9 @@ class UpdateFulfillmentOrderInput:
     carrier_id: UUID | None = strawberry.UNSET
     carrier_type: CarrierType | None = strawberry.UNSET
     freight_class: str | None = strawberry.UNSET
-    ship_to_address: ShipToAddressInput | None = strawberry.UNSET
+    ship_to_address: AddressInput | None = strawberry.UNSET
+    ship_to_name: str | None = strawberry.UNSET
+    ship_to_phone: str | None = strawberry.UNSET
     need_by_date: date | None = strawberry.UNSET
     hold_reason: str | None = strawberry.UNSET
 
@@ -204,7 +181,7 @@ class AddDocumentInput:
     """Input for adding a document to a fulfillment order."""
 
     fulfillment_order_id: UUID
-    document_type: str  # BOL, PACKING_SLIP, SHIPPING_LABEL, INVOICE, PHOTO, OTHER
+    document_type: FulfillmentDocumentType
     file_name: str
     file_url: str
     file_size: int | None = None
@@ -217,6 +194,6 @@ class UploadDocumentInput:
     """Input for uploading a document file to a fulfillment order."""
 
     fulfillment_order_id: UUID
-    document_type: str  # BOL, PACKING_SLIP, SHIPPING_LABEL, INVOICE, PHOTO, OTHER
+    document_type: FulfillmentDocumentType
     file: Upload
     notes: Optional[str] = None
