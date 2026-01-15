@@ -21,7 +21,7 @@ depends_on: str | Sequence[str] | None = None
 
 def upgrade() -> None:
     # Create takeoffs table
-    op.create_table(
+    _ = op.create_table(
         "takeoffs",
         sa.Column("id", sa.UUID(), nullable=False),
         sa.Column("takeoff_number", sa.String(20), nullable=False),
@@ -42,6 +42,17 @@ def upgrade() -> None:
             nullable=False,
         ),
         sa.PrimaryKeyConstraint("id", name=op.f("pk_ai_takeoffs")),
+        sa.ForeignKeyConstraint(
+            ["created_by_id"],
+            ["pyuser.users.id"],
+            name=op.f("fk_ai_takeoffs_created_by_id_users"),
+        ),
+        sa.ForeignKeyConstraint(
+            ["quote_id"],
+            ["pycrm.quotes.id"],
+            name=op.f("fk_ai_takeoffs_quote_id_quotes"),
+            ondelete="SET NULL",
+        ),
         schema="ai",
     )
     op.create_index(
@@ -58,7 +69,7 @@ def upgrade() -> None:
     )
 
     # Create takeoff_documents table
-    op.create_table(
+    _ = op.create_table(
         "takeoff_documents",
         sa.Column("id", sa.UUID(), nullable=False),
         sa.Column("takeoff_id", sa.UUID(), nullable=False),
@@ -114,7 +125,7 @@ def upgrade() -> None:
     )
 
     # Create product_crosses table
-    op.create_table(
+    _ = op.create_table(
         "product_crosses",
         sa.Column("id", sa.UUID(), nullable=False),
         sa.Column("user_id", sa.UUID(), nullable=False),
@@ -139,6 +150,11 @@ def upgrade() -> None:
             nullable=False,
         ),
         sa.PrimaryKeyConstraint("id", name=op.f("pk_ai_product_crosses")),
+        sa.ForeignKeyConstraint(
+            ["user_id"],
+            ["pyuser.users.id"],
+            name=op.f("fk_ai_product_crosses_user_id_users"),
+        ),
         schema="ai",
     )
     op.create_index(
@@ -170,7 +186,7 @@ def upgrade() -> None:
     )
 
     # Create cross_prompt_templates table
-    op.create_table(
+    _ = op.create_table(
         "cross_prompt_templates",
         sa.Column("id", sa.UUID(), nullable=False),
         sa.Column("user_id", sa.UUID(), nullable=False),
@@ -192,6 +208,11 @@ def upgrade() -> None:
             nullable=False,
         ),
         sa.PrimaryKeyConstraint("id", name=op.f("pk_ai_cross_prompt_templates")),
+        sa.ForeignKeyConstraint(
+            ["user_id"],
+            ["pyuser.users.id"],
+            name=op.f("fk_ai_cross_prompt_templates_user_id_users"),
+        ),
         schema="ai",
     )
     op.create_index(
