@@ -1,5 +1,7 @@
 """GraphQL enum types for Submittals."""
 
+from enum import Enum
+
 import strawberry
 from commons.db.v6.crm.submittals import (
     SubmittalItemApprovalStatus,
@@ -11,7 +13,7 @@ from commons.db.v6.crm.submittals import (
 
 
 @strawberry.enum
-class SubmittalStatusGQL(strawberry.enum.Enum):
+class SubmittalStatusGQL(Enum):
     """GraphQL enum for submittal status."""
 
     DRAFT = SubmittalStatus.DRAFT.value
@@ -23,7 +25,7 @@ class SubmittalStatusGQL(strawberry.enum.Enum):
 
 
 @strawberry.enum
-class SubmittalItemApprovalStatusGQL(strawberry.enum.Enum):
+class SubmittalItemApprovalStatusGQL(Enum):
     """GraphQL enum for submittal item approval status."""
 
     PENDING = SubmittalItemApprovalStatus.PENDING.value
@@ -34,7 +36,7 @@ class SubmittalItemApprovalStatusGQL(strawberry.enum.Enum):
 
 
 @strawberry.enum
-class SubmittalItemMatchStatusGQL(strawberry.enum.Enum):
+class SubmittalItemMatchStatusGQL(Enum):
     """GraphQL enum for submittal item match status."""
 
     NO_MATCH = SubmittalItemMatchStatus.NO_MATCH.value
@@ -43,7 +45,7 @@ class SubmittalItemMatchStatusGQL(strawberry.enum.Enum):
 
 
 @strawberry.enum
-class SubmittalStakeholderRoleGQL(strawberry.enum.Enum):
+class SubmittalStakeholderRoleGQL(Enum):
     """GraphQL enum for stakeholder roles."""
 
     CUSTOMER = SubmittalStakeholderRole.CUSTOMER.value
@@ -54,7 +56,7 @@ class SubmittalStakeholderRoleGQL(strawberry.enum.Enum):
 
 
 @strawberry.enum
-class TransmittalPurposeGQL(strawberry.enum.Enum):
+class TransmittalPurposeGQL(Enum):
     """GraphQL enum for transmittal purpose."""
 
     FOR_APPROVAL = TransmittalPurpose.FOR_APPROVAL.value

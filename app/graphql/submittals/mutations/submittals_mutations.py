@@ -1,5 +1,6 @@
 """GraphQL mutations for Submittals entity."""
 
+from typing import Optional
 from uuid import UUID
 
 import strawberry
@@ -9,6 +10,7 @@ from app.graphql.inject import inject
 from app.graphql.submittals.services.submittals_service import SubmittalsService
 from app.graphql.submittals.strawberry.submittal_input import (
     CreateSubmittalInput,
+    GenerateSubmittalPdfInput,
     SendSubmittalEmailInput,
     SubmittalItemInput,
     SubmittalStakeholderInput,
@@ -24,6 +26,12 @@ from app.graphql.submittals.strawberry.submittal_revision_response import (
 )
 from app.graphql.submittals.strawberry.submittal_stakeholder_response import (
     SubmittalStakeholderResponse,
+)
+from app.graphql.submittals.strawberry.send_email_response import (
+    SendSubmittalEmailResponse,
+)
+from app.graphql.submittals.strawberry.generate_pdf_response import (
+    GenerateSubmittalPdfResponse,
 )
 
 
@@ -197,7 +205,7 @@ class SubmittalsMutations:
         self,
         service: Injected[SubmittalsService],
         submittal_id: UUID,
-        notes: str | None = None,
+        notes: Optional[str] = None,
     ) -> SubmittalRevisionResponse:
         """
         Create a new revision for a submittal.
@@ -219,15 +227,66 @@ class SubmittalsMutations:
         self,
         service: Injected[SubmittalsService],
         input: SendSubmittalEmailInput,
-    ) -> bool:
+    ) -> SendSubmittalEmailResponse:
         """
         Send an email for a submittal.
 
+        This mutation:
+        1. Sends the email via the user's connected email provider (O365/Gmail)
+        2. Records the email in the database for tracking
+
         Args:
-            input: Email data
+            input: Email data including recipients, subject, and body
 
         Returns:
-            True if email was recorded successfully
+            SendSubmittalEmailResponse with success status and email details
         """
-        await service.send_email(input)
-        return True
+        result = await service.send_email(input)
+        return SendSubmittalEmailResponse.from_result(result)
+
+    # PDF Generation mutations
+    @strawberry.mutation
+    @inject
+    async def generate_submittal_pdf(
+        self,
+        service: Injected[SubmittalsService],
+        input: GenerateSubmittalPdfInput,
+    ) -> GenerateSubmittalPdfResponse:
+        """
+        Generate a PDF for a submittal.
+
+        This mutation:
+        1. Generates a PDF with cover page, transmittal, and items
+        2. Optionally includes spec sheet pages
+        3. Creates a new revision if requested
+        4. Returns a URL to download the PDF
+
+        Args:
+            input: PDF generation options including which pages to include
+
+        Returns:
+            GenerateSubmittalPdfResponse with PDF URL and revision info
+        """
+        result = await service.generate_pdf(input)
+
+        if not result.success:
+            return GenerateSubmittalPdfResponse.error_response(
+                result.error or "Unknown error generating PDF"
+            )
+
+        revision_response = None
+        if result.revision:
+            from app.graphql.submittals.strawberry.submittal_revision_response import (
+                SubmittalRevisionResponse,
+            )
+
+            revision_response = SubmittalRevisionResponse.from_orm_model(
+                result.revision
+            )
+
+        return GenerateSubmittalPdfResponse.success_response(
+            pdf_url=result.pdf_url or "",
+            pdf_file_name=result.pdf_file_name or "submittal.pdf",
+            pdf_file_size_bytes=result.pdf_file_size_bytes,
+            revision=revision_response,
+        )

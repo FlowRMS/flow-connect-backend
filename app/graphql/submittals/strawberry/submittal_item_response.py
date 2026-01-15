@@ -2,7 +2,7 @@
 
 from datetime import datetime
 from decimal import Decimal
-from typing import Self
+from typing import Optional, Self
 from uuid import UUID
 
 import strawberry
@@ -10,7 +10,7 @@ from commons.db.v6.crm.submittals import SubmittalItem
 
 from app.core.db.adapters.dto import DTOMixin
 from app.graphql.spec_sheets.strawberry.spec_sheet_highlight_response import (
-    SpecSheetHighlightVersionResponse,
+    HighlightVersionResponse,
 )
 from app.graphql.spec_sheets.strawberry.spec_sheet_response import SpecSheetResponse
 from app.graphql.submittals.strawberry.enums import (
@@ -27,15 +27,15 @@ class SubmittalItemResponse(DTOMixin[SubmittalItem]):
     id: UUID
     submittal_id: UUID
     item_number: int
-    quote_detail_id: UUID | None
-    spec_sheet_id: UUID | None
-    highlight_version_id: UUID | None
-    part_number: str | None
-    description: str | None
-    quantity: Decimal | None
+    quote_detail_id: Optional[UUID]
+    spec_sheet_id: Optional[UUID]
+    highlight_version_id: Optional[UUID]
+    part_number: Optional[str]
+    description: Optional[str]
+    quantity: Optional[Decimal]
     approval_status: SubmittalItemApprovalStatusGQL
     match_status: SubmittalItemMatchStatusGQL
-    notes: str | None
+    notes: Optional[str]
     created_at: datetime
 
     @classmethod
@@ -59,17 +59,17 @@ class SubmittalItemResponse(DTOMixin[SubmittalItem]):
         )
 
     @strawberry.field
-    def spec_sheet(self) -> SpecSheetResponse | None:
+    def spec_sheet(self) -> Optional[SpecSheetResponse]:
         """Resolve spec_sheet from the ORM instance."""
         if self._instance.spec_sheet:
             return SpecSheetResponse.from_orm_model(self._instance.spec_sheet)
         return None
 
     @strawberry.field
-    def highlight_version(self) -> SpecSheetHighlightVersionResponse | None:
+    def highlight_version(self) -> Optional[HighlightVersionResponse]:
         """Resolve highlight_version from the ORM instance."""
         if self._instance.highlight_version:
-            return SpecSheetHighlightVersionResponse.from_orm_model(
+            return HighlightVersionResponse.from_orm_model(
                 self._instance.highlight_version
             )
         return None

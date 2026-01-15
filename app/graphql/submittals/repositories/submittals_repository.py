@@ -1,5 +1,6 @@
 """Repository for Submittals entity with specific database operations."""
 
+from typing import Optional
 from uuid import UUID
 
 from commons.db.v6.crm.submittals import (
@@ -35,7 +36,7 @@ class SubmittalsRepository(BaseRepository[Submittal]):
         """
         super().__init__(session, context_wrapper, Submittal)
 
-    async def get_by_id_with_relations(self, submittal_id: UUID) -> Submittal | None:
+    async def get_by_id_with_relations(self, submittal_id: UUID) -> Optional[Submittal]:
         """
         Get a submittal by ID with all relations loaded.
 
@@ -96,7 +97,7 @@ class SubmittalsRepository(BaseRepository[Submittal]):
     async def search_submittals(
         self,
         search_term: str = "",
-        status: SubmittalStatus | None = None,
+        status: Optional[SubmittalStatus] = None,
         limit: int = 50,
     ) -> list[Submittal]:
         """

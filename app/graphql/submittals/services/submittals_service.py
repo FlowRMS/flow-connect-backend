@@ -1,5 +1,7 @@
 """Service layer for Submittals business logic."""
 
+from dataclasses import dataclass
+from typing import Optional
 from uuid import UUID
 
 from commons.db.v6.crm.submittals import (
@@ -14,19 +16,38 @@ from commons.db.v6.crm.submittals import (
 )
 from loguru import logger
 
+from app.graphql.campaigns.services.email_provider_service import EmailProviderService
 from app.graphql.submittals.repositories.submittals_repository import (
     SubmittalItemsRepository,
     SubmittalStakeholdersRepository,
     SubmittalsRepository,
 )
+from app.graphql.submittals.services.pdf_generation_service import (
+    PdfGenerationResult,
+    PdfGenerationService,
+)
+from app.graphql.submittals.services.types import SendSubmittalEmailResult
 from app.graphql.submittals.strawberry.submittal_input import (
     CreateSubmittalInput,
+    GenerateSubmittalPdfInput,
     SendSubmittalEmailInput,
     SubmittalItemInput,
     SubmittalStakeholderInput,
     UpdateSubmittalInput,
     UpdateSubmittalItemInput,
 )
+
+
+@dataclass
+class GenerateSubmittalPdfResult:
+    """Result of generating a submittal PDF."""
+
+    success: bool = False
+    error: Optional[str] = None
+    pdf_url: Optional[str] = None
+    pdf_file_name: Optional[str] = None
+    pdf_file_size_bytes: int = 0
+    revision: Optional[SubmittalRevision] = None
 
 
 class SubmittalsService:
@@ -37,6 +58,8 @@ class SubmittalsService:
         repository: SubmittalsRepository,
         items_repository: SubmittalItemsRepository,
         stakeholders_repository: SubmittalStakeholdersRepository,
+        email_provider: EmailProviderService,
+        pdf_service: Optional[PdfGenerationService] = None,
     ) -> None:
         """
         Initialize the Submittals service.
@@ -45,10 +68,14 @@ class SubmittalsService:
             repository: Submittals repository instance
             items_repository: SubmittalItems repository instance
             stakeholders_repository: SubmittalStakeholders repository instance
+            email_provider: Email provider service for sending emails
+            pdf_service: PDF generation service (optional, created if not provided)
         """
         self.repository = repository
         self.items_repository = items_repository
         self.stakeholders_repository = stakeholders_repository
+        self.email_provider = email_provider
+        self.pdf_service = pdf_service or PdfGenerationService()
 
     async def create_submittal(self, input_data: CreateSubmittalInput) -> Submittal:
         """
@@ -117,7 +144,7 @@ class SubmittalsService:
             logger.info(f"Deleted submittal {submittal_id}")
         return result
 
-    async def get_submittal(self, submittal_id: UUID) -> Submittal | None:
+    async def get_submittal(self, submittal_id: UUID) -> Optional[Submittal]:
         """
         Get a submittal by ID.
 
@@ -156,7 +183,7 @@ class SubmittalsService:
     async def search_submittals(
         self,
         search_term: str = "",
-        status: SubmittalStatus | None = None,
+        status: Optional[SubmittalStatus] = None,
         limit: int = 50,
     ) -> list[Submittal]:
         """
@@ -292,7 +319,7 @@ class SubmittalsService:
 
     # Revision operations
     async def create_revision(
-        self, submittal_id: UUID, notes: str | None = None
+        self, submittal_id: UUID, notes: Optional[str] = None
     ) -> SubmittalRevision:
         """
         Create a new revision for a submittal.
@@ -318,19 +345,53 @@ class SubmittalsService:
         return created
 
     # Email operations
-    async def send_email(self, input_data: SendSubmittalEmailInput) -> SubmittalEmail:
+    async def send_email(
+        self, input_data: SendSubmittalEmailInput
+    ) -> SendSubmittalEmailResult:
         """
-        Record a sent email for a submittal.
+        Send an email for a submittal and record it in the database.
 
-        Note: Actual email sending should be handled by an email service.
-        This method records the email in the database.
+        This method:
+        1. Checks if the user has an email provider connected
+        2. Sends the email via O365 or Gmail
+        3. Records the email in the database
 
         Args:
-            input_data: Email data
+            input_data: Email data including recipients, subject, and body
 
         Returns:
-            Created SubmittalEmail
+            SendSubmittalEmailResult with email record and send status
         """
+        # Check if user has an email provider connected
+        has_provider = await self.email_provider.has_connected_provider()
+        if not has_provider:
+            logger.warning(
+                f"Cannot send submittal email: no email provider connected"
+            )
+            return SendSubmittalEmailResult(
+                success=False,
+                error="No email provider connected. Please connect O365 or Gmail in settings.",
+            )
+
+        # Send the email
+        send_result = await self.email_provider.send_email(
+            to=input_data.recipient_emails,
+            subject=input_data.subject,
+            body=input_data.body or "",
+            body_type="HTML",
+        )
+
+        if not send_result.success:
+            logger.error(
+                f"Failed to send submittal email: {send_result.error}"
+            )
+            return SendSubmittalEmailResult(
+                success=False,
+                error=send_result.error,
+                send_result=send_result,
+            )
+
+        # Record the email in the database
         email = SubmittalEmail(
             revision_id=input_data.revision_id,
             subject=input_data.subject,
@@ -341,6 +402,95 @@ class SubmittalsService:
 
         created = await self.repository.add_email(input_data.submittal_id, email)
         logger.info(
-            f"Recorded email for submittal {input_data.submittal_id} to {len(input_data.recipient_emails)} recipients"
+            f"Sent and recorded email for submittal {input_data.submittal_id} "
+            f"to {len(input_data.recipient_emails)} recipients via {send_result.provider}"
         )
-        return created
+
+        return SendSubmittalEmailResult(
+            email_record=created,
+            send_result=send_result,
+            success=True,
+        )
+
+    # PDF Generation operations
+    async def generate_pdf(
+        self, input_data: GenerateSubmittalPdfInput
+    ) -> GenerateSubmittalPdfResult:
+        """
+        Generate a PDF for a submittal.
+
+        This method:
+        1. Fetches the submittal with all relations
+        2. Generates the PDF using the PDF service
+        3. Optionally creates a new revision
+        4. Returns a URL to download the PDF
+
+        Args:
+            input_data: PDF generation options
+
+        Returns:
+            GenerateSubmittalPdfResult with PDF URL and metadata
+        """
+        # Get submittal with all relations
+        submittal = await self.repository.get_by_id_with_relations(
+            input_data.submittal_id
+        )
+        if not submittal:
+            logger.warning(f"Submittal {input_data.submittal_id} not found for PDF gen")
+            return GenerateSubmittalPdfResult(
+                success=False,
+                error=f"Submittal with id {input_data.submittal_id} not found",
+            )
+
+        # TODO: Fetch spec sheet PDFs for items that have them
+        # This would need integration with the spec sheets service/S3
+        spec_sheet_pdfs: dict = {}
+
+        # Generate the PDF
+        pdf_result = await self.pdf_service.generate_submittal_pdf(
+            submittal=submittal,
+            input_data=input_data,
+            spec_sheet_pdfs=spec_sheet_pdfs,
+        )
+
+        if not pdf_result.success:
+            logger.error(
+                f"Failed to generate PDF for submittal {input_data.submittal_id}: "
+                f"{pdf_result.error}"
+            )
+            return GenerateSubmittalPdfResult(
+                success=False,
+                error=pdf_result.error,
+            )
+
+        # TODO: Upload PDF to S3 and get URL
+        # For now, we'll encode as base64 data URL for simplicity
+        import base64
+
+        pdf_base64 = base64.b64encode(pdf_result.pdf_bytes or b"").decode("utf-8")
+        pdf_url = f"data:application/pdf;base64,{pdf_base64}"
+
+        # Create revision if requested
+        revision = None
+        if input_data.create_revision:
+            revision = await self.create_revision(
+                submittal_id=input_data.submittal_id,
+                notes=input_data.revision_notes or "PDF generated",
+            )
+            logger.info(
+                f"Created revision {revision.revision_number} for submittal "
+                f"{input_data.submittal_id} after PDF generation"
+            )
+
+        logger.info(
+            f"Generated PDF for submittal {input_data.submittal_id}: "
+            f"{pdf_result.file_size_bytes} bytes"
+        )
+
+        return GenerateSubmittalPdfResult(
+            success=True,
+            pdf_url=pdf_url,
+            pdf_file_name=pdf_result.file_name,
+            pdf_file_size_bytes=pdf_result.file_size_bytes,
+            revision=revision,
+        )

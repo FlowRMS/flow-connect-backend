@@ -1,5 +1,6 @@
 """GraphQL queries for Submittals entity."""
 
+from typing import Optional
 from uuid import UUID
 
 import strawberry
@@ -21,7 +22,7 @@ class SubmittalsQueries:
         self,
         service: Injected[SubmittalsService],
         id: UUID,
-    ) -> SubmittalResponse | None:
+    ) -> Optional[SubmittalResponse]:
         """
         Get a submittal by ID.
 
@@ -80,7 +81,7 @@ class SubmittalsQueries:
         self,
         service: Injected[SubmittalsService],
         search_term: str = "",
-        status: SubmittalStatusGQL | None = None,
+        status: Optional[SubmittalStatusGQL] = None,
         limit: int = 50,
     ) -> list[SubmittalResponse]:
         """

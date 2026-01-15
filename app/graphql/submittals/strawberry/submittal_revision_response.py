@@ -1,7 +1,7 @@
 """GraphQL response type for SubmittalRevision."""
 
 from datetime import datetime
-from typing import Self
+from typing import Optional, Self
 from uuid import UUID
 
 import strawberry
@@ -19,10 +19,10 @@ class SubmittalRevisionResponse(DTOMixin[SubmittalRevision]):
     id: UUID
     submittal_id: UUID
     revision_number: int
-    pdf_file_id: UUID | None
-    pdf_file_url: str | None
-    pdf_file_name: str | None
-    notes: str | None
+    pdf_file_id: Optional[UUID]
+    pdf_file_url: Optional[str]
+    pdf_file_name: Optional[str]
+    notes: Optional[str]
     created_at: datetime
 
     @classmethod

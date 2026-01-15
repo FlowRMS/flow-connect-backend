@@ -1,7 +1,7 @@
 """GraphQL response type for Submittal."""
 
 from datetime import datetime
-from typing import TYPE_CHECKING, Self
+from typing import Annotated, Optional, Self
 from uuid import UUID
 
 import strawberry
@@ -14,17 +14,6 @@ from app.graphql.submittals.strawberry.enums import (
 )
 from app.graphql.v2.core.users.strawberry.user_response import UserResponse
 
-if TYPE_CHECKING:
-    from app.graphql.submittals.strawberry.submittal_item_response import (
-        SubmittalItemResponse,
-    )
-    from app.graphql.submittals.strawberry.submittal_revision_response import (
-        SubmittalRevisionResponse,
-    )
-    from app.graphql.submittals.strawberry.submittal_stakeholder_response import (
-        SubmittalStakeholderResponse,
-    )
-
 
 @strawberry.type
 class SubmittalResponse(DTOMixin[Submittal]):
@@ -33,11 +22,11 @@ class SubmittalResponse(DTOMixin[Submittal]):
     _instance: strawberry.Private[Submittal]
     id: UUID
     submittal_number: str
-    quote_id: UUID | None
-    job_id: UUID | None
+    quote_id: Optional[UUID]
+    job_id: Optional[UUID]
     status: SubmittalStatusGQL
-    transmittal_purpose: TransmittalPurposeGQL | None
-    description: str | None
+    transmittal_purpose: Optional[TransmittalPurposeGQL]
+    description: Optional[str]
     created_at: datetime
 
     @classmethod
@@ -65,7 +54,14 @@ class SubmittalResponse(DTOMixin[Submittal]):
         return UserResponse.from_orm_model(self._instance.created_by)
 
     @strawberry.field
-    def items(self) -> list["SubmittalItemResponse"]:
+    def items(
+        self,
+    ) -> list[
+        Annotated[
+            "SubmittalItemResponse",
+            strawberry.lazy("app.graphql.submittals.strawberry.submittal_item_response"),
+        ]
+    ]:
         """Resolve items from the ORM instance."""
         from app.graphql.submittals.strawberry.submittal_item_response import (
             SubmittalItemResponse,
@@ -74,7 +70,16 @@ class SubmittalResponse(DTOMixin[Submittal]):
         return SubmittalItemResponse.from_orm_model_list(self._instance.items)
 
     @strawberry.field
-    def stakeholders(self) -> list["SubmittalStakeholderResponse"]:
+    def stakeholders(
+        self,
+    ) -> list[
+        Annotated[
+            "SubmittalStakeholderResponse",
+            strawberry.lazy(
+                "app.graphql.submittals.strawberry.submittal_stakeholder_response"
+            ),
+        ]
+    ]:
         """Resolve stakeholders from the ORM instance."""
         from app.graphql.submittals.strawberry.submittal_stakeholder_response import (
             SubmittalStakeholderResponse,
@@ -85,7 +90,16 @@ class SubmittalResponse(DTOMixin[Submittal]):
         )
 
     @strawberry.field
-    def revisions(self) -> list["SubmittalRevisionResponse"]:
+    def revisions(
+        self,
+    ) -> list[
+        Annotated[
+            "SubmittalRevisionResponse",
+            strawberry.lazy(
+                "app.graphql.submittals.strawberry.submittal_revision_response"
+            ),
+        ]
+    ]:
         """Resolve revisions from the ORM instance."""
         from app.graphql.submittals.strawberry.submittal_revision_response import (
             SubmittalRevisionResponse,

@@ -19,6 +19,7 @@ from .submittal_item_response import SubmittalItemResponse
 from .submittal_response import SubmittalResponse
 from .submittal_revision_response import SubmittalRevisionResponse
 from .submittal_stakeholder_response import SubmittalStakeholderResponse
+from .send_email_response import SendSubmittalEmailResponse, SubmittalEmailResponse
 
 __all__ = [
     # Enums
@@ -32,6 +33,8 @@ __all__ = [
     "SubmittalItemResponse",
     "SubmittalStakeholderResponse",
     "SubmittalRevisionResponse",
+    "SubmittalEmailResponse",
+    "SendSubmittalEmailResponse",
     # Inputs
     "CreateSubmittalInput",
     "UpdateSubmittalInput",
