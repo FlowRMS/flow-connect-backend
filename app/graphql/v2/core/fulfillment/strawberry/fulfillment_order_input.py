@@ -1,0 +1,62 @@
+from datetime import date
+from uuid import UUID
+
+import strawberry
+from commons.db.v6.fulfillment import (
+    CarrierType,
+    FulfillmentMethod,
+    FulfillmentOrder,
+)
+
+from app.core.strawberry.inputs import BaseInputGQL
+from app.graphql.addresses.strawberry.address_input import AddressInput
+
+
+@strawberry.input
+class CreateFulfillmentOrderInput(BaseInputGQL[FulfillmentOrder]):
+    order_id: UUID
+    warehouse_id: UUID
+    fulfillment_method: FulfillmentMethod = FulfillmentMethod.SHIP
+    carrier_id: UUID | None = None
+    carrier_type: CarrierType | None = None
+    ship_to_address: AddressInput | None = None
+    ship_to_name: str | None = None
+    ship_to_phone: str | None = None
+    need_by_date: date | None = None
+
+    def to_orm_model(self) -> FulfillmentOrder:
+        order = FulfillmentOrder(
+            fulfillment_method=self.fulfillment_method,
+            carrier_type=self.carrier_type,
+            need_by_date=self.need_by_date,
+        )
+        order.fulfillment_order_number = ""  # Will be generated
+        order.order_id = self.order_id
+        order.warehouse_id = self.warehouse_id
+        order.carrier_id = self.carrier_id
+        # ship_to_address is handled by the service layer
+        return order
+
+
+@strawberry.input
+class UpdateFulfillmentOrderInput:
+    warehouse_id: UUID | None = strawberry.UNSET
+    fulfillment_method: FulfillmentMethod | None = strawberry.UNSET
+    carrier_id: UUID | None = strawberry.UNSET
+    carrier_type: CarrierType | None = strawberry.UNSET
+    freight_class: str | None = strawberry.UNSET
+    ship_to_address: AddressInput | None = strawberry.UNSET
+    ship_to_name: str | None = strawberry.UNSET
+    ship_to_phone: str | None = strawberry.UNSET
+    need_by_date: date | None = strawberry.UNSET
+    hold_reason: str | None = strawberry.UNSET
+
+
+@strawberry.input
+class CompleteShippingInput:
+    tracking_numbers: list[str] | None = None
+    bol_number: str | None = None
+    pro_number: str | None = None
+    signature: str | None = None
+    driver_name: str | None = None
+    pickup_customer_name: str | None = None
