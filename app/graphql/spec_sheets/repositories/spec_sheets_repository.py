@@ -5,6 +5,7 @@ from uuid import UUID
 from commons.db.v6.crm.spec_sheets.spec_sheet_model import SpecSheet
 from sqlalchemy import or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import joinedload
 
 from app.core.context_wrapper import ContextWrapper
 from app.graphql.base_repository import BaseRepository
@@ -26,6 +27,29 @@ class SpecSheetsRepository(BaseRepository[SpecSheet]):
             session: SQLAlchemy async session
         """
         super().__init__(session, context_wrapper, SpecSheet)
+
+    async def create(self, entity: SpecSheet) -> SpecSheet:
+        """
+        Create a new spec sheet and eagerly load relationships.
+
+        Overrides base create to ensure created_by relationship is loaded.
+
+        Args:
+            entity: SpecSheet to create
+
+        Returns:
+            Created SpecSheet with relationships loaded
+        """
+        created = await super().create(entity)
+
+        # Refresh to load the created_by relationship
+        stmt = (
+            select(SpecSheet)
+            .where(SpecSheet.id == created.id)
+            .options(joinedload(SpecSheet.created_by))
+        )
+        result = await self.session.execute(stmt)
+        return result.scalar_one()
 
     async def find_by_factory(
         self, factory_id: UUID, published_only: bool = True
