@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import Self
+from typing import TYPE_CHECKING, Self
 from uuid import UUID
 
 import strawberry
@@ -12,6 +12,11 @@ from app.graphql.v2.core.customers.strawberry.customer_split_rate_response impor
 )
 from app.graphql.v2.core.users.strawberry.user_response import UserResponse
 
+if TYPE_CHECKING:
+    from app.graphql.v2.core.territories.strawberry.territory_response import (
+        TerritoryLiteResponse,
+    )
+
 
 @strawberry.type
 class CustomerLiteResponse(DTOMixin[Customer]):
@@ -22,6 +27,7 @@ class CustomerLiteResponse(DTOMixin[Customer]):
     is_parent: bool
     parent_id: UUID | None
     buying_group_id: UUID | None
+    territory_id: UUID | None
 
     @classmethod
     def from_orm_model(cls, model: Customer) -> Self:
@@ -33,6 +39,7 @@ class CustomerLiteResponse(DTOMixin[Customer]):
             is_parent=model.is_parent,
             parent_id=model.parent_id,
             buying_group_id=model.buying_group_id,
+            territory_id=model.territory_id,
         )
 
 
@@ -65,3 +72,14 @@ class CustomerResponse(CustomerLiteResponse):
         if not buying_group:
             return None
         return CustomerLiteResponse.from_orm_model(buying_group)
+
+    @strawberry.field
+    def territory(self) -> TerritoryLiteResponse | None:
+        from app.graphql.v2.core.territories.strawberry.territory_response import (
+            TerritoryLiteResponse,
+        )
+
+        territory = self._instance.territory
+        if not territory:
+            return None
+        return TerritoryLiteResponse.from_orm_model(territory)
