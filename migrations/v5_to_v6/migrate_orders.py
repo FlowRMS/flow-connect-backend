@@ -205,7 +205,7 @@ async def migrate_order_inside_reps(source: asyncpg.Connection, dest: asyncpg.Co
         FROM commission.order_inside_reps oir
         JOIN commission.orders o ON o.id = oir.order_id
         JOIN commission.order_details od ON od.order_id = o.id
-        JOIN "user".users u ON u.id = o.created_by
+        JOIN "user".users u ON u.id = oir.user_id
         JOIN core.products p ON p.id = od.product_id
         WHERE o.sold_to_customer_id IS NOT NULL 
     """)

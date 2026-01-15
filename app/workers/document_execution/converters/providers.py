@@ -11,6 +11,7 @@ from .customer_converter import CustomerConverter
 from .factory_converter import FactoryConverter
 from .invoice_converter import InvoiceConverter
 from .invoice_creation_handler import InvoiceCreationHandler
+from .order_ack_converter import OrderAckConverter
 from .order_converter import OrderConverter
 from .order_creation_handler import OrderCreationHandler
 from .product_converter import ProductConverter
@@ -27,6 +28,7 @@ converter_providers = [
     aioinject.Scoped(CreditConverter),
     aioinject.Scoped(AdjustmentConverter),
     aioinject.Scoped(CheckConverter),
+    aioinject.Scoped(OrderAckConverter),
     aioinject.Scoped(OrderDetailMatcherService),
     aioinject.Scoped(OrderCreationHandler),
     aioinject.Scoped(InvoiceCreationHandler),

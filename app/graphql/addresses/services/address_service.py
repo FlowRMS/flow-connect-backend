@@ -32,6 +32,12 @@ class AddressService:
         address = await self.repository.create(address_input.to_orm_model())
         return await self.get_by_id(address.id)
 
+    async def bulk_create(self, address_inputs: list[AddressInput]) -> list[Address]:
+        if not address_inputs:
+            return []
+        entities = [inp.to_orm_model() for inp in address_inputs]
+        return await self.repository.bulk_create(entities)
+
     async def update(self, address_id: UUID, address_input: AddressInput) -> Address:
         address = address_input.to_orm_model()
         address.id = address_id
