@@ -1,3 +1,4 @@
+import logging
 from decimal import Decimal
 from uuid import UUID
 
@@ -88,8 +89,6 @@ class WarehouseLocationService:
         Handles creates, updates, and implicit deletes. Locations not in input are deleted.
         Supports temp_id/temp_parent_id for newly created hierarchical locations.
         """
-        import logging
-
         logger = logging.getLogger(__name__)
 
         if not await self.warehouse_repository.exists(warehouse_id):

@@ -6,21 +6,10 @@ from typing import TYPE_CHECKING, Self, cast
 from uuid import UUID
 
 import strawberry
-from aioinject import Injected
 from commons.db.v6 import ShippingCarrier
-from commons.db.v6.core.addresses.address import AddressSourceTypeEnum
-from commons.db.v6.crm.links.entity_type import EntityType
 from strawberry.scalars import JSON
 
 from app.core.db.adapters.dto import DTOMixin
-from app.graphql.addresses.repositories.address_repository import AddressRepository
-from app.graphql.addresses.strawberry.address_response import AddressResponse
-from app.graphql.contacts.repositories.contacts_repository import ContactsRepository
-from app.graphql.contacts.strawberry.contact_response import ContactLiteResponse
-from app.graphql.inject import inject
-from app.graphql.links.repositories.link_relations_repository import (
-    LinkRelationsRepository,
-)
 
 if TYPE_CHECKING:
     pass
@@ -91,47 +80,3 @@ class ShippingCarrierResponse(DTOMixin[ShippingCarrier]):
             remarks=model.remarks,
             internal_notes=model.internal_notes,
         )
-
-    @strawberry.field
-    @inject
-    async def billing_address(
-        self,
-        address_repo: Injected[AddressRepository],
-    ) -> AddressResponse | None:
-        """Get the billing address for this shipping carrier."""
-        addresses = await address_repo.list_by_source(
-            source_type=AddressSourceTypeEnum.SHIPPING_CARRIER,
-            source_id=self.id,
-        )
-        # Return the first (primary) billing address if exists
-        if addresses:
-            return AddressResponse.from_orm_model(addresses[0])
-        return None
-
-    @strawberry.field
-    @inject
-    async def primary_contact(
-        self,
-        link_repo: Injected[LinkRelationsRepository],
-        contacts_repo: Injected[ContactsRepository],
-    ) -> ContactLiteResponse | None:
-        """Get the primary contact for this shipping carrier via LinkRelation."""
-        # Find links from this carrier to contacts
-        links = await link_repo.get_links_from_source(
-            source_type=EntityType.SHIPPING_CARRIER,
-            source_id=self.id,
-        )
-
-        # Filter for contact links and get the first one
-        contact_links = [
-            link for link in links if link.target_entity_type == EntityType.CONTACT
-        ]
-
-        if not contact_links:
-            return None
-
-        # Get the contact
-        contact = await contacts_repo.get_by_id(contact_links[0].target_entity_id)
-        if contact:
-            return ContactLiteResponse.from_orm_model(contact)
-        return None
