@@ -17,6 +17,7 @@ class HighlightRegionInput:
     shape_type: str  # 'rectangle', 'oval'
     color: str  # hex color like '#FFD700'
     annotation: str | None = None
+    tags: list[str] | None = None
 
 
 @strawberry.input

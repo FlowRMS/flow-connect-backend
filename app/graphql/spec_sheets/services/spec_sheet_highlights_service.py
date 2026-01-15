@@ -60,6 +60,7 @@ class SpecSheetHighlightsService:
                 "shape_type": r.shape_type,
                 "color": r.color,
                 "annotation": r.annotation,
+                "tags": r.tags,
             }
             for r in input_data.regions
         ]
@@ -165,6 +166,7 @@ class SpecSheetHighlightsService:
                 "shape_type": r.shape_type,
                 "color": r.color,
                 "annotation": r.annotation,
+                "tags": r.tags,
             }
             for r in input_data.regions
         ]

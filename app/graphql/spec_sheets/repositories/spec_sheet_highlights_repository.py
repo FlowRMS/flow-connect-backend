@@ -145,6 +145,7 @@ class SpecSheetHighlightsRepository(BaseRepository[SpecSheetHighlightVersion]):
                 shape_type=region_data["shape_type"],
                 color=region_data["color"],
                 annotation=region_data.get("annotation"),
+                tags=region_data.get("tags"),
             )
             self.session.add(region)
 
@@ -188,6 +189,7 @@ class SpecSheetHighlightsRepository(BaseRepository[SpecSheetHighlightVersion]):
                 shape_type=region_data["shape_type"],
                 color=region_data["color"],
                 annotation=region_data.get("annotation"),
+                tags=region_data.get("tags"),
             )
             self.session.add(region)
 

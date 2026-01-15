@@ -28,6 +28,7 @@ class HighlightRegionResponse(DTOMixin[SpecSheetHighlightRegion]):
     shape_type: str
     color: str
     annotation: str | None
+    tags: list[str] | None
     created_at: datetime
 
     @classmethod
@@ -44,6 +45,7 @@ class HighlightRegionResponse(DTOMixin[SpecSheetHighlightRegion]):
             shape_type=model.shape_type,
             color=model.color,
             annotation=model.annotation,
+            tags=model.tags,
             created_at=model.created_at,
         )
 
