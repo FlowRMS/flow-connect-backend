@@ -74,6 +74,7 @@ class InvoiceCreationHandler:
                     entity_type=EntityPendingType.INVOICES,
                     pending_entity_id=pe_id,
                     error_message=error_msg,
+                    dto_json=grouped.dto.model_dump(mode="json"),
                 )
             )
             return None
@@ -93,6 +94,7 @@ class InvoiceCreationHandler:
                         entity_type=EntityPendingType.INVOICES,
                         pending_entity_id=pe_id,
                         error_message=str(e),
+                        dto_json=grouped.dto.model_dump(mode="json"),
                     )
                 )
                 return None

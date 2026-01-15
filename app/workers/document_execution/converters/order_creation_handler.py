@@ -80,6 +80,7 @@ class OrderCreationHandler:
                             entity_type=EntityPendingType.ORDERS,
                             pending_entity_id=pe_id,
                             error_message=str(e),
+                            dto_json=grouped.dto.model_dump(mode="json"),
                         )
                     )
 
