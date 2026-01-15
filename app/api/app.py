@@ -12,6 +12,7 @@ from loguru import logger
 from sqlalchemy.orm import configure_mappers
 from taskiq_fastapi import init
 
+import app.graphql.checks.listeners  # noqa: F401  # pyright: ignore[reportUnusedImport]
 from app.admin.app import create_admin_graphql_app
 from app.api.o365_router import router as o365_router
 from app.core.config.settings import Settings
