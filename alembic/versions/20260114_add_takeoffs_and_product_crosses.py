@@ -8,10 +8,10 @@ Create Date: 2026-01-14
 
 from collections.abc import Sequence
 
-from alembic import op
 import sqlalchemy as sa
 from sqlalchemy.dialects import postgresql
 
+from alembic import op
 
 revision: str = "takeoffs_product_crosses_001"
 down_revision: str | None = "uq_check_details_entities"
@@ -27,18 +27,35 @@ def upgrade() -> None:
         sa.Column("takeoff_number", sa.String(20), nullable=False),
         sa.Column("title", sa.String(500), nullable=False),
         sa.Column("created_by_id", sa.UUID(), nullable=False),
-        sa.Column("source", sa.String(255), nullable=False, server_default="Manual Upload"),
+        sa.Column(
+            "source", sa.String(255), nullable=False, server_default="Manual Upload"
+        ),
         sa.Column("status", sa.SmallInteger(), nullable=False, server_default="1"),
         sa.Column("quote_id", sa.UUID(), nullable=True),
-        sa.Column("takeoff_metadata", postgresql.JSONB(astext_type=sa.Text()), nullable=True),
-        sa.Column("created_at", sa.TIMESTAMP(timezone=True), server_default=sa.text("now()"), nullable=False),
+        sa.Column(
+            "takeoff_metadata", postgresql.JSONB(astext_type=sa.Text()), nullable=True
+        ),
+        sa.Column(
+            "created_at",
+            sa.TIMESTAMP(timezone=True),
+            server_default=sa.text("now()"),
+            nullable=False,
+        ),
         sa.PrimaryKeyConstraint("id", name=op.f("pk_ai_takeoffs")),
         schema="ai",
     )
-    op.create_index("ix_ai_takeoffs_created_by_id", "takeoffs", ["created_by_id"], schema="ai")
+    op.create_index(
+        "ix_ai_takeoffs_created_by_id", "takeoffs", ["created_by_id"], schema="ai"
+    )
     op.create_index("ix_ai_takeoffs_status", "takeoffs", ["status"], schema="ai")
     op.create_index("ix_ai_takeoffs_quote_id", "takeoffs", ["quote_id"], schema="ai")
-    op.create_index("ix_ai_takeoffs_takeoff_number", "takeoffs", ["takeoff_number"], unique=True, schema="ai")
+    op.create_index(
+        "ix_ai_takeoffs_takeoff_number",
+        "takeoffs",
+        ["takeoff_number"],
+        unique=True,
+        schema="ai",
+    )
 
     # Create takeoff_documents table
     op.create_table(
@@ -53,24 +70,48 @@ def upgrade() -> None:
         sa.Column("abridged_pages", sa.Integer(), nullable=True),
         sa.Column("abridged_url", sa.TEXT(), nullable=True),
         sa.Column("reduction_percentage", sa.Float(), nullable=True),
-        sa.Column("page_analyses", postgresql.JSONB(astext_type=sa.Text()), nullable=True),
+        sa.Column(
+            "page_analyses", postgresql.JSONB(astext_type=sa.Text()), nullable=True
+        ),
         sa.Column("products", postgresql.JSONB(astext_type=sa.Text()), nullable=True),
-        sa.Column("parsed_items", postgresql.JSONB(astext_type=sa.Text()), nullable=True),
-        sa.Column("created_at", sa.TIMESTAMP(timezone=True), server_default=sa.text("now()"), nullable=False),
+        sa.Column(
+            "parsed_items", postgresql.JSONB(astext_type=sa.Text()), nullable=True
+        ),
+        sa.Column(
+            "created_at",
+            sa.TIMESTAMP(timezone=True),
+            server_default=sa.text("now()"),
+            nullable=False,
+        ),
         sa.PrimaryKeyConstraint("id", name=op.f("pk_ai_takeoff_documents")),
         sa.ForeignKeyConstraint(
-            ["takeoff_id"], ["ai.takeoffs.id"],
-            name=op.f("fk_ai_takeoff_documents_takeoff_id_takeoffs"), ondelete="CASCADE"
+            ["takeoff_id"],
+            ["ai.takeoffs.id"],
+            name=op.f("fk_ai_takeoff_documents_takeoff_id_takeoffs"),
+            ondelete="CASCADE",
         ),
         sa.ForeignKeyConstraint(
-            ["file_id"], ["pyfiles.files.id"],
-            name=op.f("fk_ai_takeoff_documents_file_id_files")
+            ["file_id"],
+            ["pyfiles.files.id"],
+            name=op.f("fk_ai_takeoff_documents_file_id_files"),
         ),
         schema="ai",
     )
-    op.create_index("ix_ai_takeoff_documents_takeoff_id", "takeoff_documents", ["takeoff_id"], schema="ai")
-    op.create_index("ix_ai_takeoff_documents_file_id", "takeoff_documents", ["file_id"], schema="ai")
-    op.create_index("ix_ai_takeoff_documents_classification", "takeoff_documents", ["classification"], schema="ai")
+    op.create_index(
+        "ix_ai_takeoff_documents_takeoff_id",
+        "takeoff_documents",
+        ["takeoff_id"],
+        schema="ai",
+    )
+    op.create_index(
+        "ix_ai_takeoff_documents_file_id", "takeoff_documents", ["file_id"], schema="ai"
+    )
+    op.create_index(
+        "ix_ai_takeoff_documents_classification",
+        "takeoff_documents",
+        ["classification"],
+        schema="ai",
+    )
 
     # Create product_crosses table
     op.create_table(
@@ -85,16 +126,48 @@ def upgrade() -> None:
         sa.Column("our_description", sa.String(1000), nullable=True),
         sa.Column("times_used", sa.Integer(), nullable=False, server_default="0"),
         sa.Column("last_used", sa.TIMESTAMP(timezone=True), nullable=True),
-        sa.Column("created_at", sa.TIMESTAMP(timezone=True), server_default=sa.text("now()"), nullable=False),
-        sa.Column("updated_at", sa.TIMESTAMP(timezone=True), server_default=sa.text("now()"), nullable=False),
+        sa.Column(
+            "created_at",
+            sa.TIMESTAMP(timezone=True),
+            server_default=sa.text("now()"),
+            nullable=False,
+        ),
+        sa.Column(
+            "updated_at",
+            sa.TIMESTAMP(timezone=True),
+            server_default=sa.text("now()"),
+            nullable=False,
+        ),
         sa.PrimaryKeyConstraint("id", name=op.f("pk_ai_product_crosses")),
         schema="ai",
     )
-    op.create_index("ix_ai_product_crosses_user_id", "product_crosses", ["user_id"], schema="ai")
-    op.create_index("ix_ai_product_crosses_competitor_manufacturer", "product_crosses", ["competitor_manufacturer"], schema="ai")
-    op.create_index("ix_ai_product_crosses_competitor_part_number", "product_crosses", ["competitor_part_number"], schema="ai")
-    op.create_index("ix_ai_product_crosses_our_manufacturer", "product_crosses", ["our_manufacturer"], schema="ai")
-    op.create_index("ix_ai_product_crosses_our_part_number", "product_crosses", ["our_part_number"], schema="ai")
+    op.create_index(
+        "ix_ai_product_crosses_user_id", "product_crosses", ["user_id"], schema="ai"
+    )
+    op.create_index(
+        "ix_ai_product_crosses_competitor_manufacturer",
+        "product_crosses",
+        ["competitor_manufacturer"],
+        schema="ai",
+    )
+    op.create_index(
+        "ix_ai_product_crosses_competitor_part_number",
+        "product_crosses",
+        ["competitor_part_number"],
+        schema="ai",
+    )
+    op.create_index(
+        "ix_ai_product_crosses_our_manufacturer",
+        "product_crosses",
+        ["our_manufacturer"],
+        schema="ai",
+    )
+    op.create_index(
+        "ix_ai_product_crosses_our_part_number",
+        "product_crosses",
+        ["our_part_number"],
+        schema="ai",
+    )
 
     # Create cross_prompt_templates table
     op.create_table(
@@ -106,30 +179,86 @@ def upgrade() -> None:
         sa.Column("description", sa.String(500), nullable=True),
         sa.Column("times_used", sa.Integer(), nullable=False, server_default="0"),
         sa.Column("last_used", sa.TIMESTAMP(timezone=True), nullable=True),
-        sa.Column("created_at", sa.TIMESTAMP(timezone=True), server_default=sa.text("now()"), nullable=False),
-        sa.Column("updated_at", sa.TIMESTAMP(timezone=True), server_default=sa.text("now()"), nullable=False),
+        sa.Column(
+            "created_at",
+            sa.TIMESTAMP(timezone=True),
+            server_default=sa.text("now()"),
+            nullable=False,
+        ),
+        sa.Column(
+            "updated_at",
+            sa.TIMESTAMP(timezone=True),
+            server_default=sa.text("now()"),
+            nullable=False,
+        ),
         sa.PrimaryKeyConstraint("id", name=op.f("pk_ai_cross_prompt_templates")),
         schema="ai",
     )
-    op.create_index("ix_ai_cross_prompt_templates_user_id", "cross_prompt_templates", ["user_id"], schema="ai")
-    op.create_index("ix_ai_cross_prompt_templates_name", "cross_prompt_templates", ["name"], schema="ai")
+    op.create_index(
+        "ix_ai_cross_prompt_templates_user_id",
+        "cross_prompt_templates",
+        ["user_id"],
+        schema="ai",
+    )
+    op.create_index(
+        "ix_ai_cross_prompt_templates_name",
+        "cross_prompt_templates",
+        ["name"],
+        schema="ai",
+    )
 
 
 def downgrade() -> None:
-    op.drop_index("ix_ai_cross_prompt_templates_name", table_name="cross_prompt_templates", schema="ai")
-    op.drop_index("ix_ai_cross_prompt_templates_user_id", table_name="cross_prompt_templates", schema="ai")
+    op.drop_index(
+        "ix_ai_cross_prompt_templates_name",
+        table_name="cross_prompt_templates",
+        schema="ai",
+    )
+    op.drop_index(
+        "ix_ai_cross_prompt_templates_user_id",
+        table_name="cross_prompt_templates",
+        schema="ai",
+    )
     op.drop_table("cross_prompt_templates", schema="ai")
 
-    op.drop_index("ix_ai_product_crosses_our_part_number", table_name="product_crosses", schema="ai")
-    op.drop_index("ix_ai_product_crosses_our_manufacturer", table_name="product_crosses", schema="ai")
-    op.drop_index("ix_ai_product_crosses_competitor_part_number", table_name="product_crosses", schema="ai")
-    op.drop_index("ix_ai_product_crosses_competitor_manufacturer", table_name="product_crosses", schema="ai")
-    op.drop_index("ix_ai_product_crosses_user_id", table_name="product_crosses", schema="ai")
+    op.drop_index(
+        "ix_ai_product_crosses_our_part_number",
+        table_name="product_crosses",
+        schema="ai",
+    )
+    op.drop_index(
+        "ix_ai_product_crosses_our_manufacturer",
+        table_name="product_crosses",
+        schema="ai",
+    )
+    op.drop_index(
+        "ix_ai_product_crosses_competitor_part_number",
+        table_name="product_crosses",
+        schema="ai",
+    )
+    op.drop_index(
+        "ix_ai_product_crosses_competitor_manufacturer",
+        table_name="product_crosses",
+        schema="ai",
+    )
+    op.drop_index(
+        "ix_ai_product_crosses_user_id", table_name="product_crosses", schema="ai"
+    )
     op.drop_table("product_crosses", schema="ai")
 
-    op.drop_index("ix_ai_takeoff_documents_classification", table_name="takeoff_documents", schema="ai")
-    op.drop_index("ix_ai_takeoff_documents_file_id", table_name="takeoff_documents", schema="ai")
-    op.drop_index("ix_ai_takeoff_documents_takeoff_id", table_name="takeoff_documents", schema="ai")
+    op.drop_index(
+        "ix_ai_takeoff_documents_classification",
+        table_name="takeoff_documents",
+        schema="ai",
+    )
+    op.drop_index(
+        "ix_ai_takeoff_documents_file_id", table_name="takeoff_documents", schema="ai"
+    )
+    op.drop_index(
+        "ix_ai_takeoff_documents_takeoff_id",
+        table_name="takeoff_documents",
+        schema="ai",
+    )
     op.drop_table("takeoff_documents", schema="ai")
 
     op.drop_index("ix_ai_takeoffs_takeoff_number", table_name="takeoffs", schema="ai")
