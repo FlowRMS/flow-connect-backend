@@ -19,7 +19,7 @@ from app.graphql.v2.core.fulfillment.repositories import (
     FulfillmentAssignmentRepository,
     FulfillmentOrderRepository,
 )
-from app.graphql.v2.core.fulfillment.strawberry.fulfillment_input import (
+from app.graphql.v2.core.fulfillment.strawberry import (
     BulkAssignmentInput,
     CreateFulfillmentOrderInput,
     UpdateFulfillmentOrderInput,
