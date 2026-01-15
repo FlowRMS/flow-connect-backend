@@ -47,8 +47,10 @@ class OrderAckConverter(
     async def find_existing(
         self, input_data: OrderAcknowledgementInput
     ) -> OrderAcknowledgement | None:
+        if not input_data.order_detail_ids:
+            return None
         existing = await self.order_ack_service.find_by_order_detail_id(
-            input_data.order_detail_id
+            input_data.order_detail_ids[0]
         )
         for ack in existing:
             if (
@@ -105,7 +107,7 @@ class OrderAckConverter(
         return ConversionResult.ok(
             OrderAcknowledgementInput(
                 order_id=order_id,
-                order_detail_id=order_detail_id,
+                order_detail_ids=[order_detail_id],
                 order_acknowledgement_number=ack_number,
                 entity_date=entity_date,
                 quantity=quantity,

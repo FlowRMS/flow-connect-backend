@@ -35,15 +35,22 @@ class OrderAcknowledgementService:
 
     async def create(self, input: OrderAcknowledgementInput) -> OrderAcknowledgement:
         acknowledgement = input.to_orm_model()
-        return await self.repository.create(acknowledgement)
+        created = await self.repository.create(acknowledgement)
+        await self.repository.sync_detail_links(created.id, input.order_detail_ids)
+        return await self.repository.get_by_id(created.id)  # type: ignore
 
     async def update(self, input: OrderAcknowledgementInput) -> OrderAcknowledgement:
         if input.id is None:
             raise ValueError("ID must be provided for update")
 
+        if not input.order_detail_ids:
+            raise ValueError("At least one order_detail_id is required")
+
         acknowledgement = input.to_orm_model()
         acknowledgement.id = input.id
-        return await self.repository.update(acknowledgement)
+        updated = await self.repository.update(acknowledgement)
+        await self.repository.sync_detail_links(updated.id, input.order_detail_ids)
+        return await self.repository.get_by_id(updated.id)  # type: ignore
 
     async def delete(self, acknowledgement_id: UUID) -> bool:
         if not await self.repository.exists(acknowledgement_id):

@@ -103,7 +103,10 @@ class OrderDetailResponse(DTOMixin[OrderDetail]):
     @strawberry.field
     def acknowledgements(self) -> list[OrderAcknowledgementResponse]:
         return OrderAcknowledgementResponse.from_orm_model_list(
-            self._instance.acknowledgements
+            [
+                link.order_acknowledgement
+                for link in self._instance.acknowledgement_links
+            ]
         )
 
     @strawberry.field

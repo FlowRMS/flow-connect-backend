@@ -55,6 +55,7 @@ enum AddressSourceTypeEnum {
   CUSTOMER
   FACTORY
   SHIPPING_CARRIER
+  FULFILLMENT_ORDER
 }
 
 enum AddressTypeEnum {
@@ -1932,7 +1933,7 @@ type O365SendEmailResultType {
 
 input OrderAcknowledgementInput {
   orderId: UUID!
-  orderDetailId: UUID!
+  orderDetailIds: [UUID!]!
   orderAcknowledgementNumber: String!
   entityDate: Date!
   quantity: Decimal!
@@ -1962,11 +1963,11 @@ type OrderAcknowledgementResponse {
   createdAt: datetime!
   createdById: UUID!
   orderId: UUID!
-  orderDetailId: UUID!
   orderAcknowledgementNumber: String!
   entityDate: Date!
   quantity: Decimal!
   creationType: CreationType!
+  orderDetailIds: [UUID!]!
 }
 
 type OrderBalanceResponse {

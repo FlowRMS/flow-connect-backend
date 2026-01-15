@@ -2,14 +2,19 @@ from typing import Any
 from uuid import UUID
 
 from commons.db.v6 import RbacResourceEnum, User
-from commons.db.v6.commission.orders import Order, OrderAcknowledgement, OrderDetail
+from commons.db.v6.commission.orders import (
+    Order,
+    OrderAcknowledgement,
+    OrderAcknowledgementDetail,
+    OrderDetail,
+)
 from commons.db.v6.core import Customer, Factory
 from commons.db.v6.core.products import Product
-from sqlalchemy import Select, func, literal, select
+from sqlalchemy import Select, delete, func, literal, select
 from sqlalchemy.dialects.postgresql import ARRAY
 from sqlalchemy.dialects.postgresql import UUID as PG_UUID
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.orm import lazyload
+from sqlalchemy.orm import lazyload, selectinload
 
 from app.core.context_wrapper import ContextWrapper
 from app.graphql.base_repository import BaseRepository
@@ -62,7 +67,15 @@ class OrderAcknowledgementRepository(BaseRepository[OrderAcknowledgement]):
             .options(lazyload("*"))
             .join(User, User.id == OrderAcknowledgement.created_by_id)
             .join(Order, Order.id == OrderAcknowledgement.order_id)
-            .join(OrderDetail, OrderDetail.id == OrderAcknowledgement.order_detail_id)
+            .join(
+                OrderAcknowledgementDetail,
+                OrderAcknowledgementDetail.order_acknowledgement_id
+                == OrderAcknowledgement.id,
+            )
+            .join(
+                OrderDetail,
+                OrderDetail.id == OrderAcknowledgementDetail.order_detail_id,
+            )
             .join(Customer, Customer.id == Order.sold_to_customer_id)
             .join(Factory, Factory.id == Order.factory_id)
             .outerjoin(Product, Product.id == OrderDetail.product_id)
@@ -88,7 +101,7 @@ class OrderAcknowledgementRepository(BaseRepository[OrderAcknowledgement]):
     async def find_by_order_id(self, order_id: UUID) -> list[OrderAcknowledgement]:
         stmt = (
             select(OrderAcknowledgement)
-            .options(lazyload("*"))
+            .options(selectinload(OrderAcknowledgement.details))
             .where(OrderAcknowledgement.order_id == order_id)
         )
         result = await self.session.execute(stmt)
@@ -99,8 +112,28 @@ class OrderAcknowledgementRepository(BaseRepository[OrderAcknowledgement]):
     ) -> list[OrderAcknowledgement]:
         stmt = (
             select(OrderAcknowledgement)
-            .options(lazyload("*"))
-            .where(OrderAcknowledgement.order_detail_id == order_detail_id)
+            .options(selectinload(OrderAcknowledgement.details))
+            .join(OrderAcknowledgementDetail)
+            .where(OrderAcknowledgementDetail.order_detail_id == order_detail_id)
         )
         result = await self.session.execute(stmt)
         return list(result.scalars().all())
+
+    async def sync_detail_links(
+        self,
+        acknowledgement_id: UUID,
+        order_detail_ids: list[UUID],
+    ) -> None:
+        stmt = delete(OrderAcknowledgementDetail).where(
+            OrderAcknowledgementDetail.order_acknowledgement_id == acknowledgement_id
+        )
+        _ = await self.session.execute(stmt)
+
+        for order_detail_id in order_detail_ids:
+            link = OrderAcknowledgementDetail(
+                order_acknowledgement_id=acknowledgement_id,
+                order_detail_id=order_detail_id,
+            )
+            self.session.add(link)
+
+        await self.session.flush()
