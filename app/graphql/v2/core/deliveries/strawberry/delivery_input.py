@@ -187,16 +187,22 @@ class DeliveryDocumentInput(BaseInputGQL[DeliveryDocument]):
     """Input type for creating/updating delivery documents."""
 
     delivery_id: UUID
-    file_id: UUID
+    name: str
     doc_type: DeliveryDocumentTypeGQL
+    file_url: str
+    mime_type: str
+    file_size: int | None = None
     uploaded_by_id: UUID | None = None
     notes: str | None = None
 
     def to_orm_model(self) -> DeliveryDocument:
         return DeliveryDocument(
             delivery_id=self.delivery_id,
-            file_id=self.file_id,
+            name=self.name,
             doc_type=DeliveryDocumentType(self.doc_type.value),
+            file_url=self.file_url,
+            mime_type=self.mime_type,
+            file_size=self.file_size,
             uploaded_by_id=self.uploaded_by_id,
             notes=self.notes,
         )

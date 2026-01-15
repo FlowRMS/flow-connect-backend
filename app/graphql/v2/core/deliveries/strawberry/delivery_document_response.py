@@ -1,6 +1,5 @@
 
 from datetime import datetime
-import mimetypes
 from typing import Self
 from uuid import UUID
 
@@ -30,17 +29,15 @@ class DeliveryDocumentResponse(DTOMixin[DeliveryDocument]):
 
     @classmethod
     def from_orm_model(cls, model: DeliveryDocument) -> Self:
-        file = model.file
-        mime_type, _ = mimetypes.guess_type(file.file_name)
         return cls(
             _instance=model,
             id=model.id,
             delivery_id=model.delivery_id,
-            name=file.file_name,
+            name=model.name,
             doc_type=DeliveryDocumentTypeGQL(model.doc_type.value),
-            file_url=file.full_path,
-            mime_type=mime_type or "application/octet-stream",
-            file_size=file.file_size,
+            file_url=model.file_url,
+            mime_type=model.mime_type,
+            file_size=model.file_size,
             uploaded_by_id=model.uploaded_by_id,
             uploaded_at=model.uploaded_at,
             notes=model.notes,
