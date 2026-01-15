@@ -26,9 +26,6 @@ from app.graphql.base_repository import BaseRepository
 from app.graphql.checks.processors.validate_check_entities_processor import (
     ValidateCheckEntitiesProcessor,
 )
-from app.graphql.checks.processors.validate_check_status_processor import (
-    ValidateCheckStatusProcessor,
-)
 from app.graphql.checks.strawberry.check_landing_page_response import (
     CheckLandingPageResponse,
 )
@@ -47,7 +44,6 @@ class ChecksRepository(BaseRepository[Check]):
         context_wrapper: ContextWrapper,
         session: AsyncSession,
         processor_executor: ProcessorExecutor,
-        validate_status_processor: ValidateCheckStatusProcessor,
         validate_entities_processor: ValidateCheckEntitiesProcessor,
         rbac_filter_service: RbacFilterService,
     ) -> None:
@@ -58,7 +54,6 @@ class ChecksRepository(BaseRepository[Check]):
             rbac_filter_service,
             processor_executor=processor_executor,
             processor_executor_classes=[
-                validate_status_processor,
                 validate_entities_processor,
             ],
         )

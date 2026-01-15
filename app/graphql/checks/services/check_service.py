@@ -44,6 +44,11 @@ class CheckService:
         if check_input.id is None:
             raise ValueError("ID must be provided for update")
 
+        existing_check = await self.repository.find_check_by_id(check_input.id)
+
+        if existing_check.status == CheckStatus.POSTED:
+            raise ValueError("Posted checks cannot be updated")
+
         check = check_input.to_orm_model()
         check.id = check_input.id
         updated = await self.repository.update(check)
