@@ -109,7 +109,7 @@ class CreatePackingBoxInput(BaseInputGQL[PackingBox]):
 
 
 @strawberry.input
-class UpdatePackingBoxInput:
+class UpdatePackingBoxInput(BaseInputGQL[PackingBox]):
     container_type_id: UUID | None = strawberry.UNSET
     length: Decimal | None = strawberry.UNSET
     width: Decimal | None = strawberry.UNSET
