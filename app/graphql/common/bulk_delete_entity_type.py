@@ -10,6 +10,7 @@ class BulkDeleteEntityType(Enum):
     PRODUCTS = "products"
     ORDERS = "orders"
     INVOICES = "invoices"
+    CREDITS = "credits"
     QUOTES = "quotes"
     CHECKS = "checks"
     PRE_OPS = "pre_ops"

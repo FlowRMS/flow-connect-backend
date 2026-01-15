@@ -187,6 +187,7 @@ enum BulkDeleteEntityType {
   PRODUCTS
   ORDERS
   INVOICES
+  CREDITS
   QUOTES
   CHECKS
   PRE_OPS
@@ -1339,6 +1340,7 @@ type InvoiceDetailResponse {
   note: String
   status: InvoiceStatus!
   invoicedBalance: Decimal!
+  endUser: CustomerLiteResponse
   product: ProductLiteResponse
   uom: ProductUomResponse
   outsideSplitRates: [InvoiceSplitRateResponse!]!
@@ -2042,6 +2044,7 @@ type OrderDetailResponse {
   shippingBalance: Decimal!
   cancelledBalance: Decimal!
   outsideSplitRates: [OrderSplitRateResponse!]!
+  endUser: CustomerLiteResponse
   insideSplitRates: [OrderInsideRepResponse!]!
   product: ProductLiteResponse
   uom: ProductUomResponse
@@ -2066,6 +2069,7 @@ input OrderInput {
   factoryId: UUID!
   details: [OrderDetailInput!]!
   id: UUID
+  jobId: UUID
   published: Boolean!
   creationType: CreationType!
   orderType: OrderType!
@@ -2873,6 +2877,7 @@ type QuoteDetailResponse {
   leadTime: String
   note: String
   status: QuoteDetailStatus!
+  endUser: CustomerLiteResponse
   outsideSplitRates: [QuoteSplitRateResponse!]!
   insideSplitRates: [QuoteInsideRepResponse!]!
   product: ProductLiteResponse
