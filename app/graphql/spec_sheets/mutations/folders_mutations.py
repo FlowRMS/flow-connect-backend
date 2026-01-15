@@ -65,7 +65,7 @@ class FoldersMutations:
             input.new_name,
         )
         return RenameSpecSheetFolderResult(
-            folder=SpecSheetFolderResponse.from_orm_model(folder),
+            folder=SpecSheetFolderResponse.from_orm_model(folder, spec_count),
             spec_sheets_updated=spec_count,
         )
 

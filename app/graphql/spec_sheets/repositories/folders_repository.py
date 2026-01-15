@@ -39,6 +39,101 @@ class FoldersRepository(BaseRepository[SpecSheetFolder]):
         result = await self.session.execute(stmt)
         return list(result.scalars().all())
 
+    async def find_by_factory_with_counts(
+        self, factory_id: UUID
+    ) -> list[tuple[SpecSheetFolder, int]]:
+        """
+        Find all folders for a given factory with spec sheet counts.
+
+        Uses a subquery to count spec sheets in each folder efficiently.
+
+        Args:
+            factory_id: UUID of the factory
+
+        Returns:
+            List of tuples (Folder, spec_sheet_count)
+        """
+        # Subquery to count spec sheets per folder_path
+        count_subquery = (
+            select(
+                SpecSheet.folder_path,
+                func.count().label("spec_count"),
+            )
+            .where(SpecSheet.factory_id == factory_id)
+            .group_by(SpecSheet.folder_path)
+            .subquery()
+        )
+
+        # Main query joining folders with counts
+        stmt = (
+            select(
+                SpecSheetFolder,
+                func.coalesce(count_subquery.c.spec_count, 0).label("spec_count"),
+            )
+            .outerjoin(
+                count_subquery,
+                SpecSheetFolder.folder_path == count_subquery.c.folder_path,
+            )
+            .where(SpecSheetFolder.factory_id == factory_id)
+            .order_by(SpecSheetFolder.folder_path)
+        )
+
+        result = await self.session.execute(stmt)
+        return [(row[0], row[1]) for row in result.all()]
+
+    async def get_folder_paths_with_counts(
+        self, factory_id: UUID
+    ) -> list[tuple[str, int]]:
+        """
+        Get all folder paths that contain spec sheets with their counts.
+
+        This gets folder paths directly from spec_sheets table, not from
+        spec_sheet_folders. Counts are recursive (parent folders include
+        counts from subfolders).
+
+        Args:
+            factory_id: UUID of the factory
+
+        Returns:
+            List of tuples (folder_path, spec_sheet_count) ordered by path
+        """
+        # Get all spec sheets with their folder_paths for this factory
+        stmt = select(SpecSheet.folder_path).where(
+            and_(
+                SpecSheet.factory_id == factory_id,
+                SpecSheet.folder_path.isnot(None),
+                SpecSheet.folder_path != "",
+            )
+        )
+        result = await self.session.execute(stmt)
+        folder_paths = [row[0] for row in result.all()]
+
+        # Build a set of all folder paths (including parent paths)
+        all_paths: set[str] = set()
+        path_counts: dict[str, int] = {}
+
+        for folder_path in folder_paths:
+            # Add count for the exact folder
+            path_counts[folder_path] = path_counts.get(folder_path, 0) + 1
+
+            # Add all parent paths to the set
+            parts = folder_path.split("/")
+            for i in range(1, len(parts) + 1):
+                parent_path = "/".join(parts[:i])
+                all_paths.add(parent_path)
+
+        # Calculate recursive counts for each path
+        result_list: list[tuple[str, int]] = []
+        for path in sorted(all_paths):
+            # Count all spec sheets in this path and subpaths
+            count = sum(
+                c for p, c in path_counts.items()
+                if p == path or p.startswith(f"{path}/")
+            )
+            result_list.append((path, count))
+
+        return result_list
+
     async def find_by_path(
         self, factory_id: UUID, folder_path: str
     ) -> SpecSheetFolder | None:

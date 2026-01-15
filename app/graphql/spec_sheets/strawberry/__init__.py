@@ -6,6 +6,7 @@ from app.graphql.spec_sheets.strawberry.folder_input import (
     RenameFolderInput,
 )
 from app.graphql.spec_sheets.strawberry.folder_response import (
+    FolderPathWithCount,
     RenameSpecSheetFolderResult,
     SpecSheetFolderResponse,
 )
@@ -33,6 +34,7 @@ __all__ = [
     "DeleteFolderInput",
     "SpecSheetFolderResponse",
     "RenameSpecSheetFolderResult",
+    "FolderPathWithCount",
     # SpecSheet types
     "CreateSpecSheetInput",
     "UpdateSpecSheetInput",

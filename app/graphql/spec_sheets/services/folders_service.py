@@ -33,6 +33,37 @@ class FoldersService:
         """
         return await self.repository.find_by_factory(factory_id)
 
+    async def get_folders_by_factory_with_counts(
+        self, factory_id: UUID
+    ) -> list[tuple[SpecSheetFolder, int]]:
+        """
+        Get all folders for a factory with spec sheet counts.
+
+        Args:
+            factory_id: UUID of the factory
+
+        Returns:
+            List of tuples (Folder, spec_sheet_count)
+        """
+        return await self.repository.find_by_factory_with_counts(factory_id)
+
+    async def get_folder_paths_with_counts(
+        self, factory_id: UUID
+    ) -> list[tuple[str, int]]:
+        """
+        Get all folder paths that contain spec sheets with their counts.
+
+        This includes virtual folders derived from spec sheet folder_paths,
+        not just folders in the spec_sheet_folders table. Counts are recursive.
+
+        Args:
+            factory_id: UUID of the factory
+
+        Returns:
+            List of tuples (folder_path, spec_sheet_count)
+        """
+        return await self.repository.get_folder_paths_with_counts(factory_id)
+
     async def create_folder(
         self, factory_id: UUID, folder_path: str
     ) -> SpecSheetFolder:
