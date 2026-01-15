@@ -11,7 +11,7 @@ class ValidateCheckStatusProcessor(BaseProcessor[Check]):
         return [RepositoryEvent.PRE_UPDATE, RepositoryEvent.PRE_DELETE]
 
     async def process(self, context: EntityContext[Check]) -> None:
-        original = context.original_entity
+        original = context.entity
         if original is None:
             return
 
