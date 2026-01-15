@@ -39,7 +39,7 @@ class CreateFulfillmentOrderInput(BaseInputGQL[FulfillmentOrder]):
 
 
 @strawberry.input
-class UpdateFulfillmentOrderInput:
+class UpdateFulfillmentOrderInput(BaseInputGQL[FulfillmentOrder]):
     warehouse_id: UUID | None = strawberry.UNSET
     fulfillment_method: FulfillmentMethod | None = strawberry.UNSET
     carrier_id: UUID | None = strawberry.UNSET
