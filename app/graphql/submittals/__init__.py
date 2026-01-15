@@ -4,8 +4,8 @@ from .mutations import SubmittalsMutations
 from .queries import SubmittalsQueries
 from .repositories import (
     SubmittalItemsRepository,
-    SubmittalStakeholdersRepository,
     SubmittalsRepository,
+    SubmittalStakeholdersRepository,
 )
 from .services import SubmittalsService
 

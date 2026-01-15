@@ -20,6 +20,7 @@ class OverageTypeEnum(Enum):
     BY_TOTAL: Calculate overage on the total quote/order amount.
               Overage = (total_amount - sum(product_unit_price * qty)).
     """
+
     BY_LINE = "BY_LINE"
     BY_TOTAL = "BY_TOTAL"
 
@@ -30,6 +31,7 @@ class OverageRecord:
     Overage calculation result for a product or quote.
     Used in quotes and orders to calculate overage pricing.
     """
+
     # Calculation results
     effective_commission_rate: Optional[float] = None
     overage_unit_price: Optional[float] = None

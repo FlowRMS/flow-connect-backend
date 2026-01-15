@@ -6,23 +6,22 @@ from datetime import datetime
 from typing import Any, Optional
 from uuid import UUID
 
+from commons.db.v6.crm.submittals import Submittal, SubmittalItem, SubmittalStakeholder
 from loguru import logger
-from pypdf import PdfReader, PdfWriter
+from pypdf import PdfReader, PdfWriter  # pyright: ignore[reportMissingImports]
 from reportlab.lib import colors
 from reportlab.lib.pagesizes import letter
 from reportlab.lib.styles import ParagraphStyle, getSampleStyleSheet
 from reportlab.lib.units import inch
-from reportlab.pdfgen import canvas
+from reportlab.pdfgen import canvas  # pyright: ignore[reportUnusedImport]
 from reportlab.platypus import (
-    PageBreak,
+    PageBreak,  # pyright: ignore[reportUnusedImport]
     Paragraph,
     SimpleDocTemplate,
     Spacer,
     Table,
     TableStyle,
 )
-
-from commons.db.v6.crm.submittals import Submittal, SubmittalItem, SubmittalStakeholder
 
 from app.graphql.submittals.strawberry.submittal_input import GenerateSubmittalPdfInput
 
@@ -41,7 +40,7 @@ class PdfGenerationResult:
 class PdfGenerationService:
     """Service for generating submittal PDFs using ReportLab."""
 
-    def __init__(self) -> None:
+    def __init__(self) -> None:  # pyright: ignore[reportMissingSuperCall]
         """Initialize PDF generation service."""
         self.styles = getSampleStyleSheet()
         self._setup_custom_styles()
@@ -181,9 +180,7 @@ class PdfGenerationService:
                 error=str(e),
             )
 
-    def _add_pdf_to_writer(
-        self, writer: PdfWriter, pdf_bytes: bytes
-    ) -> None:
+    def _add_pdf_to_writer(self, writer: PdfWriter, pdf_bytes: bytes) -> None:
         """Add PDF bytes to the writer."""
         reader = PdfReader(io.BytesIO(pdf_bytes))
         for page in reader.pages:
@@ -208,9 +205,7 @@ class PdfGenerationService:
         elements: list[Any] = []
 
         # Title
-        elements.append(
-            Paragraph("SUBMITTAL", self.styles["CoverTitle"])
-        )
+        elements.append(Paragraph("SUBMITTAL", self.styles["CoverTitle"]))
         elements.append(Spacer(1, 0.5 * inch))
 
         # Submittal number
@@ -278,9 +273,7 @@ class PdfGenerationService:
         elements: list[Any] = []
 
         # Header
-        elements.append(
-            Paragraph("TRANSMITTAL", self.styles["TransmittalHeader"])
-        )
+        elements.append(Paragraph("TRANSMITTAL", self.styles["TransmittalHeader"]))
         elements.append(Spacer(1, 0.25 * inch))
 
         # Submittal info
@@ -306,9 +299,7 @@ class PdfGenerationService:
 
         # Attached items section
         if input_data.attached_items:
-            elements.append(
-                Paragraph("Attached:", self.styles["Normal"])
-            )
+            elements.append(Paragraph("Attached:", self.styles["Normal"]))
             attached_text = ", ".join(input_data.attached_items)
             if input_data.attached_other:
                 attached_text += f", {input_data.attached_other}"
@@ -317,9 +308,7 @@ class PdfGenerationService:
 
         # Transmitted for section
         if input_data.transmitted_for:
-            elements.append(
-                Paragraph("Transmitted For:", self.styles["Normal"])
-            )
+            elements.append(Paragraph("Transmitted For:", self.styles["Normal"]))
             transmitted_text = ", ".join(input_data.transmitted_for)
             if input_data.transmitted_for_other:
                 transmitted_text += f", {input_data.transmitted_for_other}"
@@ -328,9 +317,7 @@ class PdfGenerationService:
 
         # Addressed to
         if addressed_to:
-            elements.append(
-                Paragraph("Addressed To:", self.styles["Normal"])
-            )
+            elements.append(Paragraph("Addressed To:", self.styles["Normal"]))
             for s in addressed_to:
                 name = s.contact_name or "Unknown"
                 company = s.company_name or ""
@@ -341,9 +328,7 @@ class PdfGenerationService:
             elements.append(Spacer(1, 0.25 * inch))
 
         # Items table
-        elements.append(
-            Paragraph("Items:", self.styles["TransmittalHeader"])
-        )
+        elements.append(Paragraph("Items:", self.styles["TransmittalHeader"]))
 
         # Build table header
         header = ["#", "Part Number", "Description"]
@@ -407,9 +392,7 @@ class PdfGenerationService:
         elements: list[Any] = []
 
         # Header
-        elements.append(
-            Paragraph("FIXTURE SUMMARY", self.styles["TransmittalHeader"])
-        )
+        elements.append(Paragraph("FIXTURE SUMMARY", self.styles["TransmittalHeader"]))
         elements.append(
             Paragraph(
                 f"Submittal #: {submittal.submittal_number}",
@@ -440,7 +423,9 @@ class PdfGenerationService:
                 row.append(desc)
             if input_data.show_quantities:
                 row.append(str(item.quantity) if item.quantity else "-")
-            row.append(item.approval_status.value if item.approval_status else "PENDING")
+            row.append(
+                str(item.approval_status.value) if item.approval_status else "PENDING"
+            )
             table_data.append(row)
 
         # Calculate column widths based on included columns

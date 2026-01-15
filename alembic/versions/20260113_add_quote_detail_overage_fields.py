@@ -5,18 +5,19 @@ Revises: 262a851d61ee
 Create Date: 2026-01-13 15:18:49.110020
 
 """
+
 from collections.abc import Sequence
 
-from alembic import op
 import sqlalchemy as sa
-import os
 
+from alembic import op
 
 # revision identifiers, used by Alembic.
-revision: str = '7b633c60d91b'
-down_revision: str | None = '262a851d61ee'
+revision: str = "7b633c60d91b"
+down_revision: str | None = "262a851d61ee"
 branch_labels: str | Sequence[str] | None = None
 depends_on: str | Sequence[str] | None = None
+
 
 def upgrade() -> None:
     # Add overage fields to quote_details table

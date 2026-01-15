@@ -2,8 +2,8 @@
 
 from .submittals_repository import (
     SubmittalItemsRepository,
-    SubmittalStakeholdersRepository,
     SubmittalsRepository,
+    SubmittalStakeholdersRepository,
 )
 
 __all__ = [

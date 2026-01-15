@@ -8,6 +8,12 @@ from aioinject import Injected
 
 from app.graphql.inject import inject
 from app.graphql.submittals.services.submittals_service import SubmittalsService
+from app.graphql.submittals.strawberry.generate_pdf_response import (
+    GenerateSubmittalPdfResponse,
+)
+from app.graphql.submittals.strawberry.send_email_response import (
+    SendSubmittalEmailResponse,
+)
 from app.graphql.submittals.strawberry.submittal_input import (
     CreateSubmittalInput,
     GenerateSubmittalPdfInput,
@@ -26,12 +32,6 @@ from app.graphql.submittals.strawberry.submittal_revision_response import (
 )
 from app.graphql.submittals.strawberry.submittal_stakeholder_response import (
     SubmittalStakeholderResponse,
-)
-from app.graphql.submittals.strawberry.send_email_response import (
-    SendSubmittalEmailResponse,
-)
-from app.graphql.submittals.strawberry.generate_pdf_response import (
-    GenerateSubmittalPdfResponse,
 )
 
 

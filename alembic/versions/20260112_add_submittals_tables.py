@@ -22,7 +22,7 @@ depends_on: str | Sequence[str] | None = None
 
 def upgrade() -> None:
     # Create submittals table
-    op.create_table(
+    _ = op.create_table(
         "submittals",
         sa.Column("id", sa.UUID(), nullable=False),
         sa.Column("submittal_number", sa.String(length=50), nullable=False),
@@ -64,7 +64,7 @@ def upgrade() -> None:
     )
 
     # Create submittal_items table
-    op.create_table(
+    _ = op.create_table(
         "submittal_items",
         sa.Column("id", sa.UUID(), nullable=False),
         sa.Column("submittal_id", sa.UUID(), nullable=False),
@@ -75,9 +75,7 @@ def upgrade() -> None:
         sa.Column("part_number", sa.String(length=100), nullable=True),
         sa.Column("description", sa.Text(), nullable=True),
         sa.Column("quantity", sa.Numeric(precision=18, scale=6), nullable=True),
-        sa.Column(
-            "approval_status", sa.Integer(), nullable=False, server_default="0"
-        ),
+        sa.Column("approval_status", sa.Integer(), nullable=False, server_default="0"),
         sa.Column("match_status", sa.Integer(), nullable=False, server_default="0"),
         sa.Column("notes", sa.Text(), nullable=True),
         sa.Column(
@@ -107,7 +105,7 @@ def upgrade() -> None:
     )
 
     # Create submittal_stakeholders table
-    op.create_table(
+    _ = op.create_table(
         "submittal_stakeholders",
         sa.Column("id", sa.UUID(), nullable=False),
         sa.Column("submittal_id", sa.UUID(), nullable=False),
@@ -135,7 +133,7 @@ def upgrade() -> None:
     )
 
     # Create submittal_revisions table
-    op.create_table(
+    _ = op.create_table(
         "submittal_revisions",
         sa.Column("id", sa.UUID(), nullable=False),
         sa.Column("submittal_id", sa.UUID(), nullable=False),
@@ -168,7 +166,7 @@ def upgrade() -> None:
     )
 
     # Create submittal_emails table
-    op.create_table(
+    _ = op.create_table(
         "submittal_emails",
         sa.Column("id", sa.UUID(), nullable=False),
         sa.Column("submittal_id", sa.UUID(), nullable=False),
@@ -189,9 +187,7 @@ def upgrade() -> None:
             ["pycrm.submittals.id"],
             ondelete="CASCADE",
         ),
-        sa.ForeignKeyConstraint(
-            ["revision_id"], ["pycrm.submittal_revisions.id"]
-        ),
+        sa.ForeignKeyConstraint(["revision_id"], ["pycrm.submittal_revisions.id"]),
         sa.ForeignKeyConstraint(["created_by_id"], ["pyuser.users.id"]),
         sa.PrimaryKeyConstraint("id"),
         schema="pycrm",

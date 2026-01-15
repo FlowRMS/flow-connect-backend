@@ -107,7 +107,7 @@ class FactoryService:
             GQLOverageTypeEnum.BY_TOTAL: OverageTypeEnum.BY_TOTAL,
         }
 
-        await self.repository.update_overage_settings(
+        _ = await self.repository.update_overage_settings(
             factory_id=factory_id,
             overage_allowed=input.overage_allowed,
             overage_type=overage_type_map.get(

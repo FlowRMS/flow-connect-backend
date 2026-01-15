@@ -8,9 +8,9 @@ from uuid import UUID
 import strawberry
 from aioinject import Injected
 
-from app.graphql.inject import inject
 from app.graphql.common.services.overage_service import OverageService
 from app.graphql.common.strawberry.overage_record import OverageRecord
+from app.graphql.inject import inject
 
 
 @strawberry.type
@@ -19,7 +19,7 @@ class OverageQueries:
 
     @strawberry.field(
         name="findEffectiveCommissionRateAndOverageUnitPriceByProduct",
-        description="Calculate effective commission rate and overage unit price for a product"
+        description="Calculate effective commission rate and overage unit price for a product",
     )
     @inject
     async def find_effective_commission_rate_and_overage_unit_price_by_product(
@@ -28,8 +28,8 @@ class OverageQueries:
         detail_unit_price: float,
         factory_id: strawberry.ID,
         end_user_id: strawberry.ID,
+        service: Injected[OverageService],
         quantity: float = 1.0,
-        service: Injected[OverageService] = None,
     ) -> OverageRecord:
         """
         Find effective commission rate and overage unit price for a product.

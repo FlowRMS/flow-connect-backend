@@ -1,9 +1,9 @@
 from uuid import UUID
 
 from commons.auth import AuthInfo
+from commons.db.v6.core import Customer, Factory, Product
 from commons.db.v6.crm import Quote
 from commons.db.v6.crm.links.entity_type import EntityType
-from commons.db.v6.core import Customer, Factory, Product
 from commons.db.v6.user import User
 from loguru import logger
 from sqlalchemy import select
@@ -187,13 +187,13 @@ class QuoteService:
             existing_customer_ids = {row[0] for row in result.fetchall()}
             missing_customer_ids = end_user_ids - existing_customer_ids
             for cid in missing_customer_ids:
-                missing_entities.append(f"End user customer (ID: {cid}) no longer exists")
+                missing_entities.append(
+                    f"End user customer (ID: {cid}) no longer exists"
+                )
 
         # Batch validate users (for split rates)
         if user_ids:
-            result = await session.execute(
-                select(User.id).where(User.id.in_(user_ids))
-            )
+            result = await session.execute(select(User.id).where(User.id.in_(user_ids)))
             existing_user_ids = {row[0] for row in result.fetchall()}
             missing_user_ids = user_ids - existing_user_ids
             for uid in missing_user_ids:

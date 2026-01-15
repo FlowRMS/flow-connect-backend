@@ -1,7 +1,6 @@
 """GraphQL response type for generating submittal PDFs."""
 
 from typing import Optional, Self
-from uuid import UUID
 
 import strawberry
 

@@ -19,11 +19,10 @@ from loguru import logger
 from app.graphql.campaigns.services.email_provider_service import EmailProviderService
 from app.graphql.submittals.repositories.submittals_repository import (
     SubmittalItemsRepository,
-    SubmittalStakeholdersRepository,
     SubmittalsRepository,
+    SubmittalStakeholdersRepository,
 )
 from app.graphql.submittals.services.pdf_generation_service import (
-    PdfGenerationResult,
     PdfGenerationService,
 )
 from app.graphql.submittals.services.types import SendSubmittalEmailResult
@@ -53,7 +52,7 @@ class GenerateSubmittalPdfResult:
 class SubmittalsService:
     """Service for Submittals business logic."""
 
-    def __init__(
+    def __init__(  # pyright: ignore[reportMissingSuperCall]
         self,
         repository: SubmittalsRepository,
         items_repository: SubmittalItemsRepository,
@@ -89,7 +88,9 @@ class SubmittalsService:
         """
         submittal = input_data.to_orm_model()
         created = await self.repository.create(submittal)
-        logger.info(f"Created submittal {created.id} with number {created.submittal_number}")
+        logger.info(
+            f"Created submittal {created.id} with number {created.submittal_number}"
+        )
         return created
 
     async def update_submittal(
@@ -365,9 +366,7 @@ class SubmittalsService:
         # Check if user has an email provider connected
         has_provider = await self.email_provider.has_connected_provider()
         if not has_provider:
-            logger.warning(
-                f"Cannot send submittal email: no email provider connected"
-            )
+            logger.warning(f"Cannot send submittal email: no email provider connected")
             return SendSubmittalEmailResult(
                 success=False,
                 error="No email provider connected. Please connect O365 or Gmail in settings.",
@@ -382,9 +381,7 @@ class SubmittalsService:
         )
 
         if not send_result.success:
-            logger.error(
-                f"Failed to send submittal email: {send_result.error}"
-            )
+            logger.error(f"Failed to send submittal email: {send_result.error}")
             return SendSubmittalEmailResult(
                 success=False,
                 error=send_result.error,
@@ -397,7 +394,9 @@ class SubmittalsService:
             subject=input_data.subject,
             body=input_data.body,
             recipient_emails=input_data.recipient_emails,
-            recipients=[{"email": e, "type": "to"} for e in input_data.recipient_emails],
+            recipients=[
+                {"email": e, "type": "to"} for e in input_data.recipient_emails
+            ],
         )
 
         created = await self.repository.add_email(input_data.submittal_id, email)

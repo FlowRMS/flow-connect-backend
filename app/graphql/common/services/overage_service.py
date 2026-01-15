@@ -11,14 +11,16 @@ from decimal import Decimal
 from typing import Optional
 from uuid import UUID
 
+from commons.db.v6.core.factories import Factory
+from commons.db.v6.core.factories import OverageTypeEnum as DbOverageTypeEnum
+from commons.db.v6.core.products import Product, ProductCpn
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from commons.db.v6.core.factories import Factory, OverageTypeEnum as DbOverageTypeEnum
-from commons.db.v6.core.products import Product, ProductCpn
-
 from app.graphql.common.strawberry.overage_record import (
     OverageRecord,
+)
+from app.graphql.common.strawberry.overage_record import (
     OverageTypeEnum as GqlOverageTypeEnum,
 )
 
@@ -41,7 +43,7 @@ class OverageService:
     - What percentage of overage goes to the rep (rep_overage_share)
     """
 
-    def __init__(self, session: AsyncSession):
+    def __init__(self, session: AsyncSession):  # pyright: ignore[reportMissingSuperCall]
         self.session = session
 
     async def find_effective_commission_rate_and_overage(
@@ -78,16 +80,14 @@ class OverageService:
         product = await self._get_product(product_id)
         if not product:
             return OverageRecord(
-                success=False,
-                error_message=f"Product with id {product_id} not found"
+                success=False, error_message=f"Product with id {product_id} not found"
             )
 
         # Fetch factory with overage settings
         factory = await self._get_factory(factory_id)
         if not factory:
             return OverageRecord(
-                success=False,
-                error_message=f"Factory with id {factory_id} not found"
+                success=False, error_message=f"Factory with id {factory_id} not found"
             )
 
         # Check for customer-specific pricing (ProductCpn)
@@ -156,14 +156,20 @@ class OverageService:
         # Get rep's share of overage from factory settings (as percentage, e.g., 100.00 = 100%)
         rep_share: float | None = None
         if factory.rep_overage_share:
-            rep_share = float(factory.rep_overage_share) / 100.0  # Convert to decimal (100% -> 1.0)
+            rep_share = (
+                float(factory.rep_overage_share) / 100.0
+            )  # Convert to decimal (100% -> 1.0)
 
         # Get level rate and price (from product quantity-based pricing if available)
         level_rate, level_unit_price = await self._get_level_pricing(product, quantity)
 
         # Calculate effective commission rate
         effective_commission_rate = self._calculate_effective_commission_rate(
-            product, factory, detail_unit_price, overage_unit_price, customer_commission_rate
+            product,
+            factory,
+            detail_unit_price,
+            overage_unit_price,
+            customer_commission_rate,
         )
 
         return OverageRecord(
@@ -335,7 +341,9 @@ class OverageService:
         - Base portion gets full commission rate
         - Overage portion gets commission rate * rep_overage_share
         """
-        base_rate = self._get_product_commission_rate(product, factory, customer_commission_rate)
+        base_rate = self._get_product_commission_rate(
+            product, factory, customer_commission_rate
+        )
 
         if not base_rate:
             return None
@@ -343,7 +351,11 @@ class OverageService:
         # If there's overage, the effective rate is adjusted based on rep's overage share
         if overage_unit_price and detail_unit_price > 0:
             # Get rep's share of overage (stored as percentage, e.g., 100.00 means 100%)
-            rep_share = float(factory.rep_overage_share) / 100.0 if factory.rep_overage_share else 1.0
+            rep_share = (
+                float(factory.rep_overage_share) / 100.0
+                if factory.rep_overage_share
+                else 1.0
+            )
 
             # Use unit_price as base price
             base_price = float(product.unit_price) if product.unit_price else 0
@@ -353,7 +365,9 @@ class OverageService:
                 # Overage portion: overage_unit_price / detail_unit_price * base_rate * rep_share
                 base_portion = base_price / detail_unit_price
                 overage_portion = overage_unit_price / detail_unit_price
-                effective_rate = (base_rate * base_portion) + (base_rate * rep_share * overage_portion)
+                effective_rate = (base_rate * base_portion) + (
+                    base_rate * rep_share * overage_portion
+                )
                 return effective_rate
 
         return base_rate
@@ -381,8 +395,7 @@ class OverageService:
         factory = await self._get_factory(factory_id)
         if not factory:
             return OverageRecord(
-                success=False,
-                error_message=f"Factory with id {factory_id} not found"
+                success=False, error_message=f"Factory with id {factory_id} not found"
             )
 
         gql_overage_type = _convert_overage_type(factory.overage_type)
@@ -406,12 +419,12 @@ class OverageService:
         total_sell_amount = Decimal("0")
 
         for item in line_items:
-            product = await self._get_product(item['product_id'])
+            product = await self._get_product(item["product_id"])
             if not product:
                 continue
 
-            quantity = Decimal(str(item.get('quantity', 1)))
-            detail_unit_price = Decimal(str(item['detail_unit_price']))
+            quantity = Decimal(str(item.get("quantity", 1)))
+            detail_unit_price = Decimal(str(item["detail_unit_price"]))
             base_unit_price = product.unit_price or Decimal("0")
 
             total_base_amount += base_unit_price * quantity
@@ -423,16 +436,26 @@ class OverageService:
             overage_amount = float(total_sell_amount - total_base_amount)
 
         # Get rep's share
-        rep_share = float(factory.rep_overage_share) / 100.0 if factory.rep_overage_share else 1.0
+        rep_share = (
+            float(factory.rep_overage_share) / 100.0
+            if factory.rep_overage_share
+            else 1.0
+        )
 
         # Calculate effective commission rate on total
-        base_rate = float(factory.base_commission_rate) if factory.base_commission_rate else None
+        base_rate = (
+            float(factory.base_commission_rate)
+            if factory.base_commission_rate
+            else None
+        )
 
         effective_rate: float | None = None
         if base_rate and overage_amount and float(total_sell_amount) > 0:
             base_portion = float(total_base_amount) / float(total_sell_amount)
             overage_portion = overage_amount / float(total_sell_amount)
-            effective_rate = (base_rate * base_portion) + (base_rate * rep_share * overage_portion)
+            effective_rate = (base_rate * base_portion) + (
+                base_rate * rep_share * overage_portion
+            )
         elif base_rate:
             effective_rate = base_rate
 

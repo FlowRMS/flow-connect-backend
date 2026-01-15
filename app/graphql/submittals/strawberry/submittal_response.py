@@ -58,8 +58,10 @@ class SubmittalResponse(DTOMixin[Submittal]):
         self,
     ) -> list[
         Annotated[
-            "SubmittalItemResponse",
-            strawberry.lazy("app.graphql.submittals.strawberry.submittal_item_response"),
+            "SubmittalItemResponse",  # pyright: ignore[reportUndefinedVariable]
+            strawberry.lazy(
+                "app.graphql.submittals.strawberry.submittal_item_response"
+            ),
         ]
     ]:
         """Resolve items from the ORM instance."""
@@ -74,7 +76,7 @@ class SubmittalResponse(DTOMixin[Submittal]):
         self,
     ) -> list[
         Annotated[
-            "SubmittalStakeholderResponse",
+            "SubmittalStakeholderResponse",  # pyright: ignore[reportUndefinedVariable]
             strawberry.lazy(
                 "app.graphql.submittals.strawberry.submittal_stakeholder_response"
             ),
@@ -94,7 +96,7 @@ class SubmittalResponse(DTOMixin[Submittal]):
         self,
     ) -> list[
         Annotated[
-            "SubmittalRevisionResponse",
+            "SubmittalRevisionResponse",  # pyright: ignore[reportUndefinedVariable]
             strawberry.lazy(
                 "app.graphql.submittals.strawberry.submittal_revision_response"
             ),
