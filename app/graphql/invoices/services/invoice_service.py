@@ -10,6 +10,9 @@ from app.errors.common_errors import NameAlreadyExistsError, NotFoundError
 from app.graphql.invoices.factories.invoice_factory import InvoiceFactory
 from app.graphql.invoices.repositories.invoices_repository import InvoicesRepository
 from app.graphql.invoices.strawberry.invoice_input import InvoiceInput
+from app.graphql.invoices.strawberry.order_detail_to_invoice_input import (
+    OrderDetailToInvoiceDetailInput,
+)
 from app.graphql.orders.repositories.orders_repository import OrdersRepository
 
 
@@ -98,7 +101,7 @@ class InvoiceService:
         order_id: UUID,
         invoice_number: str,
         factory_id: UUID,
-        order_detail_ids: list[UUID] | None = None,
+        order_details_inputs: list[OrderDetailToInvoiceDetailInput] | None = None,
         due_date: date | None = None,
     ) -> Invoice:
         order = await self.orders_repository.find_order_by_id(order_id)
@@ -110,7 +113,7 @@ class InvoiceService:
             order=order,
             invoice_number=invoice_number,
             factory_id=factory_id,
-            order_detail_ids=order_detail_ids,
+            order_details_inputs=order_details_inputs,
             due_date=due_date,
         )
         invoice.status = InvoiceStatus.OPEN
