@@ -53,7 +53,9 @@
       "Bash(tree:*)",
       "Bash(git ls-remote:*)",
       "Bash(timeout 60 uv run:*)",
-      "Bash(gtimeout 60 uv run:*)"
+      "Bash(gtimeout 60 uv run:*)",
+      "Bash(git stash:*)",
+      "Bash(task typecheck-basedpy:*)"
     ]
   },
   "enableAllProjectMcpServers": true,
