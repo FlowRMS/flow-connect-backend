@@ -24,7 +24,7 @@ class LockCheckEntitiesProcessor(BaseProcessor[Check]):
 
     @property
     def events(self) -> list[RepositoryEvent]:
-        return [RepositoryEvent.POST_CREATE, RepositoryEvent.POST_UPDATE]
+        return [RepositoryEvent.POST_CREATE, RepositoryEvent.PRE_UPDATE]
 
     async def process(self, context: EntityContext[Check]) -> None:
         check = context.entity
