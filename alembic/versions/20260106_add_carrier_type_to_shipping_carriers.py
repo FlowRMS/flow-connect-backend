@@ -1,7 +1,7 @@
 """Add carrier_type column to shipping_carriers table.
 
 Revision ID: 20260106_carrier_type
-Revises:
+Revises: add_fulfillment_002
 Create Date: 2026-01-06
 
 """
@@ -12,7 +12,7 @@ from alembic import op
 
 # revision identifiers, used by Alembic.
 revision = "20260106_carrier_type"
-down_revision = "22af57481162"
+down_revision = "add_fulfillment_002"
 branch_labels = None
 depends_on = None
 

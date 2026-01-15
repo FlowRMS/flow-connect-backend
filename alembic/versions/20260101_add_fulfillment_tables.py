@@ -1,7 +1,7 @@
 """Add fulfillment tables
 
 Revision ID: fulfillment_001
-Revises: warehouse_settings_001
+Revises: uq_check_details_entities
 Create Date: 2026-01-01
 
 """
@@ -15,7 +15,7 @@ from alembic import op
 
 # revision identifiers, used by Alembic.
 revision: str = "fulfillment_001"
-down_revision: str | None = "b2c3d4e5f607"
+down_revision: str | None = "uq_check_details_entities"
 branch_labels: str | Sequence[str] | None = None
 depends_on: str | Sequence[str] | None = None
 
