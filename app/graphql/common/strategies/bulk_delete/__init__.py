@@ -1,6 +1,9 @@
 from app.graphql.common.strategies.bulk_delete.check_bulk_delete_strategy import (
     CheckBulkDeleteStrategy,
 )
+from app.graphql.common.strategies.bulk_delete.credit_bulk_delete_strategy import (
+    CreditBulkDeleteStrategy,
+)
 from app.graphql.common.strategies.bulk_delete.customer_bulk_delete_strategy import (
     CustomerBulkDeleteStrategy,
 )
@@ -25,6 +28,7 @@ from app.graphql.common.strategies.bulk_delete.quote_bulk_delete_strategy import
 
 __all__ = [
     "CheckBulkDeleteStrategy",
+    "CreditBulkDeleteStrategy",
     "CustomerBulkDeleteStrategy",
     "FactoryBulkDeleteStrategy",
     "InvoiceBulkDeleteStrategy",

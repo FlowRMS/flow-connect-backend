@@ -156,6 +156,7 @@ enum BulkDeleteEntityType {
   PRODUCTS
   ORDERS
   INVOICES
+  CREDITS
   QUOTES
   CHECKS
   PRE_OPS
