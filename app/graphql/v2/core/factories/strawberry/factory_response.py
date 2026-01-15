@@ -6,6 +6,7 @@ import strawberry
 from commons.db.v6.core import Factory
 
 from app.core.db.adapters.dto import DTOMixin
+from app.graphql.common.strawberry.overage_record import OverageTypeEnum
 from app.graphql.v2.core.factories.strawberry.factory_split_rate_response import (
     FactorySplitRateResponse,
 )
@@ -34,11 +35,15 @@ class FactoryLiteResponse(DTOMixin[Factory]):
     is_parent: bool
     parent_id: UUID | None
     overage_allowed: bool
-    overage_type: int
+    overage_type: OverageTypeEnum
     rep_overage_share: Decimal
 
     @classmethod
     def from_orm_model(cls, model: Factory) -> Self:
+        overage_type_map = {
+            0: OverageTypeEnum.BY_LINE,
+            1: OverageTypeEnum.BY_TOTAL,
+        }
         return cls(
             _instance=model,
             id=model.id,
@@ -60,7 +65,9 @@ class FactoryLiteResponse(DTOMixin[Factory]):
             is_parent=model.is_parent,
             parent_id=model.parent_id,
             overage_allowed=model.overage_allowed,
-            overage_type=model.overage_type,
+            overage_type=overage_type_map.get(
+                int(model.overage_type), OverageTypeEnum.BY_LINE
+            ),
             rep_overage_share=model.rep_overage_share,
         )
 
