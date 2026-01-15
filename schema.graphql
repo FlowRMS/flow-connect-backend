@@ -1568,7 +1568,7 @@ type Mutation {
   createInvoice(input: InvoiceInput!): InvoiceResponse!
   updateInvoice(input: InvoiceInput!): InvoiceResponse!
   deleteInvoice(id: UUID!): Boolean!
-  createInvoiceFromOrder(orderId: UUID!, invoiceNumber: String!, factoryId: UUID!, orderDetailIds: [UUID!] = null, dueDate: Date = null): InvoiceResponse!
+  createInvoiceFromOrder(orderId: UUID!, invoiceNumber: String!, factoryId: UUID!, orderDetailsInputs: [OrderDetailToInvoiceDetailInput!] = null, dueDate: Date = null): InvoiceResponse!
   addCompanyToJob(input: AddCompanyToJobInput!): JobCompanyLinkResponse!
   removeCompanyFromJob(input: RemoveCompanyFromJobInput!): Boolean!
   createJob(input: JobInput!): JobType!
@@ -1929,6 +1929,12 @@ type OrderDetailResponse {
   uom: ProductUomResponse
   acknowledgements: [OrderAcknowledgementResponse!]!
   invoice: InvoiceLiteResponse
+}
+
+input OrderDetailToInvoiceDetailInput {
+  quantity: Decimal!
+  unitPrice: Decimal!
+  orderDetailId: UUID!
 }
 
 enum OrderHeaderStatus {
