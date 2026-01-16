@@ -12,6 +12,7 @@ from commons.db.v6.crm.links.link_relation_model import LinkRelation
 from commons.db.v6.crm.notes.note_model import Note
 from commons.db.v6.crm.pre_opportunities.pre_opportunity_model import PreOpportunity
 from commons.db.v6.crm.tasks.task_assignee_model import TaskAssignee
+from commons.db.v6.crm.tasks.task_category_model import TaskCategory
 from commons.db.v6.crm.tasks.task_model import Task
 from commons.db.v6.user import User
 from sqlalchemy import Select, case, func, literal, or_, select
@@ -248,6 +249,7 @@ class TasksRepository(BaseRepository[Task]):
                 User.full_name.label("created_by"),
                 Task.title,
                 Task.status,
+                TaskCategory.name.label("category"),
                 Task.priority,
                 Task.description,
                 assignees_subq.label("assignees"),
@@ -260,6 +262,7 @@ class TasksRepository(BaseRepository[Task]):
             .select_from(Task)
             .options(lazyload("*"))
             .join(User, User.id == Task.created_by_id)
+            .outerjoin(TaskCategory, Task.category_id == TaskCategory.id)
         )
 
     async def search_by_title(self, search_term: str, limit: int = 20) -> list[Task]:

@@ -3418,6 +3418,7 @@ type TaskLandingPage implements LandingPageInterfaceBase {
   title: String!
   status: TaskStatus!
   priority: TaskPriority!
+  category: String
   description: String
   assignees: [String!]!
   dueDate: Date
