@@ -19,8 +19,8 @@ class DeliveryItemReceiptResponse(DTOMixin[DeliveryItemReceipt]):
     id: UUID
     delivery_item_id: UUID
     receipt_type: DeliveryReceiptTypeGQL
-    received_qty: int
-    damaged_qty: int
+    received_quantity: int
+    damaged_quantity: int
     location_id: UUID | None
     received_by_id: UUID | None
     received_at: datetime | None
@@ -33,8 +33,8 @@ class DeliveryItemReceiptResponse(DTOMixin[DeliveryItemReceipt]):
             id=model.id,
             delivery_item_id=model.delivery_item_id,
             receipt_type=DeliveryReceiptTypeGQL(model.receipt_type.value),
-            received_qty=model.received_quantity,
-            damaged_qty=model.damaged_quantity,
+            received_quantity=model.received_quantity,
+            damaged_quantity=model.damaged_quantity,
             location_id=model.location_id,
             received_by_id=model.received_by_id,
             received_at=model.received_at,

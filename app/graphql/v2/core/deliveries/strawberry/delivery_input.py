@@ -88,9 +88,9 @@ class DeliveryItemInput(BaseInputGQL[DeliveryItem]):
 
     delivery_id: UUID
     product_id: UUID
-    expected_qty: int = 0
-    received_qty: int = 0
-    damaged_qty: int = 0
+    expected_quantity: int = 0
+    received_quantity: int = 0
+    damaged_quantity: int = 0
     status: DeliveryItemStatusGQL = DeliveryItemStatusGQL.PENDING
     discrepancy_notes: str | None = None
 
@@ -98,9 +98,9 @@ class DeliveryItemInput(BaseInputGQL[DeliveryItem]):
         return DeliveryItem(
             delivery_id=self.delivery_id,
             product_id=self.product_id,
-            expected_quantity=self.expected_qty,
-            received_quantity=self.received_qty,
-            damaged_quantity=self.damaged_qty,
+            expected_quantity=self.expected_quantity,
+            received_quantity=self.received_quantity,
+            damaged_quantity=self.damaged_quantity,
             status=DeliveryItemStatus(self.status.value),
             discrepancy_notes=self.discrepancy_notes,
         )
@@ -112,8 +112,8 @@ class DeliveryItemReceiptInput(BaseInputGQL[DeliveryItemReceipt]):
 
     delivery_item_id: UUID
     receipt_type: DeliveryReceiptTypeGQL = DeliveryReceiptTypeGQL.RECEIPT
-    received_qty: int = 0
-    damaged_qty: int = 0
+    received_quantity: int = 0
+    damaged_quantity: int = 0
     location_id: UUID | None = None
     received_by_id: UUID | None = None
     received_at: datetime | None = None
@@ -123,8 +123,8 @@ class DeliveryItemReceiptInput(BaseInputGQL[DeliveryItemReceipt]):
         return DeliveryItemReceipt(
             delivery_item_id=self.delivery_item_id,
             receipt_type=DeliveryReceiptType(self.receipt_type.value),
-            received_quantity=self.received_qty,
-            damaged_quantity=self.damaged_qty,
+            received_quantity=self.received_quantity,
+            damaged_quantity=self.damaged_quantity,
             location_id=self.location_id,
             received_by_id=self.received_by_id,
             received_at=self.received_at,
@@ -161,7 +161,7 @@ class DeliveryIssueInput(BaseInputGQL[DeliveryIssue]):
     receipt_id: UUID | None = None
     issue_type: DeliveryIssueTypeGQL
     custom_issue_type: str | None = None
-    qty: int = 0
+    quantity: int = 0
     status: DeliveryIssueStatusGQL = DeliveryIssueStatusGQL.OPEN
     description: str | None = None
     notes: str | None = None
@@ -174,7 +174,7 @@ class DeliveryIssueInput(BaseInputGQL[DeliveryIssue]):
             receipt_id=self.receipt_id,
             issue_type=DeliveryIssueType(self.issue_type.value),
             custom_issue_type=self.custom_issue_type,
-            quantity=self.qty,
+            quantity=self.quantity,
             status=DeliveryIssueStatus(self.status.value),
             description=self.description,
             notes=self.notes,
@@ -187,6 +187,7 @@ class DeliveryDocumentInput(BaseInputGQL[DeliveryDocument]):
     """Input type for creating/updating delivery documents."""
 
     delivery_id: UUID
+    file_id: UUID
     name: str
     doc_type: DeliveryDocumentTypeGQL
     file_url: str
@@ -198,6 +199,7 @@ class DeliveryDocumentInput(BaseInputGQL[DeliveryDocument]):
     def to_orm_model(self) -> DeliveryDocument:
         return DeliveryDocument(
             delivery_id=self.delivery_id,
+            file_id=self.file_id,
             name=self.name,
             doc_type=DeliveryDocumentType(self.doc_type.value),
             file_url=self.file_url,

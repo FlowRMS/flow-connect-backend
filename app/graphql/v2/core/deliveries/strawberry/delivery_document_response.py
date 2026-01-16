@@ -18,6 +18,7 @@ class DeliveryDocumentResponse(DTOMixin[DeliveryDocument]):
     _instance: strawberry.Private[DeliveryDocument]
     id: UUID
     delivery_id: UUID
+    file_id: UUID | None
     name: str
     doc_type: DeliveryDocumentTypeGQL
     file_url: str
@@ -33,6 +34,7 @@ class DeliveryDocumentResponse(DTOMixin[DeliveryDocument]):
             _instance=model,
             id=model.id,
             delivery_id=model.delivery_id,
+            file_id=model.file_id,
             name=model.name,
             doc_type=DeliveryDocumentTypeGQL(model.doc_type.value),
             file_url=model.file_url,

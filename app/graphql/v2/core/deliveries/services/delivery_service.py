@@ -34,14 +34,46 @@ class DeliveryService:
             raise NotFoundError(f"Delivery with id {delivery_id} not found")
         return delivery
 
-    async def list_all(self) -> list[Delivery]:
-        return await self.repository.list_all_with_relations()
+    async def list_all(self, limit: int | None = None, offset: int | None = None) -> list[Delivery]:
+        return await self.repository.list_all_with_relations(limit=limit, offset=offset)
 
-    async def list_by_warehouse(self, warehouse_id: UUID) -> list[Delivery]:
-        return await self.repository.list_by_warehouse(warehouse_id)
+    async def list_by_warehouse(self, warehouse_id: UUID, limit: int | None = None, offset: int | None = None) -> list[Delivery]:
+        return await self.repository.list_by_warehouse(warehouse_id, limit=limit, offset=offset)
 
     async def create(self, input: DeliveryInput) -> Delivery:
-        return await self.repository.create(input.to_orm_model())
+        """
+        Create a new delivery with automatic business logic:
+        - Creates delivery in DRAFT status (unless specified otherwise)
+        - Auto-creates initial status history entry
+        - Sets created_by from auth context
+        """
+        from datetime import datetime, timezone
+        from commons.db.v6.warehouse.deliveries.delivery_status_history_model import (
+            DeliveryStatusHistory,
+        )
+
+        # Create delivery model from input
+        delivery = input.to_orm_model()
+
+        # Ensure delivery starts in DRAFT if not specified
+        if not delivery.status:
+            delivery.status = DeliveryStatus.DRAFT
+
+        # Create delivery first to get delivery_id for status history
+        created_delivery = await self.repository.create(delivery)
+
+        # Auto-create initial status history after delivery exists
+        initial_status_history = DeliveryStatusHistory(
+            delivery_id=created_delivery.id,
+            status=delivery.status,
+            timestamp=datetime.now(timezone.utc),
+            user_id=self.auth_info.flow_user_id if self.auth_info else None,
+            note=f"Delivery created in {delivery.status.value} status",
+        )
+        self.repository.session.add(initial_status_history)
+        await self.repository.session.flush()
+
+        return created_delivery
 
     async def update(self, delivery_id: UUID, input: DeliveryInput) -> Delivery:
         existing = await self.repository.get_with_relations(delivery_id)

@@ -26,9 +26,9 @@ from .entity_mapping import EntityMapping
 @dataclass(frozen=True)
 class DeliveryItemDraft:
     product_id: UUID
-    expected_qty: int
-    received_qty: int
-    damaged_qty: int
+    expected_quantity: int
+    received_quantity: int
+    damaged_quantity: int
     discrepancy_notes: str | None
 
 
@@ -63,9 +63,9 @@ class DeliveryConverter(
             item_input = DeliveryItemInput(
                 delivery_id=delivery.id,
                 product_id=item.product_id,
-                expected_qty=item.expected_qty,
-                received_qty=item.received_qty,
-                damaged_qty=item.damaged_qty,
+                expected_quantity=item.expected_quantity,
+                received_quantity=item.received_quantity,
+                damaged_quantity=item.damaged_quantity,
                 discrepancy_notes=item.discrepancy_notes,
             )
             _ = await self.delivery_item_service.create(item_input)
@@ -124,9 +124,9 @@ class DeliveryConverter(
 
         return DeliveryItemDraft(
             product_id=product_id,
-            expected_qty=detail.quantity or 0,
-            received_qty=detail.received_quantity or 0,
-            damaged_qty=detail.damaged_quantity or 0,
+            expected_quantity=detail.quantity or 0,
+            received_quantity=detail.received_quantity or 0,
+            damaged_quantity=detail.damaged_quantity or 0,
             discrepancy_notes=detail.description,
         )
 

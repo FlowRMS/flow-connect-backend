@@ -22,7 +22,7 @@ class DeliveryIssueResponse(DTOMixin[DeliveryIssue]):
     receipt_id: UUID | None
     issue_type: DeliveryIssueTypeGQL
     custom_issue_type: str | None
-    qty: int
+    quantity: int
     status: DeliveryIssueStatusGQL
     description: str | None
     notes: str | None
@@ -40,7 +40,7 @@ class DeliveryIssueResponse(DTOMixin[DeliveryIssue]):
             receipt_id=model.receipt_id,
             issue_type=DeliveryIssueTypeGQL(model.issue_type.value),
             custom_issue_type=model.custom_issue_type,
-            qty=model.quantity,
+            quantity=model.quantity,
             status=DeliveryIssueStatusGQL(model.status.value),
             description=model.description,
             notes=model.notes,

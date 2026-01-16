@@ -21,11 +21,13 @@ class DeliveriesQueries:
         self,
         service: Injected[DeliveryService],
         warehouse_id: UUID | None = None,
+        limit: int | None = None,
+        offset: int | None = None,
     ) -> list[DeliveryResponse]:
         if warehouse_id:
-            deliveries = await service.list_by_warehouse(warehouse_id)
+            deliveries = await service.list_by_warehouse(warehouse_id, limit=limit, offset=offset)
         else:
-            deliveries = await service.list_all()
+            deliveries = await service.list_all(limit=limit, offset=offset)
         return DeliveryResponse.from_orm_model_list(deliveries)
 
     @strawberry.field

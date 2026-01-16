@@ -39,14 +39,22 @@ class DeliveriesRepository(BaseRepository[Delivery]):
         result = await self.session.execute(stmt)
         return result.unique().scalar_one_or_none()
 
-    async def list_by_warehouse(self, warehouse_id: UUID) -> list[Delivery]:
+    async def list_by_warehouse(self, warehouse_id: UUID, limit: int | None = None, offset: int | None = None) -> list[Delivery]:
         stmt = self._with_relations(
             select(Delivery).where(Delivery.warehouse_id == warehouse_id)
         )
+        if offset is not None:
+            stmt = stmt.offset(offset)
+        if limit is not None:
+            stmt = stmt.limit(limit)
         result = await self.session.execute(stmt)
         return list(result.unique().scalars().all())
 
-    async def list_all_with_relations(self) -> list[Delivery]:
+    async def list_all_with_relations(self, limit: int | None = None, offset: int | None = None) -> list[Delivery]:
         stmt = self._with_relations(select(Delivery))
+        if offset is not None:
+            stmt = stmt.offset(offset)
+        if limit is not None:
+            stmt = stmt.limit(limit)
         result = await self.session.execute(stmt)
         return list(result.unique().scalars().all())
