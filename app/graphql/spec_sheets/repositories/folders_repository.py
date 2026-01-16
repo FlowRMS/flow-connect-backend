@@ -1,5 +1,3 @@
-"""Repository for Folder entity with specific database operations."""
-
 from uuid import UUID
 
 from commons.db.v6.crm.spec_sheets import SpecSheet, SpecSheetFolder
@@ -85,11 +83,13 @@ class FoldersRepository(BaseRepository[SpecSheetFolder]):
         self, factory_id: UUID
     ) -> list[tuple[str, int]]:
         """
-        Get all folder paths that contain spec sheets with their counts.
+        Get all folder paths with their spec sheet counts.
 
-        This gets folder paths directly from spec_sheets table, not from
-        spec_sheet_folders. Counts are recursive (parent folders include
-        counts from subfolders).
+        This includes:
+        1. Folders from spec_sheet_folders table (including empty folders)
+        2. Virtual folders derived from spec_sheets.folder_path
+
+        Counts are recursive (parent folders include counts from subfolders).
 
         Args:
             factory_id: UUID of the factory
@@ -98,25 +98,42 @@ class FoldersRepository(BaseRepository[SpecSheetFolder]):
             List of tuples (folder_path, spec_sheet_count) ordered by path
         """
         # Get all spec sheets with their folder_paths for this factory
-        stmt = select(SpecSheet.folder_path).where(
+        spec_stmt = select(SpecSheet.folder_path).where(
             and_(
                 SpecSheet.factory_id == factory_id,
                 SpecSheet.folder_path.isnot(None),
                 SpecSheet.folder_path != "",
             )
         )
-        result = await self.session.execute(stmt)
-        folder_paths = [row[0] for row in result.all()]
+        spec_result = await self.session.execute(spec_stmt)
+        spec_folder_paths = [row[0] for row in spec_result.all()]
+
+        # Also get all folders from spec_sheet_folders table (including empty ones)
+        folder_stmt = select(SpecSheetFolder.folder_path).where(
+            SpecSheetFolder.factory_id == factory_id
+        )
+        folder_result = await self.session.execute(folder_stmt)
+        explicit_folders = [row[0] for row in folder_result.all()]
 
         # Build a set of all folder paths (including parent paths)
         all_paths: set[str] = set()
         path_counts: dict[str, int] = {}
 
-        for folder_path in folder_paths:
+        # Add paths from spec sheets and count them
+        for folder_path in spec_folder_paths:
             # Add count for the exact folder
             path_counts[folder_path] = path_counts.get(folder_path, 0) + 1
 
             # Add all parent paths to the set
+            parts = folder_path.split("/")
+            for i in range(1, len(parts) + 1):
+                parent_path = "/".join(parts[:i])
+                all_paths.add(parent_path)
+
+        # Add explicit folders from spec_sheet_folders table (even if empty)
+        for folder_path in explicit_folders:
+            all_paths.add(folder_path)
+            # Also add parent paths for consistency
             parts = folder_path.split("/")
             for i in range(1, len(parts) + 1):
                 parent_path = "/".join(parts[:i])
@@ -127,7 +144,8 @@ class FoldersRepository(BaseRepository[SpecSheetFolder]):
         for path in sorted(all_paths):
             # Count all spec sheets in this path and subpaths
             count = sum(
-                c for p, c in path_counts.items()
+                c
+                for p, c in path_counts.items()
                 if p == path or p.startswith(f"{path}/")
             )
             result_list.append((path, count))
