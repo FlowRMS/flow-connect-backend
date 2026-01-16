@@ -27,6 +27,7 @@ class CompaniesService:
             company_id,
             options=[
                 joinedload(Company.created_by),
+                joinedload(Company.company_type),
                 lazyload("*"),
             ],
         )

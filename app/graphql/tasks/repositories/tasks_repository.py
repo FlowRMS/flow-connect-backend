@@ -277,6 +277,7 @@ class TasksRepository(BaseRepository[Task]):
             select(Task)
             .options(
                 joinedload(Task.created_by),
+                joinedload(Task.category),
                 selectinload(Task.assignees).joinedload(TaskAssignee.user),
                 lazyload("*"),
             )
@@ -295,6 +296,7 @@ class TasksRepository(BaseRepository[Task]):
             select(Task)
             .options(
                 joinedload(Task.created_by),
+                joinedload(Task.category),
                 selectinload(Task.assignees).joinedload(TaskAssignee.user),
                 lazyload("*"),
             )
