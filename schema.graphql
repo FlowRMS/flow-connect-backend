@@ -1938,6 +1938,13 @@ input OrderAcknowledgementDetailInput {
   id: UUID
 }
 
+type OrderAcknowledgementDetailResponse {
+  id: UUID!
+  orderAcknowledgementId: UUID!
+  orderDetailId: UUID!
+  orderDetail: OrderDetailLiteResponse!
+}
+
 input OrderAcknowledgementInput {
   orderId: UUID!
   details: [OrderAcknowledgementDetailInput!]!
@@ -1974,7 +1981,7 @@ type OrderAcknowledgementResponse {
   entityDate: Date!
   quantity: Decimal!
   creationType: CreationType!
-  itemNumbers: [Int!]!
+  details: [OrderAcknowledgementDetailResponse!]!
 }
 
 type OrderBalanceResponse {
@@ -2022,6 +2029,33 @@ input OrderDetailInput {
   freightCharge: Decimal! = "0.0000"
   outsideSplitRates: [OrderSplitRateInput!] = null
   insideSplitRates: [OrderInsideRepInput!] = null
+}
+
+type OrderDetailLiteResponse {
+  id: UUID!
+  orderId: UUID!
+  itemNumber: Int!
+  quantity: Decimal!
+  unitPrice: Decimal!
+  subtotal: Decimal!
+  total: Decimal!
+  totalLineCommission: Decimal
+  commissionRate: Decimal
+  commission: Decimal
+  commissionDiscountRate: Decimal
+  commissionDiscount: Decimal
+  discountRate: Decimal!
+  discount: Decimal!
+  productId: UUID
+  productNameAdhoc: String
+  productDescriptionAdhoc: String
+  endUserId: UUID
+  leadTime: String
+  note: String
+  status: OrderStatus!
+  freightCharge: Decimal!
+  shippingBalance: Decimal!
+  cancelledBalance: Decimal!
 }
 
 type OrderDetailResponse {

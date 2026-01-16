@@ -23,7 +23,7 @@ from app.graphql.v2.core.products.strawberry.product_uom_response import (
 
 
 @strawberry.type
-class OrderDetailResponse(DTOMixin[OrderDetail]):
+class OrderDetailLiteResponse(DTOMixin[OrderDetail]):
     _instance: strawberry.Private[OrderDetail]
     id: UUID
     order_id: UUID
@@ -80,6 +80,9 @@ class OrderDetailResponse(DTOMixin[OrderDetail]):
             cancelled_balance=model.cancelled_balance,
         )
 
+
+@strawberry.type
+class OrderDetailResponse(OrderDetailLiteResponse):
     @strawberry.field
     def outside_split_rates(self) -> list[OrderSplitRateResponse]:
         return OrderSplitRateResponse.from_orm_model_list(
