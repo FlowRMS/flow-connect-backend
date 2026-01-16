@@ -9,6 +9,9 @@ from app.core.db.adapters.dto import DTOMixin
 from app.graphql.companies.strawberry.company_type_response import (
     CompanyTypeResponse,
 )
+from app.graphql.v2.core.territories.strawberry.territory_response import (
+    TerritoryLiteResponse,
+)
 from app.graphql.v2.core.users.strawberry.user_response import UserResponse
 
 
@@ -23,6 +26,7 @@ class CompanyLiteResponse(DTOMixin[Company]):
     phone: str | None
     tags: list[str] | None
     parent_company_id: UUID | None
+    territory_id: UUID | None
 
     @classmethod
     def from_orm_model(cls, model: Company) -> Self:
@@ -36,6 +40,7 @@ class CompanyLiteResponse(DTOMixin[Company]):
             phone=model.phone,
             tags=model.tags,
             parent_company_id=model.parent_company_id,
+            territory_id=model.territory_id,
         )
 
 
@@ -44,6 +49,10 @@ class CompanyResponse(CompanyLiteResponse):
     @strawberry.field
     def created_by(self) -> UserResponse:
         return UserResponse.from_orm_model(self._instance.created_by)
+
+    @strawberry.field
+    def territory(self) -> TerritoryLiteResponse | None:
+        return TerritoryLiteResponse.from_orm_model_optional(self._instance.territory)
 
     @strawberry.field
     def company_type(

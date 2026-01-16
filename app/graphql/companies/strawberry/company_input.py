@@ -14,6 +14,7 @@ class CompanyInput(BaseInputGQL[Company]):
     phone: str | None = strawberry.UNSET
     tags: list[str] | None = strawberry.UNSET
     parent_company_id: UUID | None = strawberry.UNSET
+    territory_id: UUID | None = strawberry.UNSET
 
     def to_orm_model(self) -> Company:
         return Company(
@@ -23,4 +24,5 @@ class CompanyInput(BaseInputGQL[Company]):
             phone=self.optional_field(self.phone),
             tags=self.optional_field(self.tags),
             parent_company_id=self.optional_field(self.parent_company_id),
+            territory_id=self.optional_field(self.territory_id),
         )

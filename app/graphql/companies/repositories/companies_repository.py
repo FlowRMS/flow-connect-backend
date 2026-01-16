@@ -33,7 +33,7 @@ class CompaniesRepository(BaseRepository[Company]):
                 Company.created_at,
                 User.full_name.label("created_by"),
                 Company.name,
-                CompanyTypeEntity.name.label("company_type_name"),
+                CompanyTypeEntity.name.label("company_source_type"),
                 Company.website,
                 Company.phone,
                 Company.tags,

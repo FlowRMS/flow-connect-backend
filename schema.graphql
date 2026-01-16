@@ -404,6 +404,7 @@ input CompanyInput {
   phone: String
   tags: [String!]
   parentCompanyId: UUID
+  territoryId: UUID
 }
 
 type CompanyLandingPage implements LandingPageInterfaceBase {
@@ -427,6 +428,7 @@ type CompanyLiteResponse {
   phone: String
   tags: [String!]
   parentCompanyId: UUID
+  territoryId: UUID
 }
 
 type CompanyResponse {
@@ -438,7 +440,9 @@ type CompanyResponse {
   phone: String
   tags: [String!]
   parentCompanyId: UUID
+  territoryId: UUID
   createdBy: UserResponse!
+  territory: TerritoryLiteResponse
   companyType: CompanyTypeResponse
 }
 
@@ -781,6 +785,7 @@ input CustomerInput {
   isParent: Boolean! = false
   parentId: UUID = null
   buyingGroupId: UUID = null
+  territoryId: UUID = null
 }
 
 type CustomerLandingPage implements LandingPageInterfaceBase {
@@ -804,6 +809,7 @@ type CustomerLiteResponse {
   isParent: Boolean!
   parentId: UUID
   buyingGroupId: UUID
+  territoryId: UUID
 }
 
 type CustomerResponse {
@@ -813,11 +819,13 @@ type CustomerResponse {
   isParent: Boolean!
   parentId: UUID
   buyingGroupId: UUID
+  territoryId: UUID
   createdBy: UserResponse!
   outsideReps: [CustomerSplitRateResponse!]!
   insideReps: [CustomerSplitRateResponse!]!
   parent: CustomerLiteResponse
   buyingGroup: CustomerLiteResponse
+  territory: TerritoryLiteResponse
 }
 
 type CustomerSplitRateResponse {
@@ -1768,6 +1776,11 @@ type Mutation {
   createShippingCarrier(input: ShippingCarrierInput!): ShippingCarrierResponse!
   updateShippingCarrier(id: UUID!, input: ShippingCarrierInput!): ShippingCarrierResponse!
   deleteShippingCarrier(id: UUID!): Boolean!
+  createTerritory(input: TerritoryInput!): TerritoryResponse!
+  updateTerritory(id: UUID!, input: TerritoryInput!): TerritoryResponse!
+  deleteTerritory(id: UUID!): Boolean!
+  assignTerritoryManager(territoryId: UUID!, userId: UUID!): TerritoryResponse!
+  removeTerritoryManager(territoryId: UUID!, userId: UUID!): Boolean!
   createUser(input: UserInput!): UserResponse! @rolePermissionAccess
   updateUser(id: UUID!, input: UserInput!): UserResponse! @rolePermissionAccess
   deleteUser(id: UUID!): Boolean! @rolePermissionAccess
@@ -2831,6 +2844,11 @@ type Query {
   shippingCarriers(activeOnly: Boolean! = false): [ShippingCarrierResponse!]!
   shippingCarrier(id: UUID!): ShippingCarrierResponse!
   shippingCarrierSearch(searchTerm: String!, limit: Int! = 20): [ShippingCarrierResponse!]!
+  territory(id: UUID!): TerritoryResponse
+  territoriesByType(territoryType: TerritoryTypeEnum!, activeOnly: Boolean! = true): [TerritoryLiteResponse!]!
+  territoryChildren(parentId: UUID!): [TerritoryLiteResponse!]!
+  territoryHierarchy(territoryId: UUID!): [TerritoryLiteResponse!]!
+  allTerritories: [TerritoryLiteResponse!]!
   user(id: UUID!): UserResponse!
   userSearch(searchTerm: String!, isInside: Boolean = null, isOutside: Boolean = null, enabled: Boolean = true, limit: Int! = 20): [UserResponse!]!
   users(limit: Int = null, offset: Int! = 0): [UserResponse!]! @rolePermissionAccess
@@ -3129,6 +3147,7 @@ enum RbacResourceEnum {
   JOB
   PRE_OPPORTUNITY
   TASK
+  TERRITORY
 }
 
 enum RbacRoleEnum {
@@ -3418,6 +3437,7 @@ type TaskLandingPage implements LandingPageInterfaceBase {
   title: String!
   status: TaskStatus!
   priority: TaskPriority!
+  category: String
   description: String
   assignees: [String!]!
   dueDate: Date
@@ -3482,6 +3502,68 @@ type TaskType {
   createdBy: UserResponse!
   assignees: [UserResponse!]!
   category: TaskCategoryType
+}
+
+input TerritoryInput {
+  name: String!
+  code: String!
+  territoryType: TerritoryTypeEnum!
+  parentId: UUID = null
+  zipCodes: [String!]! = []
+  countyCodes: [String!]! = []
+  cityNames: [String!]! = []
+  stateCodes: [String!]! = []
+  active: Boolean! = true
+  splitRates: [TerritorySplitRateInput!]! = []
+}
+
+type TerritoryLiteResponse {
+  id: UUID!
+  name: String!
+  code: String!
+  territoryType: TerritoryTypeEnum!
+  parentId: UUID
+  active: Boolean!
+  createdAt: datetime!
+}
+
+type TerritoryResponse {
+  id: UUID!
+  name: String!
+  code: String!
+  territoryType: TerritoryTypeEnum!
+  parentId: UUID
+  active: Boolean!
+  createdAt: datetime!
+  zipCodes: [String!]!
+  countyCodes: [String!]!
+  cityNames: [String!]!
+  stateCodes: [String!]!
+  parent: TerritoryLiteResponse
+  splitRates: [TerritorySplitRateResponse!]!
+  managers: [UserResponse!]!
+}
+
+input TerritorySplitRateInput {
+  id: UUID = null
+  userId: UUID!
+  splitRate: Decimal!
+  position: Int!
+}
+
+type TerritorySplitRateResponse {
+  id: UUID!
+  territoryId: UUID!
+  userId: UUID!
+  splitRate: Decimal!
+  position: Int!
+  user: UserResponse!
+}
+
+enum TerritoryTypeEnum {
+  REGION
+  SUBREGION
+  TERRITORY
 }
 
 scalar UUID

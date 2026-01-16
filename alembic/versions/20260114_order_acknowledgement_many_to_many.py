@@ -25,7 +25,6 @@ def upgrade() -> None:
         sa.Column("id", sa.UUID(), nullable=False),
         sa.Column("order_acknowledgement_id", sa.UUID(), nullable=False),
         sa.Column("order_detail_id", sa.UUID(), nullable=False),
-        sa.Column("created_by_id", sa.UUID(), nullable=False),
         sa.Column(
             "created_at",
             postgresql.TIMESTAMP(timezone=True),
@@ -41,10 +40,6 @@ def upgrade() -> None:
             ["order_detail_id"],
             ["pycommission.order_details.id"],
             ondelete="CASCADE",
-        ),
-        sa.ForeignKeyConstraint(
-            ["created_by_id"],
-            ["pyuser.users.id"],
         ),
         sa.PrimaryKeyConstraint("id"),
         sa.UniqueConstraint(
@@ -70,12 +65,11 @@ def upgrade() -> None:
     op.execute(
         """
         INSERT INTO pycommission.order_acknowledgement_details
-            (id, order_acknowledgement_id, order_detail_id, created_by_id, created_at)
+            (id, order_acknowledgement_id, order_detail_id, created_at)
         SELECT
             gen_random_uuid(),
             id,
             order_detail_id,
-            created_by_id,
             created_at
         FROM pycommission.order_acknowledgements
         WHERE order_detail_id IS NOT NULL

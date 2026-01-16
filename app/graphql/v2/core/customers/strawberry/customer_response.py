@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 from typing import Self
 from uuid import UUID
 
@@ -9,6 +7,9 @@ from commons.db.v6 import Customer
 from app.core.db.adapters.dto import DTOMixin
 from app.graphql.v2.core.customers.strawberry.customer_split_rate_response import (
     CustomerSplitRateResponse,
+)
+from app.graphql.v2.core.territories.strawberry.territory_response import (
+    TerritoryLiteResponse,
 )
 from app.graphql.v2.core.users.strawberry.user_response import UserResponse
 
@@ -22,6 +23,7 @@ class CustomerLiteResponse(DTOMixin[Customer]):
     is_parent: bool
     parent_id: UUID | None
     buying_group_id: UUID | None
+    territory_id: UUID | None
 
     @classmethod
     def from_orm_model(cls, model: Customer) -> Self:
@@ -33,6 +35,7 @@ class CustomerLiteResponse(DTOMixin[Customer]):
             is_parent=model.is_parent,
             parent_id=model.parent_id,
             buying_group_id=model.buying_group_id,
+            territory_id=model.territory_id,
         )
 
 
@@ -65,3 +68,7 @@ class CustomerResponse(CustomerLiteResponse):
         if not buying_group:
             return None
         return CustomerLiteResponse.from_orm_model(buying_group)
+
+    @strawberry.field
+    def territory(self) -> TerritoryLiteResponse | None:
+        return TerritoryLiteResponse.from_orm_model_optional(self._instance.territory)

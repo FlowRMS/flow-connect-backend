@@ -98,33 +98,29 @@ class OrderAcknowledgementRepository(BaseRepository[OrderAcknowledgement]):
             )
         )
 
-    async def find_by_order_id(self, order_id: UUID) -> list[OrderAcknowledgement]:
-        stmt = (
-            select(OrderAcknowledgement)
-            .options(
-                joinedload(OrderAcknowledgement.details),
-                joinedload(OrderAcknowledgement.details).joinedload(
-                    OrderAcknowledgementDetail.order_detail
-                ),
+    @property
+    def base_query(self):
+        return select(OrderAcknowledgement).options(
+            joinedload(OrderAcknowledgement.details).joinedload(
+                OrderAcknowledgementDetail.order_detail
             )
-            .where(OrderAcknowledgement.order_id == order_id)
         )
+
+    async def find_by_id(self, acknowledgement_id: UUID) -> OrderAcknowledgement:
+        stmt = self.base_query.where(OrderAcknowledgement.id == acknowledgement_id)
+        result = await self.session.execute(stmt)
+        return result.unique().scalar_one()
+
+    async def find_by_order_id(self, order_id: UUID) -> list[OrderAcknowledgement]:
+        stmt = self.base_query.where(OrderAcknowledgement.order_id == order_id)
         result = await self.session.execute(stmt)
         return list(result.unique().scalars().all())
 
     async def find_by_order_detail_id(
         self, order_detail_id: UUID
     ) -> list[OrderAcknowledgement]:
-        stmt = (
-            select(OrderAcknowledgement)
-            .options(
-                joinedload(OrderAcknowledgement.details),
-                joinedload(OrderAcknowledgement.details).joinedload(
-                    OrderAcknowledgementDetail.order_detail
-                ),
-            )
-            .join(OrderAcknowledgementDetail)
-            .where(OrderAcknowledgementDetail.order_detail_id == order_detail_id)
+        stmt = self.base_query.join(OrderAcknowledgementDetail).where(
+            OrderAcknowledgementDetail.order_detail_id == order_detail_id
         )
         result = await self.session.execute(stmt)
         return list(result.unique().scalars().all())
