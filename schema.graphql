@@ -3129,6 +3129,7 @@ enum RbacResourceEnum {
   JOB
   PRE_OPPORTUNITY
   TASK
+  TERRITORY
 }
 
 enum RbacRoleEnum {
