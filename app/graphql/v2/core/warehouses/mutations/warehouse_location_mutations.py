@@ -12,6 +12,8 @@ from app.graphql.v2.core.warehouses.services.warehouse_location_service import (
     WarehouseLocationService,
 )
 from app.graphql.v2.core.warehouses.strawberry.warehouse_location_input import (
+    BulkProductAssignmentInput,
+    BulkProductRemovalInput,
     BulkWarehouseLocationInput,
     WarehouseLocationInput,
 )
@@ -105,3 +107,34 @@ class WarehouseLocationMutations:
         service: Injected[WarehouseLocationAssignmentService],
     ) -> bool:
         return await service.remove_product(location_id, product_id)
+
+    @strawberry.mutation
+    @inject
+    async def bulk_assign_products_to_locations(
+        self,
+        assignments: list[BulkProductAssignmentInput],
+        service: Injected[WarehouseLocationAssignmentService],
+    ) -> list[LocationProductAssignmentResponse]:
+        """Bulk assign products to locations in a single request.
+
+        More efficient than calling assignProductToLocation multiple times.
+        Creates new assignments or updates existing ones.
+        """
+        tuples = [(a.location_id, a.product_id, a.quantity) for a in assignments]
+        results = await service.bulk_assign_products(tuples)
+        return LocationProductAssignmentResponse.from_orm_model_list(results)
+
+    @strawberry.mutation
+    @inject
+    async def bulk_remove_products_from_locations(
+        self,
+        removals: list[BulkProductRemovalInput],
+        service: Injected[WarehouseLocationAssignmentService],
+    ) -> int:
+        """Bulk remove products from locations in a single request.
+
+        More efficient than calling removeProductFromLocation multiple times.
+        Returns the number of assignments successfully removed.
+        """
+        tuples = [(r.location_id, r.product_id) for r in removals]
+        return await service.bulk_remove_products(tuples)
