@@ -3,15 +3,12 @@ from uuid import UUID
 import strawberry
 from commons.db.v6.core.territories.territory import Territory
 from commons.db.v6.core.territories.territory_type_enum import (
-    TerritoryTypeEnum as DBTerritoryTypeEnum,
+    TerritoryTypeEnum,
 )
 
 from app.core.strawberry.inputs import BaseInputGQL
 from app.graphql.v2.core.territories.strawberry.territory_split_rate_input import (
     TerritorySplitRateInput,
-)
-from app.graphql.v2.core.territories.strawberry.territory_type_enum import (
-    TerritoryTypeEnum,
 )
 
 
@@ -32,7 +29,7 @@ class TerritoryInput(BaseInputGQL[Territory]):
         territory = Territory(
             name=self.name,
             code=self.code,
-            territory_type=DBTerritoryTypeEnum(self.territory_type.value),
+            territory_type=self.territory_type,
             parent_id=self.parent_id,
             zip_codes=self.zip_codes,
             county_codes=self.county_codes,

@@ -1,7 +1,7 @@
 """create territories table
 
 Revision ID: create_territories
-Revises: uq_check_details_entities
+Revises: add_company_types
 Create Date: 2026-01-16
 
 """
@@ -14,7 +14,7 @@ from sqlalchemy.dialects import postgresql
 from alembic import op
 
 revision: str = "create_territories"
-down_revision: str | None = "uq_check_details_entities"
+down_revision: str | None = "add_company_types"
 branch_labels: str | Sequence[str] | None = None
 depends_on: str | Sequence[str] | None = None
 

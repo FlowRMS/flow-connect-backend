@@ -9,6 +9,7 @@ from app.core.strawberry.inputs import BaseInputGQL
 
 @strawberry.input
 class TerritorySplitRateInput(BaseInputGQL[TerritorySplitRate]):
+    id: UUID | None = None
     user_id: UUID
     split_rate: Decimal
     position: int

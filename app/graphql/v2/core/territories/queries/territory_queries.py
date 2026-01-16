@@ -3,7 +3,7 @@ from uuid import UUID
 import strawberry
 from aioinject import Injected
 from commons.db.v6.core.territories.territory_type_enum import (
-    TerritoryTypeEnum as DBTerritoryTypeEnum,
+    TerritoryTypeEnum,
 )
 
 from app.graphql.inject import inject
@@ -11,9 +11,6 @@ from app.graphql.v2.core.territories.services.territory_service import Territory
 from app.graphql.v2.core.territories.strawberry.territory_response import (
     TerritoryLiteResponse,
     TerritoryResponse,
-)
-from app.graphql.v2.core.territories.strawberry.territory_type_enum import (
-    TerritoryTypeEnum,
 )
 
 
@@ -37,9 +34,7 @@ class TerritoryQueries:
         service: Injected[TerritoryService],
         active_only: bool = True,
     ) -> list[TerritoryLiteResponse]:
-        territories = await service.get_by_type(
-            DBTerritoryTypeEnum(territory_type.value), active_only
-        )
+        territories = await service.get_by_type(territory_type, active_only)
         return TerritoryLiteResponse.from_orm_model_list(territories)
 
     @strawberry.field

@@ -1,25 +1,18 @@
-from __future__ import annotations
-
 from datetime import datetime
-from typing import TYPE_CHECKING, Self
+from typing import Self
 from uuid import UUID
 
 import strawberry
 from commons.db.v6.core.territories.territory import Territory
 from commons.db.v6.core.territories.territory_type_enum import (
-    TerritoryTypeEnum as DBTerritoryTypeEnum,
-)
-
-from app.core.db.adapters.dto import DTOMixin
-from app.graphql.v2.core.territories.strawberry.territory_type_enum import (
     TerritoryTypeEnum,
 )
 
-if TYPE_CHECKING:
-    from app.graphql.v2.core.territories.strawberry.territory_split_rate_response import (
-        TerritorySplitRateResponse,
-    )
-    from app.graphql.v2.core.users.strawberry.user_response import UserResponse
+from app.core.db.adapters.dto import DTOMixin
+from app.graphql.v2.core.territories.strawberry.territory_split_rate_response import (
+    TerritorySplitRateResponse,
+)
+from app.graphql.v2.core.users.strawberry.user_response import UserResponse
 
 
 @strawberry.type
@@ -40,7 +33,7 @@ class TerritoryLiteResponse(DTOMixin[Territory]):
             id=model.id,
             name=model.name,
             code=model.code,
-            territory_type=TerritoryTypeEnum(DBTerritoryTypeEnum(model.territory_type)),
+            territory_type=model.territory_type,
             parent_id=model.parent_id,
             active=model.active,
             created_at=model.created_at,
@@ -61,7 +54,7 @@ class TerritoryResponse(TerritoryLiteResponse):
             id=model.id,
             name=model.name,
             code=model.code,
-            territory_type=TerritoryTypeEnum(DBTerritoryTypeEnum(model.territory_type)),
+            territory_type=model.territory_type,
             parent_id=model.parent_id,
             active=model.active,
             created_at=model.created_at,
@@ -80,18 +73,12 @@ class TerritoryResponse(TerritoryLiteResponse):
 
     @strawberry.field
     def split_rates(self) -> list[TerritorySplitRateResponse]:
-        from app.graphql.v2.core.territories.strawberry.territory_split_rate_response import (
-            TerritorySplitRateResponse,
-        )
-
         return TerritorySplitRateResponse.from_orm_model_list(
             self._instance.split_rates
         )
 
     @strawberry.field
     def managers(self) -> list[UserResponse]:
-        from app.graphql.v2.core.users.strawberry.user_response import UserResponse
-
         return [
             UserResponse.from_orm_model(manager.user)
             for manager in self._instance.managers

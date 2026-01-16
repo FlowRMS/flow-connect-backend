@@ -1,6 +1,4 @@
-from __future__ import annotations
-
-from typing import TYPE_CHECKING, Self
+from typing import Self
 from uuid import UUID
 
 import strawberry
@@ -10,12 +8,10 @@ from app.core.db.adapters.dto import DTOMixin
 from app.graphql.v2.core.customers.strawberry.customer_split_rate_response import (
     CustomerSplitRateResponse,
 )
+from app.graphql.v2.core.territories.strawberry.territory_response import (
+    TerritoryLiteResponse,
+)
 from app.graphql.v2.core.users.strawberry.user_response import UserResponse
-
-if TYPE_CHECKING:
-    from app.graphql.v2.core.territories.strawberry.territory_response import (
-        TerritoryLiteResponse,
-    )
 
 
 @strawberry.type
@@ -75,11 +71,4 @@ class CustomerResponse(CustomerLiteResponse):
 
     @strawberry.field
     def territory(self) -> TerritoryLiteResponse | None:
-        from app.graphql.v2.core.territories.strawberry.territory_response import (
-            TerritoryLiteResponse,
-        )
-
-        territory = self._instance.territory
-        if not territory:
-            return None
-        return TerritoryLiteResponse.from_orm_model(territory)
+        return TerritoryLiteResponse.from_orm_model_optional(self._instance.territory)

@@ -2,6 +2,9 @@ from uuid import UUID
 
 from commons.db.v6.core.territories.territory import Territory
 from commons.db.v6.core.territories.territory_manager import TerritoryManager
+from commons.db.v6.core.territories.territory_split_rate import (
+    TerritorySplitRate,
+)
 from commons.db.v6.core.territories.territory_type_enum import TerritoryTypeEnum
 from sqlalchemy.orm import joinedload
 
@@ -31,6 +34,7 @@ class TerritoryService:
             options=[
                 joinedload(Territory.parent),
                 joinedload(Territory.split_rates),
+                joinedload(Territory.split_rates).joinedload(TerritorySplitRate.user),
                 joinedload(Territory.managers),
             ],
         )
