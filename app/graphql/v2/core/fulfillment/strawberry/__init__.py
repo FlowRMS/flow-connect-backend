@@ -1,32 +1,54 @@
-from app.graphql.v2.core.fulfillment.strawberry.fulfillment_input import (
+# Input types
+from app.graphql.v2.core.fulfillment.strawberry.fulfillment_assignment_input import (
     AddAssignmentInput,
-    AddDocumentInput,
-    AssignItemToBoxInput,
     AssignUserInput,
     BulkAssignmentInput,
-    CancelBackorderInput,
-    CompleteShippingInput,
-    CreateFulfillmentLineItemInput,
-    CreateFulfillmentOrderInput,
-    CreatePackingBoxInput,
-    MarkManufacturerFulfilledInput,
-    ShipToAddressInput,
-    SplitLineItemInput,
-    UpdateFulfillmentOrderInput,
-    UpdatePackingBoxInput,
-    UpdatePickedQuantityInput,
+)
+from app.graphql.v2.core.fulfillment.strawberry.fulfillment_document_input import (
+    AddDocumentInput,
     UploadDocumentInput,
 )
-from app.graphql.v2.core.fulfillment.strawberry.fulfillment_response import (
+from app.graphql.v2.core.fulfillment.strawberry.fulfillment_line_item_input import (
+    CancelBackorderInput,
+    CreateFulfillmentLineItemInput,
+    MarkManufacturerFulfilledInput,
+    SplitLineItemInput,
+    UpdatePickedQuantityInput,
+)
+from app.graphql.v2.core.fulfillment.strawberry.fulfillment_order_input import (
+    CompleteShippingInput,
+    CreateFulfillmentOrderInput,
+    UpdateFulfillmentOrderInput,
+)
+from app.graphql.v2.core.fulfillment.strawberry.packing_box_input import (
+    AssignItemToBoxInput,
+    CreatePackingBoxInput,
+    UpdatePackingBoxInput,
+)
+
+# Response types
+from app.graphql.v2.core.fulfillment.strawberry.fulfillment_activity_response import (
     FulfillmentActivityResponse,
+)
+from app.graphql.v2.core.fulfillment.strawberry.fulfillment_assignment_response import (
     FulfillmentAssignmentResponse,
+)
+from app.graphql.v2.core.fulfillment.strawberry.fulfillment_document_response import (
     FulfillmentDocumentResponse,
+)
+from app.graphql.v2.core.fulfillment.strawberry.fulfillment_line_item_response import (
     FulfillmentOrderLineItemResponse,
+)
+from app.graphql.v2.core.fulfillment.strawberry.fulfillment_order_response import (
     FulfillmentOrderResponse,
+    ShipToAddressResponse,
+)
+from app.graphql.v2.core.fulfillment.strawberry.fulfillment_stats_response import (
     FulfillmentStatsResponse,
+)
+from app.graphql.v2.core.fulfillment.strawberry.packing_box_response import (
     PackingBoxItemResponse,
     PackingBoxResponse,
-    ShipToAddressResponse,
 )
 
 __all__ = [
@@ -42,7 +64,6 @@ __all__ = [
     "CreateFulfillmentOrderInput",
     "CreatePackingBoxInput",
     "MarkManufacturerFulfilledInput",
-    "ShipToAddressInput",
     "SplitLineItemInput",
     "UpdateFulfillmentOrderInput",
     "UpdatePackingBoxInput",

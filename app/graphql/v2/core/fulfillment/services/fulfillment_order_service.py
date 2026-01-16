@@ -1,9 +1,7 @@
 from datetime import UTC, datetime
 from uuid import UUID
 
-import strawberry
 from commons.auth import AuthInfo
-from commons.db.v6.core.addresses.address import Address, AddressSourceTypeEnum
 from commons.db.v6.fulfillment import (
     FulfillmentActivity,
     FulfillmentActivityType,
@@ -14,13 +12,14 @@ from commons.db.v6.fulfillment import (
 )
 
 from app.errors.common_errors import NotFoundError
-from app.graphql.addresses.repositories.address_repository import AddressRepository
+from app.graphql.addresses.services.address_service import AddressService
+from app.graphql.addresses.strawberry.address_input import AddressInput
 from app.graphql.v2.core.fulfillment.repositories import (
     FulfillmentActivityRepository,
     FulfillmentAssignmentRepository,
     FulfillmentOrderRepository,
 )
-from app.graphql.v2.core.fulfillment.strawberry.fulfillment_input import (
+from app.graphql.v2.core.fulfillment.strawberry import (
     BulkAssignmentInput,
     CreateFulfillmentOrderInput,
     UpdateFulfillmentOrderInput,
@@ -33,14 +32,14 @@ class FulfillmentOrderService:
         repository: FulfillmentOrderRepository,
         activity_repository: FulfillmentActivityRepository,
         assignment_repository: FulfillmentAssignmentRepository,
-        address_repository: AddressRepository,
+        address_service: AddressService,
         auth_info: AuthInfo,
     ) -> None:
         super().__init__()
         self.repository = repository
         self.activity_repository = activity_repository
         self.assignment_repository = assignment_repository
-        self.address_repository = address_repository
+        self.address_service = address_service
         self.auth_info = auth_info
 
     async def get_by_id(self, order_id: UUID) -> FulfillmentOrder | None:
@@ -70,23 +69,16 @@ class FulfillmentOrderService:
         next_number = await self.repository.get_next_order_number()
         order.fulfillment_order_number = f"FO-{next_number:06d}"
 
-        # Handle ship_to_address if provided
-        if input.ship_to_address:
-            order.ship_to_name = input.ship_to_address.name
-            order.ship_to_phone = input.ship_to_address.phone
+        # Handle ship_to_name and ship_to_phone if provided
+        if input.ship_to_name:
+            order.ship_to_name = input.ship_to_name
+        if input.ship_to_phone:
+            order.ship_to_phone = input.ship_to_phone
 
         order = await self.repository.create(order)
 
-        # Create Address record after order is created (need order.id for source_id)
         if input.ship_to_address:
-            address_fields = input.ship_to_address.to_address_fields()
-            address = Address(
-                source_id=order.id,
-                source_type=AddressSourceTypeEnum.FULFILLMENT_ORDER,
-                is_primary=True,
-                **address_fields,
-            )
-            address = await self.address_repository.create(address)
+            address = await self.address_service.create(input.ship_to_address)
             order.ship_to_address_id = address.id
             order = await self.repository.update(order)
 
@@ -100,63 +92,40 @@ class FulfillmentOrderService:
     ) -> FulfillmentOrder:
         order = await self._get_or_raise(order_id)
 
-        if (
-            input.warehouse_id is not strawberry.UNSET
-            and input.warehouse_id is not None
-        ):
-            order.warehouse_id = input.warehouse_id
-        if (
-            input.fulfillment_method is not strawberry.UNSET
-            and input.fulfillment_method is not None
-        ):
-            order.fulfillment_method = input.fulfillment_method
-        if input.carrier_id is not strawberry.UNSET:
-            order.carrier_id = input.carrier_id
-        if input.carrier_type is not strawberry.UNSET:
-            order.carrier_type = input.carrier_type
-        if input.freight_class is not strawberry.UNSET:
-            order.freight_class = input.freight_class
-        if input.need_by_date is not strawberry.UNSET:
-            order.need_by_date = input.need_by_date
-        if input.hold_reason is not strawberry.UNSET:
-            order.hold_reason = input.hold_reason
-        if input.ship_to_address is not strawberry.UNSET:
-            if input.ship_to_address is None:
-                # Clear the address reference
-                order.ship_to_address_id = None
-                order.ship_to_name = None
-                order.ship_to_phone = None
-            else:
-                # Update name and phone on the order
-                order.ship_to_name = input.ship_to_address.name
-                order.ship_to_phone = input.ship_to_address.phone
-                address_fields = input.ship_to_address.to_address_fields()
+        order.warehouse_id = input.optional_field(
+            input.warehouse_id, order.warehouse_id
+        )
+        order.fulfillment_method = input.optional_field(
+            input.fulfillment_method, order.fulfillment_method
+        )
+        order.carrier_id = input.optional_field(input.carrier_id, order.carrier_id)
+        order.carrier_type = input.optional_field(input.carrier_type, order.carrier_type)
+        order.freight_class = input.optional_field(
+            input.freight_class, order.freight_class
+        )
+        order.need_by_date = input.optional_field(input.need_by_date, order.need_by_date)
+        order.hold_reason = input.optional_field(input.hold_reason, order.hold_reason)
+        order.ship_to_name = input.optional_field(input.ship_to_name, order.ship_to_name)
+        order.ship_to_phone = input.optional_field(
+            input.ship_to_phone, order.ship_to_phone
+        )
 
-                if order.ship_to_address_id:
-                    # Update existing address
-                    existing_address = await self.address_repository.get_by_id(
-                        order.ship_to_address_id
-                    )
-                    if existing_address:
-                        existing_address.line_1 = address_fields["line_1"]
-                        existing_address.line_2 = address_fields["line_2"]
-                        existing_address.city = address_fields["city"]
-                        existing_address.state = address_fields["state"]
-                        existing_address.zip_code = address_fields["zip_code"]
-                        existing_address.country = address_fields["country"]
-                        await self.address_repository.update(existing_address)
-                else:
-                    # Create new address
-                    address = Address(
-                        source_id=order.id,
-                        source_type=AddressSourceTypeEnum.FULFILLMENT_ORDER,
-                        is_primary=True,
-                        **address_fields,
-                    )
-                    address = await self.address_repository.create(address)
-                    order.ship_to_address_id = address.id
+        await self._update_ship_to_address(order, input.ship_to_address)
 
         return await self.repository.update(order)
+
+    async def _update_ship_to_address(
+        self, order: FulfillmentOrder, address_input: AddressInput | None
+    ) -> None:
+        if address_input is None:
+            order.ship_to_address_id = None
+            return
+
+        if order.ship_to_address_id:
+            await self.address_service.update(order.ship_to_address_id, address_input)
+        else:
+            address = await self.address_service.create(address_input)
+            order.ship_to_address_id = address.id
 
     async def release_to_warehouse(self, order_id: UUID) -> FulfillmentOrder:
         order = await self._get_or_raise(order_id)

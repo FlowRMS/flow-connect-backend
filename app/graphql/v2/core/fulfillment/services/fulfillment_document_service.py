@@ -3,7 +3,7 @@ from typing import Optional
 from uuid import UUID
 
 from commons.auth import AuthInfo
-from commons.db.v6.fulfillment import FulfillmentDocument
+from commons.db.v6.fulfillment import FulfillmentDocument, FulfillmentDocumentType
 from strawberry.file_uploads import Upload
 
 from app.graphql.v2.core.fulfillment.repositories.fulfillment_document_repository import (
@@ -34,7 +34,7 @@ class FulfillmentDocumentService:
     async def add_document(
         self,
         fulfillment_order_id: UUID,
-        document_type: str,
+        document_type: FulfillmentDocumentType,
         file_name: str,
         file_url: str,
         file_size: int | None = None,
@@ -85,7 +85,7 @@ class FulfillmentDocumentService:
     async def upload_document(
         self,
         fulfillment_order_id: UUID,
-        document_type: str,
+        document_type: FulfillmentDocumentType,
         file: Upload,
         notes: Optional[str] = None,
     ) -> FulfillmentDocument:
