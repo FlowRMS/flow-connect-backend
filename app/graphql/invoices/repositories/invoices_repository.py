@@ -115,6 +115,7 @@ class InvoicesRepository(BaseRepository[Invoice]):
             invoice_id,
             options=[
                 joinedload(Invoice.details),
+                joinedload(Invoice.details).joinedload(InvoiceDetail.end_user),
                 joinedload(Invoice.details).joinedload(InvoiceDetail.product),
                 joinedload(Invoice.details).joinedload(InvoiceDetail.uom),
                 joinedload(Invoice.details).joinedload(

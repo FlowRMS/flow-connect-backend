@@ -106,7 +106,7 @@ class CustomerConverter(BaseEntityConverter[CustomerDTO, CustomerInput, Customer
             line_2=addr_dto.address_line_two if addr_dto.address_line_one else None,
             city=addr_dto.city or "",
             state=addr_dto.state,
-            zip_code=str(addr_dto.zip_code) if addr_dto.zip_code else None,
+            zip_code=str(addr_dto.zip_code) if addr_dto.zip_code else "00000",
             country="US",
             is_primary=position == 0,
         )

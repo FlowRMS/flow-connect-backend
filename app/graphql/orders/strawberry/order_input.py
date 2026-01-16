@@ -24,6 +24,7 @@ class OrderInput(BaseInputGQL[Order]):
     details: list[OrderDetailInput]
 
     id: UUID | None = strawberry.UNSET
+    job_id: UUID | None = strawberry.UNSET
     published: bool = strawberry.UNSET
     creation_type: CreationType = strawberry.UNSET
     order_type: OrderType = strawberry.UNSET
@@ -64,6 +65,7 @@ class OrderInput(BaseInputGQL[Order]):
             creation_type=creation_type,
             order_type=order_type,
             factory_id=self.factory_id,
+            job_id=self.optional_field(self.job_id),
             bill_to_customer_id=self.optional_field(self.bill_to_customer_id),
             shipping_terms=self.optional_field(self.shipping_terms),
             freight_terms=self.optional_field(self.freight_terms),

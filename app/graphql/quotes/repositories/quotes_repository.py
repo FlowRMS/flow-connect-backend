@@ -224,6 +224,7 @@ class QuotesRepository(BaseRepository[Quote]):
                 joinedload(Quote.details).joinedload(QuoteDetail.uom),
                 joinedload(Quote.details).joinedload(QuoteDetail.order),
                 joinedload(Quote.details).joinedload(QuoteDetail.factory),
+                joinedload(Quote.details).joinedload(QuoteDetail.end_user),
                 joinedload(Quote.balance),
                 joinedload(Quote.sold_to_customer),
                 joinedload(Quote.bill_to_customer),

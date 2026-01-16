@@ -1,20 +1,18 @@
-from __future__ import annotations
-
 from datetime import datetime
-from typing import TYPE_CHECKING, Self
+from typing import Self
 from uuid import UUID
 
 import strawberry
 from commons.db.v6.crm.companies.company_model import Company
-from commons.db.v6.crm.companies.company_type import CompanyType
 
 from app.core.db.adapters.dto import DTOMixin
+from app.graphql.companies.strawberry.company_type_response import (
+    CompanyTypeResponse,
+)
+from app.graphql.v2.core.territories.strawberry.territory_response import (
+    TerritoryLiteResponse,
+)
 from app.graphql.v2.core.users.strawberry.user_response import UserResponse
-
-if TYPE_CHECKING:
-    from app.graphql.v2.core.territories.strawberry.territory_response import (
-        TerritoryLiteResponse,
-    )
 
 
 @strawberry.type
@@ -23,7 +21,7 @@ class CompanyLiteResponse(DTOMixin[Company]):
     id: UUID
     created_at: datetime
     name: str
-    company_source_type: CompanyType
+    company_type_id: UUID | None
     website: str | None
     phone: str | None
     tags: list[str] | None
@@ -37,7 +35,7 @@ class CompanyLiteResponse(DTOMixin[Company]):
             id=model.id,
             created_at=model.created_at,
             name=model.name,
-            company_source_type=model.company_source_type,
+            company_type_id=model.company_type_id,
             website=model.website,
             phone=model.phone,
             tags=model.tags,
@@ -54,11 +52,10 @@ class CompanyResponse(CompanyLiteResponse):
 
     @strawberry.field
     def territory(self) -> TerritoryLiteResponse | None:
-        from app.graphql.v2.core.territories.strawberry.territory_response import (
-            TerritoryLiteResponse,
-        )
+        return TerritoryLiteResponse.from_orm_model_optional(self._instance.territory)
 
-        territory = self._instance.territory
-        if not territory:
-            return None
-        return TerritoryLiteResponse.from_orm_model(territory)
+    @strawberry.field
+    def company_type(
+        self,
+    ) -> CompanyTypeResponse | None:
+        return CompanyTypeResponse.from_orm_model_optional(self._instance.company_type)

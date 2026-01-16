@@ -1,7 +1,7 @@
 from decimal import Decimal
 from uuid import UUID
 
-from commons.db.v6.commission import Invoice, InvoiceDetail
+from commons.db.v6.commission import Invoice, InvoiceDetail, OrderDetail
 from commons.db.v6.commission.orders import Order, OrderHeaderStatus, OrderStatus
 from loguru import logger
 from sqlalchemy import func, select
@@ -25,6 +25,9 @@ class UpdateOrderOnInvoiceProcessor(BaseProcessor[Invoice]):
         ]
 
     async def process(self, context: EntityContext[Invoice]) -> None:
+        logger.info(
+            f"Processing UpdateOrderOnInvoiceProcessor for Invoice {context.entity.id} on event {context.event.name}"
+        )
         invoice = context.entity
 
         order = await self._get_order_with_details(invoice.order_id)
@@ -44,15 +47,15 @@ class UpdateOrderOnInvoiceProcessor(BaseProcessor[Invoice]):
     async def get_order_detail_totals(self, order_id: UUID) -> dict[UUID, Decimal]:
         result = await self.session.execute(
             select(
-                InvoiceDetail.order_detail_id,
+                OrderDetail.id.label("order_detail_id"),
                 func.coalesce(func.sum(InvoiceDetail.total), Decimal("0")).label(
                     "total"
                 ),
             )
-            .select_from(InvoiceDetail)
-            .join(Invoice, Invoice.id == InvoiceDetail.invoice_id)
-            .where(Invoice.order_id == order_id)
-            .group_by(InvoiceDetail.order_detail_id)
+            .select_from(OrderDetail)
+            .outerjoin(InvoiceDetail, InvoiceDetail.order_detail_id == OrderDetail.id)
+            .where(OrderDetail.order_id == order_id)
+            .group_by(OrderDetail.id)
         )
         return {row.order_detail_id: row.total for row in result.fetchall()}
 
@@ -61,10 +64,10 @@ class UpdateOrderOnInvoiceProcessor(BaseProcessor[Invoice]):
     ) -> None:
         order_detail_mapping = {detail.id: detail for detail in order.details}
         invoice_detail_totals = await self.get_order_detail_totals(order.id)
-        logger.debug(
+        logger.info(
             f"Updating Order {order.id} details based on Invoice {invoice.id} event {event.name}"
         )
-        logger.debug(f"Invoice Detail Totals: {invoice_detail_totals}")
+        logger.info(f"Invoice Detail Totals: {invoice_detail_totals}")
 
         for order_detail_id, invoiced_amount in invoice_detail_totals.items():
             order_detail = order_detail_mapping.get(order_detail_id)
