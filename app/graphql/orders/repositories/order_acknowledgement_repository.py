@@ -109,7 +109,7 @@ class OrderAcknowledgementRepository(BaseRepository[OrderAcknowledgement]):
     async def find_by_id(self, acknowledgement_id: UUID) -> OrderAcknowledgement:
         stmt = self.base_query.where(OrderAcknowledgement.id == acknowledgement_id)
         result = await self.session.execute(stmt)
-        return result.scalar_one()
+        return result.unique().scalar_one()
 
     async def find_by_order_id(self, order_id: UUID) -> list[OrderAcknowledgement]:
         stmt = self.base_query.where(OrderAcknowledgement.order_id == order_id)

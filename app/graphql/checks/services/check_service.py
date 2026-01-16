@@ -1,13 +1,14 @@
+from decimal import Decimal
 from uuid import UUID
 
 from commons.auth import AuthInfo
-from commons.db.v6.commission import Adjustment, Check, Credit, Invoice
+from commons.db.v6.commission import Adjustment, Check, CheckDetail, Credit, Invoice
 from commons.db.v6.commission.checks.enums import CheckStatus
 from commons.db.v6.commission.checks.enums.adjustment_status import AdjustmentStatus
 from commons.db.v6.commission.credits.enums import CreditStatus
 from commons.db.v6.commission.invoices.invoice import InvoiceStatus
 from commons.db.v6.crm.links.entity_type import EntityType
-from sqlalchemy import update
+from sqlalchemy import delete, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.errors.common_errors import NameAlreadyExistsError, NotFoundError
@@ -96,6 +97,8 @@ class CheckService:
         check.status = CheckStatus.POSTED
         _ = await self.repository.update(check)
 
+        await self._open_invoices_with_zero_applied(check)
+        await self._delete_details_with_zero_applied(check)
         await self._update_invoices_to_paid(check)
         await self._update_credits_to_posted(check)
         await self._update_adjustments_to_posted(check)
@@ -168,4 +171,33 @@ class CheckService:
             update(Adjustment)
             .where(Adjustment.id.in_(adjustment_ids))
             .values(status=AdjustmentStatus.PENDING, locked=True)
+        )
+
+    async def _open_invoices_with_zero_applied(self, check: Check) -> None:
+        invoice_ids = [
+            d.invoice_id
+            for d in check.details
+            if d.invoice_id is not None
+            and d.applied_amount.quantize(Decimal("0.01")) == Decimal(0)
+        ]
+        if not invoice_ids:
+            return
+
+        _ = await self.session.execute(
+            update(Invoice)
+            .where(Invoice.id.in_(invoice_ids))
+            .values(status=InvoiceStatus.OPEN, locked=False)
+        )
+
+    async def _delete_details_with_zero_applied(self, check: Check) -> None:
+        detail_ids = [
+            d.id
+            for d in check.details
+            if d.applied_amount.quantize(Decimal("0.01")) == Decimal(0)
+        ]
+        if not detail_ids:
+            return
+
+        _ = await self.session.execute(
+            delete(CheckDetail).where(CheckDetail.id.in_(detail_ids))
         )
