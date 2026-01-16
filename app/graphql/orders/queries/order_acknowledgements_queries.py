@@ -21,8 +21,7 @@ class OrderAcknowledgementsQueries:
         id: UUID,
         service: Injected[OrderAcknowledgementService],
     ) -> OrderAcknowledgementResponse | None:
-        acknowledgement = await service.get_by_id(id)
-        return OrderAcknowledgementResponse.from_orm_model_optional(acknowledgement)
+        return OrderAcknowledgementResponse.from_orm_model(await service.find_by_id(id))
 
     @strawberry.field
     @inject
