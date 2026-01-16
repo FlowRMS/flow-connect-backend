@@ -10,7 +10,6 @@ from app.graphql.tasks.strawberry.task_category_response import TaskCategoryType
 
 @strawberry.type
 class TaskCategoriesQueries:
-
     @strawberry.field
     @inject
     async def task_categories(

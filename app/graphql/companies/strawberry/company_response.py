@@ -1,11 +1,14 @@
 from datetime import datetime
-from typing import Annotated, Self
+from typing import Self
 from uuid import UUID
 
 import strawberry
 from commons.db.v6.crm.companies.company_model import Company
 
 from app.core.db.adapters.dto import DTOMixin
+from app.graphql.companies.strawberry.company_type_response import (
+    CompanyTypeResponse,
+)
 from app.graphql.v2.core.users.strawberry.user_response import UserResponse
 
 
@@ -45,12 +48,5 @@ class CompanyResponse(CompanyLiteResponse):
     @strawberry.field
     def company_type(
         self,
-    ) -> Annotated[
-        "CompanyTypeResponse",
-        strawberry.lazy("app.graphql.companies.strawberry.company_type_response"),
-    ] | None:
-        from app.graphql.companies.strawberry.company_type_response import CompanyTypeResponse
-
-        if self._instance.company_type is None:
-            return None
-        return CompanyTypeResponse.from_orm_model(self._instance.company_type)
+    ) -> CompanyTypeResponse | None:
+        return CompanyTypeResponse.from_orm_model_optional(self._instance.company_type)

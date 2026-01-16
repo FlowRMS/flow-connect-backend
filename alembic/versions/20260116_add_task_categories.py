@@ -14,14 +14,14 @@ from sqlalchemy.dialects import postgresql
 from alembic import op
 
 revision: str = "add_task_categories"
-down_revision: str | None = "takeoffs_product_crosses_001"
+down_revision: str | None = "order_ack_m2m_001"
 branch_labels: str | Sequence[str] | None = None
 depends_on: str | Sequence[str] | None = None
 
 
 def upgrade() -> None:
     # Create task_categories table
-    op.create_table(
+    _ = op.create_table(
         "task_categories",
         sa.Column(
             "id",
@@ -30,7 +30,7 @@ def upgrade() -> None:
             primary_key=True,
             server_default=sa.text("gen_random_uuid()"),
         ),
-        sa.Column("name", sa.String(100), nullable=False, unique=True),
+        sa.Column("name", sa.String, nullable=False, unique=True),
         sa.Column("display_order", sa.Integer(), nullable=False, server_default="0"),
         sa.Column("is_active", sa.Boolean(), nullable=False, server_default="true"),
         sa.Column(
@@ -102,13 +102,17 @@ def downgrade() -> None:
     op.drop_index("ix_tasks_category_id", table_name="tasks", schema="pycrm")
 
     # Drop foreign key constraint
-    op.drop_constraint("fk_tasks_category_id", "tasks", schema="pycrm", type_="foreignkey")
+    op.drop_constraint(
+        "fk_tasks_category_id", "tasks", schema="pycrm", type_="foreignkey"
+    )
 
     # Drop category_id column from tasks
     op.drop_column("tasks", "category_id", schema="pycrm")
 
     # Drop index on task_categories
-    op.drop_index("ix_task_categories_name", table_name="task_categories", schema="pycrm")
+    op.drop_index(
+        "ix_task_categories_name", table_name="task_categories", schema="pycrm"
+    )
 
     # Drop task_categories table
     op.drop_table("task_categories", schema="pycrm")

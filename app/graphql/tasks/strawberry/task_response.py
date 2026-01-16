@@ -1,5 +1,5 @@
 from datetime import date, datetime
-from typing import Annotated, Self
+from typing import Self
 from uuid import UUID
 
 import strawberry
@@ -8,6 +8,7 @@ from commons.db.v6.crm.tasks.task_priority import TaskPriority
 from commons.db.v6.crm.tasks.task_status import TaskStatus
 
 from app.core.db.adapters.dto import DTOMixin
+from app.graphql.tasks.strawberry.task_category_response import TaskCategoryType
 from app.graphql.v2.core.users.strawberry.user_response import UserResponse
 
 
@@ -55,12 +56,5 @@ class TaskType(TaskLiteType):
     @strawberry.field
     def category(
         self,
-    ) -> Annotated[
-        "TaskCategoryType",
-        strawberry.lazy("app.graphql.tasks.strawberry.task_category_response"),
-    ] | None:
-        from app.graphql.tasks.strawberry.task_category_response import TaskCategoryType
-
-        if self._instance.category is None:
-            return None
-        return TaskCategoryType.from_orm_model(self._instance.category)
+    ) -> TaskCategoryType | None:
+        return TaskCategoryType.from_orm_model_optional(self._instance.category)

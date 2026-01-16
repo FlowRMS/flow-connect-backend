@@ -399,7 +399,7 @@ enum CheckStatus {
 
 input CompanyInput {
   name: String!
-  companySourceType: CompanyType!
+  companyTypeId: UUID!
   website: String
   phone: String
   tags: [String!]
@@ -412,7 +412,7 @@ type CompanyLandingPage implements LandingPageInterfaceBase {
   createdBy: String!
   userIds: [UUID!]!
   name: String!
-  companySourceType: CompanyType!
+  companySourceType: String!
   website: String
   phone: String
   tags: [String!]
@@ -422,7 +422,7 @@ type CompanyLiteResponse {
   id: UUID!
   createdAt: datetime!
   name: String!
-  companySourceType: CompanyType!
+  companyTypeId: UUID
   website: String
   phone: String
   tags: [String!]
@@ -433,42 +433,27 @@ type CompanyResponse {
   id: UUID!
   createdAt: datetime!
   name: String!
-  companySourceType: CompanyType!
+  companyTypeId: UUID
   website: String
   phone: String
   tags: [String!]
   parentCompanyId: UUID
   createdBy: UserResponse!
+  companyType: CompanyTypeResponse
 }
 
-enum CompanyType {
-  CUSTOMER
-  MANUFACTURER
-  ENGINEERING_FIRM
-  CONSULTING_ENGINEER
-  ELECTRICAL_ENGINEER
-  MEP_ENGINEER
-  ARCHITECT
-  LIGHTING_DESIGNER
-  SPECIFIER
-  ELECTRICAL_CONTRACTOR
-  GENERAL_CONTRACTOR
-  DESIGN_BUILD_FIRM
-  EPC
-  SYSTEMS_INTEGRATOR
-  CONTROLS_CONTRACTOR
-  LOW_VOLTAGE_CONTRACTOR
-  BUILDING_OWNER
-  DEVELOPER
-  PROPERTY_MANAGEMENT_COMPANY
-  FACILITY_MANAGEMENT_COMPANY
-  UTILITY_COMPANY
-  MUNICIPALITY_PUBLIC_AUTHORITY
-  AHJ
-  COMMISSIONING_AGENT
-  TESTING_INSPECTION_AGENCY
-  ENERGY_PROGRAM_ADMINISTRATOR
-  TRADE_ASSOCIATION
+input CompanyTypeInput {
+  id: UUID = null
+  name: String!
+  displayOrder: Int! = 0
+}
+
+type CompanyTypeResponse {
+  id: UUID!
+  name: String!
+  displayOrder: Int!
+  isActive: Boolean!
+  createdAt: datetime!
 }
 
 input ContactInput {
@@ -1658,6 +1643,9 @@ type Mutation {
   createCompany(input: CompanyInput!): CompanyResponse!
   deleteCompany(id: UUID!): Boolean!
   updateCompany(id: UUID!, input: CompanyInput!): CompanyResponse!
+  createCompanyType(input: CompanyTypeInput!): CompanyTypeResponse!
+  updateCompanyType(id: UUID!, input: CompanyTypeInput!): CompanyTypeResponse!
+  deleteCompanyType(id: UUID!): Boolean!
   createContact(input: ContactInput!): ContactResponse!
   deleteContact(id: UUID!): Boolean!
   updateContact(id: UUID!, input: ContactInput!): ContactResponse!
@@ -1721,6 +1709,9 @@ type Mutation {
   deleteSpecSheet(id: UUID!): Boolean!
   incrementSpecSheetUsage(id: UUID!): Boolean!
   moveFolder(input: MoveFolderInput!): Int!
+  createTaskCategory(input: TaskCategoryInput!): TaskCategoryType!
+  updateTaskCategory(id: UUID!, input: TaskCategoryInput!): TaskCategoryType!
+  deleteTaskCategory(id: UUID!): Boolean!
   createTask(input: TaskInput!): TaskType!
   updateTask(id: UUID!, input: TaskInput!): TaskType!
   deleteTask(id: UUID!): Boolean!
@@ -2742,6 +2733,8 @@ type Query {
   universalSearch(searchTerm: String!, limit: Int! = 20): [SearchResult!]!
   company(id: UUID!): CompanyResponse!
   companySearch(searchTerm: String!, limit: Int! = 20): [CompanyResponse!]!
+  companyTypes(includeInactive: Boolean! = false): [CompanyTypeResponse!]!
+  companyType(id: UUID!): CompanyTypeResponse!
   contact(id: UUID!): ContactResponse!
   contactsByCompany(companyId: UUID!): [ContactResponse!]!
   contactSearch(searchTerm: String!, limit: Int! = 20): [ContactResponse!]!
@@ -2794,6 +2787,8 @@ type Query {
   specSheet(id: UUID!): SpecSheetResponse
   specSheetsByFactory(factoryId: UUID!, publishedOnly: Boolean! = true): [SpecSheetResponse!]!
   specSheetSearch(searchTerm: String! = "", factoryId: UUID = null, categories: [String!] = null, publishedOnly: Boolean! = true, limit: Int! = 50): [SpecSheetResponse!]!
+  taskCategories(includeInactive: Boolean! = false): [TaskCategoryType!]!
+  taskCategory(id: UUID!): TaskCategoryType!
   task(id: UUID!): TaskType!
   taskConversations(taskId: UUID!): [TaskConversationType!]!
   taskSearch(searchTerm: String!, limit: Int! = 20): [TaskType!]!
@@ -3376,6 +3371,20 @@ type SpecSheetResponse {
   createdBy: UserResponse!
 }
 
+input TaskCategoryInput {
+  id: UUID = null
+  name: String!
+  displayOrder: Int! = 0
+}
+
+type TaskCategoryType {
+  id: UUID!
+  name: String!
+  displayOrder: Int!
+  isActive: Boolean!
+  createdAt: datetime!
+}
+
 input TaskConversationInput {
   taskId: UUID!
   content: String!
@@ -3398,6 +3407,7 @@ input TaskInput {
   dueDate: Date
   reminderDate: Date
   tags: [String!]
+  categoryId: UUID
 }
 
 type TaskLandingPage implements LandingPageInterfaceBase {
@@ -3426,6 +3436,7 @@ type TaskLiteType {
   dueDate: Date
   reminderDate: Date
   tags: [String!]
+  categoryId: UUID
 }
 
 enum TaskPriority {
@@ -3467,8 +3478,10 @@ type TaskType {
   dueDate: Date
   reminderDate: Date
   tags: [String!]
+  categoryId: UUID
   createdBy: UserResponse!
   assignees: [UserResponse!]!
+  category: TaskCategoryType
 }
 
 scalar UUID

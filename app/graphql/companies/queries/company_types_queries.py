@@ -10,7 +10,6 @@ from app.graphql.inject import inject
 
 @strawberry.type
 class CompanyTypesQueries:
-
     @strawberry.field
     @inject
     async def company_types(

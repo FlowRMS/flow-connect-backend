@@ -52,7 +52,7 @@ LEGACY_COMPANY_TYPES = {
 
 def upgrade() -> None:
     # Create company_types table
-    op.create_table(
+    _ = op.create_table(
         "company_types",
         sa.Column(
             "id",
@@ -61,7 +61,7 @@ def upgrade() -> None:
             primary_key=True,
             server_default=sa.text("gen_random_uuid()"),
         ),
-        sa.Column("name", sa.String(100), nullable=False, unique=True),
+        sa.Column("name", sa.String, nullable=False, unique=True),
         sa.Column("display_order", sa.Integer(), nullable=False, server_default="0"),
         sa.Column("is_active", sa.Boolean(), nullable=False, server_default="true"),
         sa.Column(
@@ -86,7 +86,9 @@ def upgrade() -> None:
         f"(gen_random_uuid(), '{name}', {order})"
         for order, name in LEGACY_COMPANY_TYPES.items()
     )
-    op.execute(f"INSERT INTO pycrm.company_types (id, name, display_order) VALUES {values};")
+    op.execute(
+        f"INSERT INTO pycrm.company_types (id, name, display_order) VALUES {values};"
+    )
 
     # Add company_type_id column to companies
     op.add_column(
@@ -148,7 +150,9 @@ def downgrade() -> None:
     """)
 
     # Drop index on company_type_id
-    op.drop_index("ix_companies_company_type_id", table_name="companies", schema="pycrm")
+    op.drop_index(
+        "ix_companies_company_type_id", table_name="companies", schema="pycrm"
+    )
 
     # Drop foreign key constraint
     op.drop_constraint(

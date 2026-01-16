@@ -7,16 +7,18 @@ from app.graphql.companies.repositories.company_types_repository import (
     CompanyTypesRepository,
 )
 from app.graphql.companies.strawberry.company_type_input import (
-    CreateCompanyTypeInput,
-    UpdateCompanyTypeInput,
+    CompanyTypeInput,
 )
 
 
 class CompanyTypesService:
     def __init__(self, repository: CompanyTypesRepository) -> None:
+        super().__init__()
         self.repository = repository
 
-    async def list_types(self, include_inactive: bool = False) -> list[CompanyTypeEntity]:
+    async def list_types(
+        self, include_inactive: bool = False
+    ) -> list[CompanyTypeEntity]:
         if include_inactive:
             return await self.repository.list_all_ordered()
         return await self.repository.list_active()
@@ -27,12 +29,12 @@ class CompanyTypesService:
             raise NotFoundError(str(type_id))
         return company_type
 
-    async def create_type(self, input: CreateCompanyTypeInput) -> CompanyTypeEntity:
+    async def create_type(self, input: CompanyTypeInput) -> CompanyTypeEntity:
         company_type = input.to_orm_model()
         return await self.repository.create(company_type)
 
     async def update_type(
-        self, type_id: UUID, input: UpdateCompanyTypeInput
+        self, type_id: UUID, input: CompanyTypeInput
     ) -> CompanyTypeEntity:
         existing = await self.repository.get_by_id(type_id)
         if not existing:
@@ -48,5 +50,5 @@ class CompanyTypesService:
             raise NotFoundError(str(type_id))
 
         existing.is_active = False
-        await self.repository.update(existing)
+        _ = await self.repository.update(existing)
         return True

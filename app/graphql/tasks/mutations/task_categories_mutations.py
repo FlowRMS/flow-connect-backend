@@ -6,20 +6,18 @@ from aioinject import Injected
 from app.graphql.inject import inject
 from app.graphql.tasks.services.task_categories_service import TaskCategoriesService
 from app.graphql.tasks.strawberry.task_category_input import (
-    CreateTaskCategoryInput,
-    UpdateTaskCategoryInput,
+    TaskCategoryInput,
 )
 from app.graphql.tasks.strawberry.task_category_response import TaskCategoryType
 
 
 @strawberry.type
 class TaskCategoriesMutations:
-
     @strawberry.mutation
     @inject
     async def create_task_category(
         self,
-        input: CreateTaskCategoryInput,
+        input: TaskCategoryInput,
         service: Injected[TaskCategoriesService],
     ) -> TaskCategoryType:
         category = await service.create_category(input)
@@ -30,7 +28,7 @@ class TaskCategoriesMutations:
     async def update_task_category(
         self,
         id: UUID,
-        input: UpdateTaskCategoryInput,
+        input: TaskCategoryInput,
         service: Injected[TaskCategoriesService],
     ) -> TaskCategoryType:
         category = await service.update_category(id, input)

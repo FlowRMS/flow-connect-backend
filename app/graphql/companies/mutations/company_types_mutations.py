@@ -5,8 +5,7 @@ from aioinject import Injected
 
 from app.graphql.companies.services.company_types_service import CompanyTypesService
 from app.graphql.companies.strawberry.company_type_input import (
-    CreateCompanyTypeInput,
-    UpdateCompanyTypeInput,
+    CompanyTypeInput,
 )
 from app.graphql.companies.strawberry.company_type_response import CompanyTypeResponse
 from app.graphql.inject import inject
@@ -14,12 +13,11 @@ from app.graphql.inject import inject
 
 @strawberry.type
 class CompanyTypesMutations:
-
     @strawberry.mutation
     @inject
     async def create_company_type(
         self,
-        input: CreateCompanyTypeInput,
+        input: CompanyTypeInput,
         service: Injected[CompanyTypesService],
     ) -> CompanyTypeResponse:
         company_type = await service.create_type(input)
@@ -30,7 +28,7 @@ class CompanyTypesMutations:
     async def update_company_type(
         self,
         id: UUID,
-        input: UpdateCompanyTypeInput,
+        input: CompanyTypeInput,
         service: Injected[CompanyTypesService],
     ) -> CompanyTypeResponse:
         company_type = await service.update_type(id, input)
