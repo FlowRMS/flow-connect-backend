@@ -17,7 +17,6 @@ class OrderAcknowledgementResponse(DTOMixin[OrderAcknowledgement]):
     created_at: datetime
     created_by_id: UUID
     order_id: UUID
-    order_detail_id: UUID
     order_acknowledgement_number: str
     entity_date: date
     quantity: Decimal
@@ -31,9 +30,12 @@ class OrderAcknowledgementResponse(DTOMixin[OrderAcknowledgement]):
             created_at=model.created_at,
             created_by_id=model.created_by_id,
             order_id=model.order_id,
-            order_detail_id=model.order_detail_id,
             order_acknowledgement_number=model.order_acknowledgement_number,
             entity_date=model.entity_date,
             quantity=model.quantity,
             creation_type=model.creation_type,
         )
+
+    @strawberry.field
+    def item_numbers(self) -> list[int]:
+        return [detail.order_detail.item_number for detail in self._instance.details]
