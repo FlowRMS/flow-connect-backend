@@ -1,4 +1,5 @@
 
+from datetime import date
 from uuid import UUID
 
 from commons.auth import AuthInfo
@@ -10,6 +11,10 @@ from app.graphql.v2.core.deliveries.repositories.recurring_shipments_repository 
 )
 from app.graphql.v2.core.deliveries.strawberry.delivery_input import (
     RecurringShipmentInput,
+)
+from app.graphql.v2.core.deliveries.utils.recurrence_utils import (
+    calculate_next_date,
+    validate_recurrence_pattern,
 )
 
 
@@ -40,17 +45,104 @@ class RecurringShipmentService:
         return await self.repository.list_by_warehouse(warehouse_id)
 
     async def create(self, input: RecurringShipmentInput) -> RecurringShipment:
-        return await self.repository.create(input.to_orm_model())
+        """
+        Create a recurring shipment with auto-calculated next_expected_date.
+
+        The backend now calculates the next occurrence date instead of relying
+        on the frontend to send it.
+
+        Steps:
+        1. Validate recurrence pattern
+        2. Calculate next_expected_date from start_date
+        3. Create recurring shipment
+
+        Args:
+            input: RecurringShipmentInput with pattern and dates
+
+        Returns:
+            Created recurring shipment with calculated next_expected_date
+
+        Raises:
+            ValueError: If recurrence pattern is invalid
+        """
+        # Validate recurrence pattern
+        validation_error = validate_recurrence_pattern(input.recurrence_pattern)
+        if validation_error:
+            raise ValueError(f"Invalid recurrence pattern: {validation_error}")
+
+        # Convert input to ORM model
+        shipment = input.to_orm_model()
+
+        # Calculate next_expected_date from start_date
+        # If start_date is in the future, use it; otherwise calculate next from today
+        today = date.today()
+        if shipment.start_date >= today:
+            shipment.next_expected_date = shipment.start_date
+        else:
+            shipment.next_expected_date = calculate_next_date(
+                shipment.recurrence_pattern, shipment.start_date
+            )
+
+        # last_generated_date is None initially (no deliveries generated yet)
+        shipment.last_generated_date = None
+
+        return await self.repository.create(shipment)
 
     async def update(
         self, shipment_id: UUID, input: RecurringShipmentInput
     ) -> RecurringShipment:
+        """
+        Update a recurring shipment with auto-recalculation of next_expected_date.
+
+        If the recurrence pattern or start_date changes, recalculates next_expected_date.
+
+        Args:
+            shipment_id: ID of shipment to update
+            input: Updated shipment data
+
+        Returns:
+            Updated recurring shipment
+
+        Raises:
+            NotFoundError: If shipment not found
+            ValueError: If recurrence pattern is invalid
+        """
         if not await self.repository.exists(shipment_id):
             raise NotFoundError(
                 f"Recurring shipment with id {shipment_id} not found"
             )
+
+        # Validate recurrence pattern if present
+        if input.recurrence_pattern:
+            validation_error = validate_recurrence_pattern(input.recurrence_pattern)
+            if validation_error:
+                raise ValueError(f"Invalid recurrence pattern: {validation_error}")
+
+        # Get existing shipment to check if pattern/dates changed
+        existing = await self.repository.get_by_id(shipment_id)
+
         shipment = input.to_orm_model()
         shipment.id = shipment_id
+
+        # Recalculate next_expected_date if pattern or start_date changed
+        pattern_changed = (
+            input.recurrence_pattern
+            and input.recurrence_pattern != existing.recurrence_pattern
+        )
+        start_date_changed = (
+            input.start_date and input.start_date != existing.start_date
+        )
+
+        if pattern_changed or start_date_changed:
+            # Use last_generated_date if available, otherwise start_date
+            base_date = shipment.last_generated_date or shipment.start_date
+            shipment.next_expected_date = calculate_next_date(
+                shipment.recurrence_pattern, base_date
+            )
+        elif not input.next_expected_date:
+            # If next_expected_date not provided, preserve existing
+            shipment.next_expected_date = existing.next_expected_date
+
         return await self.repository.update(shipment)
 
     async def delete(self, shipment_id: UUID) -> bool:
