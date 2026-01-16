@@ -34,16 +34,20 @@ class OrderAcknowledgementService:
         return await self.repository.find_by_order_detail_id(order_detail_id)
 
     async def create(self, input: OrderAcknowledgementInput) -> OrderAcknowledgement:
-        acknowledgement = input.to_orm_model()
-        return await self.repository.create(acknowledgement)
+        oack = await self.repository.create(input.to_orm_model())
+        return await self.repository.get_by_id(oack.id)
 
     async def update(self, input: OrderAcknowledgementInput) -> OrderAcknowledgement:
         if input.id is None:
             raise ValueError("ID must be provided for update")
 
-        acknowledgement = input.to_orm_model()
-        acknowledgement.id = input.id
-        return await self.repository.update(acknowledgement)
+        if not input.details:
+            raise ValueError("At least one detail is required")
+
+        updated_acknowledgement = input.to_orm_model()
+        updated_acknowledgement.id = input.id
+        updated = await self.repository.update(updated_acknowledgement)
+        return await self.repository.get_by_id(updated.id)
 
     async def delete(self, acknowledgement_id: UUID) -> bool:
         if not await self.repository.exists(acknowledgement_id):

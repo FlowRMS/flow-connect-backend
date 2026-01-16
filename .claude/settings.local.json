@@ -55,7 +55,9 @@
       "Bash(timeout 60 uv run:*)",
       "Bash(gtimeout 60 uv run:*)",
       "Bash(git stash:*)",
-      "Bash(task typecheck-basedpy:*)"
+      "Bash(task typecheck-basedpy:*)",
+      "Bash(alembic heads:*)",
+      "Bash(alembic history:*)"
     ]
   },
   "enableAllProjectMcpServers": true,
