@@ -1,7 +1,6 @@
 from uuid import UUID
 
 import strawberry
-from commons.db.v6.crm import CompanyType
 from commons.db.v6.crm.companies.company_model import Company
 
 from app.core.strawberry.inputs import BaseInputGQL
@@ -9,22 +8,21 @@ from app.core.strawberry.inputs import BaseInputGQL
 
 @strawberry.input
 class CompanyInput(BaseInputGQL[Company]):
-    """GraphQL input type for creating/updating companies."""
-
     name: str
-    company_source_type: CompanyType
+    company_type_id: UUID
     website: str | None = strawberry.UNSET
     phone: str | None = strawberry.UNSET
     tags: list[str] | None = strawberry.UNSET
     parent_company_id: UUID | None = strawberry.UNSET
+    territory_id: UUID | None = strawberry.UNSET
 
     def to_orm_model(self) -> Company:
-        """Convert input to ORM model."""
         return Company(
             name=self.name,
-            company_source_type=self.company_source_type,
+            company_type_id=self.company_type_id,
             website=self.optional_field(self.website),
             phone=self.optional_field(self.phone),
             tags=self.optional_field(self.tags),
             parent_company_id=self.optional_field(self.parent_company_id),
+            territory_id=self.optional_field(self.territory_id),
         )

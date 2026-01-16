@@ -1,7 +1,7 @@
 """add unique constraints to check_details
 
 Revision ID: uq_check_details_entities
-Revises: add_general_settings
+Revises: 7c44527b01d1
 Create Date: 2026-01-14
 
 """
@@ -11,7 +11,7 @@ from collections.abc import Sequence
 from alembic import op
 
 revision: str = "uq_check_details_entities"
-down_revision: str | None = "add_general_settings"
+down_revision: str | None = "7c44527b01d1"
 branch_labels: str | Sequence[str] | None = None
 depends_on: str | Sequence[str] | None = None
 

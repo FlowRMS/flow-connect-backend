@@ -146,7 +146,7 @@ class ProductsRepository(BaseRepository[Product]):
             .outerjoin(ProductCpn, ProductCpn.product_id == Product.id)
             .limit(limit)
         )
-        if search_term != "":
+        if search_term:
             stmt = stmt.where(greatest > 0.2).order_by(greatest.desc())
 
         if factory_id is not None:
@@ -172,6 +172,13 @@ class ProductsRepository(BaseRepository[Product]):
 
         result = await self.session.execute(stmt)
         return list(result.scalars().all())
+
+    async def find_by_factory_part_number(
+        self, factory_part_number: str
+    ) -> Product | None:
+        stmt = select(Product).where(Product.factory_part_number == factory_part_number)
+        result = await self.session.execute(stmt)
+        return result.scalars().first()
 
     async def find_by_factory_id(
         self, factory_id: UUID, limit: int = 25

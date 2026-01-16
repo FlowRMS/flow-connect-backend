@@ -13,6 +13,15 @@ class JobCompanyLinkRepository(BaseRepository[JobCompanyLink]):
     def __init__(self, context_wrapper: ContextWrapper, session: AsyncSession) -> None:
         super().__init__(session, context_wrapper, JobCompanyLink)
 
+    async def get_by_id_with_company(self, link_id: UUID) -> JobCompanyLink | None:
+        stmt = (
+            select(JobCompanyLink)
+            .where(JobCompanyLink.id == link_id)
+            .options(joinedload(JobCompanyLink.company))
+        )
+        result = await self.session.execute(stmt)
+        return result.unique().scalar_one_or_none()
+
     async def get_links_for_job(self, job_id: UUID) -> list[JobCompanyLink]:
         stmt = (
             select(JobCompanyLink)

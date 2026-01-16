@@ -8,6 +8,7 @@ from commons.db.v6.crm.tasks.task_priority import TaskPriority
 from commons.db.v6.crm.tasks.task_status import TaskStatus
 
 from app.core.db.adapters.dto import DTOMixin
+from app.graphql.tasks.strawberry.task_category_response import TaskCategoryType
 from app.graphql.v2.core.users.strawberry.user_response import UserResponse
 
 
@@ -23,6 +24,7 @@ class TaskLiteType(DTOMixin[Task]):
     due_date: date | None
     reminder_date: date | None
     tags: list[str] | None
+    category_id: UUID | None
 
     @classmethod
     def from_orm_model(cls, model: Task) -> Self:
@@ -37,6 +39,7 @@ class TaskLiteType(DTOMixin[Task]):
             due_date=model.due_date,
             reminder_date=model.reminder_date,
             tags=model.tags,
+            category_id=model.category_id,
         )
 
 
@@ -49,3 +52,9 @@ class TaskType(TaskLiteType):
     @strawberry.field
     def assignees(self) -> list[UserResponse]:
         return [UserResponse.from_orm_model(ta.user) for ta in self._instance.assignees]
+
+    @strawberry.field
+    def category(
+        self,
+    ) -> TaskCategoryType | None:
+        return TaskCategoryType.from_orm_model_optional(self._instance.category)
