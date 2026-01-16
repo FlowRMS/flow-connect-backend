@@ -1,10 +1,9 @@
 from datetime import datetime
-from typing import Self
+from typing import Annotated, Self
 from uuid import UUID
 
 import strawberry
 from commons.db.v6.crm.companies.company_model import Company
-from commons.db.v6.crm.companies.company_type import CompanyType
 
 from app.core.db.adapters.dto import DTOMixin
 from app.graphql.v2.core.users.strawberry.user_response import UserResponse
@@ -12,13 +11,11 @@ from app.graphql.v2.core.users.strawberry.user_response import UserResponse
 
 @strawberry.type
 class CompanyLiteResponse(DTOMixin[Company]):
-    """GraphQL type for Company entity (output/query results)."""
-
     _instance: strawberry.Private[Company]
     id: UUID
     created_at: datetime
     name: str
-    company_source_type: CompanyType
+    company_type_id: UUID | None
     website: str | None
     phone: str | None
     tags: list[str] | None
@@ -26,13 +23,12 @@ class CompanyLiteResponse(DTOMixin[Company]):
 
     @classmethod
     def from_orm_model(cls, model: Company) -> Self:
-        """Convert ORM model to GraphQL type."""
         return cls(
             _instance=model,
             id=model.id,
             created_at=model.created_at,
             name=model.name,
-            company_source_type=model.company_source_type,
+            company_type_id=model.company_type_id,
             website=model.website,
             phone=model.phone,
             tags=model.tags,
@@ -45,3 +41,16 @@ class CompanyResponse(CompanyLiteResponse):
     @strawberry.field
     def created_by(self) -> UserResponse:
         return UserResponse.from_orm_model(self._instance.created_by)
+
+    @strawberry.field
+    def company_type(
+        self,
+    ) -> Annotated[
+        "CompanyTypeResponse",
+        strawberry.lazy("app.graphql.companies.strawberry.company_type_response"),
+    ] | None:
+        from app.graphql.companies.strawberry.company_type_response import CompanyTypeResponse
+
+        if self._instance.company_type is None:
+            return None
+        return CompanyTypeResponse.from_orm_model(self._instance.company_type)
