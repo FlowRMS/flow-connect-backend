@@ -59,11 +59,11 @@ jobs:
         id: set_tags
         run: |
           if [ "${{ github.ref_name }}" == "v6-production" ]; then
-            echo "image_tag=${{ secrets.DOCKER_REGISTRY }}/flow-py-backend:production-${{ github.sha }}" >> $GITHUB_OUTPUT
-            echo "latest_tag=${{ secrets.DOCKER_REGISTRY }}/flow-py-backend:production-latest" >> $GITHUB_OUTPUT
+            echo "image_tag=ghcr.io/${GITHUB_REPOSITORY@L}-production-${{ github.sha }}" >> $GITHUB_OUTPUT
+            echo "latest_tag=ghcr.io/${GITHUB_REPOSITORY@L}-production-latest" >> $GITHUB_OUTPUT
           else
-            echo "image_tag=${{ secrets.DOCKER_REGISTRY }}/flow-py-backend:staging-${{ github.sha }}" >> $GITHUB_OUTPUT
-            echo "latest_tag=${{ secrets.DOCKER_REGISTRY }}/flow-py-backend:staging-latest" >> $GITHUB_OUTPUT
+            echo "image_tag=ghcr.io/${GITHUB_REPOSITORY@L}-staging-${{ github.sha }}" >> $GITHUB_OUTPUT
+            echo "latest_tag=ghcr.io/${GITHUB_REPOSITORY@L}-staging-latest" >> $GITHUB_OUTPUT
           fi
 
       - name: Build and push
