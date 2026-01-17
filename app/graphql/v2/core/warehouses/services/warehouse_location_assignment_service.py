@@ -32,9 +32,12 @@ class WarehouseLocationAssignmentService:
         )
         if existing:
             existing.quantity = quantity
-            await self.assignment_repository.update(existing)
+            _ = await self.assignment_repository.update(existing)
             # Reload with product relationship for response
-            return await self.assignment_repository.get_with_product(existing.id)
+            result = await self.assignment_repository.get_with_product(existing.id)
+            if result is None:
+                raise NotFoundError(f"Assignment {existing.id} not found after update")
+            return result
 
         assignment = LocationProductAssignment(
             location_id=location_id,
@@ -43,7 +46,10 @@ class WarehouseLocationAssignmentService:
         )
         created = await self.assignment_repository.create(assignment)
         # Reload with product relationship for response
-        return await self.assignment_repository.get_with_product(created.id)
+        result = await self.assignment_repository.get_with_product(created.id)
+        if result is None:
+            raise NotFoundError(f"Assignment {created.id} not found after create")
+        return result
 
     async def update_product_quantity(
         self, location_id: UUID, product_id: UUID, quantity: Decimal
@@ -56,9 +62,12 @@ class WarehouseLocationAssignmentService:
                 f"Product {product_id} is not assigned to location {location_id}"
             )
         assignment.quantity = quantity
-        await self.assignment_repository.update(assignment)
+        _ = await self.assignment_repository.update(assignment)
         # Reload with product relationship for response
-        return await self.assignment_repository.get_with_product(assignment.id)
+        result = await self.assignment_repository.get_with_product(assignment.id)
+        if result is None:
+            raise NotFoundError(f"Assignment {assignment.id} not found after update")
+        return result
 
     async def remove_product(self, location_id: UUID, product_id: UUID) -> bool:
         return await self.assignment_repository.delete_by_location_and_product(
