@@ -861,6 +861,7 @@ enum DocumentEntityType {
   PRODUCTS
   END_USERS
   DELIVERIES
+  COMMISSION_STATEMENTS
 }
 
 enum EmailStatus {
@@ -1717,6 +1718,9 @@ type Mutation {
   deleteSpecSheet(id: UUID!): Boolean!
   incrementSpecSheetUsage(id: UUID!): Boolean!
   moveFolder(input: MoveFolderInput!): Int!
+  createStatement(input: StatementInput!): StatementResponse!
+  updateStatement(input: StatementInput!): StatementResponse!
+  deleteStatement(id: UUID!): Boolean!
   createTaskCategory(input: TaskCategoryInput!): TaskCategoryType!
   updateTaskCategory(id: UUID!, input: TaskCategoryInput!): TaskCategoryType!
   deleteTaskCategory(id: UUID!): Boolean!
@@ -2800,6 +2804,9 @@ type Query {
   specSheet(id: UUID!): SpecSheetResponse
   specSheetsByFactory(factoryId: UUID!, publishedOnly: Boolean! = true): [SpecSheetResponse!]!
   specSheetSearch(searchTerm: String! = "", factoryId: UUID = null, categories: [String!] = null, publishedOnly: Boolean! = true, limit: Int! = 50): [SpecSheetResponse!]!
+  statement(id: UUID!): StatementResponse!
+  statementSearch(searchTerm: String!, limit: Int! = 20): [StatementLiteResponse!]!
+  statementsByFactoryId(factoryId: UUID!, limit: Int! = 25): [StatementLiteResponse!]!
   taskCategories(includeInactive: Boolean! = false): [TaskCategoryType!]!
   taskCategory(id: UUID!): TaskCategoryType!
   task(id: UUID!): TaskType!
@@ -3388,6 +3395,129 @@ type SpecSheetResponse {
   highlightCount: Int!
   createdAt: datetime!
   createdBy: UserResponse!
+}
+
+type StatementBalanceResponse {
+  id: UUID!
+  quantity: Decimal!
+  subtotal: Decimal!
+  total: Decimal!
+  commission: Decimal!
+  discount: Decimal!
+  discountRate: Decimal!
+  commissionRate: Decimal!
+  commissionDiscount: Decimal!
+  commissionDiscountRate: Decimal!
+}
+
+input StatementDetailInput {
+  itemNumber: Int!
+  quantity: Decimal!
+  unitPrice: Decimal!
+  id: UUID = null
+  soldToCustomerId: UUID = null
+  orderId: UUID = null
+  orderDetailId: UUID = null
+  invoiceId: UUID = null
+  uomId: UUID = null
+  divisionFactor: Decimal = null
+  productId: UUID = null
+  productNameAdhoc: String = null
+  productDescriptionAdhoc: String = null
+  endUserId: UUID = null
+  leadTime: String = null
+  note: String = null
+  discountRate: Decimal! = "0.0000"
+  commissionRate: Decimal! = "0.0000"
+  commissionDiscountRate: Decimal! = "0.0000"
+  outsideSplitRates: [StatementSplitRateInput!] = null
+}
+
+type StatementDetailResponse {
+  id: UUID!
+  statementId: UUID!
+  soldToCustomerId: UUID
+  orderId: UUID
+  orderDetailId: UUID
+  invoiceId: UUID
+  itemNumber: Int!
+  quantity: Decimal!
+  unitPrice: Decimal!
+  subtotal: Decimal!
+  total: Decimal!
+  totalLineCommission: Decimal!
+  commissionRate: Decimal!
+  commission: Decimal!
+  commissionDiscountRate: Decimal!
+  commissionDiscount: Decimal!
+  discountRate: Decimal!
+  discount: Decimal!
+  divisionFactor: Decimal
+  productId: UUID
+  productNameAdhoc: String
+  productDescriptionAdhoc: String
+  uomId: UUID
+  endUserId: UUID
+  leadTime: String
+  note: String
+  soldToCustomer: CustomerLiteResponse
+  endUser: CustomerLiteResponse
+  product: ProductLiteResponse
+  uom: ProductUomResponse
+  outsideSplitRates: [StatementSplitRateResponse!]!
+}
+
+input StatementInput {
+  statementNumber: String!
+  entityDate: Date!
+  factoryId: UUID!
+  details: [StatementDetailInput!]!
+  id: UUID
+  creationType: CreationType!
+}
+
+type StatementLiteResponse {
+  id: UUID!
+  createdAt: datetime!
+  createdById: UUID!
+  statementNumber: String!
+  entityDate: Date!
+  factoryId: UUID!
+  creationType: CreationType!
+  balanceId: UUID!
+  url: String!
+}
+
+type StatementResponse {
+  id: UUID!
+  createdAt: datetime!
+  createdById: UUID!
+  statementNumber: String!
+  entityDate: Date!
+  factoryId: UUID!
+  creationType: CreationType!
+  balanceId: UUID!
+  url: String!
+  factory: FactoryLiteResponse!
+  createdBy: UserResponse!
+  balance: StatementBalanceResponse!
+  details: [StatementDetailResponse!]!
+}
+
+input StatementSplitRateInput {
+  userId: UUID!
+  splitRate: Decimal!
+  position: Int! = 0
+  id: UUID = null
+}
+
+type StatementSplitRateResponse {
+  id: UUID!
+  statementDetailId: UUID!
+  userId: UUID!
+  splitRate: Decimal
+  position: Int!
+  user: UserResponse!
 }
 
 input TaskCategoryInput {
