@@ -32,7 +32,7 @@ class WarehouseLocationAssignmentService:
         )
         if existing:
             existing.quantity = quantity
-            await self.assignment_repository.update(existing)
+            _ = await self.assignment_repository.update(existing)
             # Reload with product relationship for response
             return await self.assignment_repository.get_with_product(existing.id)
 
@@ -56,7 +56,7 @@ class WarehouseLocationAssignmentService:
                 f"Product {product_id} is not assigned to location {location_id}"
             )
         assignment.quantity = quantity
-        await self.assignment_repository.update(assignment)
+        _ = await self.assignment_repository.update(assignment)
         # Reload with product relationship for response
         return await self.assignment_repository.get_with_product(assignment.id)
 

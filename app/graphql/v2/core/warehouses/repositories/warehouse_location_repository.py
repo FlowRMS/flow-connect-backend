@@ -150,9 +150,7 @@ class LocationProductAssignmentRepository(BaseRepository[LocationProductAssignme
         result = await self.session.execute(stmt)
         return result.scalar_one_or_none()
 
-    async def get_with_product(
-        self, assignment_id: UUID
-    ) -> LocationProductAssignment | None:
+    async def get_with_product(self, assignment_id: UUID) -> LocationProductAssignment:
         """Get assignment by ID with product relationship loaded."""
         stmt = (
             select(LocationProductAssignment)
@@ -160,7 +158,7 @@ class LocationProductAssignmentRepository(BaseRepository[LocationProductAssignme
             .where(LocationProductAssignment.id == assignment_id)
         )
         result = await self.session.execute(stmt)
-        return result.unique().scalar_one_or_none()
+        return result.unique().scalar_one()
 
     async def list_by_location(
         self, location_id: UUID

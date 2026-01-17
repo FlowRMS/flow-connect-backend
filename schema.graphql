@@ -206,6 +206,17 @@ type BulkDeleteResult {
   failures: [BulkDeleteFailure!]!
 }
 
+input BulkProductAssignmentInput {
+  locationId: UUID!
+  productId: UUID!
+  quantity: Decimal! = "0.0000"
+}
+
+input BulkProductRemovalInput {
+  locationId: UUID!
+  productId: UUID!
+}
+
 input BulkWarehouseLocationInput {
   level: WarehouseStructureCode!
   name: String!
@@ -1607,6 +1618,8 @@ type LocationProductAssignmentResponse {
   productId: UUID!
   quantity: Decimal!
   createdAt: datetime!
+  productName: String!
+  partNumber: String!
 }
 
 enum LogicalOperator {
@@ -1795,6 +1808,8 @@ type Mutation {
   assignProductToLocation(locationId: UUID!, productId: UUID!, quantity: Decimal!): LocationProductAssignmentResponse!
   updateProductQuantityAtLocation(locationId: UUID!, productId: UUID!, quantity: Decimal!): LocationProductAssignmentResponse!
   removeProductFromLocation(locationId: UUID!, productId: UUID!): Boolean!
+  bulkAssignProductsToLocations(assignments: [BulkProductAssignmentInput!]!): [LocationProductAssignmentResponse!]!
+  bulkRemoveProductsFromLocations(removals: [BulkProductRemovalInput!]!): Int!
   createWarehouse(input: WarehouseInput!): WarehouseResponse!
   updateWarehouse(id: UUID!, input: WarehouseInput!): WarehouseResponse!
   deleteWarehouse(id: UUID!): Boolean!
