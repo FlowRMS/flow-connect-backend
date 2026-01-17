@@ -32,7 +32,6 @@ class TestCalculateNextDate:
         result = calculate_next_date(pattern, from_date)
         assert result == date(2024, 1, 18)
 
-    # WEEKLY tests (BUG FIX 1: Interval no longer adds extra weeks)
     def test_weekly_same_day(self):
         """Test weekly on same day - should go to next week."""
         pattern = {"frequency": "WEEKLY", "interval": 1, "dayOfWeek": "MONDAY"}
@@ -63,7 +62,6 @@ class TestCalculateNextDate:
         # Next Wednesday is 17th, then add 1 week = 24th
         assert result == date(2024, 1, 24)
 
-    # MONTHLY tests (BUG FIX 2: Preserves original day when dayOfMonth not specified)
     def test_monthly_with_day_of_month(self):
         """Test monthly with specific day of month."""
         pattern = {"frequency": "MONTHLY", "interval": 1, "dayOfMonth": 15}
@@ -106,7 +104,6 @@ class TestCalculateNextDate:
         result = calculate_next_date(pattern, from_date)
         assert result == date(2024, 1, 15)
 
-    # MONTHLY_WEEK tests (BUG FIX 3: Stays within target month)
     def test_monthly_week_first_monday(self):
         """Test first Monday of the month."""
         pattern = {
@@ -159,7 +156,6 @@ class TestCalculateNextDate:
         # Fourth Thursday of February 2024 is the 22nd
         assert result == date(2024, 2, 22)
 
-    # Edge cases
     def test_invalid_frequency(self):
         """Test with invalid frequency."""
         pattern = {"frequency": "INVALID", "interval": 1}

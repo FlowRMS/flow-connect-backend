@@ -3,8 +3,6 @@ Recurrence calculation utilities for recurring shipments.
 
 This module implements the same logic as the frontend (deliveries/utils/recurrence.ts)
 to calculate next occurrence dates for recurring deliveries.
-
-IMPORTANT: Keep this logic in sync with frontend implementation.
 """
 
 from datetime import date, timedelta
@@ -74,10 +72,6 @@ def _calculate_daily(from_date: date, interval: int) -> date:
 def _calculate_weekly(from_date: date, pattern: Dict[str, Any]) -> date:
     """
     Calculate next occurrence for WEEKLY/BIWEEKLY frequency.
-
-    Fixed bugs from original implementation:
-    - BUG FIX: No longer adds extra weeks when interval > 1
-    - Simply finds next occurrence of target day
     """
     frequency = pattern.get("frequency")
     interval = pattern.get("interval", 1) if frequency == "WEEKLY" else 2
@@ -105,10 +99,6 @@ def _calculate_weekly(from_date: date, pattern: Dict[str, Any]) -> date:
 def _calculate_monthly(from_date: date, pattern: Dict[str, Any]) -> date:
     """
     Calculate next occurrence for MONTHLY frequency.
-
-    Fixed bugs from original implementation:
-    - BUG FIX: Preserves original day when dayOfMonth not specified
-    - Uses nullish coalescing to keep from_date's day
     """
     interval = pattern.get("interval", 1)
     day_of_month = pattern.get("dayOfMonth")
@@ -142,10 +132,6 @@ def _calculate_monthly_week(from_date: date, pattern: Dict[str, Any]) -> date:
     """
     Calculate next occurrence for MONTHLY_WEEK frequency.
     (e.g., "First Monday of the month", "Last Friday of the month")
-
-    Fixed bugs from original implementation:
-    - BUG FIX: Ensures we stay within the target month
-    - Validates we don't jump to next month
     """
     interval = pattern.get("interval", 1)
     day_of_week = pattern.get("dayOfWeek", "MONDAY")
