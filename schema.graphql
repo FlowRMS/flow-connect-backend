@@ -1618,8 +1618,7 @@ type LocationProductAssignmentResponse {
   productId: UUID!
   quantity: Decimal!
   createdAt: datetime!
-  productName: String!
-  partNumber: String!
+  product: ProductLiteResponse!
 }
 
 enum LogicalOperator {
