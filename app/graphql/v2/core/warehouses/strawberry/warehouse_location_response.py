@@ -21,9 +21,13 @@ class LocationProductAssignmentResponse(DTOMixin[LocationProductAssignment]):
     product_id: UUID
     quantity: Decimal
     created_at: datetime
+    product_name: str
+    part_number: str
 
     @classmethod
     def from_orm_model(cls, model: LocationProductAssignment) -> Self:
+        # Product is eagerly loaded via lazy="joined" on the model
+        product = model.product
         return cls(
             _instance=model,
             id=model.id,
@@ -31,6 +35,10 @@ class LocationProductAssignmentResponse(DTOMixin[LocationProductAssignment]):
             product_id=model.product_id,
             quantity=model.quantity,
             created_at=model.created_at,
+            product_name=product.description or product.factory_part_number
+            if product
+            else "",
+            part_number=product.factory_part_number if product else "",
         )
 
 
@@ -75,11 +83,15 @@ class WarehouseLocationResponse(DTOMixin[WarehouseLocation]):
         )
 
     @strawberry.field
-    async def children(self) -> list["WarehouseLocationResponse"]:
-        children = await self._instance.awaitable_attrs.children
-        return WarehouseLocationResponse.from_orm_model_list(children)
+    def children(self) -> list["WarehouseLocationResponse"]:
+        # Access children directly since they are eagerly loaded via joinedload
+        # Using awaitable_attrs causes lazy loading errors when session is closed
+        return WarehouseLocationResponse.from_orm_model_list(self._instance.children)
 
     @strawberry.field
-    async def product_assignments(self) -> list[LocationProductAssignmentResponse]:
-        assignments = await self._instance.awaitable_attrs.product_assignments
-        return LocationProductAssignmentResponse.from_orm_model_list(assignments)
+    def product_assignments(self) -> list[LocationProductAssignmentResponse]:
+        # Access product_assignments directly since they are eagerly loaded via joinedload
+        # Using awaitable_attrs causes lazy loading errors when session is closed
+        return LocationProductAssignmentResponse.from_orm_model_list(
+            self._instance.product_assignments
+        )

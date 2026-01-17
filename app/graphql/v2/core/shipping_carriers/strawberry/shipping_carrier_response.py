@@ -2,7 +2,7 @@
 
 from datetime import datetime
 from decimal import Decimal
-from typing import Self, cast
+from typing import TYPE_CHECKING, Self, cast
 from uuid import UUID
 
 import strawberry
@@ -10,6 +10,9 @@ from commons.db.v6 import ShippingCarrier
 from strawberry.scalars import JSON
 
 from app.core.db.adapters.dto import DTOMixin
+
+if TYPE_CHECKING:
+    pass
 
 
 @strawberry.type

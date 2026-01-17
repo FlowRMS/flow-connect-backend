@@ -1,7 +1,10 @@
+import logging
 from decimal import Decimal
 from uuid import UUID
 
 from commons.db.v6 import WarehouseLocation, WarehouseStructureCode
+from commons.db.v6.warehouse.inventory.inventory_item import InventoryItem
+from sqlalchemy import select
 
 from app.errors.common_errors import NotFoundError, ValidationError
 from app.graphql.v2.core.warehouses.repositories import (
@@ -68,9 +71,26 @@ class WarehouseLocationService:
             await self._validate_hierarchy(
                 WarehouseStructureCode(input.level.value), input.parent_id
             )
-        location = self._build_location(input, input.warehouse_id, input.parent_id)
-        location.id = location_id
-        return await self.location_repository.update(location)
+        # Update only scalar fields to preserve product_assignments relationship
+        existing.warehouse_id = input.warehouse_id
+        existing.parent_id = input.parent_id
+        existing.level = WarehouseStructureCode(input.level.value)
+        existing.name = input.name
+        existing.code = input.code
+        existing.description = input.description
+        existing.is_active = input.is_active if input.is_active is not None else True
+        existing.sort_order = input.sort_order if input.sort_order is not None else 0
+        existing.x = Decimal(str(input.x)) if input.x is not None else None
+        existing.y = Decimal(str(input.y)) if input.y is not None else None
+        existing.width = Decimal(str(input.width)) if input.width is not None else None
+        existing.height = (
+            Decimal(str(input.height)) if input.height is not None else None
+        )
+        existing.rotation = (
+            Decimal(str(input.rotation)) if input.rotation is not None else None
+        )
+        await self.location_repository.session.flush()
+        return existing
 
     async def delete(self, location_id: UUID) -> bool:
         """Delete a location (cascade deletes children)."""
@@ -86,21 +106,57 @@ class WarehouseLocationService:
         Handles creates, updates, and implicit deletes. Locations not in input are deleted.
         Supports temp_id/temp_parent_id for newly created hierarchical locations.
         """
+        logger = logging.getLogger(__name__)
+
         if not await self.warehouse_repository.exists(warehouse_id):
             raise NotFoundError(f"Warehouse with id {warehouse_id} not found")
 
         existing = await self.location_repository.list_by_warehouse(warehouse_id)
-        existing_ids = {loc.id for loc in existing}
+        existing_by_id = {loc.id: loc for loc in existing}
+        existing_ids = set(existing_by_id.keys())
         input_ids: set[UUID] = set()
         result: list[WarehouseLocation] = []
         temp_id_map: dict[str, UUID] = {}
+
+        # Debug logging
+        logger.info(f"Bulk save: warehouse_id = {warehouse_id}")
+        logger.info(f"Bulk save: existing_ids count = {len(existing_ids)}")
+        logger.info(f"Bulk save: existing_ids = {list(existing_ids)[:10]}...")
+        logger.info(f"Bulk save: input locations count = {len(locations)}")
+        input_location_ids = {loc.id for loc in locations if loc.id}
+        logger.info(
+            f"Bulk save: input location IDs with real IDs = {len(input_location_ids)}"
+        )
+        logger.info(
+            f"Bulk save: input_location_ids = {list(input_location_ids)[:10]}..."
+        )
+
+        # Check for IDs that frontend thinks exist but backend doesn't have
+        ids_frontend_has_but_backend_doesnt = input_location_ids - existing_ids
+        if ids_frontend_has_but_backend_doesnt:
+            logger.warning(
+                f"Bulk save: Frontend has {len(ids_frontend_has_but_backend_doesnt)} IDs "
+                f"not found in backend: {list(ids_frontend_has_but_backend_doesnt)[:5]}..."
+            )
+
+        missing_from_input = existing_ids - input_location_ids
+        logger.info(
+            f"Bulk save: locations that would be deleted = {len(missing_from_input)}"
+        )
+        if missing_from_input:
+            missing_names = [
+                loc.name for loc in existing if loc.id in missing_from_input
+            ]
+            logger.warning(
+                f"Bulk save: locations to delete: {missing_names[:10]}..."
+            )  # First 10
 
         with_real_parent = [loc for loc in locations if not loc.temp_parent_id]
         with_temp_parent = [loc for loc in locations if loc.temp_parent_id]
 
         for loc in with_real_parent:
             saved = await self._save_location(
-                loc, warehouse_id, loc.parent_id, existing_ids, input_ids, temp_id_map
+                loc, warehouse_id, loc.parent_id, existing_by_id, input_ids, temp_id_map
             )
             result.append(saved)
 
@@ -109,30 +165,121 @@ class WarehouseLocationService:
                 temp_id_map.get(loc.temp_parent_id) if loc.temp_parent_id else None
             )
             saved = await self._save_location(
-                loc, warehouse_id, parent_id, existing_ids, input_ids, temp_id_map
+                loc, warehouse_id, parent_id, existing_by_id, input_ids, temp_id_map
             )
             result.append(saved)
 
-        for loc_id in existing_ids - input_ids:
-            _ = await self.location_repository.delete(loc_id)
+        # Flush all changes at once (more efficient than flushing per-location)
+        await self.location_repository.session.flush()
+
+        # Note: We no longer implicitly delete locations not in the input.
+        # The visual builder may not return all locations (e.g., orphaned locations
+        # or locations not visible in the tree). Implicit deletion was causing
+        # foreign key errors when locations had inventory items.
+        #
+        # To delete locations, use the explicit delete mutation instead.
+        locations_not_in_input = existing_ids - input_ids
+        if locations_not_in_input:
+            logger.info(
+                f"Bulk save: {len(locations_not_in_input)} existing locations not in input "
+                f"(will NOT be deleted - use explicit delete if needed)"
+            )
 
         return result
+
+    async def _get_all_descendant_ids(self, location_ids: set[UUID]) -> set[UUID]:
+        """Get all descendant location IDs (children, grandchildren, etc.)."""
+        all_ids = set(location_ids)
+        to_check = list(location_ids)
+
+        while to_check:
+            current_id = to_check.pop()
+            stmt = select(WarehouseLocation.id).where(
+                WarehouseLocation.parent_id == current_id
+            )
+            result = await self.location_repository.session.execute(stmt)
+            child_ids = {row[0] for row in result.fetchall()}
+            new_ids = child_ids - all_ids
+            all_ids.update(new_ids)
+            to_check.extend(new_ids)
+
+        return all_ids
+
+    async def _get_locations_with_inventory(self, location_ids: set[UUID]) -> set[UUID]:
+        """Check which locations (or their descendants) have inventory items assigned."""
+        if not location_ids:
+            return set()
+
+        # Get all descendants of the locations being deleted
+        all_affected_ids = await self._get_all_descendant_ids(location_ids)
+
+        # Check if any of these have inventory items
+        stmt = (
+            select(InventoryItem.location_id)
+            .where(InventoryItem.location_id.in_(all_affected_ids))
+            .distinct()
+        )
+        result = await self.location_repository.session.execute(stmt)
+        locations_with_items = {row[0] for row in result.fetchall()}
+
+        # Return the top-level locations that would cause issues
+        # (locations from the original set whose descendants have inventory)
+        affected_top_level: set[UUID] = set()
+        for loc_id in location_ids:
+            descendants = await self._get_all_descendant_ids({loc_id})
+            if descendants & locations_with_items:
+                affected_top_level.add(loc_id)
+
+        return affected_top_level
 
     async def _save_location(
         self,
         loc: BulkWarehouseLocationInput,
         warehouse_id: UUID,
         parent_id: UUID | None,
-        existing_ids: set[UUID],
+        existing_by_id: dict[UUID, WarehouseLocation],
         input_ids: set[UUID],
         temp_id_map: dict[str, UUID],
     ) -> WarehouseLocation:
-        location = self._build_location(loc, warehouse_id, parent_id)
-        if loc.id and loc.id in existing_ids:
+        logger = logging.getLogger(__name__)
+        if loc.id and loc.id in existing_by_id:
             input_ids.add(loc.id)
-            location.id = loc.id
-            saved = await self.location_repository.update(location)
+            try:
+                # Use pre-fetched location from the map (avoids N+1 queries)
+                # Update only scalar fields to preserve product_assignments relationship
+                existing = existing_by_id[loc.id]
+                existing.warehouse_id = warehouse_id
+                existing.parent_id = parent_id
+                existing.level = WarehouseStructureCode(loc.level.value)
+                existing.name = loc.name
+                existing.code = loc.code
+                existing.description = loc.description
+                existing.is_active = (
+                    loc.is_active if loc.is_active is not None else True
+                )
+                existing.sort_order = (
+                    loc.sort_order if loc.sort_order is not None else 0
+                )
+                existing.x = Decimal(str(loc.x)) if loc.x is not None else None
+                existing.y = Decimal(str(loc.y)) if loc.y is not None else None
+                existing.width = (
+                    Decimal(str(loc.width)) if loc.width is not None else None
+                )
+                existing.height = (
+                    Decimal(str(loc.height)) if loc.height is not None else None
+                )
+                existing.rotation = (
+                    Decimal(str(loc.rotation)) if loc.rotation is not None else None
+                )
+                saved = existing
+            except Exception as e:
+                # Location might have been deleted or doesn't exist
+                # Fall back to creating a new one with a fresh UUID
+                logger.warning(f"Failed to update location {loc.id}, creating new: {e}")
+                new_location = self._build_location(loc, warehouse_id, parent_id)
+                saved = await self.location_repository.create(new_location)
         else:
+            location = self._build_location(loc, warehouse_id, parent_id)
             saved = await self.location_repository.create(location)
         if loc.temp_id:
             temp_id_map[loc.temp_id] = saved.id
