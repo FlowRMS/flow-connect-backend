@@ -34,7 +34,12 @@ class JobCompanyLinkService:
             company_id=company_id,
             role=role,
         )
-        return await self.repository.create(link)
+        created = await self.repository.create(link)
+        loaded = await self.repository.get_by_id_with_company(created.id)
+        if loaded is None:
+            msg = f"Failed to load created link {created.id}"
+            raise NotFoundError(msg)
+        return loaded
 
     async def remove_company_from_job(
         self,

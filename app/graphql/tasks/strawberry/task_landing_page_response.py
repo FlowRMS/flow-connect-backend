@@ -17,6 +17,7 @@ class TaskLandingPageResponse(LandingPageInterfaceBase):
     title: str
     status: TaskStatus
     priority: TaskPriority
+    category: str | None
     description: str | None
     assignees: list[str]
     due_date: date | None

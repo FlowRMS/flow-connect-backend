@@ -8,6 +8,9 @@ from app.graphql.inject import inject
 from app.graphql.invoices.services.invoice_service import InvoiceService
 from app.graphql.invoices.strawberry.invoice_input import InvoiceInput
 from app.graphql.invoices.strawberry.invoice_response import InvoiceResponse
+from app.graphql.invoices.strawberry.order_detail_to_invoice_input import (
+    OrderDetailToInvoiceDetailInput,
+)
 
 
 @strawberry.type
@@ -49,14 +52,14 @@ class InvoicesMutations:
         invoice_number: str,
         factory_id: UUID,
         service: Injected[InvoiceService],
-        order_detail_ids: list[UUID] | None = None,
+        order_details_inputs: list[OrderDetailToInvoiceDetailInput] | None = None,
         due_date: date | None = None,
     ) -> InvoiceResponse:
         invoice = await service.create_invoice_from_order(
             order_id=order_id,
             invoice_number=invoice_number,
             factory_id=factory_id,
-            order_detail_ids=order_detail_ids,
+            order_details_inputs=order_details_inputs,
             due_date=due_date,
         )
         return InvoiceResponse.from_orm_model(invoice)

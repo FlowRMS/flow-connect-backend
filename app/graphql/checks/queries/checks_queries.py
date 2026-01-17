@@ -4,9 +4,13 @@ import strawberry
 from aioinject import Injected
 
 from app.graphql.checks.services.check_service import CheckService
+from app.graphql.checks.services.posted_statement_service import PostedStatementService
 from app.graphql.checks.strawberry.check_response import (
     CheckLiteResponse,
     CheckResponse,
+)
+from app.graphql.checks.strawberry.posted_statement_response import (
+    PostedStatementResponse,
 )
 from app.graphql.inject import inject
 
@@ -45,3 +49,12 @@ class ChecksQueries:
         return CheckLiteResponse.from_orm_model_list(
             await service.find_by_factory_id(factory_id)
         )
+
+    @strawberry.field
+    @inject
+    async def posted_statement(
+        self,
+        service: Injected[PostedStatementService],
+        check_id: UUID,
+    ) -> PostedStatementResponse:
+        return await service.generate_posted_statement(check_id)

@@ -112,7 +112,7 @@ class AdjustmentsRepository(BaseRepository[Adjustment]):
         stmt = (
             select(Adjustment)
             .options(lazyload("*"))
-            .where(Adjustment.reason.ilike(f"%{search_term}%"))
+            .where(Adjustment.adjustment_number.ilike(f"%{search_term}%"))
         )
         if open_only:
             stmt = stmt.where(Adjustment.status == AdjustmentStatus.PENDING)

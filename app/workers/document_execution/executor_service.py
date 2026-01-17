@@ -2,6 +2,9 @@ from typing import Any
 from uuid import UUID
 
 from commons.db.v6.ai.documents.enums.entity_type import DocumentEntityType
+from commons.db.v6.ai.documents.enums.processing_result_status import (
+    ProcessingResultStatus,
+)
 from commons.db.v6.ai.documents.pending_document import PendingDocument
 from commons.db.v6.ai.documents.pending_document_processing import (
     PendingDocumentProcessing,
@@ -28,6 +31,9 @@ from app.workers.document_execution.converters.entity_mapping_builder import (
 )
 from app.workers.document_execution.converters.factory_converter import FactoryConverter
 from app.workers.document_execution.converters.invoice_converter import InvoiceConverter
+from app.workers.document_execution.converters.order_ack_converter import (
+    OrderAckConverter,
+)
 from app.workers.document_execution.converters.order_converter import OrderConverter
 from app.workers.document_execution.converters.product_converter import ProductConverter
 from app.workers.document_execution.converters.quote_converter import QuoteConverter
@@ -47,6 +53,7 @@ DOCUMENT_TO_LINK_ENTITY_TYPE: dict[DocumentEntityType, EntityType] = {
     DocumentEntityType.FACTORIES: EntityType.FACTORY,
     DocumentEntityType.PRODUCTS: EntityType.PRODUCT,
     DocumentEntityType.DELIVERIES: EntityType.DELIVERY,
+    DocumentEntityType.ORDER_ACKNOWLEDGEMENTS: EntityType.ORDER_ACKNOWLEDGEMENT,
 }
 
 
@@ -65,6 +72,7 @@ class DocumentExecutorService:
         product_converter: ProductConverter,
         invoice_converter: InvoiceConverter,
         check_converter: CheckConverter,
+        order_ack_converter: OrderAckConverter,
         set_for_creation_service: SetForCreationService,
     ) -> None:
         super().__init__()
@@ -80,6 +88,7 @@ class DocumentExecutorService:
         self.product_converter = product_converter
         self.invoice_converter = invoice_converter
         self.check_converter = check_converter
+        self.order_ack_converter = order_ack_converter
         self.set_for_creation_service = set_for_creation_service
         self._batch_processor = DocumentBatchProcessor()
 
@@ -104,6 +113,8 @@ class DocumentExecutorService:
                 return self.invoice_converter
             case DocumentEntityType.CHECKS:
                 return self.check_converter
+            case DocumentEntityType.ORDER_ACKNOWLEDGEMENTS:
+                return self.order_ack_converter
             case _:
                 raise ValueError(f"Unsupported entity type: {entity_type}")
 
@@ -125,6 +136,9 @@ class DocumentExecutorService:
             logger.info(f"Built entity mapping: {entity_mappings}")
 
             converter = self.get_converter(pending_document.entity_type)
+            logger.info(
+                f"Using converter {converter.__class__.__name__} for entity type {pending_document.entity_type.name}"
+            )
             dtos = await self._parse_dtos(converter, pending_document)
             logger.info(f"Parsed {len(dtos)} DTOs from extracted_data_json")
 
@@ -134,35 +148,44 @@ class DocumentExecutorService:
                     entity_mappings=entity_mappings,
                 )
             )
+            processing_records: list[PendingDocumentProcessing] = []
             if creation_result.has_issues:
-                logger.warning(
-                    f"SET_FOR_CREATION completed with {len(creation_result.issues)} "
-                    f"issues: {creation_result.issues}"
+                for issue in creation_result.issues:
+                    error = issue.error_message
+                    processing_records.append(
+                        PendingDocumentProcessing(
+                            pending_document_id=pending_document.id,
+                            entity_id=None,
+                            status=ProcessingResultStatus.ERROR,
+                            dto_json=issue.dto_json,
+                            error_message=error,
+                        )
+                    )
+                pending_document.workflow_status = WorkflowStatus.FAILED
+            else:
+                logger.info(
+                    f"SET_FOR_CREATION completed: orders={creation_result.orders_created}, "
+                    f"invoices={creation_result.invoices_created}, "
+                    f"credits={creation_result.credits_created}, "
+                    f"adjustments={creation_result.adjustments_created}"
                 )
-            logger.info(
-                f"SET_FOR_CREATION completed: orders={creation_result.orders_created}, "
-                f"invoices={creation_result.invoices_created}, "
-                f"credits={creation_result.credits_created}, "
-                f"adjustments={creation_result.adjustments_created}"
-            )
 
-            processing_records = await self._batch_processor.execute_bulk(
-                converter=converter,
-                dtos=dtos,
-                entity_mappings=entity_mappings,
-                pending_document=pending_document,
-                batch_size=batch_size,
-            )
+                processing_records = await self._batch_processor.execute_bulk(
+                    converter=converter,
+                    dtos=dtos,
+                    entity_mappings=entity_mappings,
+                    pending_document=pending_document,
+                    batch_size=batch_size,
+                )
+                created_entity_ids = [
+                    r.entity_id for r in processing_records if r.entity_id is not None
+                ]
+                await self._link_file_to_entities(pending_document, created_entity_ids)
+                pending_document.workflow_status = WorkflowStatus.COMPLETED
 
             self.session.add_all(processing_records)
             await self.session.flush()
 
-            created_entity_ids = [
-                r.entity_id for r in processing_records if r.entity_id is not None
-            ]
-            await self._link_file_to_entities(pending_document, created_entity_ids)
-
-            pending_document.workflow_status = WorkflowStatus.COMPLETED
             return processing_records
         except Exception as e:
             _ = await self.transient_session.execute(

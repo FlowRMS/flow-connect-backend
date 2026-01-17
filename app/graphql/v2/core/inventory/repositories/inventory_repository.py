@@ -179,4 +179,3 @@ class InventoryRepository(BaseRepository[Inventory]):
             inventory.ownership_type = ownership_type
 
         return await self.update(inventory)
-

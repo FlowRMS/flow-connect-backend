@@ -23,10 +23,8 @@ from app.core.context_wrapper import ContextWrapper
 from app.core.exceptions import NotFoundError
 from app.core.processors import ProcessorExecutor
 from app.graphql.base_repository import BaseRepository
-from app.graphql.checks.processors.post_check_processor import PostCheckProcessor
-from app.graphql.checks.processors.unpost_check_processor import UnpostCheckProcessor
-from app.graphql.checks.processors.validate_check_status_processor import (
-    ValidateCheckStatusProcessor,
+from app.graphql.checks.processors.validate_check_entities_processor import (
+    ValidateCheckEntitiesProcessor,
 )
 from app.graphql.checks.strawberry.check_landing_page_response import (
     CheckLandingPageResponse,
@@ -46,9 +44,7 @@ class ChecksRepository(BaseRepository[Check]):
         context_wrapper: ContextWrapper,
         session: AsyncSession,
         processor_executor: ProcessorExecutor,
-        validate_status_processor: ValidateCheckStatusProcessor,
-        post_check_processor: PostCheckProcessor,
-        unpost_check_processor: UnpostCheckProcessor,
+        validate_entities_processor: ValidateCheckEntitiesProcessor,
         rbac_filter_service: RbacFilterService,
     ) -> None:
         super().__init__(
@@ -58,9 +54,7 @@ class ChecksRepository(BaseRepository[Check]):
             rbac_filter_service,
             processor_executor=processor_executor,
             processor_executor_classes=[
-                validate_status_processor,
-                post_check_processor,
-                unpost_check_processor,
+                validate_entities_processor,
             ],
         )
 
@@ -106,6 +100,10 @@ class ChecksRepository(BaseRepository[Check]):
                 .joinedload(CheckDetail.invoice)
                 .joinedload(Invoice.order)
                 .joinedload(Order.sold_to_customer),
+                joinedload(Check.details)
+                .joinedload(CheckDetail.invoice)
+                .joinedload(Invoice.order)
+                .joinedload(Order.bill_to_customer),
                 joinedload(Check.details)
                 .joinedload(CheckDetail.invoice)
                 .joinedload(Invoice.details),

@@ -1,4 +1,9 @@
 services:
+  flow-redis:
+    image: redis:7-alpine
+    container_name: flow_redis
+    ports:
+      - "6381:6379"
   flow-backend:
     build:
       context: .

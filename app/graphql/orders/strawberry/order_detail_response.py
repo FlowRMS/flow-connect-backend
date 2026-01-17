@@ -6,14 +6,15 @@ import strawberry
 from commons.db.v6.commission.orders import OrderDetail, OrderStatus
 
 from app.core.db.adapters.dto import DTOMixin
-from app.graphql.orders.strawberry.order_acknowledgement_response import (
-    OrderAcknowledgementResponse,
-)
+from app.graphql.invoices.strawberry.invoice_lite_response import InvoiceLiteResponse
 from app.graphql.orders.strawberry.order_inside_rep_response import (
     OrderInsideRepResponse,
 )
 from app.graphql.orders.strawberry.order_split_rate_response import (
     OrderSplitRateResponse,
+)
+from app.graphql.v2.core.customers.strawberry.customer_response import (
+    CustomerLiteResponse,
 )
 from app.graphql.v2.core.products.strawberry.product_response import ProductLiteResponse
 from app.graphql.v2.core.products.strawberry.product_uom_response import (
@@ -22,7 +23,7 @@ from app.graphql.v2.core.products.strawberry.product_uom_response import (
 
 
 @strawberry.type
-class OrderDetailResponse(DTOMixin[OrderDetail]):
+class OrderDetailLiteResponse(DTOMixin[OrderDetail]):
     _instance: strawberry.Private[OrderDetail]
     id: UUID
     order_id: UUID
@@ -79,11 +80,18 @@ class OrderDetailResponse(DTOMixin[OrderDetail]):
             cancelled_balance=model.cancelled_balance,
         )
 
+
+@strawberry.type
+class OrderDetailResponse(OrderDetailLiteResponse):
     @strawberry.field
     def outside_split_rates(self) -> list[OrderSplitRateResponse]:
         return OrderSplitRateResponse.from_orm_model_list(
             self._instance.outside_split_rates
         )
+
+    @strawberry.field
+    def end_user(self) -> CustomerLiteResponse | None:
+        return CustomerLiteResponse.from_orm_model_optional(self._instance.end_user)
 
     @strawberry.field
     def inside_split_rates(self) -> list[OrderInsideRepResponse]:
@@ -100,7 +108,5 @@ class OrderDetailResponse(DTOMixin[OrderDetail]):
         return ProductUomResponse.from_orm_model_optional(self._instance.uom)
 
     @strawberry.field
-    def acknowledgements(self) -> list[OrderAcknowledgementResponse]:
-        return OrderAcknowledgementResponse.from_orm_model_list(
-            self._instance.acknowledgements
-        )
+    def invoice(self) -> InvoiceLiteResponse | None:
+        return InvoiceLiteResponse.from_orm_model_optional(self._instance.invoice)

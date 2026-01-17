@@ -22,7 +22,7 @@ from app.graphql.jobs.strawberry.job_related_entities_response import (
     JobRelatedEntitiesResponse,
 )
 from app.graphql.orders.services.order_service import OrderService
-from app.graphql.orders.strawberry.order_response import OrderLiteResponse
+from app.graphql.orders.strawberry.order_lite_response import OrderLiteResponse
 from app.graphql.pre_opportunities.services.pre_opportunities_service import (
     PreOpportunitiesService,
 )

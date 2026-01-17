@@ -73,6 +73,7 @@ class CreditCreationHandler:
                     entity_type=EntityPendingType.CREDITS,
                     pending_entity_id=pe.id,
                     error_message=error_msg,
+                    dto_json=dto.model_dump(mode="json"),
                 )
             )
             return None
@@ -89,6 +90,7 @@ class CreditCreationHandler:
                         entity_type=EntityPendingType.CREDITS,
                         pending_entity_id=pe.id,
                         error_message=str(e),
+                        dto_json=dto.model_dump(mode="json"),
                     )
                 )
                 return None
