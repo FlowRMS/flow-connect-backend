@@ -150,9 +150,11 @@ class DeliveryService:
             NotFoundError: If recurring shipment not found
         """
         from commons.db.v6 import RecurringShipment
-        from commons.db.v6.warehouse.deliveries.delivery_enums import RecurringShipmentStatus
+        from commons.db.v6.warehouse.deliveries.delivery_enums import (
+            RecurringShipmentStatus,
+            DeliveryItemStatus,
+        )
         from commons.db.v6.warehouse.deliveries.delivery_item_model import DeliveryItem
-        from commons.db.v6.warehouse.deliveries.delivery_item_enums import DeliveryItemStatus
         from commons.db.v6.warehouse.deliveries.delivery_status_history_model import (
             DeliveryStatusHistory,
         )
@@ -167,6 +169,10 @@ class DeliveryService:
         if not recurring_shipment:
             raise NotFoundError(f"Recurring shipment with id {recurring_shipment_id} not found")
 
+        completed_delivery = await self.repository.session.get(Delivery, completed_delivery_id)
+        if not completed_delivery:
+            raise NotFoundError(f"Delivery with id {completed_delivery_id} not found")
+
         # Check if recurring shipment is still active
         if recurring_shipment.status != RecurringShipmentStatus.ACTIVE:
             # Don't generate next delivery if shipment is paused or cancelled
@@ -179,9 +185,13 @@ class DeliveryService:
             await self.repository.session.flush()
             return None
 
-        # Calculate next occurrence date
-        current_date = recurring_shipment.next_expected_date or date.today()
-        next_date = calculate_next_date(recurring_shipment.recurrence_pattern, current_date)
+        # Calculate next occurrence date based on the completed delivery date.
+        completed_date = (
+            completed_delivery.received_at.date()
+            if completed_delivery.received_at
+            else completed_delivery.expected_date
+        ) or date.today()
+        next_date = calculate_next_date(recurring_shipment.recurrence_pattern, completed_date)
 
         # Generate PO number (simple auto-increment based on year)
         year = next_date.year
@@ -200,8 +210,8 @@ class DeliveryService:
             vendor_contact_name=recurring_shipment.vendor_contact_name,
             vendor_contact_email=recurring_shipment.vendor_contact_email,
             notes=f"Auto-generated from recurring shipment: {recurring_shipment.name}",
-            created_by_id=self.auth_info.flow_user_id if self.auth_info else None,
         )
+        new_delivery.created_by_id = self.auth_info.flow_user_id if self.auth_info else None
 
         self.repository.session.add(new_delivery)
         await self.repository.session.flush()
@@ -230,7 +240,7 @@ class DeliveryService:
         self.repository.session.add(status_history)
 
         # Update recurring shipment
-        recurring_shipment.last_generated_date = date.today()
+        recurring_shipment.last_generated_date = completed_date
         recurring_shipment.next_expected_date = next_date
 
         await self.repository.session.flush()
