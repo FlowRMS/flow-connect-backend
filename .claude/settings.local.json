@@ -57,7 +57,8 @@
       "Bash(git stash:*)",
       "Bash(task typecheck-basedpy:*)",
       "Bash(alembic heads:*)",
-      "Bash(alembic history:*)"
+      "Bash(alembic history:*)",
+      "Bash(uv lock:*)"
     ]
   },
   "enableAllProjectMcpServers": true,
