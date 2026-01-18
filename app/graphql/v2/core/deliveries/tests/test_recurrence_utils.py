@@ -6,7 +6,7 @@ the frontend implementation and handles all edge cases correctly.
 """
 
 import pytest
-from datetime import date, timedelta
+from datetime import date
 from app.graphql.v2.core.deliveries.utils.recurrence_utils import (
     calculate_next_date,
     validate_recurrence_pattern,
@@ -161,21 +161,21 @@ class TestCalculateNextDate:
         pattern = {"frequency": "INVALID", "interval": 1}
         from_date = date(2024, 1, 15)
         with pytest.raises(ValueError, match="Unknown frequency"):
-            calculate_next_date(pattern, from_date)
+            _ = calculate_next_date(pattern, from_date)
 
     def test_missing_frequency(self):
         """Test with missing frequency."""
         pattern = {"interval": 1}
         from_date = date(2024, 1, 15)
         with pytest.raises(ValueError, match="must have 'frequency' field"):
-            calculate_next_date(pattern, from_date)
+            _ = calculate_next_date(pattern, from_date)
 
     def test_interval_less_than_1(self):
         """Test with interval < 1."""
         pattern = {"frequency": "DAILY", "interval": 0}
         from_date = date(2024, 1, 15)
         with pytest.raises(ValueError, match="Interval must be >= 1"):
-            calculate_next_date(pattern, from_date)
+            _ = calculate_next_date(pattern, from_date)
 
 
 class TestValidateRecurrencePattern:
@@ -208,57 +208,57 @@ class TestValidateRecurrencePattern:
 
     def test_invalid_not_dict(self):
         """Test with non-dict pattern."""
-        pattern = "not a dict"
+        pattern: dict = "not a dict"  # type: ignore[assignment]
         error = validate_recurrence_pattern(pattern)
-        assert "must be a dictionary" in error
+        assert error is not None and "must be a dictionary" in error
 
     def test_invalid_missing_frequency(self):
         """Test with missing frequency."""
         pattern = {"interval": 1}
         error = validate_recurrence_pattern(pattern)
-        assert "must have 'frequency' field" in error
+        assert error is not None and "must have 'frequency' field" in error
 
     def test_invalid_frequency_value(self):
         """Test with invalid frequency value."""
         pattern = {"frequency": "INVALID", "interval": 1}
         error = validate_recurrence_pattern(pattern)
-        assert "Invalid frequency" in error
+        assert error is not None and "Invalid frequency" in error
 
     def test_invalid_interval_not_int(self):
         """Test with non-integer interval."""
         pattern = {"frequency": "DAILY", "interval": "not an int"}
         error = validate_recurrence_pattern(pattern)
-        assert "Interval must be an integer" in error
+        assert error is not None and "Interval must be an integer" in error
 
     def test_invalid_interval_zero(self):
         """Test with interval=0."""
         pattern = {"frequency": "DAILY", "interval": 0}
         error = validate_recurrence_pattern(pattern)
-        assert "Interval must be an integer >= 1" in error
+        assert error is not None and "Interval must be an integer >= 1" in error
 
     def test_weekly_missing_day_of_week(self):
         """Test WEEKLY without dayOfWeek."""
         pattern = {"frequency": "WEEKLY", "interval": 1}
         error = validate_recurrence_pattern(pattern)
-        assert "requires 'dayOfWeek' field" in error
+        assert error is not None and "requires 'dayOfWeek' field" in error
 
     def test_weekly_invalid_day_of_week(self):
         """Test WEEKLY with invalid dayOfWeek."""
         pattern = {"frequency": "WEEKLY", "interval": 1, "dayOfWeek": "INVALID"}
         error = validate_recurrence_pattern(pattern)
-        assert "Invalid dayOfWeek" in error
+        assert error is not None and "Invalid dayOfWeek" in error
 
     def test_monthly_invalid_day_of_month(self):
         """Test MONTHLY with invalid dayOfMonth."""
         pattern = {"frequency": "MONTHLY", "interval": 1, "dayOfMonth": 32}
         error = validate_recurrence_pattern(pattern)
-        assert "dayOfMonth must be an integer between 1 and 31" in error
+        assert error is not None and "dayOfMonth must be an integer between 1 and 31" in error
 
     def test_monthly_week_missing_week_of_month(self):
         """Test MONTHLY_WEEK without weekOfMonth."""
         pattern = {"frequency": "MONTHLY_WEEK", "interval": 1, "dayOfWeek": "MONDAY"}
         error = validate_recurrence_pattern(pattern)
-        assert "requires 'weekOfMonth' field" in error
+        assert error is not None and "requires 'weekOfMonth' field" in error
 
     def test_monthly_week_invalid_week_of_month(self):
         """Test MONTHLY_WEEK with invalid weekOfMonth."""
@@ -269,7 +269,7 @@ class TestValidateRecurrencePattern:
             "weekOfMonth": "INVALID",
         }
         error = validate_recurrence_pattern(pattern)
-        assert "Invalid weekOfMonth" in error
+        assert error is not None and "Invalid weekOfMonth" in error
 
 
 class TestGetRecurrenceDescription:

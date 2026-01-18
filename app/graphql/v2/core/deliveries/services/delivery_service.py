@@ -122,8 +122,9 @@ class DeliveryService:
             _ = await self.inventory_sync_service.sync_received_delivery(existing.id)
 
         # Auto-generate next delivery from recurring shipment if needed
-        if should_generate_next:
-            await self._generate_next_recurring_delivery(existing.recurring_shipment_id, delivery_id)
+        recurring_id = existing.recurring_shipment_id
+        if should_generate_next and recurring_id is not None:
+            _ = await self._generate_next_recurring_delivery(recurring_id, delivery_id)
 
         return existing
 
@@ -134,7 +135,7 @@ class DeliveryService:
 
     async def _generate_next_recurring_delivery(
         self, recurring_shipment_id: UUID, completed_delivery_id: UUID
-    ) -> Delivery:
+    ) -> Delivery | None:
         """
         Auto-generate the next delivery from a recurring shipment.
 
@@ -219,13 +220,15 @@ class DeliveryService:
             vendor_contact_email=recurring_shipment.vendor_contact_email,
             notes=f"Auto-generated from recurring shipment: {recurring_shipment.name}",
         )
-        new_delivery.created_by_id = self.auth_info.flow_user_id if self.auth_info else None
+        if self.auth_info and self.auth_info.flow_user_id:
+            new_delivery.created_by_id = self.auth_info.flow_user_id  # type: ignore[assignment]
 
         self.repository.session.add(new_delivery)
         await self.repository.session.flush()
 
         # Create delivery items from recurring shipment's expected items
-        expected_items = recurring_shipment.recurrence_pattern.get("expectedItems", [])
+        pattern: dict = recurring_shipment.recurrence_pattern or {}
+        expected_items: list[dict] = pattern.get("expectedItems", [])
         for item in expected_items:
             delivery_item = DeliveryItem(
                 delivery_id=new_delivery.id,
