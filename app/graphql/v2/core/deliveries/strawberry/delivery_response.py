@@ -5,12 +5,12 @@ from uuid import UUID
 
 import strawberry
 from commons.db.v6 import Delivery
+from commons.db.v6.warehouse.deliveries.delivery_enums import DeliveryStatus
 
 from app.core.db.adapters.dto import DTOMixin
 
 from .delivery_assignee_response import DeliveryAssigneeResponse
 from .delivery_document_response import DeliveryDocumentResponse
-from .delivery_enums import DeliveryStatusGQL
 from .delivery_issue_response import DeliveryIssueResponse
 from .delivery_item_response import DeliveryItemResponse
 from .delivery_status_history_response import DeliveryStatusHistoryResponse
@@ -33,7 +33,7 @@ class DeliveryResponse(DTOMixin[Delivery]):
     vendor_id: UUID
     carrier_id: UUID | None
     tracking_number: str | None
-    status: DeliveryStatusGQL
+    status: DeliveryStatus
     expected_date: date | None
     arrived_at: datetime | None
     receiving_started_at: datetime | None
@@ -59,7 +59,7 @@ class DeliveryResponse(DTOMixin[Delivery]):
             vendor_id=model.vendor_id,
             carrier_id=model.carrier_id,
             tracking_number=model.tracking_number,
-            status=DeliveryStatusGQL(model.status.value),
+            status=model.status,
             expected_date=model.expected_date,
             arrived_at=model.arrived_at,
             receiving_started_at=model.receiving_started_at,

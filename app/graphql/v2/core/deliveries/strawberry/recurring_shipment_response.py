@@ -5,11 +5,10 @@ from uuid import UUID
 
 import strawberry
 from commons.db.v6 import RecurringShipment
+from commons.db.v6.warehouse.deliveries.delivery_enums import RecurringShipmentStatus
 from strawberry.scalars import JSON
 
 from app.core.db.adapters.dto import DTOMixin
-
-from .delivery_enums import RecurringShipmentStatusGQL
 
 
 @strawberry.type
@@ -28,7 +27,7 @@ class RecurringShipmentResponse(DTOMixin[RecurringShipment]):
     recurrence_pattern: JSON
     start_date: date
     end_date: date | None
-    status: RecurringShipmentStatusGQL
+    status: RecurringShipmentStatus
     last_generated_date: date | None
     next_expected_date: date | None
     created_at: datetime
@@ -51,7 +50,7 @@ class RecurringShipmentResponse(DTOMixin[RecurringShipment]):
             recurrence_pattern=model.recurrence_pattern,
             start_date=model.start_date,
             end_date=model.end_date,
-            status=RecurringShipmentStatusGQL(model.status.value),
+            status=model.status,
             last_generated_date=model.last_generated_date,
             next_expected_date=model.next_expected_date,
             created_at=model.created_at,

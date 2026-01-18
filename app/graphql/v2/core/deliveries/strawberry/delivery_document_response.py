@@ -5,10 +5,9 @@ from uuid import UUID
 
 import strawberry
 from commons.db.v6 import DeliveryDocument
+from commons.db.v6.warehouse.deliveries.delivery_enums import DeliveryDocumentType
 
 from app.core.db.adapters.dto import DTOMixin
-
-from .delivery_enums import DeliveryDocumentTypeGQL
 
 
 @strawberry.type
@@ -20,7 +19,7 @@ class DeliveryDocumentResponse(DTOMixin[DeliveryDocument]):
     delivery_id: UUID
     file_id: UUID | None
     name: str
-    doc_type: DeliveryDocumentTypeGQL
+    doc_type: DeliveryDocumentType
     file_url: str
     mime_type: str
     file_size: int | None
@@ -36,7 +35,7 @@ class DeliveryDocumentResponse(DTOMixin[DeliveryDocument]):
             delivery_id=model.delivery_id,
             file_id=model.file_id,
             name=model.name,
-            doc_type=DeliveryDocumentTypeGQL(model.doc_type.value),
+            doc_type=model.doc_type,
             file_url=model.file_url,
             mime_type=model.mime_type,
             file_size=model.file_size,

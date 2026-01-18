@@ -5,10 +5,12 @@ from uuid import UUID
 
 import strawberry
 from commons.db.v6 import DeliveryIssue
+from commons.db.v6.warehouse.deliveries.delivery_enums import (
+    DeliveryIssueStatus,
+    DeliveryIssueType,
+)
 
 from app.core.db.adapters.dto import DTOMixin
-
-from .delivery_enums import DeliveryIssueStatusGQL, DeliveryIssueTypeGQL
 
 
 @strawberry.type
@@ -20,10 +22,10 @@ class DeliveryIssueResponse(DTOMixin[DeliveryIssue]):
     delivery_id: UUID
     delivery_item_id: UUID
     receipt_id: UUID | None
-    issue_type: DeliveryIssueTypeGQL
+    issue_type: DeliveryIssueType
     custom_issue_type: str | None
     quantity: int
-    status: DeliveryIssueStatusGQL
+    status: DeliveryIssueStatus
     description: str | None
     notes: str | None
     communicated_at: datetime | None
@@ -38,10 +40,10 @@ class DeliveryIssueResponse(DTOMixin[DeliveryIssue]):
             delivery_id=model.delivery_id,
             delivery_item_id=model.delivery_item_id,
             receipt_id=model.receipt_id,
-            issue_type=DeliveryIssueTypeGQL(model.issue_type.value),
+            issue_type=model.issue_type,
             custom_issue_type=model.custom_issue_type,
             quantity=model.quantity,
-            status=DeliveryIssueStatusGQL(model.status.value),
+            status=model.status,
             description=model.description,
             notes=model.notes,
             communicated_at=model.communicated_at,

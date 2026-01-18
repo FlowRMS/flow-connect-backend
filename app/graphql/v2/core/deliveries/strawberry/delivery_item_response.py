@@ -4,10 +4,10 @@ from uuid import UUID
 
 import strawberry
 from commons.db.v6 import DeliveryItem
+from commons.db.v6.warehouse.deliveries.delivery_enums import DeliveryItemStatus
 
 from app.core.db.adapters.dto import DTOMixin
 
-from .delivery_enums import DeliveryItemStatusGQL
 from .delivery_issue_response import DeliveryIssueResponse
 from .delivery_item_receipt_response import DeliveryItemReceiptResponse
 from app.graphql.v2.core.products.strawberry.product_response import (
@@ -26,7 +26,7 @@ class DeliveryItemResponse(DTOMixin[DeliveryItem]):
     expected_quantity: int
     received_quantity: int
     damaged_quantity: int
-    status: DeliveryItemStatusGQL
+    status: DeliveryItemStatus
     discrepancy_notes: str | None
 
     @classmethod
@@ -39,7 +39,7 @@ class DeliveryItemResponse(DTOMixin[DeliveryItem]):
             expected_quantity=model.expected_quantity,
             received_quantity=model.received_quantity,
             damaged_quantity=model.damaged_quantity,
-            status=DeliveryItemStatusGQL(model.status.value),
+            status=model.status,
             discrepancy_notes=model.discrepancy_notes,
         )
 

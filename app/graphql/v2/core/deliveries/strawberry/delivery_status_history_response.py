@@ -5,10 +5,9 @@ from uuid import UUID
 
 import strawberry
 from commons.db.v6 import DeliveryStatusHistory
+from commons.db.v6.warehouse.deliveries.delivery_enums import DeliveryStatus
 
 from app.core.db.adapters.dto import DTOMixin
-
-from .delivery_enums import DeliveryStatusGQL
 
 
 @strawberry.type
@@ -18,7 +17,7 @@ class DeliveryStatusHistoryResponse(DTOMixin[DeliveryStatusHistory]):
     _instance: strawberry.Private[DeliveryStatusHistory]
     id: UUID
     delivery_id: UUID
-    status: DeliveryStatusGQL
+    status: DeliveryStatus
     timestamp: datetime
     user_id: UUID | None
     note: str | None
@@ -29,7 +28,7 @@ class DeliveryStatusHistoryResponse(DTOMixin[DeliveryStatusHistory]):
             _instance=model,
             id=model.id,
             delivery_id=model.delivery_id,
-            status=DeliveryStatusGQL(model.status.value),
+            status=model.status,
             timestamp=model.timestamp,
             user_id=model.user_id,
             note=model.note,

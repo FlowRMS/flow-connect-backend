@@ -26,17 +26,6 @@ from commons.db.v6.warehouse.deliveries.delivery_enums import (
 
 from app.core.strawberry.inputs import BaseInputGQL
 
-from .delivery_enums import (
-    DeliveryAssigneeRoleGQL,
-    DeliveryDocumentTypeGQL,
-    DeliveryIssueStatusGQL,
-    DeliveryIssueTypeGQL,
-    DeliveryItemStatusGQL,
-    DeliveryReceiptTypeGQL,
-    DeliveryStatusGQL,
-    RecurringShipmentStatusGQL,
-)
-
 
 @strawberry.input
 class DeliveryInput(BaseInputGQL[Delivery]):
@@ -47,7 +36,7 @@ class DeliveryInput(BaseInputGQL[Delivery]):
     vendor_id: UUID
     carrier_id: UUID | None = None
     tracking_number: str | None = None
-    status: DeliveryStatusGQL = DeliveryStatusGQL.DRAFT
+    status: DeliveryStatus = DeliveryStatus.DRAFT
     expected_date: date | None = None
     arrived_at: datetime | None = None
     receiving_started_at: datetime | None = None
@@ -67,7 +56,7 @@ class DeliveryInput(BaseInputGQL[Delivery]):
             vendor_id=self.vendor_id,
             carrier_id=self.carrier_id,
             tracking_number=self.tracking_number,
-            status=DeliveryStatus(self.status.value),
+            status=self.status,
             expected_date=self.expected_date,
             arrived_at=self.arrived_at,
             receiving_started_at=self.receiving_started_at,
@@ -91,7 +80,7 @@ class DeliveryItemInput(BaseInputGQL[DeliveryItem]):
     expected_quantity: int = 0
     received_quantity: int = 0
     damaged_quantity: int = 0
-    status: DeliveryItemStatusGQL = DeliveryItemStatusGQL.PENDING
+    status: DeliveryItemStatus = DeliveryItemStatus.PENDING
     discrepancy_notes: str | None = None
 
     def to_orm_model(self) -> DeliveryItem:
@@ -101,7 +90,7 @@ class DeliveryItemInput(BaseInputGQL[DeliveryItem]):
             expected_quantity=self.expected_quantity,
             received_quantity=self.received_quantity,
             damaged_quantity=self.damaged_quantity,
-            status=DeliveryItemStatus(self.status.value),
+            status=self.status,
             discrepancy_notes=self.discrepancy_notes,
         )
 
@@ -111,7 +100,7 @@ class DeliveryItemReceiptInput(BaseInputGQL[DeliveryItemReceipt]):
     """Input type for creating/updating delivery item receipts."""
 
     delivery_item_id: UUID
-    receipt_type: DeliveryReceiptTypeGQL = DeliveryReceiptTypeGQL.RECEIPT
+    receipt_type: DeliveryReceiptType = DeliveryReceiptType.RECEIPT
     received_quantity: int = 0
     damaged_quantity: int = 0
     location_id: UUID | None = None
@@ -122,7 +111,7 @@ class DeliveryItemReceiptInput(BaseInputGQL[DeliveryItemReceipt]):
     def to_orm_model(self) -> DeliveryItemReceipt:
         return DeliveryItemReceipt(
             delivery_item_id=self.delivery_item_id,
-            receipt_type=DeliveryReceiptType(self.receipt_type.value),
+            receipt_type=self.receipt_type,
             received_quantity=self.received_quantity,
             damaged_quantity=self.damaged_quantity,
             location_id=self.location_id,
@@ -137,7 +126,7 @@ class DeliveryStatusHistoryInput(BaseInputGQL[DeliveryStatusHistory]):
     """Input type for creating delivery status history entries."""
 
     delivery_id: UUID
-    status: DeliveryStatusGQL
+    status: DeliveryStatus
     timestamp: datetime | None = None
     user_id: UUID | None = None
     note: str | None = None
@@ -145,7 +134,7 @@ class DeliveryStatusHistoryInput(BaseInputGQL[DeliveryStatusHistory]):
     def to_orm_model(self) -> DeliveryStatusHistory:
         return DeliveryStatusHistory(
             delivery_id=self.delivery_id,
-            status=DeliveryStatus(self.status.value),
+            status=self.status,
             timestamp=self.timestamp or datetime.now(timezone.utc),
             user_id=self.user_id,
             note=self.note,
@@ -159,10 +148,10 @@ class DeliveryIssueInput(BaseInputGQL[DeliveryIssue]):
     delivery_id: UUID
     delivery_item_id: UUID
     receipt_id: UUID | None = None
-    issue_type: DeliveryIssueTypeGQL
+    issue_type: DeliveryIssueType
     custom_issue_type: str | None = None
     quantity: int = 0
-    status: DeliveryIssueStatusGQL = DeliveryIssueStatusGQL.OPEN
+    status: DeliveryIssueStatus = DeliveryIssueStatus.OPEN
     description: str | None = None
     notes: str | None = None
     communicated_at: datetime | None = None
@@ -172,10 +161,10 @@ class DeliveryIssueInput(BaseInputGQL[DeliveryIssue]):
             delivery_id=self.delivery_id,
             delivery_item_id=self.delivery_item_id,
             receipt_id=self.receipt_id,
-            issue_type=DeliveryIssueType(self.issue_type.value),
+            issue_type=self.issue_type,
             custom_issue_type=self.custom_issue_type,
             quantity=self.quantity,
-            status=DeliveryIssueStatus(self.status.value),
+            status=self.status,
             description=self.description,
             notes=self.notes,
             communicated_at=self.communicated_at,
@@ -189,7 +178,7 @@ class DeliveryDocumentInput(BaseInputGQL[DeliveryDocument]):
     delivery_id: UUID
     file_id: UUID
     name: str
-    doc_type: DeliveryDocumentTypeGQL
+    doc_type: DeliveryDocumentType
     file_url: str
     mime_type: str
     file_size: int | None = None
@@ -201,7 +190,7 @@ class DeliveryDocumentInput(BaseInputGQL[DeliveryDocument]):
             delivery_id=self.delivery_id,
             file_id=self.file_id,
             name=self.name,
-            doc_type=DeliveryDocumentType(self.doc_type.value),
+            doc_type=self.doc_type,
             file_url=self.file_url,
             mime_type=self.mime_type,
             file_size=self.file_size,
@@ -216,13 +205,13 @@ class DeliveryAssigneeInput(BaseInputGQL[DeliveryAssignee]):
 
     delivery_id: UUID
     user_id: UUID
-    role: DeliveryAssigneeRoleGQL
+    role: WarehouseMemberRole
 
     def to_orm_model(self) -> DeliveryAssignee:
         return DeliveryAssignee(
             delivery_id=self.delivery_id,
             user_id=self.user_id,
-            role=WarehouseMemberRole(self.role.value),
+            role=self.role,
         )
 
 
@@ -240,7 +229,7 @@ class RecurringShipmentInput(BaseInputGQL[RecurringShipment]):
     carrier: str | None = None
     notes: str | None = None
     end_date: date | None = None
-    status: RecurringShipmentStatusGQL = RecurringShipmentStatusGQL.ACTIVE
+    status: RecurringShipmentStatus = RecurringShipmentStatus.ACTIVE
     last_generated_date: date | None = None
     next_expected_date: date | None = None
     updated_by_id: UUID | None = None
@@ -257,7 +246,7 @@ class RecurringShipmentInput(BaseInputGQL[RecurringShipment]):
             carrier=self.carrier,
             notes=self.notes,
             end_date=self.end_date,
-            status=RecurringShipmentStatus(self.status.value),
+            status=self.status,
             last_generated_date=self.last_generated_date,
             next_expected_date=self.next_expected_date,
             updated_by_id=self.updated_by_id,

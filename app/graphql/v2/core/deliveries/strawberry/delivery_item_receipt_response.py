@@ -5,10 +5,9 @@ from uuid import UUID
 
 import strawberry
 from commons.db.v6 import DeliveryItemReceipt
+from commons.db.v6.warehouse.deliveries.delivery_enums import DeliveryReceiptType
 
 from app.core.db.adapters.dto import DTOMixin
-
-from .delivery_enums import DeliveryReceiptTypeGQL
 
 
 @strawberry.type
@@ -18,7 +17,7 @@ class DeliveryItemReceiptResponse(DTOMixin[DeliveryItemReceipt]):
     _instance: strawberry.Private[DeliveryItemReceipt]
     id: UUID
     delivery_item_id: UUID
-    receipt_type: DeliveryReceiptTypeGQL
+    receipt_type: DeliveryReceiptType
     received_quantity: int
     damaged_quantity: int
     location_id: UUID | None
@@ -32,7 +31,7 @@ class DeliveryItemReceiptResponse(DTOMixin[DeliveryItemReceipt]):
             _instance=model,
             id=model.id,
             delivery_item_id=model.delivery_item_id,
-            receipt_type=DeliveryReceiptTypeGQL(model.receipt_type.value),
+            receipt_type=model.receipt_type,
             received_quantity=model.received_quantity,
             damaged_quantity=model.damaged_quantity,
             location_id=model.location_id,

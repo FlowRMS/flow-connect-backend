@@ -3,11 +3,9 @@ from typing import Self
 from uuid import UUID
 
 import strawberry
-from commons.db.v6 import DeliveryAssignee
+from commons.db.v6 import DeliveryAssignee, WarehouseMemberRole
 
 from app.core.db.adapters.dto import DTOMixin
-
-from .delivery_enums import DeliveryAssigneeRoleGQL
 
 
 @strawberry.type
@@ -18,7 +16,7 @@ class DeliveryAssigneeResponse(DTOMixin[DeliveryAssignee]):
     id: UUID
     delivery_id: UUID
     user_id: UUID
-    role: DeliveryAssigneeRoleGQL
+    role: WarehouseMemberRole
 
     @classmethod
     def from_orm_model(cls, model: DeliveryAssignee) -> Self:
@@ -27,5 +25,5 @@ class DeliveryAssigneeResponse(DTOMixin[DeliveryAssignee]):
             id=model.id,
             delivery_id=model.delivery_id,
             user_id=model.user_id,
-            role=DeliveryAssigneeRoleGQL(model.role.value),
+            role=model.role,
         )
