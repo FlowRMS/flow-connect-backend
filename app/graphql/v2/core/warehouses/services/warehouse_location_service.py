@@ -1,4 +1,3 @@
-from decimal import Decimal
 from uuid import UUID
 
 from commons.db.v6 import WarehouseLocation, WarehouseStructureCode
@@ -9,7 +8,6 @@ from app.graphql.v2.core.warehouses.repositories import (
     WarehouseRepository,
 )
 from app.graphql.v2.core.warehouses.strawberry.warehouse_location_input import (
-    BulkWarehouseLocationInput,
     WarehouseLocationInput,
 )
 
@@ -24,6 +22,8 @@ LEVEL_HIERARCHY = {
 
 
 class WarehouseLocationService:
+    """Service for warehouse location CRUD operations."""
+
     def __init__(
         self,
         location_repository: WarehouseLocationRepository,
@@ -52,9 +52,7 @@ class WarehouseLocationService:
     async def create(self, input: WarehouseLocationInput) -> WarehouseLocation:
         if not await self.warehouse_repository.exists(input.warehouse_id):
             raise NotFoundError(f"Warehouse with id {input.warehouse_id} not found")
-        await self._validate_hierarchy(
-            WarehouseStructureCode(input.level.value), input.parent_id
-        )
+        await self._validate_hierarchy(input.level, input.parent_id)
         location = self._build_location(input, input.warehouse_id, input.parent_id)
         return await self.location_repository.create(location)
 
@@ -68,6 +66,7 @@ class WarehouseLocationService:
             await self._validate_hierarchy(
                 WarehouseStructureCode(input.level.value), input.parent_id
             )
+
         location = self._build_location(input, input.warehouse_id, input.parent_id)
         location.id = location_id
         return await self.location_repository.update(location)
@@ -78,86 +77,26 @@ class WarehouseLocationService:
             raise NotFoundError(f"Location with id {location_id} not found")
         return await self.location_repository.delete(location_id)
 
-    async def bulk_save(
-        self, warehouse_id: UUID, locations: list[BulkWarehouseLocationInput]
-    ) -> list[WarehouseLocation]:
-        """Bulk save locations for a warehouse.
-
-        Handles creates, updates, and implicit deletes. Locations not in input are deleted.
-        Supports temp_id/temp_parent_id for newly created hierarchical locations.
-        """
-        if not await self.warehouse_repository.exists(warehouse_id):
-            raise NotFoundError(f"Warehouse with id {warehouse_id} not found")
-
-        existing = await self.location_repository.list_by_warehouse(warehouse_id)
-        existing_ids = {loc.id for loc in existing}
-        input_ids: set[UUID] = set()
-        result: list[WarehouseLocation] = []
-        temp_id_map: dict[str, UUID] = {}
-
-        with_real_parent = [loc for loc in locations if not loc.temp_parent_id]
-        with_temp_parent = [loc for loc in locations if loc.temp_parent_id]
-
-        for loc in with_real_parent:
-            saved = await self._save_location(
-                loc, warehouse_id, loc.parent_id, existing_ids, input_ids, temp_id_map
-            )
-            result.append(saved)
-
-        for loc in with_temp_parent:
-            parent_id = (
-                temp_id_map.get(loc.temp_parent_id) if loc.temp_parent_id else None
-            )
-            saved = await self._save_location(
-                loc, warehouse_id, parent_id, existing_ids, input_ids, temp_id_map
-            )
-            result.append(saved)
-
-        for loc_id in existing_ids - input_ids:
-            _ = await self.location_repository.delete(loc_id)
-
-        return result
-
-    async def _save_location(
-        self,
-        loc: BulkWarehouseLocationInput,
-        warehouse_id: UUID,
-        parent_id: UUID | None,
-        existing_ids: set[UUID],
-        input_ids: set[UUID],
-        temp_id_map: dict[str, UUID],
-    ) -> WarehouseLocation:
-        location = self._build_location(loc, warehouse_id, parent_id)
-        if loc.id and loc.id in existing_ids:
-            input_ids.add(loc.id)
-            location.id = loc.id
-            saved = await self.location_repository.update(location)
-        else:
-            saved = await self.location_repository.create(location)
-        if loc.temp_id:
-            temp_id_map[loc.temp_id] = saved.id
-        return saved
-
     def _build_location(
         self,
-        inp: WarehouseLocationInput | BulkWarehouseLocationInput,
+        inp: WarehouseLocationInput,
         warehouse_id: UUID,
         parent_id: UUID | None,
     ) -> WarehouseLocation:
         return WarehouseLocation(
             warehouse_id=warehouse_id,
             parent_id=parent_id,
-            level=WarehouseStructureCode(inp.level.value),
+            level=inp.level,
             name=inp.name,
             code=inp.code,
             description=inp.description,
             is_active=inp.is_active if inp.is_active is not None else True,
             sort_order=inp.sort_order if inp.sort_order is not None else 0,
-            x=Decimal(str(inp.x)) if inp.x is not None else None,
-            y=Decimal(str(inp.y)) if inp.y is not None else None,
-            width=Decimal(str(inp.width)) if inp.width is not None else None,
-            height=Decimal(str(inp.height)) if inp.height is not None else None,
-            rotation=Decimal(str(inp.rotation)) if inp.rotation is not None else None,
+            x=inp.x,
+            y=inp.y,
+            width=inp.width,
+            height=inp.height,
+            rotation=inp.rotation,
         )
 
     async def _validate_hierarchy(

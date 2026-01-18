@@ -21,24 +21,21 @@ class WarehouseRepository(BaseRepository[Warehouse]):
             Warehouse,
         )
 
-    async def get_with_relations(self, warehouse_id: UUID) -> Warehouse | None:
-        stmt = (
-            select(Warehouse)
-            .options(
-                selectinload(Warehouse.members),
-                selectinload(Warehouse.settings),
-                selectinload(Warehouse.structure),
-            )
-            .where(Warehouse.id == warehouse_id)
-        )
-        result = await self.session.execute(stmt)
-        return result.scalar_one_or_none()
-
-    async def list_all_with_relations(self) -> list[Warehouse]:
-        stmt = select(Warehouse).options(
+    @property
+    def base_query(self):
+        """Base query with standard eager loading for warehouses."""
+        return select(Warehouse).options(
             selectinload(Warehouse.members),
             selectinload(Warehouse.settings),
             selectinload(Warehouse.structure),
         )
+
+    async def get_with_relations(self, warehouse_id: UUID) -> Warehouse | None:
+        stmt = self.base_query.where(Warehouse.id == warehouse_id)
+        result = await self.session.execute(stmt)
+        return result.scalar_one_or_none()
+
+    async def list_all_with_relations(self) -> list[Warehouse]:
+        stmt = self.base_query
         result = await self.session.execute(stmt)
         return list(result.scalars().all())

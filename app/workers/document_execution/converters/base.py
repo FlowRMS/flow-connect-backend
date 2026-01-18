@@ -4,6 +4,7 @@ from decimal import Decimal
 from typing import TYPE_CHECKING, Any, Generic, TypeVar
 from uuid import UUID
 
+from commons.db.v6 import RepTypeEnum
 from commons.db.v6.ai.documents import PendingDocument
 from commons.db.v6.ai.documents.enums.entity_type import DocumentEntityType
 from commons.db.v6.core.factories.factory import Factory
@@ -14,7 +15,7 @@ from pydantic import BaseModel
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from .exceptions import ConversionError
+from app.workers.document_execution.converters.exceptions import ConversionError
 
 if TYPE_CHECKING:
     from .entity_mapping import EntityMapping
@@ -67,6 +68,21 @@ class BulkCreateResult(Generic[TOutput]):
     skipped_indices: list[int]
 
 
+@dataclass
+class BulkOperationResult(Generic[TOutput]):
+    created: list[TOutput]
+    updated: list[TOutput]
+    skipped_indices: list[int]
+
+
+@dataclass
+class SeparatedInputs(Generic[TInput]):
+    for_creation: list[TInput]
+    for_creation_indices: list[int]
+    for_update: list[tuple[TInput, Any]]
+    for_update_indices: list[int]
+
+
 class BaseEntityConverter(ABC, Generic[TDto, TInput, TOutput]):
     entity_type: DocumentEntityType
     dto_class: type[BaseModel]
@@ -78,13 +94,16 @@ class BaseEntityConverter(ABC, Generic[TDto, TInput, TOutput]):
         self.session = session
         self.dto_loader_service = dto_loader_service
         self._factory_cache: dict[UUID, Factory] = {}
-        self._user_cache: dict[str, User | None] = {}
+        self._user_cache: dict[tuple[str, RepTypeEnum | None], User | None] = {}
 
     @abstractmethod
     async def create_entity(
         self,
         input_data: TInput,
     ) -> TOutput: ...
+
+    async def find_existing(self, input_data: TInput) -> TOutput | None:
+        return None
 
     @abstractmethod
     async def to_input(
@@ -120,6 +139,23 @@ class BaseEntityConverter(ABC, Generic[TDto, TInput, TOutput]):
                 skipped.append(i)
         return BulkCreateResult(created=created, skipped_indices=skipped)
 
+    async def separate_inputs(
+        self,
+        inputs: list[TInput],
+    ) -> SeparatedInputs[TInput]:
+        return SeparatedInputs(
+            for_creation=inputs,
+            for_creation_indices=list(range(len(inputs))),
+            for_update=[],
+            for_update_indices=[],
+        )
+
+    async def update_entities_bulk(
+        self,
+        inputs_with_entities: list[tuple[TInput, TOutput]],
+    ) -> BulkCreateResult[TOutput]:
+        return BulkCreateResult(created=[], skipped_indices=[])
+
     async def get_factory(self, factory_id: UUID) -> Factory | None:
         if factory_id in self._factory_cache:
             return self._factory_cache[factory_id]
@@ -151,16 +187,26 @@ class BaseEntityConverter(ABC, Generic[TDto, TInput, TOutput]):
             return factory.overall_discount_rate
         return Decimal("0")
 
-    async def get_user_by_full_name(self, full_name: str) -> User | None:
-        cache_key = full_name.lower().strip()
+    async def get_user_by_full_name(
+        self, full_name: str, rep_type: RepTypeEnum | None = None
+    ) -> User | None:
+        normalized_name = full_name.lower().strip()
+        cache_key = (normalized_name, rep_type)
         if cache_key in self._user_cache:
             return self._user_cache[cache_key]
 
         stmt = select(User).where(
-            (func.lower(func.concat(User.first_name, " ", User.last_name)) == cache_key)
-            | (func.lower(User.first_name) == cache_key)
-            | (func.lower(User.last_name) == cache_key)
+            (
+                func.lower(func.concat(User.first_name, " ", User.last_name))
+                == normalized_name
+            )
+            | (func.lower(User.first_name) == normalized_name)
+            | (func.lower(User.last_name) == normalized_name)
         )
+        if rep_type == RepTypeEnum.INSIDE:
+            stmt = stmt.where(User.inside.is_(True))
+        elif rep_type == RepTypeEnum.OUTSIDE:
+            stmt = stmt.where(User.outside.is_(True))
         result = await self.session.execute(stmt)
         user = result.scalars().first()
 

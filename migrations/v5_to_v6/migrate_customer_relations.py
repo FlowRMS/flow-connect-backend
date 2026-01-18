@@ -140,6 +140,7 @@ async def migrate_factory_split_rates(
             0 as position,
             COALESCE(f.entry_date, now()) as created_at
         FROM core.factories f
+        JOIN "user".users u ON u.id = f.inside_rep_id
         WHERE f.inside_rep_id IS NOT NULL
     """
 )
@@ -235,7 +236,7 @@ async def migrate_addresses(
     v5 entity_type: 0 = customer, 1 = factory
     v6 source_type: 1 = CUSTOMER, 2 = FACTORY (IntEnum auto())
     v5 address_type: 0 = billing, 1 = shipping, etc.
-    v6 address_type: 1 = BILLING, 2 = SHIPPING, 3 = MAILING, 4 = OTHER
+    v6 address_types table: type = 1 = BILLING, 2 = SHIPPING, 3 = MAILING, 4 = OTHER
     """
     logger.info("Starting address migration...")
 
@@ -269,17 +270,17 @@ async def migrate_addresses(
         logger.info("No addresses to migrate")
         return 0
 
+    # Insert addresses without address_type column (now in separate table)
     await dest.executemany(
         """
         INSERT INTO pycore.addresses (
-            id, source_id, source_type, address_type, country, city,
+            id, source_id, source_type, country, city,
             line_1, line_2, state, zip_code, notes, is_primary,
             created_at
-        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, NULL, false, $11)
+        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, NULL, false, $10)
         ON CONFLICT (id) DO UPDATE SET
             source_id = EXCLUDED.source_id,
             source_type = EXCLUDED.source_type,
-            address_type = EXCLUDED.address_type,
             country = EXCLUDED.country,
             city = EXCLUDED.city,
             line_1 = EXCLUDED.line_1,
@@ -291,16 +292,24 @@ async def migrate_addresses(
             a["id"],
             a["source_id"],
             a["source_type"],
-            a["address_type"],
             a["country"],
             a["city"],
             a["line_1"],
             a["line_2"],
             a["state"],
             a["zip_code"],
-            # a["created_by_id"],
             a["created_at"],
         ) for a in addresses],
+    )
+
+    # Insert address types into the junction table
+    await dest.executemany(
+        """
+        INSERT INTO pycore.address_types (id, address_id, type)
+        VALUES (gen_random_uuid(), $1, $2)
+        ON CONFLICT DO NOTHING
+        """,
+        [(a["id"], a["address_type"]) for a in addresses],
     )
 
     logger.info(f"Migrated {len(addresses)} addresses")

@@ -13,7 +13,11 @@ from app.core.processors import (
     RepositoryEvent,
     validate_split_rates_sum_to_100,
 )
-from app.errors.common_errors import ValidationError
+from app.errors.split_rate_errors import (
+    DuplicateUserInSplitRatesError,
+    InvalidFactoryRepError,
+    UserNotFoundInSplitRateError,
+)
 
 
 class ValidateFactorySplitRatesProcessor(BaseProcessor[Factory]):
@@ -32,19 +36,17 @@ class ValidateFactorySplitRatesProcessor(BaseProcessor[Factory]):
             return
 
         user_ids = [rate.user_id for rate in split_rates]
+        self._validate_unique_user_ids(user_ids)
         users = await self._get_users_by_ids(user_ids)
         user_map = {user.id: user for user in users}
 
         for rate in split_rates:
             user = user_map.get(rate.user_id)
             if not user:
-                raise ValidationError(f"User with ID '{rate.user_id}' not found")
+                raise UserNotFoundInSplitRateError(rate.user_id)
 
             if not user.inside:
-                raise ValidationError(
-                    f"User '{user.first_name} {user.last_name}' cannot be a factory rep "
-                    "(inside flag is not set)"
-                )
+                raise InvalidFactoryRepError(user.first_name, user.last_name)
 
         validate_split_rates_sum_to_100(split_rates, label="factory split rates")
 
@@ -52,3 +54,13 @@ class ValidateFactorySplitRatesProcessor(BaseProcessor[Factory]):
         stmt = select(User).where(User.id.in_(user_ids))
         result = await self.session.execute(stmt)
         return result.scalars().all()
+
+    def _validate_unique_user_ids(self, user_ids: list[UUID]) -> None:
+        seen: set[UUID] = set()
+        duplicates: set[UUID] = set()
+        for user_id in user_ids:
+            if user_id in seen:
+                duplicates.add(user_id)
+            seen.add(user_id)
+        if duplicates:
+            raise DuplicateUserInSplitRatesError(duplicates)

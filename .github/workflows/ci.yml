@@ -40,4 +40,4 @@ jobs:
         run: uv sync
 
       - name: Run lint and typecheck
-        run: task all
+        run: task all-ci

@@ -7,7 +7,7 @@ from commons.db.v6.crm.links.entity_type import EntityType
 
 from app.errors.common_errors import NotFoundError
 from app.graphql.companies.services.companies_service import CompaniesService
-from app.graphql.companies.strawberry.company_response import CompanyResponse
+from app.graphql.companies.strawberry.company_response import CompanyLiteResponse
 from app.graphql.contacts.repositories.contacts_repository import ContactsRepository
 from app.graphql.contacts.strawberry.contact_input import ContactInput
 from app.graphql.contacts.strawberry.contact_related_entities_response import (
@@ -145,7 +145,7 @@ class ContactsService:
         )
 
         return ContactRelatedEntitiesResponse(
-            companies=CompanyResponse.from_orm_model_list(companies),
+            companies=CompanyLiteResponse.from_orm_model_list(companies),
         )
 
     async def find_by_entity(

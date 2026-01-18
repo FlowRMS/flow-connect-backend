@@ -17,7 +17,12 @@ from app.graphql.v2.core.products.strawberry.product_cpn_input import (
 )
 from app.graphql.v2.core.products.strawberry.product_input import ProductInput
 
-from .base import BaseEntityConverter, BulkCreateResult, ConversionResult
+from .base import (
+    BaseEntityConverter,
+    BulkCreateResult,
+    ConversionResult,
+    SeparatedInputs,
+)
 from .entity_mapping import EntityMapping
 from .exceptions import FactoryPartNumberRequiredError, FactoryRequiredError
 
@@ -67,6 +72,64 @@ class ProductConverter(BaseEntityConverter[ProductDTO, ProductInput, Product]):
         return BulkCreateResult(created=created, skipped_indices=skipped)
 
     @override
+    async def separate_inputs(
+        self,
+        inputs: list[ProductInput],
+    ) -> SeparatedInputs[ProductInput]:
+        if not inputs:
+            return SeparatedInputs(
+                for_creation=[],
+                for_creation_indices=[],
+                for_update=[],
+                for_update_indices=[],
+            )
+
+        fpn_pairs = [(inp.factory_part_number, inp.factory_id) for inp in inputs]
+        existing_products = await self.product_service.get_existing_products(fpn_pairs)
+        existing_map = {
+            (p.factory_part_number, p.factory_id): p for p in existing_products
+        }
+
+        for_creation: list[ProductInput] = []
+        for_creation_indices: list[int] = []
+        for_update: list[tuple[ProductInput, Product]] = []
+        for_update_indices: list[int] = []
+
+        for i, inp in enumerate(inputs):
+            key = (inp.factory_part_number, inp.factory_id)
+            existing = existing_map.get(key)
+            if existing:
+                for_update.append((inp, existing))
+                for_update_indices.append(i)
+            else:
+                for_creation.append(inp)
+                for_creation_indices.append(i)
+
+        return SeparatedInputs(
+            for_creation=for_creation,
+            for_creation_indices=for_creation_indices,
+            for_update=for_update,
+            for_update_indices=for_update_indices,
+        )
+
+    @override
+    async def update_entities_bulk(
+        self,
+        inputs_with_entities: list[tuple[ProductInput, Product]],
+    ) -> BulkCreateResult[Product]:
+        if not inputs_with_entities:
+            return BulkCreateResult(created=[], skipped_indices=[])
+
+        updated = await self.product_service.bulk_update(inputs_with_entities)
+        updated_ids = {p.id for p in updated}
+        skipped = [
+            i
+            for i, (_, existing) in enumerate(inputs_with_entities)
+            if existing.id not in updated_ids
+        ]
+        return BulkCreateResult(created=updated, skipped_indices=skipped)
+
+    @override
     async def to_input(
         self,
         dto: ProductDTO,
@@ -92,7 +155,9 @@ class ProductConverter(BaseEntityConverter[ProductDTO, ProductInput, Product]):
             published=dto.published or True,
             description=dto.description,
             upc=dto.upc,
-            min_order_qty=Decimal(dto.min_order_qty) if dto.min_order_qty else None,
+            min_order_qty=Decimal(dto.min_order_quantity)
+            if dto.min_order_quantity
+            else None,
             lead_time=self._parse_lead_time(dto.lead_time),
             unit_price_discount_rate=dto.overall_discount_rate,
             commission_discount_rate=dto.commission_discount_rate,

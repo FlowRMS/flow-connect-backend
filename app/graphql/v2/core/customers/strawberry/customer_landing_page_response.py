@@ -8,5 +8,7 @@ class CustomerLandingPageResponse(LandingPageInterfaceBase):
     company_name: str
     published: bool
     is_parent: bool
+    buying_group: str | None
+    parent: str | None
     inside_reps: list[str]
     outside_reps: list[str]

@@ -13,6 +13,7 @@ from app.graphql.checks.strawberry.check_detail_response import CheckDetailRespo
 from app.graphql.v2.core.factories.strawberry.factory_response import (
     FactoryLiteResponse,
 )
+from app.graphql.v2.core.users.strawberry.user_response import UserResponse
 
 
 @strawberry.type
@@ -57,6 +58,10 @@ class CheckResponse(CheckLiteResponse):
     @strawberry.field
     def factory(self) -> FactoryLiteResponse:
         return FactoryLiteResponse.from_orm_model(self._instance.factory)
+
+    @strawberry.field
+    def created_by(self) -> UserResponse:
+        return UserResponse.from_orm_model(self._instance.created_by)
 
     @strawberry.field
     def details(self) -> list[CheckDetailResponse]:

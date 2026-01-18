@@ -14,6 +14,10 @@ from app.graphql.common.strategies.bulk_delete import (
     ProductBulkDeleteStrategy,
     QuoteBulkDeleteStrategy,
 )
+from app.graphql.common.strategies.bulk_delete.credit_bulk_delete_strategy import (
+    CreditBulkDeleteStrategy,
+)
+from app.graphql.credits.services.credit_service import CreditService
 from app.graphql.invoices.services.invoice_service import InvoiceService
 from app.graphql.orders.services.order_service import OrderService
 from app.graphql.pre_opportunities.services.pre_opportunities_service import (
@@ -34,6 +38,7 @@ def create_bulk_delete_registry(
     quote_service: QuoteService,
     check_service: CheckService,
     pre_opportunity_service: PreOpportunitiesService,
+    credit_service: CreditService,
     session: AsyncSession,
 ) -> BulkDeleteStrategyRegistry:
     registry = BulkDeleteStrategyRegistry()
@@ -52,6 +57,10 @@ def create_bulk_delete_registry(
         CheckBulkDeleteStrategy(check_service=check_service, session=session),
         PreOpportunityBulkDeleteStrategy(
             pre_opportunity_service=pre_opportunity_service, session=session
+        ),
+        CreditBulkDeleteStrategy(
+            credit_service=credit_service,
+            session=session,
         ),
     ]
 
