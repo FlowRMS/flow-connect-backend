@@ -11,6 +11,7 @@ from commons.db.v6 import (
 )
 
 from app.core.db.adapters.dto import DTOMixin
+from app.graphql.v2.core.products.strawberry.product_response import ProductLiteResponse
 
 
 @strawberry.type
@@ -21,13 +22,9 @@ class LocationProductAssignmentResponse(DTOMixin[LocationProductAssignment]):
     product_id: UUID
     quantity: Decimal
     created_at: datetime
-    product_name: str
-    part_number: str
 
     @classmethod
     def from_orm_model(cls, model: LocationProductAssignment) -> Self:
-        # Product is eagerly loaded via lazy="joined" on the model
-        product = model.product
         return cls(
             _instance=model,
             id=model.id,
@@ -35,11 +32,11 @@ class LocationProductAssignmentResponse(DTOMixin[LocationProductAssignment]):
             product_id=model.product_id,
             quantity=model.quantity,
             created_at=model.created_at,
-            product_name=product.description or product.factory_part_number
-            if product
-            else "",
-            part_number=product.factory_part_number if product else "",
         )
+
+    @strawberry.field
+    def product(self) -> ProductLiteResponse:
+        return ProductLiteResponse.from_orm_model(self._instance.product)
 
 
 @strawberry.type

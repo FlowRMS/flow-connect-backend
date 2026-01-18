@@ -8,6 +8,9 @@ from app.graphql.inject import inject
 from app.graphql.v2.core.warehouses.services.warehouse_location_assignment_service import (
     WarehouseLocationAssignmentService,
 )
+from app.graphql.v2.core.warehouses.services.warehouse_location_bulk_service import (
+    WarehouseLocationBulkService,
+)
 from app.graphql.v2.core.warehouses.services.warehouse_location_service import (
     WarehouseLocationService,
 )
@@ -62,7 +65,7 @@ class WarehouseLocationMutations:
         self,
         warehouse_id: UUID,
         locations: list[BulkWarehouseLocationInput],
-        service: Injected[WarehouseLocationService],
+        service: Injected[WarehouseLocationBulkService],
     ) -> list[WarehouseLocationResponse]:
         """Bulk save warehouse locations.
 
