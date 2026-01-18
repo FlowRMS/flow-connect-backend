@@ -68,3 +68,12 @@ class ShipmentRequestRepository(BaseRepository[ShipmentRequest]):
 
         result = await self.session.execute(stmt)
         return list(result.unique().scalars().all())
+
+    async def create(self, request: ShipmentRequest) -> ShipmentRequest:
+        """Create a new shipment request with eager loading of relationships."""
+        created = await super().create(request)
+
+        # Refresh with eager loading to avoid lazy load errors
+        await self.session.refresh(created, attribute_names=["items", "factory"])
+
+        return created

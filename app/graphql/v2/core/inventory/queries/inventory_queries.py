@@ -74,3 +74,29 @@ class InventoryQueries:
     ) -> InventoryResponse:
         inventory = await service.get_by_id(id)
         return InventoryResponse.from_orm_model(inventory)
+
+    @strawberry.field
+    @inject
+    async def inventory_by_product(
+        self,
+        service: Injected[InventoryService],
+        product_id: UUID,
+        warehouse_id: UUID,
+    ) -> InventoryResponse | None:
+        """Get inventory for a specific product in a warehouse."""
+        inventory = await service.get_by_product(product_id, warehouse_id)
+        if inventory:
+            return InventoryResponse.from_orm_model(inventory)
+        return None
+
+    @strawberry.field
+    @inject
+    async def inventories_by_products(
+        self,
+        service: Injected[InventoryService],
+        product_ids: list[UUID],
+        warehouse_id: UUID,
+    ) -> list[InventoryResponse]:
+        """Get inventory for multiple products in a warehouse (for picking)."""
+        inventories = await service.get_by_products(product_ids, warehouse_id)
+        return InventoryResponse.from_orm_model_list(inventories)

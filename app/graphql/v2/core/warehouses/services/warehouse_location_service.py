@@ -1,6 +1,3 @@
-"""Core CRUD operations for warehouse locations."""
-
-from decimal import Decimal
 from uuid import UUID
 
 from commons.db.v6 import WarehouseLocation, WarehouseStructureCode
@@ -55,9 +52,7 @@ class WarehouseLocationService:
     async def create(self, input: WarehouseLocationInput) -> WarehouseLocation:
         if not await self.warehouse_repository.exists(input.warehouse_id):
             raise NotFoundError(f"Warehouse with id {input.warehouse_id} not found")
-        await self._validate_hierarchy(
-            WarehouseStructureCode(input.level.value), input.parent_id
-        )
+        await self._validate_hierarchy(input.level, input.parent_id)
         location = self._build_location(input, input.warehouse_id, input.parent_id)
         return await self.location_repository.create(location)
 
@@ -91,17 +86,17 @@ class WarehouseLocationService:
         return WarehouseLocation(
             warehouse_id=warehouse_id,
             parent_id=parent_id,
-            level=WarehouseStructureCode(inp.level.value),
+            level=inp.level,
             name=inp.name,
             code=inp.code,
             description=inp.description,
             is_active=inp.is_active if inp.is_active is not None else True,
             sort_order=inp.sort_order if inp.sort_order is not None else 0,
-            x=Decimal(str(inp.x)) if inp.x is not None else None,
-            y=Decimal(str(inp.y)) if inp.y is not None else None,
-            width=Decimal(str(inp.width)) if inp.width is not None else None,
-            height=Decimal(str(inp.height)) if inp.height is not None else None,
-            rotation=Decimal(str(inp.rotation)) if inp.rotation is not None else None,
+            x=inp.x,
+            y=inp.y,
+            width=inp.width,
+            height=inp.height,
+            rotation=inp.rotation,
         )
 
     async def _validate_hierarchy(

@@ -65,7 +65,7 @@ class WarehouseLocationResponse(DTOMixin[WarehouseLocation]):
             id=model.id,
             warehouse_id=model.warehouse_id,
             parent_id=model.parent_id,
-            level=WarehouseStructureCode(model.level.value),
+            level=model.level,
             name=model.name,
             code=model.code,
             description=model.description,

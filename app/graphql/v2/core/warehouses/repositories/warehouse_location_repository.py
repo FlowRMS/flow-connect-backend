@@ -58,14 +58,14 @@ class WarehouseLocationRepository(BaseRepository[WarehouseLocation]):
     ) -> WarehouseLocation | None:
         stmt = self.base_query.where(WarehouseLocation.id == location_id)
         result = await self.session.execute(stmt)
-        return result.unique().scalar_one_or_none()
+        return result.scalar_one_or_none()
 
     async def list_by_warehouse(self, warehouse_id: UUID) -> list[WarehouseLocation]:
         stmt = self.base_query.where(
             WarehouseLocation.warehouse_id == warehouse_id
         ).order_by(WarehouseLocation.level, WarehouseLocation.sort_order)
         result = await self.session.execute(stmt)
-        return list(result.unique().scalars().all())
+        return list(result.scalars().all())
 
     async def get_root_locations(self, warehouse_id: UUID) -> list[WarehouseLocation]:
         stmt = self.base_query.where(
@@ -73,14 +73,14 @@ class WarehouseLocationRepository(BaseRepository[WarehouseLocation]):
             WarehouseLocation.parent_id.is_(None),
         ).order_by(WarehouseLocation.sort_order)
         result = await self.session.execute(stmt)
-        return list(result.unique().scalars().all())
+        return list(result.scalars().all())
 
     async def get_children(self, parent_id: UUID) -> list[WarehouseLocation]:
         stmt = self.base_query.where(WarehouseLocation.parent_id == parent_id).order_by(
             WarehouseLocation.sort_order
         )
         result = await self.session.execute(stmt)
-        return list(result.unique().scalars().all())
+        return list(result.scalars().all())
 
     async def delete_by_warehouse(self, warehouse_id: UUID) -> None:
         stmt = select(WarehouseLocation).where(

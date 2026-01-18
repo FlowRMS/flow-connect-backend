@@ -1,18 +1,14 @@
-"""Strawberry response types for shipping carriers."""
-
 from datetime import datetime
 from decimal import Decimal
-from typing import TYPE_CHECKING, Self, cast
+from typing import Self, cast
 from uuid import UUID
 
 import strawberry
 from commons.db.v6 import ShippingCarrier
+from commons.db.v6.crm.shipping_carriers.shipping_carrier_model import CarrierType
 from strawberry.scalars import JSON
 
 from app.core.db.adapters.dto import DTOMixin
-
-if TYPE_CHECKING:
-    pass
 
 
 @strawberry.type
@@ -22,6 +18,7 @@ class ShippingCarrierResponse(DTOMixin[ShippingCarrier]):
     _instance: strawberry.Private[ShippingCarrier]
     id: UUID
     name: str
+    carrier_type: CarrierType | None
     code: str | None  # SCAC code
     account_number: str | None
     is_active: bool | None
@@ -59,6 +56,7 @@ class ShippingCarrierResponse(DTOMixin[ShippingCarrier]):
             _instance=model,
             id=model.id,
             name=model.name,
+            carrier_type=model.carrier_type,
             code=model.code,
             account_number=model.account_number,
             is_active=model.is_active,

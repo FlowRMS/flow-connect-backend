@@ -6,7 +6,7 @@ from commons.db.v6.warehouse.inventory.inventory import Inventory
 from commons.db.v6.warehouse.inventory.inventory_item import InventoryItem
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.orm import contains_eager, joinedload
+from sqlalchemy.orm import contains_eager, joinedload, selectinload
 
 from app.core.constants import DEFAULT_QUERY_LIMIT, DEFAULT_QUERY_OFFSET
 from app.core.context_wrapper import ContextWrapper
@@ -80,6 +80,40 @@ class InventoryRepository(BaseRepository[Inventory]):
         result = await self.session.execute(stmt)
         return list(result.unique().scalars().all())
 
+    async def find_by_product(
+        self,
+        product_id: UUID,
+        warehouse_id: UUID | None = None,
+    ) -> Inventory | None:
+        """Get inventory record for a product, optionally filtered by warehouse."""
+        stmt = (
+            select(Inventory)
+            .where(Inventory.product_id == product_id)
+            .options(selectinload(Inventory.items))
+        )
+
+        if warehouse_id:
+            stmt = stmt.where(Inventory.warehouse_id == warehouse_id)
+
+        result = await self.session.execute(stmt)
+        return result.unique().scalars().first()
+
+    async def find_by_products(
+        self,
+        product_ids: list[UUID],
+        warehouse_id: UUID,
+    ) -> list[Inventory]:
+        """Get inventory records for multiple products in a warehouse."""
+        stmt = (
+            select(Inventory)
+            .where(Inventory.product_id.in_(product_ids))
+            .where(Inventory.warehouse_id == warehouse_id)
+            .options(selectinload(Inventory.items))
+        )
+
+        result = await self.session.execute(stmt)
+        return list(result.unique().scalars().all())
+
     async def find_by_product_id(
         self, warehouse_id: UUID, product_id: UUID
     ) -> Inventory | None:
@@ -91,7 +125,7 @@ class InventoryRepository(BaseRepository[Inventory]):
             )
             .join(Inventory.product)
             .options(
-                joinedload(Inventory.items),
+                selectinload(Inventory.items),
                 contains_eager(Inventory.product),
             )
         )
