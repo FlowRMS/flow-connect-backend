@@ -11,6 +11,7 @@ from commons.db.v6 import (
 )
 
 from app.core.db.adapters.dto import DTOMixin
+from app.graphql.v2.core.products.strawberry.product_response import ProductLiteResponse
 
 
 @strawberry.type
@@ -32,6 +33,10 @@ class LocationProductAssignmentResponse(DTOMixin[LocationProductAssignment]):
             quantity=model.quantity,
             created_at=model.created_at,
         )
+
+    @strawberry.field
+    def product(self) -> ProductLiteResponse:
+        return ProductLiteResponse.from_orm_model(self._instance.product)
 
 
 @strawberry.type
@@ -60,7 +65,7 @@ class WarehouseLocationResponse(DTOMixin[WarehouseLocation]):
             id=model.id,
             warehouse_id=model.warehouse_id,
             parent_id=model.parent_id,
-            level=WarehouseStructureCode(model.level.value),
+            level=model.level,
             name=model.name,
             code=model.code,
             description=model.description,
@@ -75,11 +80,15 @@ class WarehouseLocationResponse(DTOMixin[WarehouseLocation]):
         )
 
     @strawberry.field
-    async def children(self) -> list["WarehouseLocationResponse"]:
-        children = await self._instance.awaitable_attrs.children
-        return WarehouseLocationResponse.from_orm_model_list(children)
+    def children(self) -> list["WarehouseLocationResponse"]:
+        # Access children directly since they are eagerly loaded via joinedload
+        # Using awaitable_attrs causes lazy loading errors when session is closed
+        return WarehouseLocationResponse.from_orm_model_list(self._instance.children)
 
     @strawberry.field
-    async def product_assignments(self) -> list[LocationProductAssignmentResponse]:
-        assignments = await self._instance.awaitable_attrs.product_assignments
-        return LocationProductAssignmentResponse.from_orm_model_list(assignments)
+    def product_assignments(self) -> list[LocationProductAssignmentResponse]:
+        # Access product_assignments directly since they are eagerly loaded via joinedload
+        # Using awaitable_attrs causes lazy loading errors when session is closed
+        return LocationProductAssignmentResponse.from_orm_model_list(
+            self._instance.product_assignments
+        )

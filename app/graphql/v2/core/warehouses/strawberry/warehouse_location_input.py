@@ -56,3 +56,20 @@ class LocationProductAssignmentInput:
     location_id: UUID
     product_id: UUID
     quantity: Decimal = Decimal(0)
+
+
+@strawberry.input
+class BulkProductAssignmentInput:
+    """Input for bulk product assignment operations."""
+
+    location_id: UUID
+    product_id: UUID
+    quantity: Decimal = Decimal(0)
+
+
+@strawberry.input
+class BulkProductRemovalInput:
+    """Input for bulk product removal operations."""
+
+    location_id: UUID
+    product_id: UUID

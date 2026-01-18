@@ -1,8 +1,9 @@
-from datetime import date, datetime, timezone
+from datetime import date
 from decimal import Decimal
 from typing import override
 from uuid import UUID
 
+from commons.db.v6 import AutoNumberEntityType
 from commons.db.v6.ai.documents.enums.entity_type import DocumentEntityType
 from commons.db.v6.commission import Invoice, Order, OrderDetail
 from commons.dtos.common.dto_loader_service import DTOLoaderService
@@ -10,6 +11,9 @@ from commons.dtos.invoice.invoice_detail_dto import InvoiceDetailDTO
 from commons.dtos.invoice.invoice_dto import InvoiceDTO
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.graphql.auto_numbers.services.auto_number_settings_service import (
+    AutoNumberSettingsService,
+)
 from app.graphql.invoices.services.invoice_service import InvoiceService
 from app.graphql.invoices.services.order_detail_matcher import OrderDetailMatcherService
 from app.graphql.invoices.strawberry.invoice_detail_input import InvoiceDetailInput
@@ -32,11 +36,13 @@ class InvoiceConverter(BaseEntityConverter[InvoiceDTO, InvoiceInput, Invoice]):
         invoice_service: InvoiceService,
         orders_repository: OrdersRepository,
         order_detail_matcher: OrderDetailMatcherService,
+        auto_number_settings_service: AutoNumberSettingsService,
     ) -> None:
         super().__init__(session, dto_loader_service)
         self.invoice_service = invoice_service
         self.orders_repository = orders_repository
         self.order_detail_matcher = order_detail_matcher
+        self.auto_number_settings_service = auto_number_settings_service
 
     @override
     async def find_existing(self, input_data: InvoiceInput) -> Invoice | None:
@@ -78,7 +84,11 @@ class InvoiceConverter(BaseEntityConverter[InvoiceDTO, InvoiceInput, Invoice]):
         )
         default_discount_rate = await self.get_factory_discount_rate(factory_id)
 
-        invoice_number = dto.invoice_number or self._generate_invoice_number()
+        invoice_number = dto.invoice_number
+        if self.auto_number_settings_service.needs_generation(invoice_number):
+            invoice_number = await self.auto_number_settings_service.generate_number(
+                AutoNumberEntityType.INVOICE
+            )
         entity_date = dto.invoice_date or date.today()
         order_detail_dict = {detail.id: detail for detail in order.details}
 
@@ -98,7 +108,8 @@ class InvoiceConverter(BaseEntityConverter[InvoiceDTO, InvoiceInput, Invoice]):
 
         return ConversionResult.ok(
             InvoiceInput(
-                invoice_number=invoice_number,
+                invoice_number=invoice_number
+                or f"I-{date.today().strftime('%Y%m%d')}-GEN",
                 entity_date=entity_date,
                 order_id=order_id,
                 factory_id=factory_id,
@@ -208,8 +219,3 @@ class InvoiceConverter(BaseEntityConverter[InvoiceDTO, InvoiceInput, Invoice]):
         if detail.description:
             return detail.description[:100]
         return None
-
-    @staticmethod
-    def _generate_invoice_number() -> str:
-        timestamp = datetime.now(timezone.utc).strftime("%Y%m%d%H%M%S")
-        return f"INV-{timestamp}"

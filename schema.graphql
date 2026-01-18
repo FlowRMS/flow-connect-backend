@@ -12,6 +12,16 @@ input AddCompanyToJobInput {
   role: JobCompanyRole!
 }
 
+input AddDocumentInput {
+  fulfillmentOrderId: UUID!
+  documentType: FulfillmentDocumentType!
+  fileName: String!
+  fileUrl: String!
+  fileSize: Int = null
+  mimeType: String = null
+  notes: String = null
+}
+
 input AddInventoryItemInput {
   inventoryId: UUID!
   locationId: UUID = null
@@ -166,6 +176,40 @@ enum AdjustmentStatus {
   POSTED
 }
 
+input AssignItemToBoxInput {
+  boxId: UUID!
+  lineItemId: UUID!
+  quantity: Decimal!
+}
+
+enum AutoNumberEntityType {
+  PRE_OPPORTUNITY
+  JOB
+  QUOTE
+  ORDER
+  ORDER_ACKNOWLEDGEMENT
+  INVOICE
+  CHECK
+}
+
+input AutoNumberSettingsInput {
+  entityType: AutoNumberEntityType!
+  prefix: String!
+  startsAt: Int!
+  incrementBy: Int!
+  allowAutoGeneration: Boolean! = true
+}
+
+type AutoNumberSettingsResponse {
+  id: UUID!
+  entityType: AutoNumberEntityType!
+  prefix: String!
+  startsAt: Int!
+  incrementBy: Int!
+  counter: Int!
+  allowAutoGeneration: Boolean!
+}
+
 type BackorderResponse {
   id: UUID!
   orderedQuantity: Decimal!
@@ -180,6 +224,12 @@ type BackorderResponse {
   factory: FactoryLiteResponse
   shippedQuantity: Decimal!
   backorderedQuantity: Decimal!
+}
+
+input BulkAssignmentInput {
+  fulfillmentOrderIds: [UUID!]!
+  managerIds: [UUID!] = null
+  workerIds: [UUID!] = null
 }
 
 enum BulkDeleteEntityType {
@@ -204,6 +254,17 @@ type BulkDeleteResult {
   deletedCount: Int!
   failedCount: Int!
   failures: [BulkDeleteFailure!]!
+}
+
+input BulkProductAssignmentInput {
+  locationId: UUID!
+  productId: UUID!
+  quantity: Decimal! = "0.0000"
+}
+
+input BulkProductRemovalInput {
+  locationId: UUID!
+  productId: UUID!
 }
 
 input BulkWarehouseLocationInput {
@@ -311,6 +372,17 @@ enum CampaignStatus {
   SENDING
   COMPLETED
   PAUSED
+}
+
+input CancelBackorderInput {
+  fulfillmentOrderId: UUID!
+  lineItemIds: [UUID!]!
+  reason: String!
+}
+
+enum CarrierType {
+  PARCEL
+  FREIGHT
 }
 
 input CheckDetailInput {
@@ -460,6 +532,15 @@ type CompanyTypeResponse {
   createdAt: datetime!
 }
 
+input CompleteShippingInput {
+  trackingNumbers: [String!] = null
+  bolNumber: String = null
+  proNumber: String = null
+  signature: String = null
+  driverName: String = null
+  pickupCustomerName: String = null
+}
+
 input ContactInput {
   firstName: String!
   lastName: String!
@@ -542,6 +623,18 @@ input CreateFolderInput {
   parentId: UUID = null
 }
 
+input CreateFulfillmentOrderInput {
+  orderId: UUID!
+  warehouseId: UUID!
+  fulfillmentMethod: FulfillmentMethod! = SHIP
+  carrierId: UUID = null
+  carrierType: CarrierType = null
+  shipToAddress: AddressInput = null
+  shipToName: String = null
+  shipToPhone: String = null
+  needByDate: Date = null
+}
+
 input CreateHighlightVersionInput {
   specSheetId: UUID!
   name: String!
@@ -552,6 +645,14 @@ input CreateHighlightVersionInput {
 input CreateInventoryInput {
   warehouseId: UUID!
   productId: UUID!
+}
+
+input CreatePackingBoxInput {
+  containerTypeId: UUID = null
+  length: Decimal = null
+  width: Decimal = null
+  height: Decimal = null
+  weight: Decimal = null
 }
 
 input CreateShipmentRequestInput {
@@ -861,6 +962,7 @@ enum DocumentEntityType {
   PRODUCTS
   END_USERS
   DELIVERIES
+  COMMISSION_STATEMENTS
 }
 
 enum EmailStatus {
@@ -1119,6 +1221,161 @@ type FolderWithChildrenResponse {
   children: [FolderLiteResponse!]!
   files: [FileLiteResponse!]!
   parent: FolderLiteResponse
+}
+
+type FulfillmentActivityResponse {
+  id: UUID!
+  activityType: FulfillmentActivityType!
+  content: String
+  metadata: JSON
+  createdAt: datetime!
+  createdById: UUID!
+}
+
+enum FulfillmentActivityType {
+  CREATED
+  RELEASED
+  PICK_STARTED
+  PICK_COMPLETED
+  PACK_STARTED
+  PACK_COMPLETED
+  SHIPPED
+  DELIVERED
+  CANCELLED
+  NOTE_ADDED
+  ITEM_NOTE_ADDED
+  BACKORDER_REPORTED
+  ASSIGNMENT_ADDED
+  ASSIGNMENT_REMOVED
+  SIGNATURE_CAPTURED
+  TRACKING_ADDED
+}
+
+type FulfillmentAssignmentResponse {
+  id: UUID!
+  userId: UUID!
+  role: FulfillmentAssignmentRole!
+  createdAt: datetime!
+  userName: String!
+  userEmail: String!
+}
+
+enum FulfillmentAssignmentRole {
+  MANAGER
+  WORKER
+  INSIDE_SALES
+}
+
+type FulfillmentDocumentResponse {
+  id: UUID!
+  documentType: FulfillmentDocumentType!
+  fileName: String!
+  fileUrl: String!
+  fileSize: Int
+  mimeType: String
+  notes: String
+  uploadedAt: datetime!
+  createdAt: datetime!
+  createdById: UUID!
+  fileId: UUID
+  uploadedByName: String!
+}
+
+enum FulfillmentDocumentType {
+  BOL
+  PACKING_SLIP
+  SHIPPING_LABEL
+  INVOICE
+  PHOTO
+  OTHER
+}
+
+enum FulfillmentMethod {
+  SHIP
+  WILL_CALL
+}
+
+type FulfillmentOrderLineItemResponse {
+  id: UUID!
+  productId: UUID!
+  orderDetailId: UUID
+  orderedQty: Decimal!
+  allocatedQty: Decimal!
+  pickedQty: Decimal!
+  packedQty: Decimal!
+  shippedQty: Decimal!
+  backorderQty: Decimal!
+  fulfilledByManufacturer: Boolean!
+  manufacturerFulfillmentStatus: String
+  linkedShipmentRequestId: UUID
+  shortReason: String
+  notes: String
+  productName: String!
+  partNumber: String!
+  uom: String!
+  packingBoxItems: [PackingBoxItemResponse!]!
+  factoryId: UUID
+  factoryName: String
+}
+
+type FulfillmentOrderResponse {
+  id: UUID!
+  fulfillmentOrderNumber: String!
+  orderId: UUID!
+  warehouseId: UUID!
+  carrierId: UUID
+  status: FulfillmentOrderStatus!
+  fulfillmentMethod: FulfillmentMethod!
+  carrierType: CarrierType
+  freightClass: String
+  needByDate: Date
+  hasBackorderItems: Boolean!
+  holdReason: String
+  releasedAt: datetime
+  pickStartedAt: datetime
+  pickCompletedAt: datetime
+  packCompletedAt: datetime
+  shipConfirmedAt: datetime
+  deliveredAt: datetime
+  createdAt: datetime!
+  trackingNumbers: [String!]!
+  bolNumber: String
+  proNumber: String
+  pickupSignature: String
+  pickupTimestamp: datetime
+  pickupCustomerName: String
+  driverName: String
+  warehouseName: String!
+  carrierName: String
+  orderNumber: String!
+  customerName: String!
+  shipToAddress: ShipToAddressResponse
+  lineItems: [FulfillmentOrderLineItemResponse!]!
+  packingBoxes: [PackingBoxResponse!]!
+  assignments: [FulfillmentAssignmentResponse!]!
+  documents: [FulfillmentDocumentResponse!]!
+  activities: [FulfillmentActivityResponse!]!
+}
+
+enum FulfillmentOrderStatus {
+  PENDING
+  RELEASED
+  PICKING
+  PACKING
+  SHIPPING
+  SHIPPED
+  COMMUNICATED
+  DELIVERED
+  BACKORDER_REVIEW
+  PARTIAL_SHIPPED
+  CANCELLED
+}
+
+type FulfillmentStatsResponse {
+  pendingCount: Int!
+  inProgressCount: Int!
+  completedCount: Int!
+  backorderCount: Int!
 }
 
 input GeneralSettingsInput {
@@ -1553,7 +1810,7 @@ interface LandingPageInterfaceBase {
   userIds: [UUID!]!
 }
 
-union LandingRecord = JobLandingPage | CompanyLandingPage | ContactLandingPage | PreOpportunityLandingPage | NoteLandingPage | TaskLandingPage | CampaignLandingPage | CustomerLandingPage | FactoryLandingPage | ProductLandingPage | QuoteLandingPage | OrderLandingPage | FileLandingPage | InvoiceLandingPage | CreditLandingPage | AdjustmentLandingPage | CheckLandingPage | OrderAcknowledgementLandingPage | PendingDocumentLandingPage
+union LandingRecord = JobLandingPage | CompanyLandingPage | ContactLandingPage | PreOpportunityLandingPage | NoteLandingPage | TaskLandingPage | CampaignLandingPage | CustomerLandingPage | FactoryLandingPage | ProductLandingPage | QuoteLandingPage | OrderLandingPage | FileLandingPage | InvoiceLandingPage | CreditLandingPage | AdjustmentLandingPage | CheckLandingPage | OrderAcknowledgementLandingPage | PendingDocumentLandingPage | StatementLandingPage
 
 enum LandingSourceType {
   JOBS
@@ -1576,6 +1833,7 @@ enum LandingSourceType {
   CHECKS
   ORDER_ACKNOWLEDGEMENTS
   PENDING_DOCUMENTS
+  STATEMENTS
 }
 
 input LinkRelationInput {
@@ -1606,11 +1864,17 @@ type LocationProductAssignmentResponse {
   productId: UUID!
   quantity: Decimal!
   createdAt: datetime!
+  product: ProductLiteResponse!
 }
 
 enum LogicalOperator {
   AND
   OR
+}
+
+input MarkManufacturerFulfilledInput {
+  fulfillmentOrderId: UUID!
+  lineItemIds: [UUID!]!
 }
 
 input MoveFolderInput {
@@ -1634,6 +1898,7 @@ type Mutation {
   createAdjustment(input: AdjustmentInput!): AdjustmentResponse!
   updateAdjustment(input: AdjustmentInput!): AdjustmentResponse!
   deleteAdjustment(id: UUID!): Boolean!
+  updateAutoNumberSettings(inputs: [AutoNumberSettingsInput!]!): [AutoNumberSettingsResponse!]!
   createCampaign(input: CampaignInput!): CampaignResponse!
   updateCampaign(id: UUID!, input: CampaignInput!): CampaignResponse!
   deleteCampaign(id: UUID!): Boolean!
@@ -1717,6 +1982,9 @@ type Mutation {
   deleteSpecSheet(id: UUID!): Boolean!
   incrementSpecSheetUsage(id: UUID!): Boolean!
   moveFolder(input: MoveFolderInput!): Int!
+  createStatement(input: StatementInput!): StatementResponse!
+  updateStatement(input: StatementInput!): StatementResponse!
+  deleteStatement(id: UUID!): Boolean!
   createTaskCategory(input: TaskCategoryInput!): TaskCategoryType!
   updateTaskCategory(id: UUID!, input: TaskCategoryInput!): TaskCategoryType!
   deleteTaskCategory(id: UUID!): Boolean!
@@ -1740,6 +2008,34 @@ type Mutation {
   updateFactory(id: UUID!, input: FactoryInput!): FactoryResponse!
   deleteFactory(id: UUID!): Boolean!
   updateManufacturerOrder(factoryIds: [UUID!]!): Int!
+  createFulfillmentOrder(input: CreateFulfillmentOrderInput!): FulfillmentOrderResponse!
+  updateFulfillmentOrder(id: UUID!, input: UpdateFulfillmentOrderInput!): FulfillmentOrderResponse!
+  releaseToWarehouse(id: UUID!): FulfillmentOrderResponse!
+  cancelFulfillmentOrder(id: UUID!, reason: String!): FulfillmentOrderResponse!
+  bulkAssignFulfillmentOrders(input: BulkAssignmentInput!): [FulfillmentOrderResponse!]!
+  addFulfillmentAssignment(fulfillmentOrderId: UUID!, userId: UUID!, role: FulfillmentAssignmentRole!): FulfillmentOrderResponse!
+  removeFulfillmentAssignment(assignmentId: UUID!): FulfillmentOrderResponse!
+  startPicking(id: UUID!): FulfillmentOrderResponse!
+  updatePickedQuantity(input: UpdatePickedQuantityInput!): FulfillmentOrderLineItemResponse!
+  completePicking(id: UUID!): FulfillmentOrderResponse!
+  reportInventoryDiscrepancy(lineItemId: UUID!, actualQuantity: Decimal!, reason: String!): FulfillmentOrderResponse!
+  addPackingBox(fulfillmentOrderId: UUID!, input: CreatePackingBoxInput!): PackingBoxResponse!
+  updatePackingBox(boxId: UUID!, input: UpdatePackingBoxInput!): PackingBoxResponse!
+  assignItemToBox(input: AssignItemToBoxInput!): PackingBoxResponse!
+  removeItemFromBox(boxId: UUID!, lineItemId: UUID!): PackingBoxResponse!
+  deletePackingBox(boxId: UUID!): Boolean!
+  completePacking(id: UUID!): FulfillmentOrderResponse!
+  completeShipping(id: UUID!, input: CompleteShippingInput!): FulfillmentOrderResponse!
+  markCommunicated(id: UUID!): FulfillmentOrderResponse!
+  markDelivered(id: UUID!): FulfillmentOrderResponse!
+  addFulfillmentNote(fulfillmentOrderId: UUID!, content: String!): FulfillmentOrderResponse!
+  markManufacturerFulfilled(input: MarkManufacturerFulfilledInput!): FulfillmentOrderResponse!
+  splitFulfillmentLineItem(input: SplitLineItemInput!): FulfillmentOrderLineItemResponse!
+  cancelBackorderItems(input: CancelBackorderInput!): FulfillmentOrderResponse!
+  resolveBackorder(fulfillmentOrderId: UUID!): FulfillmentOrderResponse!
+  addDocument(input: AddDocumentInput!): FulfillmentDocumentResponse!
+  uploadDocument(input: UploadDocumentInput!): FulfillmentDocumentResponse!
+  deleteDocument(documentId: UUID!): Boolean!
   createInventory(input: CreateInventoryInput!): InventoryResponse!
   updateInventory(input: UpdateInventoryInput!): InventoryResponse!
   deleteInventory(id: UUID!): Boolean!
@@ -1791,6 +2087,8 @@ type Mutation {
   assignProductToLocation(locationId: UUID!, productId: UUID!, quantity: Decimal!): LocationProductAssignmentResponse!
   updateProductQuantityAtLocation(locationId: UUID!, productId: UUID!, quantity: Decimal!): LocationProductAssignmentResponse!
   removeProductFromLocation(locationId: UUID!, productId: UUID!): Boolean!
+  bulkAssignProductsToLocations(assignments: [BulkProductAssignmentInput!]!): [LocationProductAssignmentResponse!]!
+  bulkRemoveProductsFromLocations(removals: [BulkProductRemovalInput!]!): Int!
   createWarehouse(input: WarehouseInput!): WarehouseResponse!
   updateWarehouse(id: UUID!, input: WarehouseInput!): WarehouseResponse!
   deleteWarehouse(id: UUID!): Boolean!
@@ -2337,6 +2635,27 @@ enum OwnershipType {
   THIRD_PARTY
 }
 
+type PackingBoxItemResponse {
+  id: UUID!
+  fulfillmentLineItemId: UUID!
+  quantity: Decimal!
+}
+
+type PackingBoxResponse {
+  id: UUID!
+  boxNumber: Int!
+  containerTypeId: UUID
+  length: Decimal
+  width: Decimal
+  height: Decimal
+  weight: Decimal
+  trackingNumber: String
+  labelPrintedAt: datetime
+  createdAt: datetime!
+  containerTypeName: String
+  items: [PackingBoxItemResponse!]!
+}
+
 type PendingDocumentLandingPage {
   id: UUID!
   createdAt: datetime!
@@ -2732,6 +3051,8 @@ type Query {
   addressesBySourceId(sourceId: UUID!): [AddressResponse!]!
   adjustment(id: UUID!): AdjustmentResponse!
   adjustmentSearch(searchTerm: String!, limit: Int! = 20, openOnly: Boolean! = false, unlockedOnly: Boolean! = false): [AdjustmentLiteResponse!]!
+  autoNumberSettings: [AutoNumberSettingsResponse!]!
+  autoNumberSetting(entityType: AutoNumberEntityType!): AutoNumberSettingsResponse
   campaign(id: UUID!): CampaignResponse!
   campaignRecipients(campaignId: UUID!, limit: Int! = 100, offset: Int! = 0): [CampaignRecipientResponse!]!
   estimateRecipients(criteria: CampaignCriteriaInput!, sampleLimit: Int! = 10): EstimateRecipientsResponse!
@@ -2800,6 +3121,9 @@ type Query {
   specSheet(id: UUID!): SpecSheetResponse
   specSheetsByFactory(factoryId: UUID!, publishedOnly: Boolean! = true): [SpecSheetResponse!]!
   specSheetSearch(searchTerm: String! = "", factoryId: UUID = null, categories: [String!] = null, publishedOnly: Boolean! = true, limit: Int! = 50): [SpecSheetResponse!]!
+  statement(id: UUID!): StatementResponse!
+  statementSearch(searchTerm: String!, limit: Int! = 20): [StatementLiteResponse!]!
+  statementsByFactoryId(factoryId: UUID!, limit: Int! = 25): [StatementLiteResponse!]!
   taskCategories(includeInactive: Boolean! = false): [TaskCategoryType!]!
   taskCategory(id: UUID!): TaskCategoryType!
   task(id: UUID!): TaskType!
@@ -2818,10 +3142,16 @@ type Query {
   customerBuyingGroupMembers(buyingGroupId: UUID!): [CustomerLiteResponse!]!
   factory(id: UUID!): FactoryResponse!
   factorySearch(searchTerm: String!, published: Boolean! = true, limit: Int! = 20, useCustomOrder: Boolean! = false): [FactoryResponse!]!
+  fulfillmentOrders(warehouseId: UUID = null, status: [FulfillmentOrderStatus!] = null, search: String = null, limit: Int! = 50, offset: Int! = 0): [FulfillmentOrderResponse!]!
+  fulfillmentOrder(id: UUID!): FulfillmentOrderResponse
+  fulfillmentStats(warehouseId: UUID = null): FulfillmentStatsResponse!
+  backorderItems(fulfillmentOrderId: UUID!): [FulfillmentOrderLineItemResponse!]!
   inventoryStatuses: [InventoryStatusOption!]!
   inventories(warehouseId: UUID!, factoryId: UUID = null, status: String = null, search: String = null, limit: Int! = 100, offset: Int! = 0): [InventoryResponse!]!
   inventoryStats(warehouseId: UUID!): InventoryStatsResponse!
   inventoryById(id: UUID!): InventoryResponse!
+  inventoryByProduct(productId: UUID!, warehouseId: UUID!): InventoryResponse
+  inventoriesByProducts(productIds: [UUID!]!, warehouseId: UUID!): [InventoryResponse!]!
   productCategories(factoryId: UUID, parentId: UUID, grandparentId: UUID): [ProductCategoryResponse!]!
   rootProductCategories(factoryId: UUID): [ProductCategoryResponse!]!
   productCpn(id: UUID!): ProductCpnResponse!
@@ -2844,6 +3174,7 @@ type Query {
   shippingCarriers(activeOnly: Boolean! = false): [ShippingCarrierResponse!]!
   shippingCarrier(id: UUID!): ShippingCarrierResponse!
   shippingCarrierSearch(searchTerm: String!, limit: Int! = 20): [ShippingCarrierResponse!]!
+  shippingCarriersByType(carrierType: CarrierType!, activeOnly: Boolean! = true): [ShippingCarrierResponse!]!
   territory(id: UUID!): TerritoryResponse
   territoriesByType(territoryType: TerritoryTypeEnum!, activeOnly: Boolean! = true): [TerritoryLiteResponse!]!
   territoryChildren(parentId: UUID!): [TerritoryLiteResponse!]!
@@ -3239,6 +3570,17 @@ enum SettingKey {
   SIDEBAR_SETTINGS
 }
 
+type ShipToAddressResponse {
+  name: String
+  street: String
+  streetLine2: String
+  city: String
+  state: String
+  postalCode: String
+  country: String
+  phone: String
+}
+
 enum ShipmentMethod {
   EMAIL
   PHONE_CALL
@@ -3301,6 +3643,7 @@ type ShipmentRequestStatusOption {
 
 input ShippingCarrierInput {
   name: String!
+  carrierType: CarrierType = null
   code: String = null
   accountNumber: String = null
   isActive: Boolean! = true
@@ -3323,6 +3666,7 @@ input ShippingCarrierInput {
 type ShippingCarrierResponse {
   id: UUID!
   name: String!
+  carrierType: CarrierType
   code: String
   accountNumber: String
   isActive: Boolean
@@ -3388,6 +3732,147 @@ type SpecSheetResponse {
   highlightCount: Int!
   createdAt: datetime!
   createdBy: UserResponse!
+}
+
+input SplitLineItemInput {
+  lineItemId: UUID!
+  warehouseQty: Decimal!
+  manufacturerQty: Decimal!
+}
+
+type StatementBalanceResponse {
+  id: UUID!
+  quantity: Decimal!
+  subtotal: Decimal!
+  total: Decimal!
+  commission: Decimal!
+  discount: Decimal!
+  discountRate: Decimal!
+  commissionRate: Decimal!
+  commissionDiscount: Decimal!
+  commissionDiscountRate: Decimal!
+}
+
+input StatementDetailInput {
+  itemNumber: Int!
+  quantity: Decimal!
+  unitPrice: Decimal!
+  id: UUID = null
+  soldToCustomerId: UUID = null
+  orderId: UUID = null
+  orderDetailId: UUID = null
+  invoiceId: UUID = null
+  uomId: UUID = null
+  divisionFactor: Decimal = null
+  productId: UUID = null
+  productNameAdhoc: String = null
+  productDescriptionAdhoc: String = null
+  endUserId: UUID = null
+  leadTime: String = null
+  note: String = null
+  discountRate: Decimal! = "0.0000"
+  commissionRate: Decimal! = "0.0000"
+  commissionDiscountRate: Decimal! = "0.0000"
+  outsideSplitRates: [StatementSplitRateInput!] = null
+}
+
+type StatementDetailResponse {
+  id: UUID!
+  statementId: UUID!
+  soldToCustomerId: UUID
+  orderId: UUID
+  orderDetailId: UUID
+  invoiceId: UUID
+  itemNumber: Int!
+  quantity: Decimal!
+  unitPrice: Decimal!
+  subtotal: Decimal!
+  total: Decimal!
+  totalLineCommission: Decimal!
+  commissionRate: Decimal!
+  commission: Decimal!
+  commissionDiscountRate: Decimal!
+  commissionDiscount: Decimal!
+  discountRate: Decimal!
+  discount: Decimal!
+  divisionFactor: Decimal
+  productId: UUID
+  productNameAdhoc: String
+  productDescriptionAdhoc: String
+  uomId: UUID
+  endUserId: UUID
+  leadTime: String
+  note: String
+  soldToCustomer: CustomerLiteResponse
+  endUser: CustomerLiteResponse
+  product: ProductLiteResponse
+  uom: ProductUomResponse
+  outsideSplitRates: [StatementSplitRateResponse!]!
+}
+
+input StatementInput {
+  statementNumber: String!
+  entityDate: Date!
+  factoryId: UUID!
+  details: [StatementDetailInput!]!
+  id: UUID
+  creationType: CreationType!
+}
+
+type StatementLandingPage implements LandingPageInterfaceBase {
+  id: UUID!
+  createdAt: datetime!
+  createdBy: String!
+  userIds: [UUID!]!
+  statementNumber: String!
+  entityDate: Date!
+  total: Decimal!
+  commission: Decimal!
+  factoryName: String!
+}
+
+type StatementLiteResponse {
+  id: UUID!
+  createdAt: datetime!
+  createdById: UUID!
+  statementNumber: String!
+  entityDate: Date!
+  factoryId: UUID!
+  creationType: CreationType!
+  balanceId: UUID!
+  url: String!
+}
+
+type StatementResponse {
+  id: UUID!
+  createdAt: datetime!
+  createdById: UUID!
+  statementNumber: String!
+  entityDate: Date!
+  factoryId: UUID!
+  creationType: CreationType!
+  balanceId: UUID!
+  url: String!
+  factory: FactoryLiteResponse!
+  createdBy: UserResponse!
+  balance: StatementBalanceResponse!
+  details: [StatementDetailResponse!]!
+}
+
+input StatementSplitRateInput {
+  userId: UUID!
+  splitRate: Decimal!
+  position: Int! = 0
+  id: UUID = null
+}
+
+type StatementSplitRateResponse {
+  id: UUID!
+  statementDetailId: UUID!
+  userId: UUID!
+  splitRate: Decimal
+  position: Int!
+  user: UserResponse!
 }
 
 input TaskCategoryInput {
@@ -3580,6 +4065,19 @@ input UpdateFolderInput {
   parentId: UUID = null
 }
 
+input UpdateFulfillmentOrderInput {
+  warehouseId: UUID
+  fulfillmentMethod: FulfillmentMethod
+  carrierId: UUID
+  carrierType: CarrierType
+  freightClass: String
+  shipToAddress: AddressInput
+  shipToName: String
+  shipToPhone: String
+  needByDate: Date
+  holdReason: String
+}
+
 input UpdateHighlightRegionsInput {
   versionId: UUID!
   regions: [HighlightRegionInput!]!
@@ -3606,6 +4104,21 @@ input UpdateInventoryItemInput {
   receivedDate: datetime
 }
 
+input UpdatePackingBoxInput {
+  containerTypeId: UUID
+  length: Decimal
+  width: Decimal
+  height: Decimal
+  weight: Decimal
+  trackingNumber: String
+}
+
+input UpdatePickedQuantityInput {
+  lineItemId: UUID!
+  quantity: Decimal!
+  notes: String = null
+}
+
 input UpdateShipmentRequestInput {
   id: UUID!
   factoryId: UUID = null
@@ -3626,6 +4139,13 @@ input UpdateSpecSheetInput {
 }
 
 scalar Upload
+
+input UploadDocumentInput {
+  fulfillmentOrderId: UUID!
+  documentType: FulfillmentDocumentType!
+  file: Upload!
+  notes: String = null
+}
 
 input UserInput {
   username: String!
