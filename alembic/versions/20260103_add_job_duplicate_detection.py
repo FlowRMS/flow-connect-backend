@@ -1,7 +1,7 @@
 """Add job duplicate detection tables
 
 Revision ID: job_duplicate_detection_001
-Revises: add_visible_to_users
+Revises: add_auto_number_settings
 Create Date: 2026-01-03
 
 """
@@ -14,7 +14,7 @@ from sqlalchemy.dialects import postgresql
 from alembic import op
 
 revision: str = "job_duplicate_detection_001"
-down_revision: str | None = "add_visible_to_users"
+down_revision: str | None = "add_auto_number_settings"
 branch_labels: str | Sequence[str] | None = None
 depends_on: str | Sequence[str] | None = None
 
