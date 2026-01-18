@@ -1,7 +1,7 @@
 from typing import Any, override
 from uuid import UUID
 
-from commons.db.v6 import User
+from commons.db.v6 import RbacResourceEnum, User
 from commons.db.v6.commission.statements import (
     CommissionStatement,
     CommissionStatementBalance,
@@ -22,18 +22,26 @@ from app.graphql.statements.repositories.statement_balance_repository import (
 from app.graphql.statements.strawberry.statement_landing_page_response import (
     StatementLandingPageResponse,
 )
+from app.graphql.v2.rbac.services.rbac_filter_service import RbacFilterService
 
 
 class StatementsRepository(BaseRepository[CommissionStatement]):
     landing_model = StatementLandingPageResponse
+    rbac_resource: RbacResourceEnum | None = RbacResourceEnum.CHECK
 
     def __init__(
         self,
         context_wrapper: ContextWrapper,
         session: AsyncSession,
         balance_repository: StatementBalanceRepository,
+        rbac_filter_service: RbacFilterService,
     ) -> None:
-        super().__init__(session, context_wrapper, CommissionStatement)
+        super().__init__(
+            session,
+            context_wrapper,
+            CommissionStatement,
+            rbac_filter_service=rbac_filter_service,
+        )
         self.balance_repository = balance_repository
 
     def paginated_stmt(self) -> Select[Any]:

@@ -1565,7 +1565,7 @@ interface LandingPageInterfaceBase {
   userIds: [UUID!]!
 }
 
-union LandingRecord = JobLandingPage | CompanyLandingPage | ContactLandingPage | PreOpportunityLandingPage | NoteLandingPage | TaskLandingPage | CampaignLandingPage | CustomerLandingPage | FactoryLandingPage | ProductLandingPage | QuoteLandingPage | OrderLandingPage | FileLandingPage | InvoiceLandingPage | CreditLandingPage | AdjustmentLandingPage | CheckLandingPage | OrderAcknowledgementLandingPage | PendingDocumentLandingPage
+union LandingRecord = JobLandingPage | CompanyLandingPage | ContactLandingPage | PreOpportunityLandingPage | NoteLandingPage | TaskLandingPage | CampaignLandingPage | CustomerLandingPage | FactoryLandingPage | ProductLandingPage | QuoteLandingPage | OrderLandingPage | FileLandingPage | InvoiceLandingPage | CreditLandingPage | AdjustmentLandingPage | CheckLandingPage | OrderAcknowledgementLandingPage | PendingDocumentLandingPage | StatementLandingPage
 
 enum LandingSourceType {
   JOBS
@@ -1588,6 +1588,7 @@ enum LandingSourceType {
   CHECKS
   ORDER_ACKNOWLEDGEMENTS
   PENDING_DOCUMENTS
+  STATEMENTS
 }
 
 input LinkRelationInput {
@@ -3489,6 +3490,18 @@ input StatementInput {
   details: [StatementDetailInput!]!
   id: UUID
   creationType: CreationType!
+}
+
+type StatementLandingPage implements LandingPageInterfaceBase {
+  id: UUID!
+  createdAt: datetime!
+  createdBy: String!
+  userIds: [UUID!]!
+  statementNumber: String!
+  entityDate: Date!
+  total: Decimal!
+  commission: Decimal!
+  factoryName: String!
 }
 
 type StatementLiteResponse {
