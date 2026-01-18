@@ -70,7 +70,7 @@ class QuoteConverter(BaseEntityConverter[QuoteDTO, QuoteInput, Quote]):
             quote_number = await self.auto_number_settings_service.generate_number(
                 AutoNumberEntityType.QUOTE
             )
-        assert quote_number is not None
+
         entity_date = dto.quote_date or date.today()
 
         details = [
@@ -87,7 +87,7 @@ class QuoteConverter(BaseEntityConverter[QuoteDTO, QuoteInput, Quote]):
 
         return ConversionResult.ok(
             QuoteInput(
-                quote_number=quote_number,
+                quote_number=quote_number or f"Q-{date.today().strftime('%Y%m%d')}-GEN",
                 entity_date=entity_date,
                 sold_to_customer_id=sold_to_id,
                 status=QuoteStatus.OPEN,
@@ -153,4 +153,3 @@ class QuoteConverter(BaseEntityConverter[QuoteDTO, QuoteInput, Quote]):
         if detail.description:
             return detail.description[:100]
         return None
-

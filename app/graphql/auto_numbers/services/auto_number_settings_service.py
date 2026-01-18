@@ -33,6 +33,12 @@ class AutoNumberSettingsService:
         created_settings = await self._create_defaults(missing_types)
         return settings + created_settings
 
+    async def get_setting(
+        self,
+        entity_type: AutoNumberEntityType,
+    ) -> AutoNumberSetting | None:
+        return await self.repository.get_by_entity_type(entity_type)
+
     async def update_settings(
         self,
         inputs: Sequence[AutoNumberSettingsInput],
@@ -40,13 +46,13 @@ class AutoNumberSettingsService:
         if not inputs:
             return []
 
-        entity_types = [inp.entity_type.to_entity_type() for inp in inputs]
+        entity_types = [inp.entity_type for inp in inputs]
         existing = await self.repository.list_by_entity_types(entity_types)
         existing_by_type = {setting.entity_type: setting for setting in existing}
 
         updated: list[AutoNumberSetting] = []
         for input_data in inputs:
-            entity_type = input_data.entity_type.to_entity_type()
+            entity_type = input_data.entity_type
             setting = existing_by_type.get(entity_type)
             if not setting:
                 setting = AutoNumberSetting(

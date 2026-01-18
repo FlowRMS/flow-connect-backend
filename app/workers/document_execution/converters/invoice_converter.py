@@ -89,7 +89,6 @@ class InvoiceConverter(BaseEntityConverter[InvoiceDTO, InvoiceInput, Invoice]):
             invoice_number = await self.auto_number_settings_service.generate_number(
                 AutoNumberEntityType.INVOICE
             )
-        assert invoice_number is not None
         entity_date = dto.invoice_date or date.today()
         order_detail_dict = {detail.id: detail for detail in order.details}
 
@@ -109,7 +108,8 @@ class InvoiceConverter(BaseEntityConverter[InvoiceDTO, InvoiceInput, Invoice]):
 
         return ConversionResult.ok(
             InvoiceInput(
-                invoice_number=invoice_number,
+                invoice_number=invoice_number
+                or f"I-{date.today().strftime('%Y%m%d')}-GEN",
                 entity_date=entity_date,
                 order_id=order_id,
                 factory_id=factory_id,
@@ -219,4 +219,3 @@ class InvoiceConverter(BaseEntityConverter[InvoiceDTO, InvoiceInput, Invoice]):
         if detail.description:
             return detail.description[:100]
         return None
-

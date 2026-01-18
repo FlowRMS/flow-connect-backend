@@ -1,7 +1,7 @@
 """add auto number settings
 
 Revision ID: add_auto_number_settings
-Revises: insert_default_job_statuses
+Revises: fulfillment_address_fk
 Create Date: 2026-01-13
 
 """
@@ -14,7 +14,7 @@ from sqlalchemy.dialects import postgresql
 from alembic import op
 
 revision: str = "add_auto_number_settings"
-down_revision: str | None = "b2c3d4e5f607"
+down_revision: str | None = "fulfillment_address_fk"
 branch_labels: str | Sequence[str] | None = None
 depends_on: str | Sequence[str] | None = None
 

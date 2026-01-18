@@ -74,7 +74,6 @@ class CheckConverter(BaseEntityConverter[CheckDTO, CheckInput, Check]):
             check_number = await self.auto_number_settings_service.generate_number(
                 AutoNumberEntityType.CHECK
             )
-        assert check_number is not None
         entity_date = dto.check_date or date.today()
 
         details: list[CheckDetailInput] = []
@@ -96,7 +95,7 @@ class CheckConverter(BaseEntityConverter[CheckDTO, CheckInput, Check]):
 
         return ConversionResult.ok(
             CheckInput(
-                check_number=check_number,
+                check_number=check_number or f"C-{date.today().strftime('%Y%m%d')}-GEN",
                 entity_date=entity_date,
                 factory_id=factory_id,
                 entered_commission_amount=entered_commission_amount,
@@ -335,4 +334,3 @@ class CheckConverter(BaseEntityConverter[CheckDTO, CheckInput, Check]):
 
         self._adjustment_cache[cache_key] = adjustment
         return adjustment
-

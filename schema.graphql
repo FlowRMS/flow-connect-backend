@@ -182,6 +182,34 @@ input AssignItemToBoxInput {
   quantity: Decimal!
 }
 
+enum AutoNumberEntityType {
+  PRE_OPPORTUNITY
+  JOB
+  QUOTE
+  ORDER
+  ORDER_ACKNOWLEDGEMENT
+  INVOICE
+  CHECK
+}
+
+input AutoNumberSettingsInput {
+  entityType: AutoNumberEntityType!
+  prefix: String!
+  startsAt: Int!
+  incrementBy: Int!
+  allowAutoGeneration: Boolean! = true
+}
+
+type AutoNumberSettingsResponse {
+  id: UUID!
+  entityType: AutoNumberEntityType!
+  prefix: String!
+  startsAt: Int!
+  incrementBy: Int!
+  counter: Int!
+  allowAutoGeneration: Boolean!
+}
+
 type BackorderResponse {
   id: UUID!
   orderedQuantity: Decimal!
@@ -1870,6 +1898,7 @@ type Mutation {
   createAdjustment(input: AdjustmentInput!): AdjustmentResponse!
   updateAdjustment(input: AdjustmentInput!): AdjustmentResponse!
   deleteAdjustment(id: UUID!): Boolean!
+  updateAutoNumberSettings(inputs: [AutoNumberSettingsInput!]!): [AutoNumberSettingsResponse!]!
   createCampaign(input: CampaignInput!): CampaignResponse!
   updateCampaign(id: UUID!, input: CampaignInput!): CampaignResponse!
   deleteCampaign(id: UUID!): Boolean!
@@ -3022,6 +3051,8 @@ type Query {
   addressesBySourceId(sourceId: UUID!): [AddressResponse!]!
   adjustment(id: UUID!): AdjustmentResponse!
   adjustmentSearch(searchTerm: String!, limit: Int! = 20, openOnly: Boolean! = false, unlockedOnly: Boolean! = false): [AdjustmentLiteResponse!]!
+  autoNumberSettings: [AutoNumberSettingsResponse!]!
+  autoNumberSetting(entityType: AutoNumberEntityType!): AutoNumberSettingsResponse
   campaign(id: UUID!): CampaignResponse!
   campaignRecipients(campaignId: UUID!, limit: Int! = 100, offset: Int! = 0): [CampaignRecipientResponse!]!
   estimateRecipients(criteria: CampaignCriteriaInput!, sampleLimit: Int! = 10): EstimateRecipientsResponse!

@@ -11,13 +11,11 @@ from app.graphql.auto_numbers.services.auto_number_settings_service import (
     AutoNumberSettingsService,
 )
 from app.graphql.auto_numbers.strawberry import (
-    AutoNumberEntityTypeEnum,
     AutoNumberSettingsInput,
     AutoNumberSettingsResponse,
 )
 
 __all__ = [
-    "AutoNumberEntityTypeEnum",
     "AutoNumberSettingsInput",
     "AutoNumberSettingsMutations",
     "AutoNumberSettingsQueries",

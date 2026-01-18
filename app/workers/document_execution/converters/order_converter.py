@@ -84,7 +84,6 @@ class OrderConverter(BaseEntityConverter[OrderDTO, OrderInput, Order]):
             order_number = await self.auto_number_settings_service.generate_number(
                 AutoNumberEntityType.ORDER
             )
-        assert order_number is not None
         entity_date = dto.order_date or date.today()
         due_date = dto.due_date or entity_date
 
@@ -105,7 +104,7 @@ class OrderConverter(BaseEntityConverter[OrderDTO, OrderInput, Order]):
 
         return ConversionResult.ok(
             OrderInput(
-                order_number=order_number,
+                order_number=order_number or f"O-{date.today().strftime('%Y%m%d')}-GEN",
                 entity_date=entity_date,
                 due_date=due_date,
                 sold_to_customer_id=sold_to_id,
