@@ -87,37 +87,45 @@ class DeliveryService:
         if not existing:
             raise NotFoundError(f"Delivery with id {delivery_id} not found")
 
-        delivery = input.to_orm_model()
-        delivery.id = delivery_id
-
-        # Check if transitioning to RECEIVED status
+        # Check if transitioning to RECEIVED status (before updating)
         is_being_received = (
             existing.status != DeliveryStatus.RECEIVED
-            and delivery.status == DeliveryStatus.RECEIVED
+            and input.status == DeliveryStatus(DeliveryStatus.RECEIVED.value)
         )
 
         should_sync_inventory = is_being_received and existing.inventory_synced_at is None
         should_generate_next = is_being_received and existing.recurring_shipment_id is not None
 
-        # Preserve child collections to avoid delete-orphan wipes on update.
-        delivery.items = existing.items
-        delivery.status_history = existing.status_history
-        delivery.issues = existing.issues
-        delivery.assignees = existing.assignees
-        delivery.documents = existing.documents
-        delivery.recurring_shipment = existing.recurring_shipment
+        # Update only scalar fields on existing entity (preserves relationships automatically)
+        existing.po_number = input.po_number
+        existing.warehouse_id = input.warehouse_id
+        existing.vendor_id = input.vendor_id
+        existing.carrier_id = input.carrier_id
+        existing.tracking_number = input.tracking_number
+        existing.status = DeliveryStatus(input.status.value)
+        existing.expected_date = input.expected_date
+        existing.arrived_at = input.arrived_at
+        existing.receiving_started_at = input.receiving_started_at
+        existing.received_at = input.received_at
+        existing.origin_address_id = input.origin_address_id
+        existing.destination_address_id = input.destination_address_id
+        existing.recurring_shipment_id = input.recurring_shipment_id
+        existing.vendor_contact_name = input.vendor_contact_name
+        existing.vendor_contact_email = input.vendor_contact_email
+        existing.notes = input.notes
+        existing.updated_by_id = input.updated_by_id
 
-        updated = await self.repository.update(delivery)
+        await self.repository.session.flush()
 
         # Sync inventory if needed
         if should_sync_inventory:
-            _ = await self.inventory_sync_service.sync_received_delivery(updated.id)
+            _ = await self.inventory_sync_service.sync_received_delivery(existing.id)
 
         # Auto-generate next delivery from recurring shipment if needed
         if should_generate_next:
             await self._generate_next_recurring_delivery(existing.recurring_shipment_id, delivery_id)
 
-        return updated
+        return existing
 
     async def delete(self, delivery_id: UUID) -> bool:
         if not await self.repository.exists(delivery_id):
