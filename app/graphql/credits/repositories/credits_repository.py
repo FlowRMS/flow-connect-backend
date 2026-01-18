@@ -21,6 +21,9 @@ from app.core.context_wrapper import ContextWrapper
 from app.core.exceptions import NotFoundError
 from app.core.processors import ProcessorExecutor
 from app.graphql.base_repository import BaseRepository
+from app.graphql.credits.processors.default_rep_split_processor import (
+    CreditDefaultRepSplitProcessor,
+)
 from app.graphql.credits.processors.update_order_on_credit_processor import (
     UpdateOrderOnCreditProcessor,
 )
@@ -51,6 +54,7 @@ class CreditsRepository(BaseRepository[Credit]):
         validate_status_processor: ValidateCreditStatusProcessor,
         validate_split_rate_processor: ValidateCreditSplitRateProcessor,
         update_order_processor: UpdateOrderOnCreditProcessor,
+        default_rep_split_processor: CreditDefaultRepSplitProcessor,
     ) -> None:
         super().__init__(
             session,
@@ -58,6 +62,7 @@ class CreditsRepository(BaseRepository[Credit]):
             Credit,
             processor_executor=processor_executor,
             processor_executor_classes=[
+                default_rep_split_processor,
                 validate_status_processor,
                 validate_split_rate_processor,
                 update_order_processor,

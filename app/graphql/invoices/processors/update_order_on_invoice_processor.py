@@ -1,7 +1,7 @@
 from decimal import Decimal
 from uuid import UUID
 
-from commons.db.v6.commission import Invoice, InvoiceDetail
+from commons.db.v6.commission import Invoice, InvoiceDetail, OrderDetail
 from commons.db.v6.commission.orders import Order, OrderHeaderStatus, OrderStatus
 from loguru import logger
 from sqlalchemy import func, select
@@ -21,10 +21,13 @@ class UpdateOrderOnInvoiceProcessor(BaseProcessor[Invoice]):
         return [
             RepositoryEvent.POST_CREATE,
             RepositoryEvent.POST_UPDATE,
-            RepositoryEvent.PRE_DELETE,
+            RepositoryEvent.POST_DELETE,
         ]
 
     async def process(self, context: EntityContext[Invoice]) -> None:
+        logger.info(
+            f"Processing UpdateOrderOnInvoiceProcessor for Invoice {context.entity.id} on event {context.event.name}"
+        )
         invoice = context.entity
 
         order = await self._get_order_with_details(invoice.order_id)
@@ -41,16 +44,18 @@ class UpdateOrderOnInvoiceProcessor(BaseProcessor[Invoice]):
         )
         return result.unique().scalar_one_or_none()
 
-    async def get_order_detail_totals(self, invoice_id: UUID) -> dict[UUID, Decimal]:
+    async def get_order_detail_totals(self, order_id: UUID) -> dict[UUID, Decimal]:
         result = await self.session.execute(
             select(
-                InvoiceDetail.order_detail_id,
+                OrderDetail.id.label("order_detail_id"),
                 func.coalesce(func.sum(InvoiceDetail.total), Decimal("0")).label(
                     "total"
                 ),
             )
-            .where(InvoiceDetail.invoice_id == invoice_id)
-            .group_by(InvoiceDetail.order_detail_id)
+            .select_from(OrderDetail)
+            .outerjoin(InvoiceDetail, InvoiceDetail.order_detail_id == OrderDetail.id)
+            .where(OrderDetail.order_id == order_id)
+            .group_by(OrderDetail.id)
         )
         return {row.order_detail_id: row.total for row in result.fetchall()}
 
@@ -58,11 +63,11 @@ class UpdateOrderOnInvoiceProcessor(BaseProcessor[Invoice]):
         self, order: Order, invoice: Invoice, event: RepositoryEvent
     ) -> None:
         order_detail_mapping = {detail.id: detail for detail in order.details}
-        invoice_detail_totals = await self.get_order_detail_totals(invoice.id)
-        logger.debug(
+        invoice_detail_totals = await self.get_order_detail_totals(order.id)
+        logger.info(
             f"Updating Order {order.id} details based on Invoice {invoice.id} event {event.name}"
         )
-        logger.debug(f"Invoice Detail Totals: {invoice_detail_totals}")
+        logger.info(f"Invoice Detail Totals: {invoice_detail_totals}")
 
         for order_detail_id, invoiced_amount in invoice_detail_totals.items():
             order_detail = order_detail_mapping.get(order_detail_id)
@@ -73,10 +78,11 @@ class UpdateOrderOnInvoiceProcessor(BaseProcessor[Invoice]):
             logger.info(
                 f"Updating OrderDetail {order_detail.id} with current balance {order_detail.shipping_balance} for Order {order.id} based on Invoice {invoice.id} event {event.name} with invoiced amount {invoiced_amount}"
             )
-            if event == RepositoryEvent.PRE_DELETE:
-                order_detail.shipping_balance += invoiced_amount
+            if event == RepositoryEvent.POST_DELETE:
+                order_detail.shipping_balance = order_detail.total + invoiced_amount
             else:
-                order_detail.shipping_balance -= invoiced_amount
+                order_detail.shipping_balance = order_detail.total - invoiced_amount
+
             order_detail.status = self._calculate_detail_status(
                 order_detail.shipping_balance, order_detail.total
             )

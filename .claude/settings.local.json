@@ -51,7 +51,14 @@
       "mcp__flowrms__list_tables",
       "Bash(alias pg_dump15:*)",
       "Bash(tree:*)",
-      "Bash(git ls-remote:*)"
+      "Bash(git ls-remote:*)",
+      "Bash(timeout 60 uv run:*)",
+      "Bash(gtimeout 60 uv run:*)",
+      "Bash(git stash:*)",
+      "Bash(task typecheck-basedpy:*)",
+      "Bash(alembic heads:*)",
+      "Bash(alembic history:*)",
+      "Bash(uv lock:*)"
     ]
   },
   "enableAllProjectMcpServers": true,

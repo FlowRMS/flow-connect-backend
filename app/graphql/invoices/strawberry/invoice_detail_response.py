@@ -10,6 +10,9 @@ from app.core.db.adapters.dto import DTOMixin
 from app.graphql.invoices.strawberry.invoice_split_rate_response import (
     InvoiceSplitRateResponse,
 )
+from app.graphql.v2.core.customers.strawberry.customer_response import (
+    CustomerLiteResponse,
+)
 from app.graphql.v2.core.products.strawberry.product_response import ProductLiteResponse
 from app.graphql.v2.core.products.strawberry.product_uom_response import (
     ProductUomResponse,
@@ -75,6 +78,10 @@ class InvoiceDetailResponse(DTOMixin[InvoiceDetail]):
             status=model.status,
             invoiced_balance=model.invoiced_balance,
         )
+
+    @strawberry.field
+    def end_user(self) -> CustomerLiteResponse | None:
+        return CustomerLiteResponse.from_orm_model_optional(self._instance.end_user)
 
     @strawberry.field
     def product(self) -> ProductLiteResponse | None:

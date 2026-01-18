@@ -4,6 +4,7 @@ from uuid import UUID
 
 from commons.db.v6 import RbacResourceEnum, User
 from commons.db.v6.commission import (
+    CheckDetail,
     Invoice,
     InvoiceBalance,
     InvoiceDetail,
@@ -114,6 +115,7 @@ class InvoicesRepository(BaseRepository[Invoice]):
             invoice_id,
             options=[
                 joinedload(Invoice.details),
+                joinedload(Invoice.details).joinedload(InvoiceDetail.end_user),
                 joinedload(Invoice.details).joinedload(InvoiceDetail.product),
                 joinedload(Invoice.details).joinedload(InvoiceDetail.uom),
                 joinedload(Invoice.details).joinedload(
@@ -192,6 +194,11 @@ class InvoicesRepository(BaseRepository[Invoice]):
             stmt = stmt.where(Invoice.status == InvoiceStatus.OPEN)
         if unlocked_only:
             stmt = stmt.where(Invoice.locked.is_(False))
+
+        if open_only or unlocked_only:
+            stmt = stmt.outerjoin(
+                CheckDetail, CheckDetail.invoice_id == Invoice.id
+            ).where(CheckDetail.id.is_(None))
         stmt = stmt.limit(limit)
         result = await self.session.execute(stmt)
         return list(result.scalars().all())
@@ -242,10 +249,13 @@ class InvoicesRepository(BaseRepository[Invoice]):
                 .joinedload(InvoiceSplitRate.user),
                 lazyload("*"),
             )
+            .select_from(Invoice)
+            .outerjoin(CheckDetail, CheckDetail.invoice_id == Invoice.id)
             .where(
                 Invoice.factory_id == factory_id,
                 Invoice.status == InvoiceStatus.OPEN,
                 Invoice.locked.is_(False),
+                CheckDetail.id.is_(None),
             )
             .order_by(Invoice.entity_date.asc())
         )

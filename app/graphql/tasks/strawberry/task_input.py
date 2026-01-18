@@ -19,6 +19,7 @@ class TaskInput(BaseInputGQL[Task]):
     due_date: date | None = strawberry.UNSET
     reminder_date: date | None = strawberry.UNSET
     tags: list[str] | None = strawberry.UNSET
+    category_id: UUID | None = strawberry.UNSET
 
     def to_orm_model(self) -> Task:
         return Task(
@@ -29,6 +30,7 @@ class TaskInput(BaseInputGQL[Task]):
             due_date=self.optional_field(self.due_date),
             reminder_date=self.optional_field(self.reminder_date),
             tags=self.optional_field(self.tags) or [],
+            category_id=self.optional_field(self.category_id),
         )
 
     def get_assignee_ids(self) -> list[UUID]:

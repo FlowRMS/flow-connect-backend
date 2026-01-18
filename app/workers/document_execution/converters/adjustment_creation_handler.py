@@ -68,6 +68,7 @@ class AdjustmentCreationHandler:
                     entity_type=EntityPendingType.ADJUSTMENTS,
                     pending_entity_id=pe.id,
                     error_message=error_msg,
+                    dto_json=dto.model_dump(mode="json"),
                 )
             )
             return None
@@ -88,6 +89,7 @@ class AdjustmentCreationHandler:
                         entity_type=EntityPendingType.ADJUSTMENTS,
                         pending_entity_id=pe.id,
                         error_message=str(e),
+                        dto_json=dto.model_dump(mode="json"),
                     )
                 )
                 return None

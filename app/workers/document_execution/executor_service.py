@@ -2,6 +2,9 @@ from typing import Any
 from uuid import UUID
 
 from commons.db.v6.ai.documents.enums.entity_type import DocumentEntityType
+from commons.db.v6.ai.documents.enums.processing_result_status import (
+    ProcessingResultStatus,
+)
 from commons.db.v6.ai.documents.pending_document import PendingDocument
 from commons.db.v6.ai.documents.pending_document_processing import (
     PendingDocumentProcessing,
@@ -137,35 +140,44 @@ class DocumentExecutorService:
                     entity_mappings=entity_mappings,
                 )
             )
+            processing_records: list[PendingDocumentProcessing] = []
             if creation_result.has_issues:
-                logger.warning(
-                    f"SET_FOR_CREATION completed with {len(creation_result.issues)} "
-                    f"issues: {creation_result.issues}"
+                for issue in creation_result.issues:
+                    error = issue.error_message
+                    processing_records.append(
+                        PendingDocumentProcessing(
+                            pending_document_id=pending_document.id,
+                            entity_id=None,
+                            status=ProcessingResultStatus.ERROR,
+                            dto_json=issue.dto_json,
+                            error_message=error,
+                        )
+                    )
+                pending_document.workflow_status = WorkflowStatus.FAILED
+            else:
+                logger.info(
+                    f"SET_FOR_CREATION completed: orders={creation_result.orders_created}, "
+                    f"invoices={creation_result.invoices_created}, "
+                    f"credits={creation_result.credits_created}, "
+                    f"adjustments={creation_result.adjustments_created}"
                 )
-            logger.info(
-                f"SET_FOR_CREATION completed: orders={creation_result.orders_created}, "
-                f"invoices={creation_result.invoices_created}, "
-                f"credits={creation_result.credits_created}, "
-                f"adjustments={creation_result.adjustments_created}"
-            )
 
-            processing_records = await self._batch_processor.execute_bulk(
-                converter=converter,
-                dtos=dtos,
-                entity_mappings=entity_mappings,
-                pending_document=pending_document,
-                batch_size=batch_size,
-            )
+                processing_records = await self._batch_processor.execute_bulk(
+                    converter=converter,
+                    dtos=dtos,
+                    entity_mappings=entity_mappings,
+                    pending_document=pending_document,
+                    batch_size=batch_size,
+                )
+                created_entity_ids = [
+                    r.entity_id for r in processing_records if r.entity_id is not None
+                ]
+                await self._link_file_to_entities(pending_document, created_entity_ids)
+                pending_document.workflow_status = WorkflowStatus.COMPLETED
 
             self.session.add_all(processing_records)
             await self.session.flush()
 
-            created_entity_ids = [
-                r.entity_id for r in processing_records if r.entity_id is not None
-            ]
-            await self._link_file_to_entities(pending_document, created_entity_ids)
-
-            pending_document.workflow_status = WorkflowStatus.COMPLETED
             return processing_records
         except Exception as e:
             _ = await self.transient_session.execute(
