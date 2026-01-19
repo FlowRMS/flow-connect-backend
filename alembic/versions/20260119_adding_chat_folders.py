@@ -40,7 +40,9 @@ def upgrade() -> None:
         sa.PrimaryKeyConstraint("id", name=op.f("pk_ai_chat_folders")),
         schema="ai",
     )
-    op.create_index("ix_ai_chat_folders_user_id", "chat_folders", ["user_id"], schema="ai")
+    op.create_index(
+        "ix_ai_chat_folders_user_id", "chat_folders", ["user_id"], schema="ai"
+    )
 
     # Add folder_id column to chats table
     op.add_column(

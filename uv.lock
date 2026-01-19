@@ -973,8 +973,8 @@ wheels = [
 
 [[package]]
 name = "flow-py-commons"
-version = "2.3.0"
-source = { git = "ssh://git@github.com/FlowRMS/flowbot-commons.git?tag=2.03.00#203d70b6ce6462f5b0242400b93a62e75d721cc4" }
+version = "2.3.2"
+source = { git = "ssh://git@github.com/FlowRMS/flowbot-commons.git?tag=2.03.02#65957314a2fa1ef2d3dd0a9796bbe12eab5cba54" }
 dependencies = [
     { name = "aiobotocore" },
     { name = "aiohttp" },
@@ -1034,7 +1034,7 @@ dependencies = [
     { name = "python-dotenv" },
     { name = "resend" },
     { name = "sqlalchemy" },
-    { name = "strawberry-graphql", extra = ["debug-server", "fastapi"] },
+    { name = "strawberry-graphql", extra = ["cli", "debug-server", "fastapi"] },
     { name = "taskiq" },
     { name = "taskiq-fastapi" },
     { name = "taskiq-redis" },
@@ -1067,7 +1067,7 @@ requires-dist = [
     { name = "asyncpg", specifier = ">=0.30.0" },
     { name = "cryptography", specifier = ">=46.0.2" },
     { name = "fastapi", extras = ["standard"], specifier = ">=0.110.0" },
-    { name = "flow-py-commons", git = "ssh://git@github.com/FlowRMS/flowbot-commons.git?tag=2.03.00" },
+    { name = "flow-py-commons", git = "ssh://git@github.com/FlowRMS/flowbot-commons.git?tag=2.03.02" },
     { name = "greenlet", specifier = ">=3.2.4" },
     { name = "httpx", specifier = ">=0.27.0" },
     { name = "loguru", specifier = ">=0.7.2,<0.8" },
@@ -1080,7 +1080,7 @@ requires-dist = [
     { name = "python-dotenv", specifier = ">=1.0.0" },
     { name = "resend", specifier = ">=2.19.0" },
     { name = "sqlalchemy", specifier = ">=2.0.30,<3" },
-    { name = "strawberry-graphql", extras = ["debug-server", "fastapi"], specifier = ">=0.278.0" },
+    { name = "strawberry-graphql", extras = ["cli", "debug-server", "fastapi"], specifier = ">=0.278.0" },
     { name = "taskiq", specifier = ">=0.11.0" },
     { name = "taskiq-fastapi", specifier = ">=0.3.0" },
     { name = "taskiq-redis", specifier = ">=1.0.0" },
@@ -4215,6 +4215,16 @@ wheels = [
 ]
 
 [package.optional-dependencies]
+cli = [
+    { name = "libcst" },
+    { name = "pygments" },
+    { name = "python-multipart" },
+    { name = "rich" },
+    { name = "starlette" },
+    { name = "typer" },
+    { name = "uvicorn" },
+    { name = "websockets" },
+]
 debug-server = [
     { name = "libcst" },
     { name = "pygments" },

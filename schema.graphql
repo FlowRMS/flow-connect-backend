@@ -66,6 +66,8 @@ enum AddressSourceTypeEnum {
   FACTORY
   SHIPPING_CARRIER
   FULFILLMENT_ORDER
+  CONTACT
+  COMPANY
 }
 
 enum AddressTypeEnum {
