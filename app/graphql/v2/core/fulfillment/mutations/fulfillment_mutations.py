@@ -3,9 +3,9 @@ from uuid import UUID
 
 import strawberry
 from aioinject import Injected
-from commons.db.v6.fulfillment import FulfillmentAssignmentRole
 
 from app.graphql.inject import inject
+from app.graphql.v2.core.fulfillment.strawberry.enums import FulfillmentAssignmentRole
 from app.graphql.v2.core.fulfillment.services import (
     FulfillmentAssignmentService,
     FulfillmentBackorderService,

@@ -3,9 +3,10 @@ from typing import Self
 from uuid import UUID
 
 import strawberry
-from commons.db.v6.fulfillment import FulfillmentAssignment, FulfillmentAssignmentRole
+from commons.db.v6.fulfillment import FulfillmentAssignment
 
 from app.core.db.adapters.dto import DTOMixin
+from app.graphql.v2.core.fulfillment.strawberry.enums import FulfillmentAssignmentRole
 
 
 @strawberry.type
@@ -27,11 +28,11 @@ class FulfillmentAssignmentResponse(DTOMixin[FulfillmentAssignment]):
         )
 
     @strawberry.field
-    async def user_name(self) -> str:
-        user = await self._instance.awaitable_attrs.user
-        return user.full_name if user else ""
+    def user_name(self) -> str:
+        """Get user name - relationship is eager-loaded."""
+        return self._instance.user.full_name if self._instance.user else ""
 
     @strawberry.field
-    async def user_email(self) -> str:
-        user = await self._instance.awaitable_attrs.user
-        return user.email if user else ""
+    def user_email(self) -> str:
+        """Get user email - relationship is eager-loaded."""
+        return self._instance.user.email if self._instance.user else ""

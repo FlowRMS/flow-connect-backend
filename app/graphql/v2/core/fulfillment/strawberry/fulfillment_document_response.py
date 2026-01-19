@@ -3,9 +3,10 @@ from typing import Self
 from uuid import UUID
 
 import strawberry
-from commons.db.v6.fulfillment import FulfillmentDocument, FulfillmentDocumentType
+from commons.db.v6.fulfillment import FulfillmentDocument
 
 from app.core.db.adapters.dto import DTOMixin
+from app.graphql.v2.core.fulfillment.strawberry.enums import FulfillmentDocumentType
 
 
 @strawberry.type
@@ -41,6 +42,6 @@ class FulfillmentDocumentResponse(DTOMixin[FulfillmentDocument]):
         )
 
     @strawberry.field
-    async def uploaded_by_name(self) -> str:
-        user = await self._instance.awaitable_attrs.uploaded_by_user
-        return user.full_name if user else ""
+    def uploaded_by_name(self) -> str:
+        """Get uploaded by user name - relationship is eager-loaded."""
+        return self._instance.uploaded_by_user.full_name if self._instance.uploaded_by_user else ""

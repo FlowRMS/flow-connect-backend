@@ -3,9 +3,10 @@ from typing import Self
 from uuid import UUID
 
 import strawberry
-from commons.db.v6.fulfillment import FulfillmentActivity, FulfillmentActivityType
+from commons.db.v6.fulfillment import FulfillmentActivity
 
 from app.core.db.adapters.dto import DTOMixin
+from app.graphql.v2.core.fulfillment.strawberry.enums import FulfillmentActivityType
 
 
 @strawberry.type

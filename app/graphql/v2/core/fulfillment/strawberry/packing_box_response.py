@@ -57,11 +57,11 @@ class PackingBoxResponse(DTOMixin[PackingBox]):
         )
 
     @strawberry.field
-    async def container_type_name(self) -> str | None:
-        container_type = await self._instance.awaitable_attrs.container_type
-        return container_type.name if container_type else None
+    def container_type_name(self) -> str | None:
+        """Get container type name - relationship is eager-loaded."""
+        return self._instance.container_type.name if self._instance.container_type else None
 
     @strawberry.field
-    async def items(self) -> list[PackingBoxItemResponse]:
-        items = await self._instance.awaitable_attrs.items
-        return PackingBoxItemResponse.from_orm_model_list(items)
+    def items(self) -> list[PackingBoxItemResponse]:
+        """Get box items - relationship is eager-loaded."""
+        return PackingBoxItemResponse.from_orm_model_list(self._instance.items)

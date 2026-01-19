@@ -1,16 +1,18 @@
+"""Full response type for fulfillment orders - used for detail views."""
+
 from datetime import date, datetime
 from typing import Self
 from uuid import UUID
 
 import strawberry
-from commons.db.v6.fulfillment import (
-    CarrierType,
-    FulfillmentMethod,
-    FulfillmentOrder,
-    FulfillmentOrderStatus,
-)
+from commons.db.v6.fulfillment import FulfillmentOrder
 
 from app.core.db.adapters.dto import DTOMixin
+from app.graphql.v2.core.fulfillment.strawberry.enums import (
+    CarrierType,
+    FulfillmentMethod,
+    FulfillmentOrderStatus,
+)
 from app.graphql.v2.core.fulfillment.strawberry.fulfillment_activity_response import (
     FulfillmentActivityResponse,
 )
@@ -20,8 +22,8 @@ from app.graphql.v2.core.fulfillment.strawberry.fulfillment_assignment_response 
 from app.graphql.v2.core.fulfillment.strawberry.fulfillment_document_response import (
     FulfillmentDocumentResponse,
 )
-from app.graphql.v2.core.fulfillment.strawberry.fulfillment_line_item_response import (
-    FulfillmentOrderLineItemResponse,
+from app.graphql.v2.core.fulfillment.strawberry.fulfillment_line_item_lite_response import (
+    FulfillmentOrderLineItemLiteResponse,
 )
 from app.graphql.v2.core.fulfillment.strawberry.packing_box_response import (
     PackingBoxResponse,
@@ -42,6 +44,8 @@ class ShipToAddressResponse:
 
 @strawberry.type
 class FulfillmentOrderResponse(DTOMixin[FulfillmentOrder]):
+    """Full response for detail views - includes nested collections."""
+
     _instance: strawberry.Private[FulfillmentOrder]
     id: UUID
     fulfillment_order_number: str
@@ -109,33 +113,31 @@ class FulfillmentOrderResponse(DTOMixin[FulfillmentOrder]):
         )
 
     @strawberry.field
-    async def warehouse_name(self) -> str:
-        warehouse = await self._instance.awaitable_attrs.warehouse
-        return warehouse.name if warehouse else ""
+    def warehouse_name(self) -> str:
+        """Get warehouse name - relationship is eager-loaded."""
+        return self._instance.warehouse.name if self._instance.warehouse else ""
 
     @strawberry.field
-    async def carrier_name(self) -> str | None:
-        carrier = await self._instance.awaitable_attrs.carrier
-        return carrier.name if carrier else None
+    def carrier_name(self) -> str | None:
+        """Get carrier name - relationship is eager-loaded."""
+        return self._instance.carrier.name if self._instance.carrier else None
 
     @strawberry.field
-    async def order_number(self) -> str:
-        """Get the sales order number from the related Order."""
-        order = await self._instance.awaitable_attrs.order
-        return order.order_number if order else ""
+    def order_number(self) -> str:
+        """Get the sales order number - relationship is eager-loaded."""
+        return self._instance.order.order_number if self._instance.order else ""
 
     @strawberry.field
-    async def customer_name(self) -> str:
-        """Get the customer name from the related Order."""
-        order = await self._instance.awaitable_attrs.order
-        if order:
-            customer = await order.awaitable_attrs.sold_to_customer
-            return customer.company_name if customer else ""
+    def customer_name(self) -> str:
+        """Get customer name - order.sold_to_customer is eager-loaded."""
+        if self._instance.order and self._instance.order.sold_to_customer:
+            return self._instance.order.sold_to_customer.company_name
         return ""
 
     @strawberry.field
-    async def ship_to_address(self) -> ShipToAddressResponse | None:
-        address = await self._instance.awaitable_attrs.ship_to_address
+    def ship_to_address(self) -> ShipToAddressResponse | None:
+        """Get ship-to address - relationship is eager-loaded."""
+        address = self._instance.ship_to_address
         if not address:
             return None
         return ShipToAddressResponse(
@@ -150,26 +152,34 @@ class FulfillmentOrderResponse(DTOMixin[FulfillmentOrder]):
         )
 
     @strawberry.field
-    async def line_items(self) -> list[FulfillmentOrderLineItemResponse]:
-        items = await self._instance.awaitable_attrs.line_items
-        return FulfillmentOrderLineItemResponse.from_orm_model_list(items)
+    def line_items(self) -> list[FulfillmentOrderLineItemLiteResponse]:
+        """Get line items - relationship is eager-loaded."""
+        return FulfillmentOrderLineItemLiteResponse.from_orm_model_list(
+            self._instance.line_items
+        )
 
     @strawberry.field
-    async def packing_boxes(self) -> list[PackingBoxResponse]:
-        boxes = await self._instance.awaitable_attrs.packing_boxes
-        return PackingBoxResponse.from_orm_model_list(boxes)
+    def packing_boxes(self) -> list[PackingBoxResponse]:
+        """Get packing boxes - relationship is eager-loaded."""
+        return PackingBoxResponse.from_orm_model_list(self._instance.packing_boxes)
 
     @strawberry.field
-    async def assignments(self) -> list[FulfillmentAssignmentResponse]:
-        assignments = await self._instance.awaitable_attrs.assignments
-        return FulfillmentAssignmentResponse.from_orm_model_list(assignments)
+    def assignments(self) -> list[FulfillmentAssignmentResponse]:
+        """Get assignments - relationship is eager-loaded."""
+        return FulfillmentAssignmentResponse.from_orm_model_list(
+            self._instance.assignments
+        )
 
     @strawberry.field
-    async def documents(self) -> list[FulfillmentDocumentResponse]:
-        documents = await self._instance.awaitable_attrs.documents
-        return FulfillmentDocumentResponse.from_orm_model_list(documents)
+    def documents(self) -> list[FulfillmentDocumentResponse]:
+        """Get documents - relationship is eager-loaded."""
+        return FulfillmentDocumentResponse.from_orm_model_list(
+            self._instance.documents
+        )
 
     @strawberry.field
-    async def activities(self) -> list[FulfillmentActivityResponse]:
-        activities = await self._instance.awaitable_attrs.activities
-        return FulfillmentActivityResponse.from_orm_model_list(activities)
+    def activities(self) -> list[FulfillmentActivityResponse]:
+        """Get activities - relationship is eager-loaded."""
+        return FulfillmentActivityResponse.from_orm_model_list(
+            self._instance.activities
+        )

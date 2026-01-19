@@ -14,7 +14,7 @@ from commons.db.v6 import (
 )
 
 from app.core.db.adapters.dto import DTOMixin
-from app.graphql.v2.core.warehouses.strawberry.warehouse_input import (
+from app.graphql.v2.core.warehouses.strawberry.enums import (
     WarehouseMemberRole,
     WarehouseStructureCode,
 )

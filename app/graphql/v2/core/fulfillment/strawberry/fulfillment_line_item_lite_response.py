@@ -1,4 +1,4 @@
-"""Response type for fulfillment order line items."""
+"""Lite response type for fulfillment order line items."""
 
 from decimal import Decimal
 from typing import Self
@@ -8,14 +8,11 @@ import strawberry
 from commons.db.v6.fulfillment import FulfillmentOrderLineItem
 
 from app.core.db.adapters.dto import DTOMixin
-from app.graphql.v2.core.fulfillment.strawberry.packing_box_response import (
-    PackingBoxItemResponse,
-)
 
 
 @strawberry.type
-class FulfillmentOrderLineItemResponse(DTOMixin[FulfillmentOrderLineItem]):
-    """Response type for line items - with all fields and sync accessors."""
+class FulfillmentOrderLineItemLiteResponse(DTOMixin[FulfillmentOrderLineItem]):
+    """Lite response for line items - scalar fields + synchronous accessors."""
 
     _instance: strawberry.Private[FulfillmentOrderLineItem]
     id: UUID
@@ -69,13 +66,6 @@ class FulfillmentOrderLineItemResponse(DTOMixin[FulfillmentOrderLineItem]):
         if self._instance.product and self._instance.product.uom:
             return self._instance.product.uom.title
         return "EA"
-
-    @strawberry.field
-    def packing_box_items(self) -> list[PackingBoxItemResponse]:
-        """Get packing box items - relationship is eager-loaded."""
-        return PackingBoxItemResponse.from_orm_model_list(
-            self._instance.packing_box_items
-        )
 
     @strawberry.field
     def factory_id(self) -> UUID | None:
