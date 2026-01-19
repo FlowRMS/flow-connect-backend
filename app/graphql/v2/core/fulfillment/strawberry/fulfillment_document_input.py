@@ -6,10 +6,10 @@ from uuid import UUID
 
 import strawberry
 from commons.db.v6.fulfillment import FulfillmentDocument
+from commons.db.v6.fulfillment.enums import FulfillmentDocumentType
 from strawberry.file_uploads import Upload
 
 from app.core.strawberry.inputs import BaseInputGQL
-from commons.db.v6.fulfillment.enums import FulfillmentDocumentType
 
 
 @strawberry.input

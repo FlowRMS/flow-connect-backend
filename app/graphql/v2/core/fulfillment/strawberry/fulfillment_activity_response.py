@@ -4,9 +4,9 @@ from uuid import UUID
 
 import strawberry
 from commons.db.v6.fulfillment import FulfillmentActivity
+from commons.db.v6.fulfillment.enums import FulfillmentActivityType
 
 from app.core.db.adapters.dto import DTOMixin
-from commons.db.v6.fulfillment.enums import FulfillmentActivityType
 
 
 @strawberry.type

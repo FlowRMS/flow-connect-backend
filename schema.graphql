@@ -1253,11 +1253,9 @@ enum FulfillmentActivityType {
 
 type FulfillmentAssignmentResponse {
   id: UUID!
-  userId: UUID!
   role: FulfillmentAssignmentRole!
   createdAt: datetime!
-  userName: String!
-  userEmail: String!
+  user: UserLiteResponse
 }
 
 enum FulfillmentAssignmentRole {
@@ -1276,9 +1274,8 @@ type FulfillmentDocumentResponse {
   notes: String
   uploadedAt: datetime!
   createdAt: datetime!
-  createdById: UUID!
   fileId: UUID
-  uploadedByName: String!
+  uploadedBy: UserLiteResponse
 }
 
 enum FulfillmentDocumentType {
@@ -1293,6 +1290,28 @@ enum FulfillmentDocumentType {
 enum FulfillmentMethod {
   SHIP
   WILL_CALL
+}
+
+type FulfillmentOrderLineItemLiteResponse {
+  id: UUID!
+  productId: UUID!
+  orderDetailId: UUID
+  orderedQty: Decimal!
+  allocatedQty: Decimal!
+  pickedQty: Decimal!
+  packedQty: Decimal!
+  shippedQty: Decimal!
+  backorderQty: Decimal!
+  fulfilledByManufacturer: Boolean!
+  manufacturerFulfillmentStatus: String
+  linkedShipmentRequestId: UUID
+  shortReason: String
+  notes: String
+  productName: String!
+  partNumber: String!
+  uom: String!
+  factoryId: UUID
+  factoryName: String
 }
 
 type FulfillmentOrderLineItemResponse {
@@ -1316,6 +1335,35 @@ type FulfillmentOrderLineItemResponse {
   packingBoxItems: [PackingBoxItemResponse!]!
   factoryId: UUID
   factoryName: String
+}
+
+type FulfillmentOrderLiteResponse {
+  id: UUID!
+  fulfillmentOrderNumber: String!
+  orderId: UUID!
+  warehouseId: UUID!
+  carrierId: UUID
+  status: FulfillmentOrderStatus!
+  fulfillmentMethod: FulfillmentMethod!
+  carrierType: CarrierType
+  freightClass: String
+  needByDate: Date
+  hasBackorderItems: Boolean!
+  holdReason: String
+  releasedAt: datetime
+  pickStartedAt: datetime
+  pickCompletedAt: datetime
+  packCompletedAt: datetime
+  shipConfirmedAt: datetime
+  deliveredAt: datetime
+  createdAt: datetime!
+  trackingNumbers: [String!]!
+  bolNumber: String
+  proNumber: String
+  warehouseName: String!
+  carrierName: String
+  orderNumber: String!
+  customerName: String!
 }
 
 type FulfillmentOrderResponse {
@@ -1350,7 +1398,7 @@ type FulfillmentOrderResponse {
   orderNumber: String!
   customerName: String!
   shipToAddress: ShipToAddressResponse
-  lineItems: [FulfillmentOrderLineItemResponse!]!
+  lineItems: [FulfillmentOrderLineItemLiteResponse!]!
   packingBoxes: [PackingBoxResponse!]!
   assignments: [FulfillmentAssignmentResponse!]!
   documents: [FulfillmentDocumentResponse!]!
@@ -3142,10 +3190,10 @@ type Query {
   customerBuyingGroupMembers(buyingGroupId: UUID!): [CustomerLiteResponse!]!
   factory(id: UUID!): FactoryResponse!
   factorySearch(searchTerm: String!, published: Boolean! = true, limit: Int! = 20, useCustomOrder: Boolean! = false): [FactoryResponse!]!
-  fulfillmentOrders(warehouseId: UUID = null, status: [FulfillmentOrderStatus!] = null, search: String = null, limit: Int! = 50, offset: Int! = 0): [FulfillmentOrderResponse!]!
+  fulfillmentOrders(warehouseId: UUID = null, status: [FulfillmentOrderStatus!] = null, search: String = null, limit: Int! = 50, offset: Int! = 0): [FulfillmentOrderLiteResponse!]!
   fulfillmentOrder(id: UUID!): FulfillmentOrderResponse
   fulfillmentStats(warehouseId: UUID = null): FulfillmentStatsResponse!
-  backorderItems(fulfillmentOrderId: UUID!): [FulfillmentOrderLineItemResponse!]!
+  backorderItems(fulfillmentOrderId: UUID!): [FulfillmentOrderLineItemLiteResponse!]!
   inventoryStatuses: [InventoryStatusOption!]!
   inventories(warehouseId: UUID!, factoryId: UUID = null, status: String = null, search: String = null, limit: Int! = 100, offset: Int! = 0): [InventoryResponse!]!
   inventoryStats(warehouseId: UUID!): InventoryStatsResponse!
@@ -4160,6 +4208,12 @@ input UserInput {
   inside: Boolean = null
   outside: Boolean = null
   visible: Boolean = true
+}
+
+type UserLiteResponse {
+  id: UUID!
+  fullName: String!
+  email: String!
 }
 
 type UserRbac {

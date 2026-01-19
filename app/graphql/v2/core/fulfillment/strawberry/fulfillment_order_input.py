@@ -3,10 +3,10 @@ from uuid import UUID
 
 import strawberry
 from commons.db.v6.fulfillment import FulfillmentOrder
+from commons.db.v6.fulfillment.enums import CarrierType, FulfillmentMethod
 
 from app.core.strawberry.inputs import BaseInputGQL
 from app.graphql.addresses.strawberry.address_input import AddressInput
-from commons.db.v6.fulfillment.enums import CarrierType, FulfillmentMethod
 
 
 @strawberry.input

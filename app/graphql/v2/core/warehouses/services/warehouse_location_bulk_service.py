@@ -4,7 +4,7 @@ import logging
 from decimal import Decimal
 from uuid import UUID
 
-from commons.db.v6 import WarehouseLocation, WarehouseStructureCode
+from commons.db.v6 import WarehouseLocation
 from commons.db.v6.warehouse.inventory.inventory_item import InventoryItem
 from sqlalchemy import select
 

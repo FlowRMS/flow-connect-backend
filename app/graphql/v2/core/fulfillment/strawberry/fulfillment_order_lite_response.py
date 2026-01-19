@@ -6,13 +6,13 @@ from uuid import UUID
 
 import strawberry
 from commons.db.v6.fulfillment import FulfillmentOrder
-
-from app.core.db.adapters.dto import DTOMixin
 from commons.db.v6.fulfillment.enums import (
     CarrierType,
     FulfillmentMethod,
     FulfillmentOrderStatus,
 )
+
+from app.core.db.adapters.dto import DTOMixin
 
 
 @strawberry.type

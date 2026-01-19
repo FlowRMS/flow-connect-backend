@@ -10,10 +10,10 @@ from commons.db.v6 import (
     WarehouseSettings,
     WarehouseStructure,
 )
-
-from app.core.strawberry.inputs import BaseInputGQL
 from commons.db.v6.warehouse.warehouse_member_role import WarehouseMemberRole
 from commons.db.v6.warehouse.warehouse_structure_code import WarehouseStructureCode
+
+from app.core.strawberry.inputs import BaseInputGQL
 
 
 @strawberry.input

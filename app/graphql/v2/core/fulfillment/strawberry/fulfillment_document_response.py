@@ -4,9 +4,9 @@ from uuid import UUID
 
 import strawberry
 from commons.db.v6.fulfillment import FulfillmentDocument
+from commons.db.v6.fulfillment.enums import FulfillmentDocumentType
 
 from app.core.db.adapters.dto import DTOMixin
-from commons.db.v6.fulfillment.enums import FulfillmentDocumentType
 from app.graphql.v2.core.users.strawberry import UserLiteResponse
 
 

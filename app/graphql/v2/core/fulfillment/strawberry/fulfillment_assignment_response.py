@@ -4,9 +4,9 @@ from uuid import UUID
 
 import strawberry
 from commons.db.v6.fulfillment import FulfillmentAssignment
+from commons.db.v6.fulfillment.enums import FulfillmentAssignmentRole
 
 from app.core.db.adapters.dto import DTOMixin
-from commons.db.v6.fulfillment.enums import FulfillmentAssignmentRole
 from app.graphql.v2.core.users.strawberry import UserLiteResponse
 
 
