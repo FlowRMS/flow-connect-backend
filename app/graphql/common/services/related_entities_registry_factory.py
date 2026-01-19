@@ -7,6 +7,7 @@ from app.graphql.common.strategies.related_entities import (
     CheckRelatedEntitiesStrategy,
     CompanyRelatedEntitiesStrategy,
     ContactRelatedEntitiesStrategy,
+    CustomerRelatedEntitiesStrategy,
     FactoryRelatedEntitiesStrategy,
     FileRelatedEntitiesStrategy,
     InvoiceRelatedEntitiesStrategy,
@@ -39,6 +40,9 @@ from app.graphql.quotes.repositories.quotes_repository import QuotesRepository
 from app.graphql.quotes.services.quote_service import QuoteService
 from app.graphql.tasks.repositories.tasks_repository import TasksRepository
 from app.graphql.tasks.services.tasks_service import TasksService
+from app.graphql.v2.core.customers.repositories.customers_repository import (
+    CustomersRepository,
+)
 from app.graphql.v2.core.customers.services.customer_service import CustomerService
 from app.graphql.v2.core.factories.repositories.factories_repository import (
     FactoriesRepository,
@@ -61,6 +65,7 @@ def create_related_entities_registry(
     invoices_repository: InvoicesRepository,
     checks_repository: ChecksRepository,
     file_repository: FileRepository,
+    customers_repository: CustomersRepository,
     jobs_service: JobsService,
     notes_service: NotesService,
     tasks_service: TasksService,
@@ -248,6 +253,21 @@ def create_related_entities_registry(
             factory_service=factory_service,
             product_service=product_service,
             customer_service=customer_service,
+        ),
+        CustomerRelatedEntitiesStrategy(
+            repository=customers_repository,
+            jobs_service=jobs_service,
+            notes_service=notes_service,
+            tasks_service=tasks_service,
+            contacts_service=contacts_service,
+            companies_service=companies_service,
+            pre_opportunities_service=pre_opportunities_service,
+            quote_service=quote_service,
+            order_service=order_service,
+            invoice_service=invoice_service,
+            check_service=check_service,
+            factory_service=factory_service,
+            product_service=product_service,
         ),
     ]
 

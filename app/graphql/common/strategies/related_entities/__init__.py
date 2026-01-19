@@ -7,6 +7,9 @@ from app.graphql.common.strategies.related_entities.company_related_entities_str
 from app.graphql.common.strategies.related_entities.contact_related_entities_strategy import (
     ContactRelatedEntitiesStrategy,
 )
+from app.graphql.common.strategies.related_entities.customer_related_entities_strategy import (
+    CustomerRelatedEntitiesStrategy,
+)
 from app.graphql.common.strategies.related_entities.factory_related_entities_strategy import (
     FactoryRelatedEntitiesStrategy,
 )
@@ -39,6 +42,7 @@ __all__ = [
     "CheckRelatedEntitiesStrategy",
     "CompanyRelatedEntitiesStrategy",
     "ContactRelatedEntitiesStrategy",
+    "CustomerRelatedEntitiesStrategy",
     "FactoryRelatedEntitiesStrategy",
     "FileRelatedEntitiesStrategy",
     "InvoiceRelatedEntitiesStrategy",
