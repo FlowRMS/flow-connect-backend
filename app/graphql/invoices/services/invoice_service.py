@@ -118,3 +118,6 @@ class InvoiceService:
         )
         invoice.status = InvoiceStatus.OPEN
         return await self.repository.create_with_balance(invoice)
+
+    async def find_by_sold_to_customer_id(self, customer_id: UUID) -> list[Invoice]:
+        return await self.repository.find_by_sold_to_customer_id(customer_id)

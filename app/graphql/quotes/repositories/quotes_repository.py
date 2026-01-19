@@ -305,3 +305,12 @@ class QuotesRepository(BaseRepository[Quote]):
             .values(order_id=order_id)
         )
         _ = await self.session.execute(stmt)
+
+    async def find_by_sold_to_customer_id(self, customer_id: UUID) -> list[Quote]:
+        stmt = (
+            select(Quote)
+            .options(lazyload("*"))
+            .where(Quote.sold_to_customer_id == customer_id)
+        )
+        result = await self.session.execute(stmt)
+        return list(result.scalars().all())

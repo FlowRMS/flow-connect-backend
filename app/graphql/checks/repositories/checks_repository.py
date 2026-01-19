@@ -201,3 +201,16 @@ class ChecksRepository(BaseRepository[Check]):
         )
         result = await self.session.execute(stmt)
         return list(result.scalars().all())
+
+    async def find_by_sold_to_customer_id(self, customer_id: UUID) -> list[Check]:
+        stmt = (
+            select(Check)
+            .options(lazyload("*"))
+            .join(CheckDetail, CheckDetail.check_id == Check.id)
+            .join(Invoice, Invoice.id == CheckDetail.invoice_id)
+            .join(Order, Order.id == Invoice.order_id)
+            .where(Order.sold_to_customer_id == customer_id)
+            .distinct()
+        )
+        result = await self.session.execute(stmt)
+        return list(result.scalars().all())
