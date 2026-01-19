@@ -5,6 +5,7 @@ from app.graphql.common.interfaces.related_entities_strategy import (
 )
 from app.graphql.common.strategies.related_entities import (
     CheckRelatedEntitiesStrategy,
+    CompanyRelatedEntitiesStrategy,
     ContactRelatedEntitiesStrategy,
     FactoryRelatedEntitiesStrategy,
     FileRelatedEntitiesStrategy,
@@ -16,6 +17,7 @@ from app.graphql.common.strategies.related_entities import (
     QuoteRelatedEntitiesStrategy,
     TaskRelatedEntitiesStrategy,
 )
+from app.graphql.companies.repositories.companies_repository import CompaniesRepository
 from app.graphql.companies.services.companies_service import CompaniesService
 from app.graphql.contacts.repositories.contacts_repository import ContactsRepository
 from app.graphql.contacts.services.contacts_service import ContactsService
@@ -49,6 +51,7 @@ from app.graphql.v2.files.repositories.file_repository import FileRepository
 def create_related_entities_registry(
     jobs_repository: JobsRepository,
     contacts_repository: ContactsRepository,
+    companies_repository: CompaniesRepository,
     notes_repository: NotesRepository,
     tasks_repository: TasksRepository,
     pre_opportunities_repository: PreOpportunitiesRepository,
@@ -96,6 +99,21 @@ def create_related_entities_registry(
             notes_service=notes_service,
             tasks_service=tasks_service,
             companies_service=companies_service,
+            pre_opportunities_service=pre_opportunities_service,
+            quote_service=quote_service,
+            order_service=order_service,
+            invoice_service=invoice_service,
+            check_service=check_service,
+            factory_service=factory_service,
+            product_service=product_service,
+            customer_service=customer_service,
+        ),
+        CompanyRelatedEntitiesStrategy(
+            repository=companies_repository,
+            jobs_service=jobs_service,
+            notes_service=notes_service,
+            tasks_service=tasks_service,
+            contacts_service=contacts_service,
             pre_opportunities_service=pre_opportunities_service,
             quote_service=quote_service,
             order_service=order_service,
