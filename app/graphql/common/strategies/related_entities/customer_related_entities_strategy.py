@@ -97,12 +97,16 @@ class CustomerRelatedEntitiesStrategy(RelatedEntitiesStrategy):
         pre_opportunities = await self.pre_opportunities_service.find_by_entity(
             entity_type, entity_id
         )
-        quotes = await self.quote_service.find_by_entity(entity_type, entity_id)
-        orders = await self.order_service.find_by_entity(entity_type, entity_id)
-        invoices = await self.invoice_service.find_by_entity(entity_type, entity_id)
-        checks = await self.check_service.find_by_entity(entity_type, entity_id)
         factories = await self.factory_service.find_by_entity(entity_type, entity_id)
-        products = await self.product_service.find_by_entity(entity_type, entity_id)
+
+        # Quotes, orders, invoices, checks use sold_to_customer_id
+        quotes = await self.quote_service.find_by_sold_to_customer_id(entity_id)
+        orders = await self.order_service.find_by_sold_to_customer_id(entity_id)
+        invoices = await self.invoice_service.find_by_sold_to_customer_id(entity_id)
+        checks = await self.check_service.find_by_sold_to_customer_id(entity_id)
+
+        # Products are related through CPN (customer part number)
+        products = await self.product_service.find_by_customer_id(entity_id)
 
         return RelatedEntitiesResponse(
             source_type=LandingSourceType.CUSTOMERS,

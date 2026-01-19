@@ -288,3 +288,13 @@ class InvoicesRepository(BaseRepository[Invoice]):
         )
         result = await self.session.execute(stmt)
         return list(result.scalars().all())
+
+    async def find_by_sold_to_customer_id(self, customer_id: UUID) -> list[Invoice]:
+        stmt = (
+            select(Invoice)
+            .options(lazyload("*"))
+            .join(Order, Order.id == Invoice.order_id)
+            .where(Order.sold_to_customer_id == customer_id)
+        )
+        result = await self.session.execute(stmt)
+        return list(result.scalars().all())
