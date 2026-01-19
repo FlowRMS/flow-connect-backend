@@ -6,14 +6,14 @@ import strawberry
 from commons.db.v6.fulfillment import FulfillmentAssignment
 
 from app.core.db.adapters.dto import DTOMixin
-from app.graphql.v2.core.fulfillment.strawberry.enums import FulfillmentAssignmentRole
+from commons.db.v6.fulfillment.enums import FulfillmentAssignmentRole
+from app.graphql.v2.core.users.strawberry import UserLiteResponse
 
 
 @strawberry.type
 class FulfillmentAssignmentResponse(DTOMixin[FulfillmentAssignment]):
     _instance: strawberry.Private[FulfillmentAssignment]
     id: UUID
-    user_id: UUID
     role: FulfillmentAssignmentRole
     created_at: datetime
 
@@ -22,17 +22,13 @@ class FulfillmentAssignmentResponse(DTOMixin[FulfillmentAssignment]):
         return cls(
             _instance=model,
             id=model.id,
-            user_id=model.user_id,
             role=model.role,
             created_at=model.created_at,
         )
 
     @strawberry.field
-    def user_name(self) -> str:
-        """Get user name - relationship is eager-loaded."""
-        return self._instance.user.full_name if self._instance.user else ""
-
-    @strawberry.field
-    def user_email(self) -> str:
-        """Get user email - relationship is eager-loaded."""
-        return self._instance.user.email if self._instance.user else ""
+    def user(self) -> UserLiteResponse | None:
+        """Get user - relationship is eager-loaded."""
+        if self._instance.user:
+            return UserLiteResponse.from_orm_model(self._instance.user)
+        return None

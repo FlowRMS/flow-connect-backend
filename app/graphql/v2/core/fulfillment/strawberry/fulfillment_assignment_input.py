@@ -2,7 +2,7 @@ from uuid import UUID
 
 import strawberry
 
-from app.graphql.v2.core.fulfillment.strawberry.enums import FulfillmentAssignmentRole
+from commons.db.v6.fulfillment.enums import FulfillmentAssignmentRole
 
 
 @strawberry.input

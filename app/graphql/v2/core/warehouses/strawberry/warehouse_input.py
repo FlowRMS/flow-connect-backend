@@ -12,10 +12,8 @@ from commons.db.v6 import (
 )
 
 from app.core.strawberry.inputs import BaseInputGQL
-from app.graphql.v2.core.warehouses.strawberry.enums import (
-    WarehouseMemberRole,
-    WarehouseStructureCode,
-)
+from commons.db.v6.warehouse.warehouse_member_role import WarehouseMemberRole
+from commons.db.v6.warehouse.warehouse_structure_code import WarehouseStructureCode
 
 
 @strawberry.input

@@ -6,7 +6,8 @@ import strawberry
 from commons.db.v6.fulfillment import FulfillmentDocument
 
 from app.core.db.adapters.dto import DTOMixin
-from app.graphql.v2.core.fulfillment.strawberry.enums import FulfillmentDocumentType
+from commons.db.v6.fulfillment.enums import FulfillmentDocumentType
+from app.graphql.v2.core.users.strawberry import UserLiteResponse
 
 
 @strawberry.type
@@ -21,7 +22,6 @@ class FulfillmentDocumentResponse(DTOMixin[FulfillmentDocument]):
     notes: str | None
     uploaded_at: datetime
     created_at: datetime
-    created_by_id: UUID
     file_id: UUID | None
 
     @classmethod
@@ -37,11 +37,12 @@ class FulfillmentDocumentResponse(DTOMixin[FulfillmentDocument]):
             notes=model.notes,
             uploaded_at=model.uploaded_at,
             created_at=model.created_at,
-            created_by_id=model.created_by_id,
             file_id=model.file_id,
         )
 
     @strawberry.field
-    def uploaded_by_name(self) -> str:
-        """Get uploaded by user name - relationship is eager-loaded."""
-        return self._instance.uploaded_by_user.full_name if self._instance.uploaded_by_user else ""
+    def uploaded_by(self) -> UserLiteResponse | None:
+        """Get uploaded by user - relationship is eager-loaded."""
+        if self._instance.uploaded_by_user:
+            return UserLiteResponse.from_orm_model(self._instance.uploaded_by_user)
+        return None
