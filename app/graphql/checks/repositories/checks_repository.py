@@ -7,6 +7,7 @@ from commons.db.v6.commission import (
     Check,
     CheckDetail,
     Credit,
+    CreditDetail,
     Invoice,
     InvoiceDetail,
     InvoiceSplitRate,
@@ -128,6 +129,16 @@ class ChecksRepository(BaseRepository[Check]):
                 .joinedload(CheckDetail.adjustment)
                 .joinedload(Adjustment.factory),
                 joinedload(Check.factory),
+                joinedload(Check.details)
+                .joinedload(CheckDetail.credit)
+                .joinedload(Credit.details),
+                joinedload(Check.details)
+                .joinedload(CheckDetail.credit)
+                .joinedload(Credit.details)
+                .joinedload(CreditDetail.outside_split_rates),
+                joinedload(Check.details)
+                .joinedload(CheckDetail.credit)
+                .joinedload(Credit.balance),
                 lazyload("*"),
             ],
         )
