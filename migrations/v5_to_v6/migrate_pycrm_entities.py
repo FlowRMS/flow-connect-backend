@@ -212,7 +212,10 @@ async def migrate_companies(
     source: asyncpg.Connection,
     dest: asyncpg.Connection,
 ) -> int:
-    """Migrate companies from pycrm.companies using SELECT *."""
+    """Migrate companies from pycrm.companies.
+
+    Maps company_source_type (int) to company_type_id (UUID) via company_types table.
+    """
     logger.info("Starting companies migration...")
 
     companies = await source.fetch("SELECT * FROM pycrm.companies")
@@ -221,15 +224,21 @@ async def migrate_companies(
         logger.info("No companies to migrate")
         return 0
 
+    # Build mapping from display_order (old int value) to UUID
+    company_types = await dest.fetch(
+        "SELECT id, display_order FROM pycrm.company_types"
+    )
+    type_map = {ct["display_order"]: ct["id"] for ct in company_types}
+
     await dest.executemany(
         """
         INSERT INTO pycrm.companies (
-            id, name, company_source_type, website, phone, tags,
+            id, name, company_type_id, website, phone, tags,
             parent_company_id, created_by_id, created_at
         ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
         ON CONFLICT (id) DO UPDATE SET
             name = EXCLUDED.name,
-            company_source_type = EXCLUDED.company_source_type,
+            company_type_id = EXCLUDED.company_type_id,
             website = EXCLUDED.website,
             phone = EXCLUDED.phone,
             tags = EXCLUDED.tags,
@@ -238,7 +247,7 @@ async def migrate_companies(
         [(
             c["id"],
             c["name"],
-            c["company_source_type"],
+            type_map.get(c["company_source_type"]),
             c["website"],
             c["phone"],
             c["tags"],
