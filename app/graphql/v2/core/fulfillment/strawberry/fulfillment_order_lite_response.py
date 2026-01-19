@@ -13,11 +13,18 @@ from commons.db.v6.fulfillment.enums import (
 )
 
 from app.core.db.adapters.dto import DTOMixin
+from app.graphql.orders.strawberry.order_lite_response import OrderLiteResponse
+from app.graphql.v2.core.fulfillment.strawberry.shipping_carrier_lite_response import (
+    ShippingCarrierLiteResponse,
+)
+from app.graphql.v2.core.warehouses.strawberry.warehouse_lite_response import (
+    WarehouseLiteResponse,
+)
 
 
 @strawberry.type
 class FulfillmentOrderLiteResponse(DTOMixin[FulfillmentOrder]):
-    """Lite response for list endpoints - scalar fields + synchronous accessors."""
+    """Lite response for list endpoints - scalar fields + nested Lite responses."""
 
     _instance: strawberry.Private[FulfillmentOrder]
     id: UUID
@@ -76,23 +83,22 @@ class FulfillmentOrderLiteResponse(DTOMixin[FulfillmentOrder]):
         )
 
     @strawberry.field
-    def warehouse_name(self) -> str:
-        """Get warehouse name - relationship is eager-loaded."""
-        return self._instance.warehouse.name if self._instance.warehouse else ""
+    def warehouse(self) -> WarehouseLiteResponse | None:
+        """Get warehouse - relationship is eager-loaded."""
+        if self._instance.warehouse:
+            return WarehouseLiteResponse.from_orm_model(self._instance.warehouse)
+        return None
 
     @strawberry.field
-    def carrier_name(self) -> str | None:
-        """Get carrier name - relationship is eager-loaded."""
-        return self._instance.carrier.name if self._instance.carrier else None
+    def carrier(self) -> ShippingCarrierLiteResponse | None:
+        """Get carrier - relationship is eager-loaded."""
+        if self._instance.carrier:
+            return ShippingCarrierLiteResponse.from_orm_model(self._instance.carrier)
+        return None
 
     @strawberry.field
-    def order_number(self) -> str:
-        """Get the sales order number - relationship is eager-loaded."""
-        return self._instance.order.order_number if self._instance.order else ""
-
-    @strawberry.field
-    def customer_name(self) -> str:
-        """Get customer name - order.sold_to_customer is eager-loaded."""
-        if self._instance.order and self._instance.order.sold_to_customer:
-            return self._instance.order.sold_to_customer.company_name
-        return ""
+    def order(self) -> OrderLiteResponse | None:
+        """Get the sales order - relationship is eager-loaded."""
+        if self._instance.order:
+            return OrderLiteResponse.from_orm_model(self._instance.order)
+        return None

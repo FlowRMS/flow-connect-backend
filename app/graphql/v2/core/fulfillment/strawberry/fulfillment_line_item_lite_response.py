@@ -8,11 +8,12 @@ import strawberry
 from commons.db.v6.fulfillment import FulfillmentOrderLineItem
 
 from app.core.db.adapters.dto import DTOMixin
+from app.graphql.v2.core.products.strawberry.product_response import ProductLiteResponse
 
 
 @strawberry.type
 class FulfillmentOrderLineItemLiteResponse(DTOMixin[FulfillmentOrderLineItem]):
-    """Lite response for line items - scalar fields + synchronous accessors."""
+    """Lite response for line items - scalar fields + nested Lite responses."""
 
     _instance: strawberry.Private[FulfillmentOrderLineItem]
     id: UUID
@@ -51,30 +52,8 @@ class FulfillmentOrderLineItemLiteResponse(DTOMixin[FulfillmentOrderLineItem]):
         )
 
     @strawberry.field
-    def product_name(self) -> str:
-        """Get product name - product is eager-loaded."""
-        return self._instance.product.factory_part_number if self._instance.product else ""
-
-    @strawberry.field
-    def part_number(self) -> str:
-        """Get product part number - product is eager-loaded."""
-        return self._instance.product.factory_part_number if self._instance.product else ""
-
-    @strawberry.field
-    def uom(self) -> str:
-        """Get UOM title - product.uom is eager-loaded."""
-        if self._instance.product and self._instance.product.uom:
-            return self._instance.product.uom.title
-        return "EA"
-
-    @strawberry.field
-    def factory_id(self) -> UUID | None:
-        """Get factory ID - product is eager-loaded."""
-        return self._instance.product.factory_id if self._instance.product else None
-
-    @strawberry.field
-    def factory_name(self) -> str | None:
-        """Get factory name - product.factory is eager-loaded."""
-        if self._instance.product and self._instance.product.factory:
-            return self._instance.product.factory.title
+    def product(self) -> ProductLiteResponse | None:
+        """Get product - relationship is eager-loaded."""
+        if self._instance.product:
+            return ProductLiteResponse.from_orm_model(self._instance.product)
         return None

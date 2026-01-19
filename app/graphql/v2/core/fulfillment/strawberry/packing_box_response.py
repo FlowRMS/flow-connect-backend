@@ -59,7 +59,11 @@ class PackingBoxResponse(DTOMixin[PackingBox]):
     @strawberry.field
     def container_type_name(self) -> str | None:
         """Get container type name - relationship is eager-loaded."""
-        return self._instance.container_type.name if self._instance.container_type else None
+        return (
+            self._instance.container_type.name
+            if self._instance.container_type
+            else None
+        )
 
     @strawberry.field
     def items(self) -> list[PackingBoxItemResponse]:

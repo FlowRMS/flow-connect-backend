@@ -1307,11 +1307,7 @@ type FulfillmentOrderLineItemLiteResponse {
   linkedShipmentRequestId: UUID
   shortReason: String
   notes: String
-  productName: String!
-  partNumber: String!
-  uom: String!
-  factoryId: UUID
-  factoryName: String
+  product: ProductLiteResponse
 }
 
 type FulfillmentOrderLineItemResponse {
@@ -1329,12 +1325,8 @@ type FulfillmentOrderLineItemResponse {
   linkedShipmentRequestId: UUID
   shortReason: String
   notes: String
-  productName: String!
-  partNumber: String!
-  uom: String!
+  product: ProductLiteResponse
   packingBoxItems: [PackingBoxItemResponse!]!
-  factoryId: UUID
-  factoryName: String
 }
 
 type FulfillmentOrderLiteResponse {
@@ -1360,10 +1352,9 @@ type FulfillmentOrderLiteResponse {
   trackingNumbers: [String!]!
   bolNumber: String
   proNumber: String
-  warehouseName: String!
-  carrierName: String
-  orderNumber: String!
-  customerName: String!
+  warehouse: WarehouseLiteResponse
+  carrier: ShippingCarrierLiteResponse
+  order: OrderLiteResponse
 }
 
 type FulfillmentOrderResponse {
@@ -1389,14 +1380,13 @@ type FulfillmentOrderResponse {
   trackingNumbers: [String!]!
   bolNumber: String
   proNumber: String
+  warehouse: WarehouseLiteResponse
+  carrier: ShippingCarrierLiteResponse
+  order: OrderLiteResponse
   pickupSignature: String
   pickupTimestamp: datetime
   pickupCustomerName: String
   driverName: String
-  warehouseName: String!
-  carrierName: String
-  orderNumber: String!
-  customerName: String!
   shipToAddress: ShipToAddressResponse
   lineItems: [FulfillmentOrderLineItemLiteResponse!]!
   packingBoxes: [PackingBoxResponse!]!
@@ -3711,6 +3701,15 @@ input ShippingCarrierInput {
   internalNotes: String = null
 }
 
+type ShippingCarrierLiteResponse {
+  id: UUID!
+  name: String!
+  carrierType: CarrierType
+  code: String
+  isActive: Boolean
+  createdAt: datetime!
+}
+
 type ShippingCarrierResponse {
   id: UUID!
   name: String!
@@ -4243,6 +4242,17 @@ input WarehouseInput {
   longitude: Decimal = null
   description: String = null
   isActive: Boolean! = true
+}
+
+type WarehouseLiteResponse {
+  id: UUID!
+  name: String!
+  status: String!
+  latitude: Decimal
+  longitude: Decimal
+  description: String
+  isActive: Boolean
+  createdAt: datetime!
 }
 
 input WarehouseLocationInput {

@@ -1,18 +1,11 @@
 """Full response type for fulfillment orders - used for detail views."""
 
-from datetime import date, datetime
+from datetime import datetime
 from typing import Self
-from uuid import UUID
 
 import strawberry
 from commons.db.v6.fulfillment import FulfillmentOrder
-from commons.db.v6.fulfillment.enums import (
-    CarrierType,
-    FulfillmentMethod,
-    FulfillmentOrderStatus,
-)
 
-from app.core.db.adapters.dto import DTOMixin
 from app.graphql.v2.core.fulfillment.strawberry.fulfillment_activity_response import (
     FulfillmentActivityResponse,
 )
@@ -24,6 +17,9 @@ from app.graphql.v2.core.fulfillment.strawberry.fulfillment_document_response im
 )
 from app.graphql.v2.core.fulfillment.strawberry.fulfillment_line_item_lite_response import (
     FulfillmentOrderLineItemLiteResponse,
+)
+from app.graphql.v2.core.fulfillment.strawberry.fulfillment_order_lite_response import (
+    FulfillmentOrderLiteResponse,
 )
 from app.graphql.v2.core.fulfillment.strawberry.packing_box_response import (
     PackingBoxResponse,
@@ -43,38 +39,10 @@ class ShipToAddressResponse:
 
 
 @strawberry.type
-class FulfillmentOrderResponse(DTOMixin[FulfillmentOrder]):
-    """Full response for detail views - includes nested collections."""
+class FulfillmentOrderResponse(FulfillmentOrderLiteResponse):
+    """Full response for detail views - extends Lite with collections and additional fields."""
 
-    _instance: strawberry.Private[FulfillmentOrder]
-    id: UUID
-    fulfillment_order_number: str
-    order_id: UUID
-    warehouse_id: UUID
-    carrier_id: UUID | None
-    status: FulfillmentOrderStatus
-    fulfillment_method: FulfillmentMethod
-    carrier_type: CarrierType | None
-    freight_class: str | None
-    need_by_date: date | None
-    has_backorder_items: bool
-    hold_reason: str | None
-
-    # Timestamps
-    released_at: datetime | None
-    pick_started_at: datetime | None
-    pick_completed_at: datetime | None
-    pack_completed_at: datetime | None
-    ship_confirmed_at: datetime | None
-    delivered_at: datetime | None
-    created_at: datetime
-
-    # Shipping
-    tracking_numbers: list[str]
-    bol_number: str | None
-    pro_number: str | None
-
-    # Signature
+    # Additional fields for detail view (not in Lite)
     pickup_signature: str | None
     pickup_timestamp: datetime | None
     pickup_customer_name: str | None
@@ -111,28 +79,6 @@ class FulfillmentOrderResponse(DTOMixin[FulfillmentOrder]):
             pickup_customer_name=model.pickup_customer_name,
             driver_name=model.driver_name,
         )
-
-    @strawberry.field
-    def warehouse_name(self) -> str:
-        """Get warehouse name - relationship is eager-loaded."""
-        return self._instance.warehouse.name if self._instance.warehouse else ""
-
-    @strawberry.field
-    def carrier_name(self) -> str | None:
-        """Get carrier name - relationship is eager-loaded."""
-        return self._instance.carrier.name if self._instance.carrier else None
-
-    @strawberry.field
-    def order_number(self) -> str:
-        """Get the sales order number - relationship is eager-loaded."""
-        return self._instance.order.order_number if self._instance.order else ""
-
-    @strawberry.field
-    def customer_name(self) -> str:
-        """Get customer name - order.sold_to_customer is eager-loaded."""
-        if self._instance.order and self._instance.order.sold_to_customer:
-            return self._instance.order.sold_to_customer.company_name
-        return ""
 
     @strawberry.field
     def ship_to_address(self) -> ShipToAddressResponse | None:
@@ -173,9 +119,7 @@ class FulfillmentOrderResponse(DTOMixin[FulfillmentOrder]):
     @strawberry.field
     def documents(self) -> list[FulfillmentDocumentResponse]:
         """Get documents - relationship is eager-loaded."""
-        return FulfillmentDocumentResponse.from_orm_model_list(
-            self._instance.documents
-        )
+        return FulfillmentDocumentResponse.from_orm_model_list(self._instance.documents)
 
     @strawberry.field
     def activities(self) -> list[FulfillmentActivityResponse]:
