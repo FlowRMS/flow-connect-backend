@@ -9,7 +9,6 @@ from commons.db.v6 import (
     WarehouseMemberRole,
     WarehouseSettings,
     WarehouseStructure,
-    WarehouseStructureCode,
 )
 
 from app.errors.common_errors import NotFoundError
@@ -162,7 +161,7 @@ class WarehouseService:
         for level in levels:
             structure = WarehouseStructure(
                 warehouse_id=warehouse_id,
-                code=WarehouseStructureCode(level.code.value),
+                code=level.code,
                 level_order=level.level_order,
             )
             created = await self.structure_repository.create(structure)

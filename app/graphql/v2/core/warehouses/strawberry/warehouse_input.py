@@ -10,12 +10,6 @@ from commons.db.v6 import (
     WarehouseSettings,
     WarehouseStructure,
 )
-from commons.db.v6.warehouse.warehouse_member_role import (
-    WarehouseMemberRole as DbWarehouseMemberRole,
-)
-from commons.db.v6.warehouse.warehouse_structure_code import (
-    WarehouseStructureCode as DbWarehouseStructureCode,
-)
 
 from app.core.strawberry.inputs import BaseInputGQL
 from app.graphql.v2.core.warehouses.strawberry.enums import (
@@ -62,7 +56,7 @@ class WarehouseMemberInput(BaseInputGQL[WarehouseMember]):
         return WarehouseMember(
             warehouse_id=self.warehouse_id,
             user_id=self.user_id,
-            role=DbWarehouseMemberRole(self.role.value),
+            role=self.role,
         )
 
 
@@ -105,6 +99,6 @@ class WarehouseStructureInput(BaseInputGQL[WarehouseStructure]):
     def to_orm_model(self) -> WarehouseStructure:
         return WarehouseStructure(
             warehouse_id=self.warehouse_id,
-            code=DbWarehouseStructureCode(self.code.value),
+            code=self.code,
             level_order=self.level_order,
         )

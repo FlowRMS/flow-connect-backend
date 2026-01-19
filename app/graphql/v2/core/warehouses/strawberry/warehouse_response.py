@@ -36,7 +36,7 @@ class WarehouseStructureResponse(DTOMixin[WarehouseStructure]):
             _instance=model,
             id=model.id,
             warehouse_id=model.warehouse_id,
-            code=WarehouseStructureCode(model.code.value),
+            code=model.code,
             level_order=model.level_order,
         )
 
@@ -84,7 +84,7 @@ class WarehouseMemberResponse(DTOMixin[WarehouseMember]):
             id=model.id,
             warehouse_id=model.warehouse_id,
             user_id=model.user_id,
-            role=WarehouseMemberRole(model.role.value),
+            role=model.role,
             created_at=model.created_at,
         )
 
