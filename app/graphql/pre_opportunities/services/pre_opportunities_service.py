@@ -97,6 +97,9 @@ class PreOpportunitiesService:
                 joinedload(PreOpportunity.details).joinedload(
                     PreOpportunityDetail.quote
                 ),
+                joinedload(PreOpportunity.details).joinedload(
+                    PreOpportunityDetail.factory
+                ),
                 lazyload("*"),
             ],
         )

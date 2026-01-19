@@ -6,6 +6,7 @@ import pendulum
 from commons.db.v6 import BaseModel, RbacPrivilegeTypeEnum, RbacResourceEnum
 from commons.db.v6.crm.links.entity_type import EntityType
 from commons.db.v6.crm.links.link_relation_model import LinkRelation
+from loguru import logger
 from sqlalchemy import Result, Select, func, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.sql.base import ExecutableOption
@@ -15,7 +16,7 @@ from app.core.processors.base import BaseProcessor
 from app.core.processors.context import EntityContext
 from app.core.processors.events import RepositoryEvent
 from app.core.processors.executor import ProcessorExecutor
-from app.errors.common_errors import UnauthorizedError
+from app.errors.common_errors import DeletionError, UnauthorizedError
 from app.graphql.v2.rbac.services.rbac_filter_service import RbacFilterService
 from app.graphql.v2.rbac.strategies.base import RbacFilterStrategy
 
@@ -48,6 +49,7 @@ class BaseRepository(Generic[T]):
     ) -> None:
         super().__init__()
         self.context = context_wrapper.get()
+        self.auth_info = self.context.auth_info
         self.session = session
         self.model_class = model_class
         self._rbac_filter_service = rbac_filter_service
@@ -73,11 +75,17 @@ class BaseRepository(Generic[T]):
         )
 
     def get_rbac_filter_strategy(self) -> RbacFilterStrategy | None:
-        """
-        Override in subclasses to provide a custom RBAC filter strategy.
+        return None
 
-        Returns None if no RBAC filtering should be applied.
+    def compute_user_ids(self, entity: T) -> list[UUID] | None:
         """
+        Override in subclasses to compute user_ids for an entity.
+
+        Default: returns [created_by_id] if entity has both user_ids and created_by_id.
+        Return None to skip setting user_ids.
+        """
+        if hasattr(entity, "user_ids"):
+            return [self.auth_info.flow_user_id]
         return None
 
     async def execute(
@@ -130,7 +138,7 @@ class BaseRepository(Generic[T]):
 
     async def get_by_id(
         self, entity_id: UUID | str, options: list[ExecutableOption] | None = None
-    ) -> T | None:
+    ) -> T:
         """
         Get an entity by its ID.
 
@@ -149,7 +157,7 @@ class BaseRepository(Generic[T]):
         result = await self.execute(
             stmt,
         )
-        return result.unique().scalar_one_or_none()
+        return result.unique().scalar_one()
 
     async def list_all(self, limit: int | None = None, offset: int = 0) -> list[T]:
         """
@@ -169,15 +177,23 @@ class BaseRepository(Generic[T]):
         result = await self.session.execute(query)
         return list(result.scalars().all())
 
-    async def create(self, entity: T) -> T:
+    async def prepare_create(self, entity: T) -> T:
         if hasattr(entity, "created_by_id"):
             setattr(entity, "created_by_id", self.context.auth_info.flow_user_id)
 
         if hasattr(entity, "created_at"):
             setattr(entity, "created_at", pendulum.now())
 
+        user_ids = self.compute_user_ids(entity)
+        if user_ids is not None and hasattr(entity, "user_ids"):
+            setattr(entity, "user_ids", user_ids)
+
         await self._run_processors(RepositoryEvent.PRE_CREATE, entity)
 
+        return entity
+
+    async def create(self, entity: T) -> T:
+        entity = await self.prepare_create(entity)
         self.session.add(entity)
         await self.session.flush()
 
@@ -196,6 +212,10 @@ class BaseRepository(Generic[T]):
                     incoming_entity, column.name, getattr(original_entity, column.name)
                 )
 
+        user_ids = self.compute_user_ids(incoming_entity)
+        if user_ids is not None and hasattr(incoming_entity, "user_ids"):
+            setattr(incoming_entity, "user_ids", user_ids)
+
         await self._run_processors(
             RepositoryEvent.PRE_UPDATE, incoming_entity, original_entity
         )
@@ -207,21 +227,27 @@ class BaseRepository(Generic[T]):
         return merged
 
     async def delete(self, entity_id: UUID | str) -> bool:
-        if isinstance(entity_id, str):
-            entity_id = UUID(entity_id)
+        try:
+            if isinstance(entity_id, str):
+                entity_id = UUID(entity_id)
 
-        entity = await self.get_edit(
-            pk=entity_id, privilege=RbacPrivilegeTypeEnum.DELETE
-        )
+            entity = await self.get_edit(
+                pk=entity_id, privilege=RbacPrivilegeTypeEnum.DELETE
+            )
 
-        await self._run_processors(RepositoryEvent.PRE_DELETE, entity)
+            await self._run_processors(RepositoryEvent.PRE_DELETE, entity)
 
-        await self.session.delete(entity)
-        await self.session.flush()
+            await self.session.delete(entity)
+            await self.session.flush()
 
-        await self._run_processors(RepositoryEvent.POST_DELETE, entity)
+            await self._run_processors(RepositoryEvent.POST_DELETE, entity)
 
-        return True
+            return True
+        except Exception as e:
+            logger.exception(f"Deletion failed: {e}")
+            raise DeletionError(
+                f"Can not delete {self.model_class.__name__} as it is linked to other records"
+            )
 
     async def exists(self, entity_id: UUID | str) -> bool:
         """
@@ -256,17 +282,28 @@ class BaseRepository(Generic[T]):
         return result.scalar_one()
 
     async def bulk_create(self, entities: list[T]) -> list[T]:
-        """
-        Create multiple entities in bulk.
+        if not entities:
+            return []
 
-        Args:
-            entities: List of entities to create
+        for entity in entities:
+            if hasattr(entity, "created_by_id"):
+                setattr(entity, "created_by_id", self.context.auth_info.flow_user_id)
 
-        Returns:
-            List of created entities
-        """
+            if hasattr(entity, "created_at"):
+                setattr(entity, "created_at", pendulum.now())
+
+            user_ids = self.compute_user_ids(entity)
+            if user_ids is not None and hasattr(entity, "user_ids"):
+                setattr(entity, "user_ids", user_ids)
+
+            await self._run_processors(RepositoryEvent.PRE_CREATE, entity)
+
         self.session.add_all(entities)
         await self.session.flush()
+
+        for entity in entities:
+            await self._run_processors(RepositoryEvent.POST_CREATE, entity)
+
         return entities
 
     async def find_by_entity(self, entity_type: EntityType, entity_id: UUID) -> list[T]:

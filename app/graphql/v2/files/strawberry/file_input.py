@@ -1,6 +1,7 @@
 from uuid import UUID
 
 import strawberry
+from commons.db.v6.enums import DocumentEntityType
 from strawberry.file_uploads import Upload
 
 
@@ -10,6 +11,7 @@ class FileUploadInput:
     file_name: str
     folder_id: UUID | None = None
     folder_path: str | None = None
+    file_entity_type: DocumentEntityType | None = None
 
 
 @strawberry.input
@@ -18,3 +20,4 @@ class MultiFileUploadInput:
     file_names: list[str]
     folder_id: UUID | None = None
     folder_path: str | None = None
+    file_entity_type: DocumentEntityType | None = None

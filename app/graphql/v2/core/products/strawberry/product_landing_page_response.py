@@ -9,7 +9,7 @@ from app.core.db.adapters.dto import LandingPageInterfaceBase
 class ProductLandingPageResponse(LandingPageInterfaceBase):
     factory_part_number: str
     unit_price: Decimal
-    default_commission_rate: Decimal
+    default_commission_rate: Decimal | None
     published: bool
     approval_needed: bool
     description: str | None

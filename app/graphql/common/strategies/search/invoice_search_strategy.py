@@ -1,6 +1,7 @@
 from typing import Any, override
 
 from commons.db.v6.commission.invoices import Invoice
+from commons.db.v6.core.factories import Factory
 from sqlalchemy.orm import InstrumentedAttribute
 
 from app.graphql.common.builders.search_query_builder import SearchQueryBuilder
@@ -22,6 +23,14 @@ class InvoiceSearchQueryBuilder(SearchQueryBuilder[Invoice]):
     @override
     def get_alias_field(self) -> Any | None:
         return None
+
+    @override
+    def get_extra_info_field(self) -> Any | None:
+        return Factory.title
+
+    @override
+    def get_joins(self) -> list[tuple[Any, Any]]:
+        return [(Factory, Invoice.factory_id == Factory.id)]
 
 
 class InvoiceSearchStrategy(SearchQueryStrategy):

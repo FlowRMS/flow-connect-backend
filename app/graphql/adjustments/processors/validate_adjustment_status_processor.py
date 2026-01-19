@@ -21,9 +21,6 @@ class ValidateAdjustmentStatusProcessor(BaseProcessor[Adjustment]):
         if original is None:
             return
 
-        if original.locked:
-            raise ValidationError("Cannot modify a locked adjustment.")
-
         if original.status == AdjustmentStatus.POSTED:
             raise ValidationError("Cannot modify a posted adjustment.")
 

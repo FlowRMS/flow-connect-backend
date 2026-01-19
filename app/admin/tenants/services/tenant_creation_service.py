@@ -61,6 +61,7 @@ class TenantCreationService:
         first_name: str | None = None,
         last_name: str | None = None,
         external_id: uuid.UUID | None = None,
+        visible: bool = True,
     ) -> uuid.UUID:
         engine = create_async_engine(database_url)
         try:
@@ -81,6 +82,7 @@ class TenantCreationService:
                         email=email,
                         role=role,
                         enabled=True,
+                        visible=visible,
                     )
                     user.auth_provider_id = workos_user_id
                     if external_id:
@@ -122,9 +124,10 @@ class TenantCreationService:
             name=name,
             url=url_slug,
             database=db_host,
-            read_only_database=db_host,
+            read_only_database=self.settings.ro_pg_host,
             username=host["username"],
             alembic_version=alembic_version,
+            org_id=workos_org.id,
         )
         _ = await self.repository.create(tenant)
         logger.info(f"Created tenant record: {tenant.id}")
@@ -157,7 +160,7 @@ class TenantCreationService:
         emails = [
             self.admin_settings.support_user_email,
             "matias@flowrms.com",
-            "derrick@flowrms.com",
+            "derrick.smith@flowrms.com",
             "mhr@flowrms.com",
             "junaid@flowrms.com",
             "kamal@flowrms.com",
@@ -187,6 +190,7 @@ class TenantCreationService:
                 workos_user_id=support_user.id,
                 role=RbacRoleEnum.ADMINISTRATOR,
                 external_id=support_user.external_id,
+                visible=False,
             )
         return TenantCreationResult(
             tenant=tenant,
@@ -201,3 +205,25 @@ class TenantCreationService:
 
     async def get_tenant(self, tenant_id: uuid.UUID) -> Tenant | None:
         return await self.repository.get_by_id(tenant_id)
+
+    async def delete_tenant(self, tenant_id: uuid.UUID) -> bool:
+        tenant = await self.repository.get_by_id(tenant_id)
+        if not tenant:
+            raise ValueError(f"Tenant with ID '{tenant_id}' not found")
+
+        logger.info(f"Deleting tenant: {tenant.name} (id: {tenant_id})")
+
+        await self.database_service.drop_database(tenant.url)
+        logger.info(f"Dropped database: {tenant.url}")
+
+        if tenant.org_id:
+            deleted = await self.workos_service.delete_tenant(tenant.org_id)
+            if deleted:
+                logger.info(f"Deleted WorkOS organization: {tenant.org_id}")
+            else:
+                logger.warning(f"Failed to delete WorkOS organization: {tenant.org_id}")
+
+        await self.repository.delete(tenant)
+        logger.info(f"Deleted tenant record: {tenant_id}")
+
+        return True

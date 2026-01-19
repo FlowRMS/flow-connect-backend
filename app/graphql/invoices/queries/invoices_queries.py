@@ -7,6 +7,7 @@ from aioinject import Injected
 from app.graphql.inject import inject
 from app.graphql.invoices.services.invoice_service import InvoiceService
 from app.graphql.invoices.strawberry.invoice_response import (
+    InvoiceLiteCheckResponse,
     InvoiceLiteResponse,
     InvoiceResponse,
 )
@@ -46,10 +47,11 @@ class InvoicesQueries:
         self,
         service: Injected[InvoiceService],
         factory_id: UUID,
-        start_from: date,
-    ) -> list[InvoiceLiteResponse]:
-        return InvoiceLiteResponse.from_orm_model_list(
-            await service.search_open_invoices(factory_id, start_from)
+        start_from: date | None = None,
+        limit: int | None = None,
+    ) -> list[InvoiceLiteCheckResponse]:
+        return InvoiceLiteCheckResponse.from_orm_model_list(
+            await service.search_open_invoices(factory_id, start_from, limit)
         )
 
     @strawberry.field

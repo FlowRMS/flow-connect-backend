@@ -3,6 +3,7 @@ from uuid import UUID
 
 from commons.db.v6 import RbacResourceEnum, User
 from commons.db.v6.crm.companies.company_model import Company
+from commons.db.v6.crm.companies.company_type_model import CompanyTypeEntity
 from commons.db.v6.crm.links.entity_type import EntityType
 from commons.db.v6.crm.links.link_relation_model import LinkRelation
 from sqlalchemy import Select, or_, select
@@ -20,6 +21,7 @@ from app.graphql.companies.strawberry.company_landing_page_response import (
 class CompaniesRepository(BaseRepository[Company]):
     landing_model = CompanyLandingPageResponse
     rbac_resource: RbacResourceEnum | None = None
+    entity_type = EntityType.COMPANY
 
     def __init__(self, context_wrapper: ContextWrapper, session: AsyncSession) -> None:
         super().__init__(session, context_wrapper, Company)
@@ -31,7 +33,7 @@ class CompaniesRepository(BaseRepository[Company]):
                 Company.created_at,
                 User.full_name.label("created_by"),
                 Company.name,
-                Company.company_source_type,
+                CompanyTypeEntity.name.label("company_source_type"),
                 Company.website,
                 Company.phone,
                 Company.tags,
@@ -40,6 +42,7 @@ class CompaniesRepository(BaseRepository[Company]):
             .select_from(Company)
             .options(lazyload("*"))
             .join(User, User.id == Company.created_by_id)
+            .join(CompanyTypeEntity, Company.company_type_id == CompanyTypeEntity.id)
         )
 
     async def find_by_job_id(self, job_id: UUID) -> list[Company]:

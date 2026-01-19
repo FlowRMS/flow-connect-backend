@@ -18,6 +18,7 @@ type AdminUserType {
   tenantId: UUID!
   tenantName: String!
   tenantUrl: String!
+  visible: Boolean
 }
 
 input CreateAdminUserInput {
@@ -30,6 +31,7 @@ input CreateAdminUserInput {
   enabled: Boolean! = true
   inside: Boolean = null
   outside: Boolean = null
+  visible: Boolean = true
 }
 
 input CreateTenantInput {
@@ -82,8 +84,11 @@ scalar UUID
 input UpdateAdminUserInput {
   firstName: String = null
   lastName: String = null
+  email: String = null
+  username: String = null
   role: RbacRoleEnum = null
   enabled: Boolean = null
   inside: Boolean = null
   outside: Boolean = null
+  visible: Boolean = null
 }

@@ -40,26 +40,33 @@ class UserService:
         return await self.repository.get_by_keycloak_id(auth_provider_id)
 
     async def create(self, user_input: UserInput) -> User:
+        existing_user = await self.repository.get_by_email(user_input.email)
+        if existing_user:
+            raise ValueError(f"User with email {user_input.email} already exists")
+
         user_model = user_input.to_orm_model()
-        user_model.id = uuid.uuid4()
-        auth_user = await self._create_workos_user(user_input, user_model.id)
+        auth_user = await self._create_workos_user(user_input)
         if not auth_user:
             raise Exception("Failed to create user in WorkOS")
 
         user_model.auth_provider_id = auth_user.id
+        user_model.id = auth_user.external_id
         return await self.repository.create(user_model)
 
     async def _create_workos_user(
-        self, user_input: UserInput, external_id: uuid.UUID
+        self, user_input: UserInput, external_id: uuid.UUID | None = None
     ) -> AuthUser | None:
         auth_input = AuthUserInput(
             email=user_input.email,
-            external_id=external_id,
+            external_id=uuid.uuid4() if external_id is None else external_id,
             tenant_id=self.auth_info.tenant_id,
             role=user_input.role,
             first_name=user_input.first_name,
             last_name=user_input.last_name,
             email_verified=False,
+            metadata={
+                "enabled": str(user_input.enabled),
+            },
         )
         auth_user = await self.workos_auth_service.create_user(auth_input)
         if not auth_user:
@@ -69,8 +76,7 @@ class UserService:
     async def update(self, user_id: UUID, user_input: UserInput) -> User:
         user = user_input.to_orm_model()
         user.id = user_id
-        if self.workos_auth_service:
-            await self._update_workos_user(user_input)
+        await self._update_workos_user(user_input)
         return await self.repository.update(user)
 
     async def _update_workos_user(self, user_input: UserInput) -> None:
@@ -79,6 +85,17 @@ class UserService:
             raise NotFoundError(
                 f"User with username {user_input.username} not found in WorkOS"
             )
+
+        workos_user = await self.workos_auth_service.get_user(user.auth_provider_id)
+
+        if not workos_user:
+            raise NotFoundError(
+                f"User with auth provider id {user.auth_provider_id} not found in WorkOS"
+            )
+
+        if workos_user.external_id != user.id:
+            raise ValueError("Mismatch between local user ID and WorkOS external ID")
+
         auth_input = AuthUserInput(
             email=user_input.email,
             tenant_id=self.auth_info.tenant_name,
@@ -86,6 +103,9 @@ class UserService:
             first_name=user_input.first_name,
             last_name=user_input.last_name,
             external_id=user.id,
+            metadata={
+                "enabled": str(user_input.enabled),
+            },
         )
         _ = await self.workos_auth_service.update_user(
             user.auth_provider_id, auth_input
@@ -112,4 +132,4 @@ class UserService:
         )
 
     async def list_all(self, limit: int | None = None, offset: int = 0) -> list[User]:
-        return await self.repository.list_all(limit, offset)
+        return await self.repository.list_users(limit, offset)

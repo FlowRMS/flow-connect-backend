@@ -38,6 +38,7 @@ class NotesService:
             note_id,
             options=[
                 joinedload(Note.created_by),
+                joinedload(Note.mentioned_users),
                 lazyload("*"),
             ],
         )
@@ -61,18 +62,11 @@ class NotesService:
         _ = await self.repository.update(note)
         return await self.find_note_by_id(note_id)
 
-    async def delete_note(self, note_id: UUID | str) -> bool:
+    async def delete_note(self, note_id: UUID) -> bool:
         """Delete a note by ID."""
         if not await self.repository.exists(note_id):
             raise NotFoundError(str(note_id))
         return await self.repository.delete(note_id)
-
-    async def get_note(self, note_id: UUID | str) -> Note:
-        """Get a note by ID."""
-        note = await self.repository.get_by_id(note_id)
-        if not note:
-            raise NotFoundError(str(note_id))
-        return note
 
     async def list_notes(self, limit: int = 20, offset: int = 0) -> list[Note]:
         """List notes with pagination."""
@@ -90,8 +84,15 @@ class NotesService:
         """Add a conversation entry to a note."""
         if not await self.repository.exists(conversation_input.note_id):
             raise NotFoundError(str(conversation_input.note_id))
-        return await self.conversations_repository.create(
+        note_conversation = await self.conversations_repository.create(
             conversation_input.to_orm_model()
+        )
+        return await self.conversations_repository.get_by_id(
+            note_conversation.id,
+            options=[
+                joinedload(NoteConversation.created_by),
+                lazyload("*"),
+            ],
         )
 
     async def update_conversation(
@@ -102,7 +103,15 @@ class NotesService:
             raise NotFoundError(str(conversation_id))
         conversation = conversation_input.to_orm_model()
         conversation.id = conversation_id
-        return await self.conversations_repository.update(conversation)
+        _ = await self.conversations_repository.update(conversation)
+
+        return await self.conversations_repository.get_by_id(
+            conversation.id,
+            options=[
+                joinedload(NoteConversation.created_by),
+                lazyload("*"),
+            ],
+        )
 
     async def delete_conversation(self, conversation_id: UUID | str) -> bool:
         """Delete a single conversation entry by its ID."""

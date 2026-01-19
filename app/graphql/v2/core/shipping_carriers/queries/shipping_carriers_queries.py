@@ -4,6 +4,7 @@ from uuid import UUID
 
 import strawberry
 from aioinject import Injected
+from commons.db.v6.crm.shipping_carriers.shipping_carrier_model import CarrierType
 
 from app.graphql.inject import inject
 from app.graphql.v2.core.shipping_carriers.services.shipping_carrier_service import (
@@ -57,4 +58,21 @@ class ShippingCarriersQueries:
     ) -> list[ShippingCarrierResponse]:
         """Search shipping carriers by name."""
         carriers = await service.search(search_term, limit)
+        return ShippingCarrierResponse.from_orm_model_list(carriers)
+
+    @strawberry.field
+    @inject
+    async def shipping_carriers_by_type(
+        self,
+        carrier_type: CarrierType,
+        active_only: bool = True,
+        service: Injected[ShippingCarrierService] = None,  # type: ignore[assignment]
+    ) -> list[ShippingCarrierResponse]:
+        """Get shipping carriers filtered by type (PARCEL or FREIGHT).
+
+        Args:
+            carrier_type: The type of carrier to filter by.
+            active_only: If true, only return active carriers.
+        """
+        carriers = await service.list_by_type(carrier_type, active_only)
         return ShippingCarrierResponse.from_orm_model_list(carriers)

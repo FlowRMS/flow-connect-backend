@@ -11,6 +11,9 @@ from commons.db.v6.crm.pre_opportunities.pre_opportunity_detail_model import (
 
 from app.core.db.adapters.dto import DTOMixin
 from app.graphql.quotes.strawberry.quote_lite_response import QuoteLiteResponse
+from app.graphql.v2.core.factories.strawberry.factory_response import (
+    FactoryLiteResponse,
+)
 from app.graphql.v2.core.products.strawberry.product_response import ProductLiteResponse
 
 
@@ -26,8 +29,8 @@ class PreOpportunityDetailResponse(DTOMixin[PreOpportunityDetail]):
     discount_rate: Decimal
     discount: Decimal
     total: Decimal
-    product_id: UUID
-    product_cpn_id: UUID | None
+    product_id: UUID | None
+    factory_id: UUID | None
     end_user_id: UUID
     lead_time: str | None
 
@@ -45,14 +48,18 @@ class PreOpportunityDetailResponse(DTOMixin[PreOpportunityDetail]):
             discount=model.discount,
             total=model.total,
             product_id=model.product_id,
-            product_cpn_id=model.product_cpn_id,
+            factory_id=model.factory_id,
             end_user_id=model.end_user_id,
             lead_time=model.lead_time,
         )
 
     @strawberry.field
-    def product(self) -> ProductLiteResponse:
-        return ProductLiteResponse.from_orm_model(self._instance.product)
+    def product(self) -> ProductLiteResponse | None:
+        return ProductLiteResponse.from_orm_model_optional(self._instance.product)
+
+    @strawberry.field
+    def factory(self) -> FactoryLiteResponse | None:
+        return FactoryLiteResponse.from_orm_model_optional(self._instance.factory)
 
     @strawberry.field
     def quote(self) -> QuoteLiteResponse | None:

@@ -1,9 +1,11 @@
 """Strawberry input types for shipping carriers."""
 
 from decimal import Decimal
+from typing import Any, cast
 
 import strawberry
 from commons.db.v6 import ShippingCarrier
+from commons.db.v6.crm.shipping_carriers.shipping_carrier_model import CarrierType
 from strawberry.scalars import JSON
 
 from app.core.strawberry.inputs import BaseInputGQL
@@ -14,6 +16,7 @@ class ShippingCarrierInput(BaseInputGQL[ShippingCarrier]):
     """Input type for creating/updating shipping carriers."""
 
     name: str
+    carrier_type: CarrierType | None = None
     code: str | None = None  # SCAC code
     account_number: str | None = None
     is_active: bool = True
@@ -50,6 +53,7 @@ class ShippingCarrierInput(BaseInputGQL[ShippingCarrier]):
     def to_orm_model(self) -> ShippingCarrier:
         return ShippingCarrier(
             name=self.name,
+            carrier_type=self.carrier_type,
             code=self.code,
             account_number=self.account_number,
             is_active=self.is_active,
@@ -57,7 +61,9 @@ class ShippingCarrierInput(BaseInputGQL[ShippingCarrier]):
             api_key=self.api_key,
             api_endpoint=self.api_endpoint,
             tracking_url_template=self.tracking_url_template,
-            service_types=self.service_types,
+            service_types=cast(dict[Any, Any], self.service_types)
+            if self.service_types
+            else None,
             default_service_type=self.default_service_type,
             max_weight=self.max_weight,
             max_dimensions=self.max_dimensions,

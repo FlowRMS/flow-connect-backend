@@ -21,44 +21,17 @@ from app.graphql.contacts.strawberry.contact_landing_page_response import (
 class ContactsRepository(BaseRepository[Contact]):
     landing_model = ContactLandingPageResponse
     rbac_resource: RbacResourceEnum | None = None
+    entity_type = EntityType.CONTACT
 
     def __init__(self, context_wrapper: ContextWrapper, session: AsyncSession) -> None:
         super().__init__(session, context_wrapper, Contact)
 
     def paginated_stmt(self) -> Select[Any]:
-        return (
-            select(
-                Contact.id,
-                Contact.created_at,
-                User.full_name.label("created_by"),
-                Contact.first_name,
-                Contact.last_name,
-                Contact.email,
-                Contact.phone,
-                Contact.role,
-                Company.name.label("company_name"),
-                Contact.tags,
-                array([Contact.created_by_id]).label("user_ids"),
-            )
-            .select_from(Contact)
-            .options(lazyload("*"))
-            .join(User, User.id == Contact.created_by_id)
-            .outerjoin(
-                LinkRelation,
-                or_(
-                    (
-                        (LinkRelation.source_entity_type == EntityType.CONTACT)
-                        & (LinkRelation.target_entity_type == EntityType.COMPANY)
-                        & (LinkRelation.source_entity_id == Contact.id)
-                    ),
-                    (
-                        (LinkRelation.source_entity_type == EntityType.COMPANY)
-                        & (LinkRelation.target_entity_type == EntityType.CONTACT)
-                        & (LinkRelation.target_entity_id == Contact.id)
-                    ),
-                ),
-            )
-            .outerjoin(
+        # Subquery to get company name - avoids cartesian product from OR-based joins
+        company_name_subq = (
+            select(Company.name)
+            .select_from(LinkRelation)
+            .join(
                 Company,
                 or_(
                     (
@@ -73,6 +46,42 @@ class ContactsRepository(BaseRepository[Contact]):
                     ),
                 ),
             )
+            .where(
+                or_(
+                    (
+                        (LinkRelation.source_entity_type == EntityType.CONTACT)
+                        & (LinkRelation.target_entity_type == EntityType.COMPANY)
+                        & (LinkRelation.source_entity_id == Contact.id)
+                    ),
+                    (
+                        (LinkRelation.source_entity_type == EntityType.COMPANY)
+                        & (LinkRelation.target_entity_type == EntityType.CONTACT)
+                        & (LinkRelation.target_entity_id == Contact.id)
+                    ),
+                )
+            )
+            .limit(1)
+            .correlate(Contact)
+            .scalar_subquery()
+        )
+
+        return (
+            select(
+                Contact.id,
+                Contact.created_at,
+                User.full_name.label("created_by"),
+                Contact.first_name,
+                Contact.last_name,
+                Contact.email,
+                Contact.phone,
+                Contact.role,
+                company_name_subq.label("company_name"),
+                Contact.tags,
+                array([Contact.created_by_id]).label("user_ids"),
+            )
+            .select_from(Contact)
+            .options(lazyload("*"))
+            .join(User, User.id == Contact.created_by_id)
         )
 
     async def get_by_company_id(self, company_id: UUID) -> list[Contact]:

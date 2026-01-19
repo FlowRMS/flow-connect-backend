@@ -2,6 +2,7 @@ from typing import Any, Self
 from uuid import UUID
 
 import strawberry
+from commons.db.v6.enums import DocumentEntityType
 from commons.db.v6.files import FileType
 from sqlalchemy.engine.row import Row
 
@@ -13,6 +14,7 @@ class FileLandingPageResponse(LandingPageInterfaceBase):
     file_name: str
     file_path: str
     file_size: int
+    file_entity_type: DocumentEntityType | None
     file_type: str | None
     file_sha: str | None
     archived: bool

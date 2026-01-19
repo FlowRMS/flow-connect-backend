@@ -6,7 +6,7 @@ from commons.db.v6.core.factories.factory_split_rate import FactorySplitRate
 from commons.db.v6.crm.links.entity_type import EntityType
 from sqlalchemy.orm import joinedload, lazyload
 
-from app.errors.common_errors import NotFoundError
+from app.errors.common_errors import NameAlreadyExistsError, NotFoundError
 from app.graphql.v2.core.factories.repositories.factories_repository import (
     FactoriesRepository,
 )
@@ -38,6 +38,9 @@ class FactoryService:
         return factory
 
     async def create(self, factory_input: FactoryInput) -> Factory:
+        if await self.repository.title_exists(factory_input.title):
+            raise NameAlreadyExistsError(factory_input.title)
+
         factory = await self.repository.create(factory_input.to_orm_model())
         return await self.get_by_id(factory.id)
 

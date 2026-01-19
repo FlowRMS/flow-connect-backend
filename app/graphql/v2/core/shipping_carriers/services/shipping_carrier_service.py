@@ -4,6 +4,7 @@ from uuid import UUID
 
 from commons.auth import AuthInfo
 from commons.db.v6 import ShippingCarrier
+from commons.db.v6.crm.shipping_carriers.shipping_carrier_model import CarrierType
 
 from app.errors.common_errors import NotFoundError
 from app.graphql.v2.core.shipping_carriers.repositories import (
@@ -65,3 +66,8 @@ class ShippingCarrierService:
     async def search(self, search_term: str, limit: int = 20) -> list[ShippingCarrier]:
         """Search carriers by name."""
         return await self.repository.search_by_name(search_term, limit)
+
+    async def list_by_type(
+        self, carrier_type: CarrierType, active_only: bool = True
+    ) -> list[ShippingCarrier]:
+        return await self.repository.list_by_type(carrier_type, active_only)

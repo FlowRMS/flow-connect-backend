@@ -1,5 +1,3 @@
-"""GraphQL output types for notes."""
-
 from datetime import datetime
 from typing import Self
 from uuid import UUID
@@ -14,6 +12,7 @@ from app.graphql.v2.core.users.strawberry.user_response import UserResponse
 
 @strawberry.type
 class NoteConversationType(DTOMixin[NoteConversation]):
+    _instance: strawberry.Private[NoteConversation]
     id: UUID
     created_at: datetime
     note_id: UUID
@@ -22,15 +21,20 @@ class NoteConversationType(DTOMixin[NoteConversation]):
     @classmethod
     def from_orm_model(cls, model: NoteConversation) -> Self:
         return cls(
+            _instance=model,
             id=model.id,
             created_at=model.created_at,
             note_id=model.note_id,
             content=model.content,
         )
 
+    @strawberry.field
+    def created_by(self) -> UserResponse:
+        return UserResponse.from_orm_model(self._instance.created_by)
+
 
 @strawberry.type
-class NoteType(DTOMixin[Note]):
+class NoteLiteType(DTOMixin[Note]):
     _instance: strawberry.Private[Note]
     id: UUID
     created_at: datetime
@@ -38,6 +42,7 @@ class NoteType(DTOMixin[Note]):
     content: str
     tags: list[str] | None
     mentions: list[UUID] | None
+    is_public: bool
 
     @classmethod
     def from_orm_model(cls, model: Note) -> Self:
@@ -49,11 +54,19 @@ class NoteType(DTOMixin[Note]):
             content=model.content,
             tags=model.tags,
             mentions=model.mentions,
+            is_public=model.is_public,
         )
 
+
+@strawberry.type
+class NoteType(NoteLiteType):
     @strawberry.field
     def created_by(self) -> UserResponse:
         return UserResponse.from_orm_model(self._instance.created_by)
+
+    @strawberry.field
+    def mentioned_users(self) -> list[UserResponse]:
+        return UserResponse.from_orm_model_list(self._instance.mentioned_users)
 
     # @strawberry.field
     # def conversations(self) -> list[NoteConversationType]:

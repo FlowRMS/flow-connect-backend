@@ -3,14 +3,40 @@ from uuid import UUID
 from commons.db.v6.core.products.product_category import ProductCategory
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import joinedload, selectinload
 
 from app.core.context_wrapper import ContextWrapper
+from app.core.processors.executor import ProcessorExecutor
 from app.graphql.base_repository import BaseRepository
+from app.graphql.v2.core.products.processors.validate_product_category_hierarchy_processor import (
+    ValidateProductCategoryHierarchyProcessor,
+)
 
 
 class ProductCategoryRepository(BaseRepository[ProductCategory]):
-    def __init__(self, context_wrapper: ContextWrapper, session: AsyncSession) -> None:
-        super().__init__(session, context_wrapper, ProductCategory)
+    def __init__(
+        self,
+        context_wrapper: ContextWrapper,
+        session: AsyncSession,
+        processor_executor: ProcessorExecutor,
+        validate_hierarchy_processor: ValidateProductCategoryHierarchyProcessor,
+    ) -> None:
+        super().__init__(
+            session,
+            context_wrapper,
+            ProductCategory,
+            processor_executor=processor_executor,
+            processor_executor_classes=[validate_hierarchy_processor],
+        )
+
+    async def name_exists(self, factory_id: UUID | None, name: str) -> bool:
+        stmt = select(ProductCategory).where(
+            ProductCategory.title == name,
+        )
+        if factory_id is None:
+            stmt = stmt.where(ProductCategory.factory_id.is_(None))
+        result = await self.session.execute(stmt)
+        return result.scalars().first() is not None
 
     async def get_by_factory_id(self, factory_id: UUID) -> list[ProductCategory]:
         stmt = select(ProductCategory).where(ProductCategory.factory_id == factory_id)
@@ -30,5 +56,27 @@ class ProductCategoryRepository(BaseRepository[ProductCategory]):
             stmt = stmt.where(ProductCategory.parent_id == parent_id)
         if grandparent_id is not None:
             stmt = stmt.where(ProductCategory.grandparent_id == grandparent_id)
-        result = await self.session.execute(stmt)
-        return list(result.scalars().all())
+        result = await self.session.execute(
+            stmt.options(
+                joinedload(ProductCategory.parent),
+                joinedload(ProductCategory.grandparent),
+                selectinload(ProductCategory.children),
+            )
+        )
+        return list(result.scalars().unique().all())
+
+    async def get_root_categories(
+        self, factory_id: UUID | None = None
+    ) -> list[ProductCategory]:
+        """Get all categories with no parent (Level 1 / root categories)."""
+        stmt = select(ProductCategory).where(ProductCategory.parent_id.is_(None))
+        if factory_id is not None:
+            stmt = stmt.where(ProductCategory.factory_id == factory_id)
+        result = await self.session.execute(
+            stmt.options(
+                joinedload(ProductCategory.parent),
+                joinedload(ProductCategory.grandparent),
+                selectinload(ProductCategory.children),
+            )
+        )
+        return list(result.scalars().unique().all())

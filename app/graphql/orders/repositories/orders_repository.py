@@ -6,23 +6,26 @@ from commons.db.v6.commission.orders import (
     Order,
     OrderBalance,
     OrderDetail,
-    OrderInsideRep,
-    OrderSplitRate,
 )
 from commons.db.v6.core import Customer, Factory
 from commons.db.v6.crm.jobs.jobs_model import Job
 from commons.db.v6.crm.links.entity_type import EntityType
 from commons.db.v6.crm.links.link_relation_model import LinkRelation
-from sqlalchemy import Select, func, literal, or_, select
-from sqlalchemy.dialects.postgresql import ARRAY, array
-from sqlalchemy.dialects.postgresql import UUID as PG_UUID
+from sqlalchemy import Select, func, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import joinedload, lazyload
 
 from app.core.context_wrapper import ContextWrapper
 from app.core.exceptions import NotFoundError
-from app.core.processors import ProcessorExecutor
+from app.core.processors import ProcessorExecutor, ValidateCommissionRateProcessor
+from app.core.processors.events import RepositoryEvent
 from app.graphql.base_repository import BaseRepository
+from app.graphql.orders.processors.default_rep_split_processor import (
+    OrderDefaultRepSplitProcessor,
+)
+from app.graphql.orders.processors.set_shipping_balance_processor import (
+    SetShippingBalanceProcessor,
+)
 from app.graphql.orders.repositories.order_balance_repository import (
     OrderBalanceRepository,
 )
@@ -50,6 +53,9 @@ class OrdersRepository(BaseRepository[Order]):
         rbac_filter_service: RbacFilterService,
         processor_executor: ProcessorExecutor,
         validate_rep_split_processor: ValidateRepSplitProcessor,
+        set_shipping_balance_processor: SetShippingBalanceProcessor,
+        order_default_rep_split_processor: OrderDefaultRepSplitProcessor,
+        validate_commission_rate_processor: ValidateCommissionRateProcessor,
     ) -> None:
         super().__init__(
             session,
@@ -57,7 +63,12 @@ class OrdersRepository(BaseRepository[Order]):
             Order,
             rbac_filter_service,
             processor_executor,
-            processor_executor_classes=[validate_rep_split_processor],
+            processor_executor_classes=[
+                order_default_rep_split_processor,
+                validate_rep_split_processor,
+                set_shipping_balance_processor,
+                validate_commission_rate_processor,
+            ],
         )
         self.balance_repository = balance_repository
 
@@ -66,40 +77,6 @@ class OrdersRepository(BaseRepository[Order]):
         return OrderOwnerFilterStrategy(RbacResourceEnum.ORDER)
 
     def paginated_stmt(self) -> Select[Any]:
-        empty_array = literal([]).cast(ARRAY(PG_UUID))
-
-        inside_rep_user_ids_subq = (
-            select(
-                OrderDetail.order_id,
-                func.array_agg(OrderInsideRep.user_id).label("inside_rep_user_ids"),
-            )
-            .join(OrderInsideRep, OrderInsideRep.order_detail_id == OrderDetail.id)
-            .group_by(OrderDetail.order_id)
-            .subquery()
-        )
-
-        split_rate_user_ids_subq = (
-            select(
-                OrderDetail.order_id,
-                func.array_agg(OrderSplitRate.user_id.distinct()).label(
-                    "split_rate_user_ids"
-                ),
-            )
-            .join(OrderSplitRate, OrderSplitRate.order_detail_id == OrderDetail.id)
-            .group_by(OrderDetail.order_id)
-            .subquery()
-        )
-
-        user_ids_expr = func.array_cat(
-            func.array_cat(
-                array([Order.created_by_id]),
-                func.coalesce(
-                    inside_rep_user_ids_subq.c.inside_rep_user_ids, empty_array
-                ),
-            ),
-            func.coalesce(split_rate_user_ids_subq.c.split_rate_user_ids, empty_array),
-        ).label("user_ids")
-
         return (
             select(
                 Order.id,
@@ -117,7 +94,7 @@ class OrdersRepository(BaseRepository[Order]):
                 Factory.title.label("factory_name"),
                 Job.job_name.label("job_name"),
                 Customer.company_name.label("sold_to_customer_name"),
-                user_ids_expr,
+                Order.user_ids,
             )
             .select_from(Order)
             .options(lazyload("*"))
@@ -126,21 +103,25 @@ class OrdersRepository(BaseRepository[Order]):
             .join(Factory, Factory.id == Order.factory_id)
             .join(Customer, Customer.id == Order.sold_to_customer_id)
             .outerjoin(Job, Job.id == Order.job_id)
-            .outerjoin(
-                inside_rep_user_ids_subq,
-                inside_rep_user_ids_subq.c.order_id == Order.id,
-            )
-            .outerjoin(
-                split_rate_user_ids_subq,
-                split_rate_user_ids_subq.c.order_id == Order.id,
-            )
         )
+
+    @override
+    def compute_user_ids(self, order: Order) -> list[UUID]:
+        user_ids: set[UUID] = {self.auth_info.flow_user_id}
+        for detail in order.details:
+            for split_rate in detail.outside_split_rates:
+                user_ids.add(split_rate.user_id)
+            for inside_rep in detail.inside_split_rates:
+                user_ids.add(inside_rep.user_id)
+        return list(user_ids)
 
     async def find_order_by_id(self, order_id: UUID) -> Order:
         order = await self.get_by_id(
             order_id,
             options=[
                 joinedload(Order.details),
+                joinedload(Order.details).joinedload(OrderDetail.invoice),
+                joinedload(Order.details).joinedload(OrderDetail.end_user),
                 joinedload(Order.details).joinedload(OrderDetail.product),
                 joinedload(Order.details).joinedload(OrderDetail.outside_split_rates),
                 joinedload(Order.details).joinedload(OrderDetail.inside_split_rates),
@@ -150,6 +131,7 @@ class OrdersRepository(BaseRepository[Order]):
                 joinedload(Order.bill_to_customer),
                 joinedload(Order.created_by),
                 joinedload(Order.job),
+                joinedload(Order.factory),
                 lazyload("*"),
             ],
         )
@@ -171,14 +153,34 @@ class OrdersRepository(BaseRepository[Order]):
         await self.session.flush()
         return await self.find_order_by_id(updated.id)
 
-    async def order_number_exists(self, order_number: str) -> bool:
-        result = await self.session.execute(
+    async def order_number_exists(
+        self, order_number: str, customer_id: UUID | None
+    ) -> bool:
+        stmt = (
             select(func.count())
             .select_from(Order)
             .options(lazyload("*"))
             .where(Order.order_number == order_number)
         )
+        if customer_id:
+            stmt = stmt.where(Order.sold_to_customer_id == customer_id)
+
+        result = await self.session.execute(stmt)
         return result.scalar_one() > 0
+
+    async def find_by_order_number(
+        self, order_number: str, customer_id: UUID
+    ) -> Order | None:
+        stmt = (
+            select(Order)
+            .options(lazyload("*"))
+            .where(
+                Order.order_number == order_number,
+                Order.sold_to_customer_id == customer_id,
+            )
+        )
+        result = await self.session.execute(stmt)
+        return result.scalar_one_or_none()
 
     async def search_by_order_number(
         self, search_term: str, limit: int = 20
@@ -213,6 +215,71 @@ class OrdersRepository(BaseRepository[Order]):
                     ),
                 ),
             )
+        )
+        result = await self.session.execute(stmt)
+        return list(result.scalars().all())
+
+    async def find_by_factory_id(
+        self, factory_id: UUID, limit: int = 25
+    ) -> list[Order]:
+        stmt = (
+            select(Order)
+            .options(lazyload("*"))
+            .where(Order.factory_id == factory_id)
+            .limit(limit)
+        )
+        result = await self.session.execute(stmt)
+        return list(result.scalars().all())
+
+    async def order_numbers_exist_bulk(
+        self,
+        order_customer_pairs: list[tuple[str, UUID]],
+    ) -> set[tuple[str, UUID]]:
+        if not order_customer_pairs:
+            return set()
+
+        conditions = [
+            (Order.order_number == order_num) & (Order.sold_to_customer_id == cust_id)
+            for order_num, cust_id in order_customer_pairs
+        ]
+
+        stmt = select(Order).options(lazyload("*")).where(or_(*conditions))
+
+        result = await self.session.execute(stmt)
+        return {
+            (row.order_number, row.sold_to_customer_id)
+            for row in result.scalars().all()
+        }
+
+    async def create_balances_bulk(
+        self,
+        details_list: list[list[OrderDetail]],
+    ) -> list[OrderBalance]:
+        balances = [
+            self.balance_repository.calculate_balance_from_details(details)
+            for details in details_list
+        ]
+        self.session.add_all(balances)
+        await self.session.flush(balances)
+        return balances
+
+    async def create_bulk(self, orders: list[Order]) -> list[Order]:
+        for order in orders:
+            order = await self.prepare_create(order)
+
+        self.session.add_all(orders)
+        await self.session.flush(orders)
+
+        for order in orders:
+            await self._run_processors(RepositoryEvent.POST_CREATE, order)
+
+        return orders
+
+    async def find_by_sold_to_customer_id(self, customer_id: UUID) -> list[Order]:
+        stmt = (
+            select(Order)
+            .options(lazyload("*"))
+            .where(Order.sold_to_customer_id == customer_id)
         )
         result = await self.session.execute(stmt)
         return list(result.scalars().all())

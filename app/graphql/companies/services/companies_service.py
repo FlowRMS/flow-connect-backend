@@ -2,6 +2,7 @@ from uuid import UUID
 
 from commons.auth import AuthInfo
 from commons.db.v6.crm.companies.company_model import Company
+from commons.db.v6.crm.links.entity_type import EntityType
 from sqlalchemy.orm import joinedload, lazyload
 
 from app.errors.common_errors import NotFoundError
@@ -26,6 +27,8 @@ class CompaniesService:
             company_id,
             options=[
                 joinedload(Company.created_by),
+                joinedload(Company.company_type),
+                joinedload(Company.territory),
                 lazyload("*"),
             ],
         )
@@ -102,3 +105,8 @@ class CompaniesService:
     async def find_companies_by_contact_id(self, contact_id: UUID) -> list[Company]:
         """Find all companies linked to the given contact ID."""
         return await self.repository.find_by_contact_id(contact_id)
+
+    async def find_by_entity(
+        self, entity_type: EntityType, entity_id: UUID
+    ) -> list[Company]:
+        return await self.repository.find_by_entity(entity_type, entity_id)

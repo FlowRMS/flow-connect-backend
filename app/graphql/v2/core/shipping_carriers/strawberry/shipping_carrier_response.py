@@ -1,12 +1,11 @@
-"""Strawberry response types for shipping carriers."""
-
 from datetime import datetime
 from decimal import Decimal
-from typing import Self
+from typing import Self, cast
 from uuid import UUID
 
 import strawberry
 from commons.db.v6 import ShippingCarrier
+from commons.db.v6.crm.shipping_carriers.shipping_carrier_model import CarrierType
 from strawberry.scalars import JSON
 
 from app.core.db.adapters.dto import DTOMixin
@@ -19,6 +18,7 @@ class ShippingCarrierResponse(DTOMixin[ShippingCarrier]):
     _instance: strawberry.Private[ShippingCarrier]
     id: UUID
     name: str
+    carrier_type: CarrierType | None
     code: str | None  # SCAC code
     account_number: str | None
     is_active: bool | None
@@ -56,6 +56,7 @@ class ShippingCarrierResponse(DTOMixin[ShippingCarrier]):
             _instance=model,
             id=model.id,
             name=model.name,
+            carrier_type=model.carrier_type,
             code=model.code,
             account_number=model.account_number,
             is_active=model.is_active,
@@ -64,7 +65,9 @@ class ShippingCarrierResponse(DTOMixin[ShippingCarrier]):
             api_key=model.api_key,
             api_endpoint=model.api_endpoint,
             tracking_url_template=model.tracking_url_template,
-            service_types=model.service_types,
+            service_types=cast(JSON, model.service_types)
+            if model.service_types
+            else None,
             default_service_type=model.default_service_type,
             max_weight=model.max_weight,
             max_dimensions=model.max_dimensions,
