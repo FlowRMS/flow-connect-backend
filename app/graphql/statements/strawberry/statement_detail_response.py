@@ -6,6 +6,9 @@ import strawberry
 from commons.db.v6.commission.statements import CommissionStatementDetail
 
 from app.core.db.adapters.dto import DTOMixin
+from app.graphql.invoices.strawberry.invoice_lite_response import InvoiceLiteResponse
+from app.graphql.orders.strawberry.order_detail_response import OrderDetailLiteResponse
+from app.graphql.orders.strawberry.order_lite_response import OrderLiteResponse
 from app.graphql.statements.strawberry.statement_split_rate_response import (
     StatementSplitRateResponse,
 )
@@ -85,6 +88,20 @@ class StatementDetailResponse(DTOMixin[CommissionStatementDetail]):
         return CustomerLiteResponse.from_orm_model_optional(
             self._instance.sold_to_customer
         )
+
+    @strawberry.field
+    def order(self) -> OrderLiteResponse | None:
+        return OrderLiteResponse.from_orm_model_optional(self._instance.order)
+
+    @strawberry.field
+    def order_detail(self) -> OrderDetailLiteResponse | None:
+        return OrderDetailLiteResponse.from_orm_model_optional(
+            self._instance.order_detail
+        )
+
+    @strawberry.field
+    def invoice(self) -> InvoiceLiteResponse | None:
+        return InvoiceLiteResponse.from_orm_model_optional(self._instance.invoice)
 
     @strawberry.field
     def end_user(self) -> CustomerLiteResponse | None:

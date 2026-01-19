@@ -87,6 +87,15 @@ class StatementsRepository(BaseRepository[CommissionStatement]):
                     CommissionStatementDetail.sold_to_customer
                 ),
                 joinedload(CommissionStatement.details).joinedload(
+                    CommissionStatementDetail.order
+                ),
+                joinedload(CommissionStatement.details).joinedload(
+                    CommissionStatementDetail.order_detail
+                ),
+                joinedload(CommissionStatement.details).joinedload(
+                    CommissionStatementDetail.invoice
+                ),
+                joinedload(CommissionStatement.details).joinedload(
                     CommissionStatementDetail.product
                 ),
                 joinedload(CommissionStatement.details).joinedload(

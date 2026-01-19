@@ -3804,6 +3804,9 @@ type StatementDetailResponse {
   leadTime: String
   note: String
   soldToCustomer: CustomerLiteResponse
+  order: OrderLiteResponse
+  orderDetail: OrderDetailLiteResponse
+  invoice: InvoiceLiteResponse
   endUser: CustomerLiteResponse
   product: ProductLiteResponse
   uom: ProductUomResponse
