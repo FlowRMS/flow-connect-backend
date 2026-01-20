@@ -9,6 +9,7 @@ from app.graphql.v2.core.deliveries.services.delivery_assignee_service import (
     DeliveryAssigneeService,
 )
 from app.graphql.v2.core.deliveries.strawberry.delivery_assignee_response import (
+    DeliveryAssigneeLiteResponse,
     DeliveryAssigneeResponse,
 )
 
@@ -23,9 +24,10 @@ class DeliveryAssigneesQueries:
         self,
         delivery_id: UUID,
         service: Injected[DeliveryAssigneeService],
-    ) -> list[DeliveryAssigneeResponse]:
+    ) -> list[DeliveryAssigneeLiteResponse]:
+        """List assignees - returns lite response to avoid N+1 queries."""
         assignees = await service.list_by_delivery(delivery_id)
-        return DeliveryAssigneeResponse.from_orm_model_list(assignees)
+        return DeliveryAssigneeLiteResponse.from_orm_model_list(assignees)
 
     @strawberry.field
     @inject

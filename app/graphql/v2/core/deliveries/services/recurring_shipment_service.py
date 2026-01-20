@@ -9,13 +9,8 @@ from app.errors.common_errors import NotFoundError
 from app.graphql.v2.core.deliveries.repositories.recurring_shipments_repository import (
     RecurringShipmentsRepository,
 )
-from app.graphql.v2.core.deliveries.strawberry.delivery_input import (
-    RecurringShipmentInput,
-)
-from app.graphql.v2.core.deliveries.utils.recurrence_utils import (
-    calculate_next_date,
-    validate_recurrence_pattern,
-)
+from app.graphql.v2.core.deliveries.strawberry.inputs import RecurringShipmentInput
+from app.graphql.v2.core.deliveries.utils.recurrence_utils import calculate_next_date
 
 
 class RecurringShipmentService:
@@ -51,25 +46,14 @@ class RecurringShipmentService:
         The backend now calculates the next occurrence date instead of relying
         on the frontend to send it.
 
-        Steps:
-        1. Validate recurrence pattern
-        2. Calculate next_expected_date from start_date
-        3. Create recurring shipment
+        Note: Recurrence pattern validation is handled by the repository preprocessor.
 
         Args:
             input: RecurringShipmentInput with pattern and dates
 
         Returns:
             Created recurring shipment with calculated next_expected_date
-
-        Raises:
-            ValueError: If recurrence pattern is invalid
         """
-        # Validate recurrence pattern
-        validation_error = validate_recurrence_pattern(input.recurrence_pattern)
-        if validation_error:
-            raise ValueError(f"Invalid recurrence pattern: {validation_error}")
-
         # Convert input to ORM model
         shipment = input.to_orm_model()
 
@@ -96,6 +80,8 @@ class RecurringShipmentService:
 
         If the recurrence pattern or start_date changes, recalculates next_expected_date.
 
+        Note: Recurrence pattern validation is handled by the repository preprocessor.
+
         Args:
             shipment_id: ID of shipment to update
             input: Updated shipment data
@@ -105,18 +91,11 @@ class RecurringShipmentService:
 
         Raises:
             NotFoundError: If shipment not found
-            ValueError: If recurrence pattern is invalid
         """
         if not await self.repository.exists(shipment_id):
             raise NotFoundError(
                 f"Recurring shipment with id {shipment_id} not found"
             )
-
-        # Validate recurrence pattern if present
-        if input.recurrence_pattern:
-            validation_error = validate_recurrence_pattern(input.recurrence_pattern)
-            if validation_error:
-                raise ValueError(f"Invalid recurrence pattern: {validation_error}")
 
         # Get existing shipment to check if pattern/dates changed
         existing = await self.repository.get_by_id(shipment_id)

@@ -8,9 +8,7 @@ from app.errors.common_errors import NotFoundError
 from app.graphql.v2.core.deliveries.repositories.delivery_status_history_repository import (
     DeliveryStatusHistoryRepository,
 )
-from app.graphql.v2.core.deliveries.strawberry.delivery_input import (
-    DeliveryStatusHistoryInput,
-)
+from app.graphql.v2.core.deliveries.strawberry.inputs import DeliveryStatusHistoryInput
 
 
 class DeliveryStatusHistoryService:

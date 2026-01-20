@@ -14,8 +14,8 @@ from app.core.db.adapters.dto import DTOMixin
 
 
 @strawberry.type
-class DeliveryIssueResponse(DTOMixin[DeliveryIssue]):
-    """Response type for delivery issues."""
+class DeliveryIssueLiteResponse(DTOMixin[DeliveryIssue]):
+    """Lite response type for delivery issues - used for list queries."""
 
     _instance: strawberry.Private[DeliveryIssue]
     id: UUID
@@ -50,3 +50,10 @@ class DeliveryIssueResponse(DTOMixin[DeliveryIssue]):
             created_at=model.created_at,
             created_by_id=model.created_by_id,
         )
+
+
+@strawberry.type
+class DeliveryIssueResponse(DeliveryIssueLiteResponse):
+    """Full response type for delivery issues."""
+
+    pass

@@ -9,8 +9,8 @@ from app.core.db.adapters.dto import DTOMixin
 
 
 @strawberry.type
-class DeliveryAssigneeResponse(DTOMixin[DeliveryAssignee]):
-    """Response type for delivery assignees."""
+class DeliveryAssigneeLiteResponse(DTOMixin[DeliveryAssignee]):
+    """Lite response type for delivery assignees - used for list queries."""
 
     _instance: strawberry.Private[DeliveryAssignee]
     id: UUID
@@ -27,3 +27,10 @@ class DeliveryAssigneeResponse(DTOMixin[DeliveryAssignee]):
             user_id=model.user_id,
             role=model.role,
         )
+
+
+@strawberry.type
+class DeliveryAssigneeResponse(DeliveryAssigneeLiteResponse):
+    """Full response type for delivery assignees."""
+
+    pass

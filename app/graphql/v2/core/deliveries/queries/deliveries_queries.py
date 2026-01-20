@@ -7,6 +7,7 @@ from aioinject import Injected
 from app.graphql.inject import inject
 from app.graphql.v2.core.deliveries.services.delivery_service import DeliveryService
 from app.graphql.v2.core.deliveries.strawberry.delivery_response import (
+    DeliveryLiteResponse,
     DeliveryResponse,
 )
 
@@ -23,12 +24,13 @@ class DeliveriesQueries:
         warehouse_id: UUID | None = None,
         limit: int | None = None,
         offset: int | None = None,
-    ) -> list[DeliveryResponse]:
+    ) -> list[DeliveryLiteResponse]:
+        """List deliveries - returns lite response to avoid N+1 queries."""
         if warehouse_id:
             deliveries = await service.list_by_warehouse(warehouse_id, limit=limit, offset=offset)
         else:
             deliveries = await service.list_all(limit=limit, offset=offset)
-        return DeliveryResponse.from_orm_model_list(deliveries)
+        return DeliveryLiteResponse.from_orm_model_list(deliveries)
 
     @strawberry.field
     @inject

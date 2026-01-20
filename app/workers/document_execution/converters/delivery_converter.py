@@ -14,9 +14,9 @@ from app.graphql.v2.core.deliveries.services.delivery_item_service import (
     DeliveryItemService,
 )
 from app.graphql.v2.core.deliveries.services.delivery_service import DeliveryService
-from app.graphql.v2.core.deliveries.strawberry.delivery_input import (
-    DeliveryInput,
-    DeliveryItemInput,
+from app.graphql.v2.core.deliveries.strawberry.inputs import (
+        DeliveryInput,
+        DeliveryItemInput,
 )
 
 from .base import BaseEntityConverter

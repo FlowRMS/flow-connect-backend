@@ -10,7 +10,7 @@ from app.errors.common_errors import NotFoundError
 from app.graphql.v2.core.deliveries.repositories.deliveries_repository import (
     DeliveriesRepository,
 )
-from app.graphql.v2.core.deliveries.strawberry.delivery_input import DeliveryInput
+from app.graphql.v2.core.deliveries.strawberry.inputs import DeliveryInput
 from app.graphql.v2.core.deliveries.services.delivery_inventory_sync_service import (
     DeliveryInventorySyncService,
 )
@@ -37,7 +37,7 @@ class DeliveryService:
         return delivery
 
     async def list_all(self, limit: int | None = None, offset: int | None = None) -> list[Delivery]:
-        return await self.repository.list_all_with_relations(limit=limit, offset=offset)
+        return await self.repository.list_all(limit=limit, offset=offset)
 
     async def list_by_warehouse(self, warehouse_id: UUID, limit: int | None = None, offset: int | None = None) -> list[Delivery]:
         return await self.repository.list_by_warehouse(warehouse_id, limit=limit, offset=offset)
@@ -48,10 +48,13 @@ class DeliveryService:
         - Creates delivery in DRAFT status (unless specified otherwise)
         - Auto-creates initial status history entry
         - Sets created_by from auth context
+        - If linked to recurring shipment, advances next_expected_date
         """
+        from commons.db.v6 import RecurringShipment
         from commons.db.v6.warehouse.deliveries.delivery_status_history_model import (
             DeliveryStatusHistory,
         )
+        from sqlalchemy import select
 
         # Create delivery model from input
         delivery = input.to_orm_model()
@@ -72,6 +75,22 @@ class DeliveryService:
             note=f"Delivery created in {delivery.status.value} status",
         )
         self.repository.session.add(initial_status_history)
+
+        # If linked to recurring shipment, advance next_expected_date to next occurrence
+        if created_delivery.recurring_shipment_id:
+            result = await self.repository.session.execute(
+                select(RecurringShipment).where(
+                    RecurringShipment.id == created_delivery.recurring_shipment_id
+                )
+            )
+            recurring = result.scalar_one_or_none()
+            if recurring and recurring.recurrence_pattern:
+                # Calculate next date from the delivery's expected_date
+                delivery_date = created_delivery.expected_date or date.today()
+                next_date = calculate_next_date(recurring.recurrence_pattern, delivery_date)
+                recurring.last_generated_date = delivery_date
+                recurring.next_expected_date = next_date
+
         await self.repository.session.flush()
 
         return created_delivery
@@ -194,13 +213,13 @@ class DeliveryService:
             await self.repository.session.flush()
             return None
 
-        # Calculate next occurrence date based on the completed delivery date.
-        completed_date = (
-            completed_delivery.received_at.date()
-            if completed_delivery.received_at
-            else completed_delivery.expected_date
-        ) or date.today()
-        next_date = calculate_next_date(recurring_shipment.recurrence_pattern, completed_date)
+        # Calculate next occurrence date based on the SCHEDULED date of the completed delivery.
+        # We use expected_date (the scheduled delivery date) NOT received_at (when it was actually received)
+        # because the recurrence pattern is based on the schedule, not actual receipt timing.
+        # For example: if delivery was scheduled for Friday Jan 23 and received Monday Jan 19,
+        # the next weekly Friday delivery should be Jan 30, not Jan 23 again.
+        scheduled_date = completed_delivery.expected_date or date.today()
+        next_date = calculate_next_date(recurring_shipment.recurrence_pattern, scheduled_date)
 
         # Generate PO number (simple auto-increment based on year)
         year = next_date.year
@@ -250,9 +269,11 @@ class DeliveryService:
         )
         self.repository.session.add(status_history)
 
-        # Update recurring shipment
-        recurring_shipment.last_generated_date = completed_date
-        recurring_shipment.next_expected_date = next_date
+        # Update recurring shipment: we've now generated `next_date`, so advance again.
+        recurring_shipment.last_generated_date = next_date
+        recurring_shipment.next_expected_date = calculate_next_date(
+            recurring_shipment.recurrence_pattern, next_date
+        )
 
         await self.repository.session.flush()
 

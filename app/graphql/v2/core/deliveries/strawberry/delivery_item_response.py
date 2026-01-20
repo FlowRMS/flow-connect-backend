@@ -44,16 +44,16 @@ class DeliveryItemResponse(DTOMixin[DeliveryItem]):
         )
 
     @strawberry.field
-    async def receipts(self) -> list[DeliveryItemReceiptResponse]:
-        receipts = await self._instance.awaitable_attrs.receipts
-        return DeliveryItemReceiptResponse.from_orm_model_list(receipts)
+    def receipts(self) -> list[DeliveryItemReceiptResponse]:
+        """Receipts - pre-loaded via repository."""
+        return DeliveryItemReceiptResponse.from_orm_model_list(self._instance.receipts)
 
     @strawberry.field
-    async def issues(self) -> list[DeliveryIssueResponse]:
-        issues = await self._instance.awaitable_attrs.issues
-        return DeliveryIssueResponse.from_orm_model_list(issues)
+    def issues(self) -> list[DeliveryIssueResponse]:
+        """Issues - pre-loaded via repository."""
+        return DeliveryIssueResponse.from_orm_model_list(self._instance.issues)
 
     @strawberry.field
-    async def product(self) -> ProductLiteResponse:
-        product = await self._instance.awaitable_attrs.product
-        return ProductLiteResponse.from_orm_model(product)
+    def product(self) -> ProductLiteResponse:
+        """Product - pre-loaded via repository."""
+        return ProductLiteResponse.from_orm_model(self._instance.product)

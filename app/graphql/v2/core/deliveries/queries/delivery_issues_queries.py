@@ -9,6 +9,7 @@ from app.graphql.v2.core.deliveries.services.delivery_issue_service import (
     DeliveryIssueService,
 )
 from app.graphql.v2.core.deliveries.strawberry.delivery_issue_response import (
+    DeliveryIssueLiteResponse,
     DeliveryIssueResponse,
 )
 
@@ -23,9 +24,10 @@ class DeliveryIssuesQueries:
         self,
         delivery_id: UUID,
         service: Injected[DeliveryIssueService],
-    ) -> list[DeliveryIssueResponse]:
+    ) -> list[DeliveryIssueLiteResponse]:
+        """List issues - returns lite response to avoid N+1 queries."""
         issues = await service.list_by_delivery(delivery_id)
-        return DeliveryIssueResponse.from_orm_model_list(issues)
+        return DeliveryIssueLiteResponse.from_orm_model_list(issues)
 
     @strawberry.field
     @inject

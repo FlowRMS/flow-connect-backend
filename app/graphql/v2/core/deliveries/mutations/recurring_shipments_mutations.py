@@ -8,9 +8,7 @@ from app.graphql.inject import inject
 from app.graphql.v2.core.deliveries.services.recurring_shipment_service import (
     RecurringShipmentService,
 )
-from app.graphql.v2.core.deliveries.strawberry.delivery_input import (
-    RecurringShipmentInput,
-)
+from app.graphql.v2.core.deliveries.strawberry.inputs import RecurringShipmentInput
 from app.graphql.v2.core.deliveries.strawberry.recurring_shipment_response import (
     RecurringShipmentResponse,
 )

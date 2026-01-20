@@ -11,9 +11,7 @@ from app.graphql.v2.core.deliveries.services.delivery_document_service import (
 from app.graphql.v2.core.deliveries.strawberry.delivery_document_response import (
     DeliveryDocumentResponse,
 )
-from app.graphql.v2.core.deliveries.strawberry.delivery_input import (
-    DeliveryDocumentInput,
-)
+from app.graphql.v2.core.deliveries.strawberry.inputs import DeliveryDocumentInput
 
 
 @strawberry.type

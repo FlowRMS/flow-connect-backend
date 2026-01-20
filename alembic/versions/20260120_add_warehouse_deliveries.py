@@ -273,12 +273,8 @@ def upgrade() -> None:
         "delivery_documents",
         sa.Column("id", postgresql.UUID(as_uuid=True), nullable=False),
         sa.Column("delivery_id", postgresql.UUID(as_uuid=True), nullable=False),
-        sa.Column("file_id", postgresql.UUID(as_uuid=True), nullable=True),
-        sa.Column("name", sa.String(255), nullable=False),
+        sa.Column("file_id", postgresql.UUID(as_uuid=True), nullable=False),
         sa.Column("doc_type", sa.SmallInteger(), nullable=False),
-        sa.Column("file_url", sa.Text(), nullable=False),
-        sa.Column("mime_type", sa.String(100), nullable=False),
-        sa.Column("file_size", sa.Integer(), nullable=True),
         sa.Column("uploaded_by_id", postgresql.UUID(as_uuid=True), nullable=True),
         sa.Column(
             "uploaded_at",

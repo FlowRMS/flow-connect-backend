@@ -8,9 +8,7 @@ from app.errors.common_errors import NotFoundError
 from app.graphql.v2.core.deliveries.repositories.delivery_assignees_repository import (
     DeliveryAssigneesRepository,
 )
-from app.graphql.v2.core.deliveries.strawberry.delivery_input import (
-    DeliveryAssigneeInput,
-)
+from app.graphql.v2.core.deliveries.strawberry.inputs import DeliveryAssigneeInput
 
 
 class DeliveryAssigneeService:

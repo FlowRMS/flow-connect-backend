@@ -23,8 +23,8 @@ from app.graphql.v2.core.shipping_carriers.strawberry.shipping_carrier_response 
 
 
 @strawberry.type
-class DeliveryResponse(DTOMixin[Delivery]):
-    """Response type for deliveries."""
+class DeliveryLiteResponse(DTOMixin[Delivery]):
+    """Lite response type for deliveries"""
 
     _instance: strawberry.Private[Delivery]
     id: UUID
@@ -76,37 +76,44 @@ class DeliveryResponse(DTOMixin[Delivery]):
             updated_at=model.updated_at,
         )
 
-    @strawberry.field
-    async def items(self) -> list[DeliveryItemResponse]:
-        items = await self._instance.awaitable_attrs.items
-        return DeliveryItemResponse.from_orm_model_list(items)
+
+@strawberry.type
+class DeliveryResponse(DeliveryLiteResponse):
+    """Full response type for deliveries - includes relations (pre-loaded via repository)."""
 
     @strawberry.field
-    async def status_history(self) -> list[DeliveryStatusHistoryResponse]:
-        history = await self._instance.awaitable_attrs.status_history
-        return DeliveryStatusHistoryResponse.from_orm_model_list(history)
+    def items(self) -> list[DeliveryItemResponse]:
+        """Delivery items - pre-loaded via repository."""
+        return DeliveryItemResponse.from_orm_model_list(self._instance.items)
 
     @strawberry.field
-    async def issues(self) -> list[DeliveryIssueResponse]:
-        issues = await self._instance.awaitable_attrs.issues
-        return DeliveryIssueResponse.from_orm_model_list(issues)
+    def status_history(self) -> list[DeliveryStatusHistoryResponse]:
+        """Status history - pre-loaded via repository."""
+        return DeliveryStatusHistoryResponse.from_orm_model_list(
+            self._instance.status_history
+        )
 
     @strawberry.field
-    async def assignees(self) -> list[DeliveryAssigneeResponse]:
-        assignees = await self._instance.awaitable_attrs.assignees
-        return DeliveryAssigneeResponse.from_orm_model_list(assignees)
+    def issues(self) -> list[DeliveryIssueResponse]:
+        """Delivery issues - pre-loaded via repository."""
+        return DeliveryIssueResponse.from_orm_model_list(self._instance.issues)
 
     @strawberry.field
-    async def documents(self) -> list[DeliveryDocumentResponse]:
-        documents = await self._instance.awaitable_attrs.documents
-        return DeliveryDocumentResponse.from_orm_model_list(documents)
+    def assignees(self) -> list[DeliveryAssigneeResponse]:
+        """Assignees - pre-loaded via repository."""
+        return DeliveryAssigneeResponse.from_orm_model_list(self._instance.assignees)
 
     @strawberry.field
-    async def vendor(self) -> FactoryLiteResponse:
-        vendor = await self._instance.awaitable_attrs.vendor
-        return FactoryLiteResponse.from_orm_model(vendor)
+    def documents(self) -> list[DeliveryDocumentResponse]:
+        """Documents - pre-loaded via repository."""
+        return DeliveryDocumentResponse.from_orm_model_list(self._instance.documents)
 
     @strawberry.field
-    async def carrier(self) -> ShippingCarrierResponse | None:
-        carrier = await self._instance.awaitable_attrs.carrier
-        return ShippingCarrierResponse.from_orm_model_optional(carrier)
+    def vendor(self) -> FactoryLiteResponse:
+        """Vendor - pre-loaded via repository."""
+        return FactoryLiteResponse.from_orm_model(self._instance.vendor)
+
+    @strawberry.field
+    def carrier(self) -> ShippingCarrierResponse | None:
+        """Carrier - pre-loaded via repository."""
+        return ShippingCarrierResponse.from_orm_model_optional(self._instance.carrier)

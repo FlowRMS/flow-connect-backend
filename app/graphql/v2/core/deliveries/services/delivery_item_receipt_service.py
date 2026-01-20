@@ -8,9 +8,7 @@ from app.errors.common_errors import NotFoundError
 from app.graphql.v2.core.deliveries.repositories.delivery_item_receipts_repository import (
     DeliveryItemReceiptsRepository,
 )
-from app.graphql.v2.core.deliveries.strawberry.delivery_input import (
-    DeliveryItemReceiptInput,
-)
+from app.graphql.v2.core.deliveries.strawberry.inputs import DeliveryItemReceiptInput
 
 
 class DeliveryItemReceiptService:

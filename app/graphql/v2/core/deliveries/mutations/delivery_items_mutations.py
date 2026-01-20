@@ -8,7 +8,7 @@ from app.graphql.inject import inject
 from app.graphql.v2.core.deliveries.services.delivery_item_service import (
     DeliveryItemService,
 )
-from app.graphql.v2.core.deliveries.strawberry.delivery_input import DeliveryItemInput
+from app.graphql.v2.core.deliveries.strawberry.inputs import DeliveryItemInput
 from app.graphql.v2.core.deliveries.strawberry.delivery_item_response import (
     DeliveryItemResponse,
 )

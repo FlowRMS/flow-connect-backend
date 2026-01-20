@@ -11,9 +11,7 @@ from app.graphql.v2.core.deliveries.services.delivery_assignee_service import (
 from app.graphql.v2.core.deliveries.strawberry.delivery_assignee_response import (
     DeliveryAssigneeResponse,
 )
-from app.graphql.v2.core.deliveries.strawberry.delivery_input import (
-    DeliveryAssigneeInput,
-)
+from app.graphql.v2.core.deliveries.strawberry.inputs import DeliveryAssigneeInput
 
 
 @strawberry.type
