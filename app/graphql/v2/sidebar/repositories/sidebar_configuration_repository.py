@@ -1,6 +1,6 @@
 from uuid import UUID
 
-from commons.db.v6.crm import (
+from commons.db.v6.core import (
     SidebarConfiguration,
     SidebarConfigurationGroup,
     SidebarConfigurationItem,

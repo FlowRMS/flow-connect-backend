@@ -2,6 +2,7 @@ from uuid import UUID
 
 import strawberry
 from commons.db.v6 import RbacRoleEnum
+from commons.db.v6.core import SidebarGroupId
 
 
 @strawberry.input
@@ -13,7 +14,7 @@ class SidebarItemInput:
 
 @strawberry.input
 class SidebarGroupInput:
-    group_id: str
+    group_id: SidebarGroupId
     order: int
     collapsed: bool
     items: list[SidebarItemInput]

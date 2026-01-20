@@ -4,7 +4,11 @@ from uuid import UUID
 
 import strawberry
 from commons.db.v6 import RbacRoleEnum
-from commons.db.v6.crm import RoleSidebarAssignment, SidebarConfiguration
+from commons.db.v6.core import (
+    RoleSidebarAssignment,
+    SidebarConfiguration,
+    SidebarGroupId,
+)
 
 from app.graphql.v2.sidebar.services import (
     EffectiveGroup,
@@ -22,7 +26,7 @@ class SidebarItemResponse:
 
 @strawberry.type
 class SidebarGroupResponse:
-    group_id: str
+    group_id: SidebarGroupId
     order: int
     collapsed: bool
     items: list[SidebarItemResponse]
@@ -41,12 +45,12 @@ class SidebarConfigurationResponse:
     @classmethod
     def from_model(cls, model: SidebarConfiguration) -> Self:
         # Build group responses
-        group_map: dict[str, tuple[int, bool]] = {}
+        group_map: dict[SidebarGroupId, tuple[int, bool]] = {}
         for group in model.groups:
             group_map[group.group_id] = (group.group_order, group.collapsed)
 
         # Build items by group
-        items_by_group: dict[str, list[SidebarItemResponse]] = {}
+        items_by_group: dict[SidebarGroupId, list[SidebarItemResponse]] = {}
         for item in model.items:
             if item.group_id not in items_by_group:
                 items_by_group[item.group_id] = []
@@ -121,7 +125,7 @@ class EffectiveSidebarItemResponse:
 
 @strawberry.type
 class EffectiveSidebarGroupResponse:
-    group_id: str
+    group_id: SidebarGroupId
     order: int
     collapsed: bool
     items: list[EffectiveSidebarItemResponse]

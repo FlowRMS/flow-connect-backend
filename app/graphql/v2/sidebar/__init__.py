@@ -1,4 +1,4 @@
-from commons.db.v6.crm import (
+from commons.db.v6.core import (
     RoleSidebarAssignment,
     SidebarConfiguration,
     SidebarConfigurationGroup,

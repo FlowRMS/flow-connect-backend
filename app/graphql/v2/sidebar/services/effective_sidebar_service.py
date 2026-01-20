@@ -2,7 +2,7 @@ from dataclasses import dataclass
 
 from commons.auth import AuthInfo
 from commons.db.v6 import RbacRoleEnum
-from commons.db.v6.crm import SidebarConfiguration
+from commons.db.v6.core import SidebarConfiguration, SidebarGroupId
 
 from app.graphql.v2.sidebar.repositories import (
     RoleSidebarRepository,
@@ -20,7 +20,7 @@ class EffectiveItem:
 
 @dataclass
 class EffectiveGroup:
-    group_id: str
+    group_id: SidebarGroupId
     order: int
     collapsed: bool
     items: list[EffectiveItem]
@@ -103,12 +103,12 @@ class EffectiveSidebarService:
         admin_enabled_items: set[str] | None = None,
     ) -> EffectiveSidebar:
         # Build group map
-        group_map: dict[str, tuple[int, bool]] = {}
+        group_map: dict[SidebarGroupId, tuple[int, bool]] = {}
         for group in config.groups:
             group_map[group.group_id] = (group.group_order, group.collapsed)
 
         # Build items by group
-        items_by_group: dict[str, list[EffectiveItem]] = {}
+        items_by_group: dict[SidebarGroupId, list[EffectiveItem]] = {}
         for item in config.items:
             is_configurable = (
                 admin_enabled_items is None or item.item_id in admin_enabled_items

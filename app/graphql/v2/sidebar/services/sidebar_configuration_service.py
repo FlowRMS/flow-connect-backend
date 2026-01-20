@@ -2,7 +2,7 @@ from uuid import UUID
 
 from commons.auth import AuthInfo
 from commons.db.v6 import RbacRoleEnum
-from commons.db.v6.crm import (
+from commons.db.v6.core import (
     RoleSidebarAssignment,
     SidebarConfiguration,
     SidebarConfigurationGroup,
