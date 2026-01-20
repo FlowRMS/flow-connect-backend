@@ -2230,6 +2230,34 @@ type O365ConnectionStatusType {
   lastUsedAt: datetime
 }
 
+type O365ContactEmailType {
+  address: String!
+  name: String
+}
+
+type O365ContactType {
+  id: String!
+  displayName: String!
+  givenName: String
+  surname: String
+  emailAddresses: [O365ContactEmailType!]
+  businessPhones: [String!]
+  mobilePhone: String
+  homePhones: [String!]
+  jobTitle: String
+  companyName: String
+  department: String
+  businessAddressCity: String
+  businessAddressState: String
+  businessAddressCountry: String
+}
+
+type O365ContactsResultType {
+  success: Boolean!
+  contacts: [O365ContactType!]
+  error: String
+}
+
 input O365SendEmailInput {
   to: [String!]!
   subject: String!
@@ -3093,6 +3121,7 @@ type Query {
   o365ConnectionStatus: O365ConnectionStatusType!
   o365CalendarEvents(top: Int! = 50, skip: Int! = 0): O365CalendarEventsResultType!
   o365CalendarEventsInRange(startDate: datetime!, endDate: datetime!, top: Int! = 100): O365CalendarEventsResultType!
+  o365Contacts(top: Int! = 50, skip: Int! = 0, search: String = null): O365ContactsResultType!
   invoice(id: UUID!): InvoiceResponse!
   invoiceSearch(searchTerm: String!, limit: Int! = 20, openOnly: Boolean! = false, unlockedOnly: Boolean! = false): [InvoiceLiteResponse!]!
   searchOpenInvoices(factoryId: UUID!, startFrom: Date = null, limit: Int = null): [InvoiceLiteCheckResponse!]!
