@@ -165,8 +165,7 @@ class DeliveryInventorySyncService:
         delivery: Delivery,
         product_id: UUID,
     ) -> Inventory:
-        # Use lite version - we only need inventory ID for creating items, not all items loaded
-        inventory = await self.inventory_repository.find_by_product_id_lite(
+        inventory = await self.inventory_repository.find_by_product_id(
             warehouse_id=delivery.warehouse_id,
             product_id=product_id,
         )
