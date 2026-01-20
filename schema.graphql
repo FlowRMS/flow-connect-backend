@@ -553,6 +553,7 @@ input ContactInput {
   tags: [String!]
   notes: String
   companyId: UUID
+  externalId: String
 }
 
 type ContactLandingPage implements LandingPageInterfaceBase {
@@ -580,6 +581,7 @@ type ContactLiteResponse {
   territory: String
   tags: [String!]
   notes: String
+  externalId: String
 }
 
 type ContactRelatedEntitiesResponse {
@@ -597,6 +599,7 @@ type ContactResponse {
   territory: String
   tags: [String!]
   notes: String
+  externalId: String
 }
 
 input ContainerTypeInput {
@@ -858,6 +861,12 @@ enum CriteriaOperator {
   IS_NOT_NULL
   IN
   NOT_IN
+}
+
+input CustomerFactorySalesRepBulkInput {
+  customerId: UUID!
+  factoryId: UUID!
+  splits: [SalesRepSplitInput!]!
 }
 
 input CustomerFactorySalesRepInput {
@@ -1963,7 +1972,7 @@ type Mutation {
   createOrder(input: OrderInput!): OrderResponse!
   updateOrder(input: OrderInput!): OrderResponse!
   deleteOrder(id: UUID!): Boolean!
-  createOrderFromQuote(quoteId: UUID!, orderNumber: String!, factoryId: UUID!, dueDate: Date = null, quoteDetailIds: [UUID!] = null): OrderResponse!
+  createOrderFromQuote(quoteId: UUID!, orderNumber: String!, factoryId: UUID!, dueDate: Date = null, quoteDetailsInputs: [QuoteDetailToOrderDetailInput!] = null): OrderResponse!
   duplicateOrder(orderId: UUID!, newOrderNumber: String!, newSoldToCustomerId: UUID!): OrderResponse!
   createOrganization(input: OrganizationInput!): OrganizationType! @rolePermissionAccess
   updateOrganization(input: OrganizationInput!): OrganizationType! @rolePermissionAccess
@@ -2003,9 +2012,11 @@ type Mutation {
   createCustomerFactorySalesRep(input: CustomerFactorySalesRepInput!): CustomerFactorySalesRepResponse!
   updateCustomerFactorySalesRep(id: UUID!, input: CustomerFactorySalesRepInput!): CustomerFactorySalesRepResponse!
   deleteCustomerFactorySalesRep(id: UUID!): Boolean!
+  createCustomerFactorySalesReps(input: CustomerFactorySalesRepBulkInput!): [CustomerFactorySalesRepResponse!]!
   createCustomer(input: CustomerInput!): CustomerResponse!
   updateCustomer(id: UUID!, input: CustomerInput!): CustomerResponse!
   deleteCustomer(id: UUID!): Boolean!
+  assignChildCustomers(parentId: UUID!, childIds: [UUID!]!): [CustomerLiteResponse!]!
   createFactory(input: FactoryInput!): FactoryResponse!
   updateFactory(id: UUID!, input: FactoryInput!): FactoryResponse!
   deleteFactory(id: UUID!): Boolean!
@@ -2220,6 +2231,34 @@ type O365ConnectionStatusType {
   microsoftEmail: String
   expiresAt: datetime
   lastUsedAt: datetime
+}
+
+type O365ContactEmailType {
+  address: String!
+  name: String
+}
+
+type O365ContactType {
+  id: String!
+  displayName: String!
+  givenName: String
+  surname: String
+  emailAddresses: [O365ContactEmailType!]
+  businessPhones: [String!]
+  mobilePhone: String
+  homePhones: [String!]
+  jobTitle: String
+  companyName: String
+  department: String
+  businessAddressCity: String
+  businessAddressState: String
+  businessAddressCountry: String
+}
+
+type O365ContactsResultType {
+  success: Boolean!
+  contacts: [O365ContactType!]
+  error: String
 }
 
 input O365SendEmailInput {
@@ -3085,6 +3124,7 @@ type Query {
   o365ConnectionStatus: O365ConnectionStatusType!
   o365CalendarEvents(top: Int! = 50, skip: Int! = 0): O365CalendarEventsResultType!
   o365CalendarEventsInRange(startDate: datetime!, endDate: datetime!, top: Int! = 100): O365CalendarEventsResultType!
+  o365Contacts(top: Int! = 50, skip: Int! = 0, search: String = null): O365ContactsResultType!
   invoice(id: UUID!): InvoiceResponse!
   invoiceSearch(searchTerm: String!, limit: Int! = 20, openOnly: Boolean! = false, unlockedOnly: Boolean! = false): [InvoiceLiteResponse!]!
   searchOpenInvoices(factoryId: UUID!, startFrom: Date = null, limit: Int = null): [InvoiceLiteCheckResponse!]!
@@ -3282,6 +3322,12 @@ enum QuoteDetailStatus {
   ORDERED
   EXPIRED
   LOST
+}
+
+input QuoteDetailToOrderDetailInput {
+  quantity: Decimal!
+  unitPrice: Decimal!
+  quoteDetailId: UUID!
 }
 
 input QuoteInput {
@@ -3536,6 +3582,12 @@ input RemoveCompanyFromJobInput {
 enum RepTypeEnum {
   OUTSIDE
   INSIDE
+}
+
+input SalesRepSplitInput {
+  userId: UUID!
+  rate: Decimal!
+  position: Int! = 0
 }
 
 type SalesRepSummary {

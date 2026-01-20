@@ -8,6 +8,7 @@ from app.graphql.v2.core.customers.services.customer_factory_sales_rep_service i
     CustomerFactorySalesRepService,
 )
 from app.graphql.v2.core.customers.strawberry.customer_factory_sales_rep_input import (
+    CustomerFactorySalesRepBulkInput,
     CustomerFactorySalesRepInput,
 )
 from app.graphql.v2.core.customers.strawberry.customer_factory_sales_rep_response import (
@@ -46,3 +47,13 @@ class CustomerFactorySalesRepMutations:
         service: Injected[CustomerFactorySalesRepService],
     ) -> bool:
         return await service.delete(id)
+
+    @strawberry.mutation
+    @inject
+    async def create_customer_factory_sales_reps(
+        self,
+        input: CustomerFactorySalesRepBulkInput,
+        service: Injected[CustomerFactorySalesRepService],
+    ) -> list[CustomerFactorySalesRepResponse]:
+        reps = await service.create_bulk(input)
+        return [CustomerFactorySalesRepResponse.from_orm_model(rep) for rep in reps]

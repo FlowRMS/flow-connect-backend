@@ -6,7 +6,7 @@ from commons.db.v6.crm.companies.company_model import Company
 from commons.db.v6.crm.contact_model import Contact
 from commons.db.v6.crm.links.entity_type import EntityType
 from commons.db.v6.crm.links.link_relation_model import LinkRelation
-from sqlalchemy import Select, or_, select
+from sqlalchemy import Select, func, or_, select
 from sqlalchemy.dialects.postgresql import array
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import lazyload
@@ -167,6 +167,9 @@ class ContactsRepository(BaseRepository[Contact]):
                 or_(
                     Contact.first_name.ilike(f"%{search_term}%"),
                     Contact.last_name.ilike(f"%{search_term}%"),
+                    func.concat(Contact.first_name, " ", Contact.last_name).ilike(
+                        f"%{search_term}%"
+                    ),
                 )
             )
             .limit(limit)

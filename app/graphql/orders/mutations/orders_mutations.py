@@ -8,6 +8,9 @@ from app.graphql.inject import inject
 from app.graphql.orders.services.order_service import OrderService
 from app.graphql.orders.strawberry.order_input import OrderInput
 from app.graphql.orders.strawberry.order_response import OrderResponse
+from app.graphql.orders.strawberry.quote_detail_to_order_input import (
+    QuoteDetailToOrderDetailInput,
+)
 
 
 @strawberry.type
@@ -50,14 +53,14 @@ class OrdersMutations:
         factory_id: UUID,
         service: Injected[OrderService],
         due_date: date | None = None,
-        quote_detail_ids: list[UUID] | None = None,
+        quote_details_inputs: list[QuoteDetailToOrderDetailInput] | None = None,
     ) -> OrderResponse:
         order = await service.create_order_from_quote(
             quote_id=quote_id,
             order_number=order_number,
             factory_id=factory_id,
             due_date=due_date,
-            quote_detail_ids=quote_detail_ids,
+            quote_details_inputs=quote_details_inputs,
         )
         return OrderResponse.from_orm_model(order)
 
