@@ -14,7 +14,9 @@ from commons.db.v6.fulfillment.enums import (
 
 from app.core.db.adapters.dto import DTOMixin
 from app.graphql.orders.strawberry.order_lite_response import OrderLiteResponse
-from app.graphql.v2.core.customers.strawberry.customer_response import CustomerLiteResponse
+from app.graphql.v2.core.customers.strawberry.customer_response import (
+    CustomerLiteResponse,
+)
 from app.graphql.v2.core.fulfillment.strawberry.fulfillment_assignment_response import (
     FulfillmentAssignmentResponse,
 )
@@ -116,7 +118,9 @@ class FulfillmentOrderLiteResponse(DTOMixin[FulfillmentOrder]):
     def customer(self) -> CustomerLiteResponse | None:
         """Get the sold-to customer via the order relationship - eager-loaded."""
         if self._instance.order and self._instance.order.sold_to_customer:
-            return CustomerLiteResponse.from_orm_model(self._instance.order.sold_to_customer)
+            return CustomerLiteResponse.from_orm_model(
+                self._instance.order.sold_to_customer
+            )
         return None
 
     @strawberry.field

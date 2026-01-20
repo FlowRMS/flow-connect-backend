@@ -1341,6 +1341,7 @@ type FulfillmentOrderLiteResponse {
   fulfillmentMethod: FulfillmentMethod!
   carrierType: CarrierType
   freightClass: String
+  serviceType: String
   needByDate: Date
   hasBackorderItems: Boolean!
   holdReason: String
@@ -1357,6 +1358,9 @@ type FulfillmentOrderLiteResponse {
   warehouse: WarehouseLiteResponse
   carrier: ShippingCarrierLiteResponse
   order: OrderLiteResponse
+  customer: CustomerLiteResponse
+  lineItems: [FulfillmentOrderLineItemLiteResponse!]!
+  assignments: [FulfillmentAssignmentResponse!]!
 }
 
 type FulfillmentOrderResponse {
@@ -1369,6 +1373,7 @@ type FulfillmentOrderResponse {
   fulfillmentMethod: FulfillmentMethod!
   carrierType: CarrierType
   freightClass: String
+  serviceType: String
   needByDate: Date
   hasBackorderItems: Boolean!
   holdReason: String
@@ -1385,14 +1390,15 @@ type FulfillmentOrderResponse {
   warehouse: WarehouseLiteResponse
   carrier: ShippingCarrierLiteResponse
   order: OrderLiteResponse
+  customer: CustomerLiteResponse
+  lineItems: [FulfillmentOrderLineItemLiteResponse!]!
+  assignments: [FulfillmentAssignmentResponse!]!
   pickupSignature: String
   pickupTimestamp: datetime
   pickupCustomerName: String
   driverName: String
   shipToAddress: ShipToAddressResponse
-  lineItems: [FulfillmentOrderLineItemLiteResponse!]!
   packingBoxes: [PackingBoxResponse!]!
-  assignments: [FulfillmentAssignmentResponse!]!
   documents: [FulfillmentDocumentResponse!]!
   activities: [FulfillmentActivityResponse!]!
 }
@@ -1892,6 +1898,12 @@ type LinkRelationType {
   createdAt: datetime!
 }
 
+input LinkShipmentRequestInput {
+  fulfillmentOrderId: UUID!
+  lineItemIds: [UUID!]!
+  shipmentRequestId: UUID!
+}
+
 type LinkedEntity {
   id: UUID
   title: String
@@ -2072,6 +2084,7 @@ type Mutation {
   markManufacturerFulfilled(input: MarkManufacturerFulfilledInput!): FulfillmentOrderResponse!
   splitFulfillmentLineItem(input: SplitLineItemInput!): FulfillmentOrderLineItemResponse!
   cancelBackorderItems(input: CancelBackorderInput!): FulfillmentOrderResponse!
+  linkShipmentRequest(input: LinkShipmentRequestInput!): FulfillmentOrderResponse!
   resolveBackorder(fulfillmentOrderId: UUID!): FulfillmentOrderResponse!
   addDocument(input: AddDocumentInput!): FulfillmentDocumentResponse!
   uploadDocument(input: UploadDocumentInput!): FulfillmentDocumentResponse!
@@ -3032,6 +3045,8 @@ type ProductLiteResponse {
   approvalDate: Date
   approvalComments: String
   tags: [String!]
+  uom: ProductUomResponse
+  factory: FactoryLiteResponse
 }
 
 input ProductQuantityPricingInput {
@@ -3066,9 +3081,10 @@ type ProductResponse {
   approvalDate: Date
   approvalComments: String
   tags: [String!]
-  factory: FactoryLiteResponse!
-  category: ProductCategoryResponse
   uom: ProductUomResponse
+  factory: FactoryLiteResponse
+  factoryFull: FactoryLiteResponse!
+  category: ProductCategoryResponse
 }
 
 input ProductUomInput {
@@ -4123,6 +4139,7 @@ input UpdateFulfillmentOrderInput {
   carrierId: UUID
   carrierType: CarrierType
   freightClass: String
+  serviceType: String
   shipToAddress: AddressInput
   shipToName: String
   shipToPhone: String

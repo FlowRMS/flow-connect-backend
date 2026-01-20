@@ -1,8 +1,6 @@
 from datetime import UTC, datetime
 from uuid import UUID
 
-from strawberry import UNSET
-
 from commons.auth import AuthInfo
 from commons.db.v6.fulfillment import (
     FulfillmentActivity,
@@ -12,6 +10,7 @@ from commons.db.v6.fulfillment import (
     FulfillmentOrder,
     FulfillmentOrderStatus,
 )
+from strawberry import UNSET
 
 from app.errors.common_errors import NotFoundError
 from app.graphql.addresses.services.address_service import AddressService

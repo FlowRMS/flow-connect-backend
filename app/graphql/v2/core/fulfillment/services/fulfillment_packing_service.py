@@ -55,7 +55,9 @@ class FulfillmentPackingService:
         # Fetch with relationships to avoid lazy loading issues
         result = await self.box_repository.get_with_items(created_box.id)
         if not result:
-            raise NotFoundError(f"Packing box {created_box.id} not found after creation")
+            raise NotFoundError(
+                f"Packing box {created_box.id} not found after creation"
+            )
         return result
 
     async def update_box(
@@ -78,7 +80,7 @@ class FulfillmentPackingService:
             input.tracking_number, box.tracking_number
         )
 
-        await self.box_repository.update(box)
+        _ = await self.box_repository.update(box)
         # Fetch with relationships to avoid lazy loading issues
         result = await self.box_repository.get_with_items(box_id)
         if not result:
