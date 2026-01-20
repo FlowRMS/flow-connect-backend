@@ -90,7 +90,11 @@ async def migrate_invoices(source: asyncpg.Connection, dest: asyncpg.Connection)
         FROM commission.invoices i
         JOIN commission.orders o ON o.id = i.order_id
         JOIN "user".users u ON u.id = i.created_by
-        WHERE o.sold_to_customer_id IS NOT NULL
+        LEFT JOIN crm.quotes q ON q.id = o.quote_id
+        WHERE
+            o.sold_to_customer_id IS NOT NULL
+            AND o.factory_id IS NOT NULL
+            AND (o.quote_id IS NULL OR q.sold_to_customer_id IS NOT NULL)
     """)
 
     if not invoices:
@@ -169,7 +173,11 @@ async def migrate_invoice_details(source: asyncpg.Connection, dest: asyncpg.Conn
         JOIN commission.orders o ON o.id = i.order_id
         JOIN commission.order_details od ON od.id = id.order_detail_id
         JOIN "user".users u ON u.id = i.created_by
-        WHERE o.sold_to_customer_id IS NOT NULL
+        LEFT JOIN crm.quotes q ON q.id = o.quote_id
+        WHERE
+            o.sold_to_customer_id IS NOT NULL
+            AND o.factory_id IS NOT NULL
+            AND (o.quote_id IS NULL OR q.sold_to_customer_id IS NOT NULL)
     """)
 
     if not details:
@@ -251,7 +259,11 @@ async def migrate_invoice_split_rates(source: asyncpg.Connection, dest: asyncpg.
         JOIN commission.invoices i ON i.id = id.invoice_id
         JOIN commission.orders o ON o.id = i.order_id
         JOIN "user".users u ON u.id = isr.user_id
-        WHERE o.sold_to_customer_id IS NOT NULL
+        LEFT JOIN crm.quotes q ON q.id = o.quote_id
+        WHERE
+            o.sold_to_customer_id IS NOT NULL
+            AND o.factory_id IS NOT NULL
+            AND (o.quote_id IS NULL OR q.sold_to_customer_id IS NOT NULL)
     """)
 
     if not split_rates:

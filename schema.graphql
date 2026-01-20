@@ -553,6 +553,7 @@ input ContactInput {
   tags: [String!]
   notes: String
   companyId: UUID
+  externalId: String
 }
 
 type ContactLandingPage implements LandingPageInterfaceBase {
@@ -580,6 +581,7 @@ type ContactLiteResponse {
   territory: String
   tags: [String!]
   notes: String
+  externalId: String
 }
 
 type ContactRelatedEntitiesResponse {
@@ -597,6 +599,7 @@ type ContactResponse {
   territory: String
   tags: [String!]
   notes: String
+  externalId: String
 }
 
 input ContainerTypeInput {

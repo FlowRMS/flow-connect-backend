@@ -65,7 +65,11 @@ async def migrate_credits(source: asyncpg.Connection, dest: asyncpg.Connection) 
         FROM commission.credits c
         JOIN commission.orders o ON o.id = c.order_id
         JOIN "user".users u ON u.id = c.created_by
-        WHERE o.sold_to_customer_id IS NOT NULL
+        LEFT JOIN crm.quotes q ON q.id = o.quote_id
+        WHERE
+            o.sold_to_customer_id IS NOT NULL
+            AND o.factory_id IS NOT NULL
+            AND (o.quote_id IS NULL OR q.sold_to_customer_id IS NOT NULL)
     """)
 
     if not credits:
@@ -123,7 +127,11 @@ async def migrate_credit_details(source: asyncpg.Connection, dest: asyncpg.Conne
         JOIN commission.credits c ON c.id = cd.credit_id
         JOIN commission.orders o ON o.id = c.order_id
         JOIN "user".users u ON u.id = c.created_by
-        WHERE o.sold_to_customer_id IS NOT NULL
+        LEFT JOIN crm.quotes q ON q.id = o.quote_id
+        WHERE
+            o.sold_to_customer_id IS NOT NULL
+            AND o.factory_id IS NOT NULL
+            AND (o.quote_id IS NULL OR q.sold_to_customer_id IS NOT NULL)
     """)
 
     if not details:

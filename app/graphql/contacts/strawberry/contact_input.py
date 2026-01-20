@@ -19,6 +19,7 @@ class ContactInput(BaseInputGQL[Contact]):
     tags: list[str] | None = strawberry.UNSET
     notes: str | None = strawberry.UNSET
     company_id: UUID | None = strawberry.UNSET
+    external_id: str | None = strawberry.UNSET
 
     def to_orm_model(self) -> Contact:
         """Convert input to ORM model."""
@@ -31,4 +32,5 @@ class ContactInput(BaseInputGQL[Contact]):
             territory=self.optional_field(self.territory),
             tags=self.optional_field(self.tags),
             notes=self.optional_field(self.notes),
+            external_id=self.optional_field(self.external_id),
         )
