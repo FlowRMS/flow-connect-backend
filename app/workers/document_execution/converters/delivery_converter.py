@@ -15,12 +15,17 @@ from app.graphql.v2.core.deliveries.services.delivery_item_service import (
 )
 from app.graphql.v2.core.deliveries.services.delivery_service import DeliveryService
 from app.graphql.v2.core.deliveries.strawberry.inputs import (
-        DeliveryInput,
-        DeliveryItemInput,
+    DeliveryInput,
+    DeliveryItemInput,
 )
 
-from .base import BaseEntityConverter
+from .base import BaseEntityConverter, ConversionResult
 from .entity_mapping import EntityMapping
+from .exceptions import (
+    DeliveryProductRequiredError,
+    DeliveryVendorRequiredError,
+    DeliveryWarehouseRequiredError,
+)
 
 
 @dataclass(frozen=True)
@@ -77,14 +82,14 @@ class DeliveryConverter(
         self,
         dto: DeliveryDTO,
         entity_mapping: EntityMapping,
-    ) -> DeliveryCreatePayload:
+    ) -> ConversionResult[DeliveryCreatePayload]:
         vendor_id = entity_mapping.factory_id
         warehouse_id = dto.warehouse_id
 
         if not vendor_id:
-            raise ValueError("Vendor ID is required but not found in entity_mapping")
+            return ConversionResult.fail(DeliveryVendorRequiredError())
         if not warehouse_id:
-            raise ValueError("Warehouse ID is required but not provided in the DTO")
+            return ConversionResult.fail(DeliveryWarehouseRequiredError())
 
         delivery_input = DeliveryInput(
             po_number=dto.po_number or self._generate_po_number(),
@@ -98,36 +103,42 @@ class DeliveryConverter(
             notes=dto.notes,
         )
 
-        item_drafts = [
-            self._convert_detail(detail, entity_mapping) for detail in dto.details
-        ]
+        item_drafts: list[DeliveryItemDraft] = []
+        for detail in dto.details:
+            detail_result = self._convert_detail(detail, entity_mapping)
+            if detail_result.is_error():
+                return ConversionResult.fail(detail_result.unwrap_error())
+            item_drafts.append(detail_result.unwrap())
 
-        return DeliveryCreatePayload(
-            delivery_input=delivery_input,
-            item_drafts=item_drafts,
+        return ConversionResult.ok(
+            DeliveryCreatePayload(
+                delivery_input=delivery_input,
+                item_drafts=item_drafts,
+            )
         )
 
     def _convert_detail(
         self,
         detail: DeliveryDetailDTO,
         entity_mapping: EntityMapping,
-    ) -> DeliveryItemDraft:
+    ) -> ConversionResult[DeliveryItemDraft]:
         flow_index = detail.flow_index
         product_id = entity_mapping.get_product_id(flow_index)
 
         if not product_id:
             part_number = detail.part_number or "unknown"
-            raise ValueError(
-                "Product ID is required for delivery item at index "
-                f"{flow_index} (part_number='{part_number}')"
+            return ConversionResult.fail(
+                DeliveryProductRequiredError(flow_index, part_number)
             )
 
-        return DeliveryItemDraft(
-            product_id=product_id,
-            expected_quantity=detail.quantity or 0,
-            received_quantity=detail.received_quantity or 0,
-            damaged_quantity=detail.damaged_quantity or 0,
-            discrepancy_notes=detail.description,
+        return ConversionResult.ok(
+            DeliveryItemDraft(
+                product_id=product_id,
+                expected_quantity=detail.quantity or 0,
+                received_quantity=detail.received_quantity or 0,
+                damaged_quantity=detail.damaged_quantity or 0,
+                discrepancy_notes=detail.description,
+            )
         )
 
     @staticmethod
