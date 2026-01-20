@@ -84,6 +84,16 @@ async def migrate_check_details(source: asyncpg.Connection, dest: asyncpg.Connec
         FROM commission.check_details cd
         JOIN commission.checks c ON c.id = cd.check_id
         JOIN "user".users u ON u.id = c.created_by
+        LEFT JOIN commission.invoices i ON i.id = cd.invoice_id
+        LEFT JOIN commission.orders o ON o.id = i.order_id
+        LEFT JOIN crm.quotes q ON q.id = o.quote_id
+        WHERE
+            cd.invoice_id IS NULL
+            OR (
+                o.sold_to_customer_id IS NOT NULL
+                AND o.factory_id IS NOT NULL
+                AND (o.quote_id IS NULL OR q.sold_to_customer_id IS NOT NULL)
+            )
     """)
 
     if not details:

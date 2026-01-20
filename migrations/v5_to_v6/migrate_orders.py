@@ -125,8 +125,11 @@ async def migrate_orders(source: asyncpg.Connection, dest: asyncpg.Connection) -
             COALESCE(o.entry_date, now()) as created_at
         FROM commission.orders o
         JOIN "user".users u ON u.id = o.created_by
-        WHERE 
-            o.sold_to_customer_id IS NOT NULL AND o.factory_id IS NOT NULL
+        LEFT JOIN crm.quotes q ON q.id = o.quote_id
+        WHERE
+            o.sold_to_customer_id IS NOT NULL
+            AND o.factory_id IS NOT NULL
+            AND (o.quote_id IS NULL OR q.sold_to_customer_id IS NOT NULL)
     """)
 
     if not orders:
@@ -207,7 +210,11 @@ async def migrate_order_inside_reps(source: asyncpg.Connection, dest: asyncpg.Co
         JOIN commission.order_details od ON od.order_id = o.id
         JOIN "user".users u ON u.id = oir.user_id
         JOIN core.products p ON p.id = od.product_id
-        WHERE o.sold_to_customer_id IS NOT NULL 
+        LEFT JOIN crm.quotes q ON q.id = o.quote_id
+        WHERE
+            o.sold_to_customer_id IS NOT NULL
+            AND o.factory_id IS NOT NULL
+            AND (o.quote_id IS NULL OR q.sold_to_customer_id IS NOT NULL)
     """)
 
     if not inside_reps:
@@ -269,8 +276,11 @@ async def migrate_order_details(source: asyncpg.Connection, dest: asyncpg.Connec
         JOIN core.products p ON p.id = od.product_id
         JOIN commission.orders o ON o.id = od.order_id
         JOIN "user".users u ON u.id = o.created_by
-        WHERE 
-        o.sold_to_customer_id IS NOT NULL 
+        LEFT JOIN crm.quotes q ON q.id = o.quote_id
+        WHERE
+            o.sold_to_customer_id IS NOT NULL
+            AND o.factory_id IS NOT NULL
+            AND (o.quote_id IS NULL OR q.sold_to_customer_id IS NOT NULL)
     """)
 
     if not details:
@@ -375,8 +385,11 @@ async def migrate_order_split_rates(source: asyncpg.Connection, dest: asyncpg.Co
         JOIN commission.orders o ON o.id = od.order_id
         JOIN "user".users u ON u.id = o.created_by
         JOIN core.products p ON p.id = od.product_id
-        WHERE 
-        o.sold_to_customer_id IS NOT NULL 
+        LEFT JOIN crm.quotes q ON q.id = o.quote_id
+        WHERE
+            o.sold_to_customer_id IS NOT NULL
+            AND o.factory_id IS NOT NULL
+            AND (o.quote_id IS NULL OR q.sold_to_customer_id IS NOT NULL)
     """)
 
     if not split_rates:
@@ -433,8 +446,12 @@ async def migrate_order_acknowledgements(
         JOIN commission.order_details od ON od.id = oa.order_detail_id
         JOIN commission.orders o ON o.id = od.order_id
         JOIN "user".users u ON u.id = oa.created_by
-        WHERE o.sold_to_customer_id IS NOT NULL
-        AND o.entry_date < now() - INTERVAL '2 days'
+        LEFT JOIN crm.quotes q ON q.id = o.quote_id
+        WHERE
+            o.sold_to_customer_id IS NOT NULL
+            AND o.factory_id IS NOT NULL
+            AND (o.quote_id IS NULL OR q.sold_to_customer_id IS NOT NULL)
+            AND o.entry_date < now() - INTERVAL '2 days'
     """)
 
     if not acknowledgements:
