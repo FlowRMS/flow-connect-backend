@@ -29,7 +29,7 @@ async def downgrade_migration() -> None:
         controller = await create_multitenant_for_migration_controller(
             settings.pg_url.unicode_string(), settings.environment
         )
-        MultiTenantMigration(controller, config_file="alembic.ini").downgrade()
+        await MultiTenantMigration(controller, config_file="alembic.ini").downgrade()
 
 def main() -> None:
     import argparse
