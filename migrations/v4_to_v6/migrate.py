@@ -600,6 +600,10 @@ async def migrate_customer_split_rates(source: asyncpg.Connection, dest: asyncpg
     """Migrate customer split rates from v4 to v6."""
     logger.info("Starting customer split rate migration...")
 
+    # Get list of migrated customer IDs from destination
+    migrated_customers = await dest.fetch("SELECT id FROM pycore.customers")
+    migrated_customer_ids = {row["id"] for row in migrated_customers}
+
     # Map integer customer_id to customer's uuid
     split_rates = await source.fetch("""
         SELECT
@@ -613,6 +617,9 @@ async def migrate_customer_split_rates(source: asyncpg.Connection, dest: asyncpg
         FROM public.default_outside_rep_customer_split csr
         JOIN public.customers c ON csr.customer_id = c.customer_id
     """)
+
+    # Filter to only include split rates for customers that were migrated
+    split_rates = [sr for sr in split_rates if sr["customer_id"] in migrated_customer_ids]
 
     if not split_rates:
         logger.info("No customer split rates to migrate")
@@ -649,6 +656,12 @@ async def migrate_customer_factory_sales_reps(source: asyncpg.Connection, dest: 
     """Migrate customer factory sales reps from v4 to v6."""
     logger.info("Starting customer factory sales rep migration...")
 
+    # Get list of migrated customer and factory IDs from destination
+    migrated_customers = await dest.fetch("SELECT id FROM pycore.customers")
+    migrated_customer_ids = {row["id"] for row in migrated_customers}
+    migrated_factories = await dest.fetch("SELECT id FROM pycore.factories")
+    migrated_factory_ids = {row["id"] for row in migrated_factories}
+
     # Join sales_rep_selection with default_outside_rep_split
     sales_reps = await source.fetch("""
         SELECT
@@ -665,6 +678,12 @@ async def migrate_customer_factory_sales_reps(source: asyncpg.Connection, dest: 
         JOIN public.factories f ON srs.factory = f.factory_id
         WHERE dors.user_id IS NOT NULL
     """)
+
+    # Filter to only include sales reps for customers and factories that were migrated
+    sales_reps = [
+        sr for sr in sales_reps
+        if sr["customer_id"] in migrated_customer_ids and sr["factory_id"] in migrated_factory_ids
+    ]
 
     if not sales_reps:
         logger.info("No customer factory sales reps to migrate")
