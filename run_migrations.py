@@ -19,7 +19,7 @@ async def run_migration() -> None:
             settings.pg_url.unicode_string(), settings.environment
         )
         await MultiTenantMigration(controller, config_file="alembic.ini").run(
-            chunk_size=2
+            chunk_size=1
         )
 
 

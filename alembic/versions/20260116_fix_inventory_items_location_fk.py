@@ -7,6 +7,7 @@ Revises: add_commission_statements
 from collections.abc import Sequence
 
 import sqlalchemy as sa
+
 from alembic import op
 
 revision: str = "fix_inventory_items_location_fk"
