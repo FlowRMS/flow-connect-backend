@@ -1,7 +1,4 @@
-"""Service layer for Submittals business logic."""
-
 from dataclasses import dataclass
-from typing import Optional
 from uuid import UUID
 
 from commons.db.v6.crm.submittals import (
@@ -22,8 +19,8 @@ from app.graphql.submittals.repositories.submittals_repository import (
     SubmittalsRepository,
     SubmittalStakeholdersRepository,
 )
-from app.graphql.submittals.services.pdf_generation_service import (
-    PdfGenerationService,
+from app.graphql.submittals.services.submittal_pdf_export_service import (
+    SubmittalPdfExportService,
 )
 from app.graphql.submittals.services.types import SendSubmittalEmailResult
 from app.graphql.submittals.strawberry.submittal_input import (
@@ -42,11 +39,11 @@ class GenerateSubmittalPdfResult:
     """Result of generating a submittal PDF."""
 
     success: bool = False
-    error: Optional[str] = None
-    pdf_url: Optional[str] = None
-    pdf_file_name: Optional[str] = None
+    error: str | None = None
+    pdf_url: str | None = None
+    pdf_file_name: str | None = None
     pdf_file_size_bytes: int = 0
-    revision: Optional[SubmittalRevision] = None
+    revision: SubmittalRevision | None = None
 
 
 class SubmittalsService:
@@ -58,7 +55,7 @@ class SubmittalsService:
         items_repository: SubmittalItemsRepository,
         stakeholders_repository: SubmittalStakeholdersRepository,
         email_provider: EmailProviderService,
-        pdf_service: Optional[PdfGenerationService] = None,
+        pdf_export_service: SubmittalPdfExportService,
     ) -> None:
         """
         Initialize the Submittals service.
@@ -68,13 +65,13 @@ class SubmittalsService:
             items_repository: SubmittalItems repository instance
             stakeholders_repository: SubmittalStakeholders repository instance
             email_provider: Email provider service for sending emails
-            pdf_service: PDF generation service (optional, created if not provided)
+            pdf_export_service: PDF export service for generating and uploading PDFs
         """
         self.repository = repository
         self.items_repository = items_repository
         self.stakeholders_repository = stakeholders_repository
         self.email_provider = email_provider
-        self.pdf_service = pdf_service or PdfGenerationService()
+        self.pdf_export_service = pdf_export_service
 
     async def create_submittal(self, input_data: CreateSubmittalInput) -> Submittal:
         """
@@ -145,7 +142,7 @@ class SubmittalsService:
             logger.info(f"Deleted submittal {submittal_id}")
         return result
 
-    async def get_submittal(self, submittal_id: UUID) -> Optional[Submittal]:
+    async def get_submittal(self, submittal_id: UUID) -> Submittal | None:
         """
         Get a submittal by ID.
 
@@ -184,7 +181,7 @@ class SubmittalsService:
     async def search_submittals(
         self,
         search_term: str = "",
-        status: Optional[SubmittalStatus] = None,
+        status: SubmittalStatus | None = None,
         limit: int = 50,
     ) -> list[Submittal]:
         """
@@ -320,7 +317,7 @@ class SubmittalsService:
 
     # Revision operations
     async def create_revision(
-        self, submittal_id: UUID, notes: Optional[str] = None
+        self, submittal_id: UUID, notes: str | None = None
     ) -> SubmittalRevision:
         """
         Create a new revision for a submittal.
@@ -420,9 +417,9 @@ class SubmittalsService:
 
         This method:
         1. Fetches the submittal with all relations
-        2. Generates the PDF using the PDF service
-        3. Optionally creates a new revision
-        4. Returns a URL to download the PDF
+        2. Generates the PDF with spec sheets using the export service
+        3. Uploads to S3 and returns a presigned URL
+        4. Optionally creates a new revision
 
         Args:
             input_data: PDF generation options
@@ -441,33 +438,21 @@ class SubmittalsService:
                 error=f"Submittal with id {input_data.submittal_id} not found",
             )
 
-        # TODO: Fetch spec sheet PDFs for items that have them
-        # This would need integration with the spec sheets service/S3
-        spec_sheet_pdfs: dict = {}
-
-        # Generate the PDF
-        pdf_result = await self.pdf_service.generate_submittal_pdf(
+        # Export PDF using the export service (handles spec sheets + S3 upload)
+        export_result = await self.pdf_export_service.export_submittal_pdf(
             submittal=submittal,
             input_data=input_data,
-            spec_sheet_pdfs=spec_sheet_pdfs,
         )
 
-        if not pdf_result.success:
+        if not export_result.success:
             logger.error(
-                f"Failed to generate PDF for submittal {input_data.submittal_id}: "
-                f"{pdf_result.error}"
+                f"Failed to export PDF for submittal {input_data.submittal_id}: "
+                f"{export_result.error}"
             )
             return GenerateSubmittalPdfResult(
                 success=False,
-                error=pdf_result.error,
+                error=export_result.error,
             )
-
-        # TODO: Upload PDF to S3 and get URL
-        # For now, we'll encode as base64 data URL for simplicity
-        import base64
-
-        pdf_base64 = base64.b64encode(pdf_result.pdf_bytes or b"").decode("utf-8")
-        pdf_url = f"data:application/pdf;base64,{pdf_base64}"
 
         # Create revision if requested
         revision = None
@@ -483,13 +468,13 @@ class SubmittalsService:
 
         logger.info(
             f"Generated PDF for submittal {input_data.submittal_id}: "
-            f"{pdf_result.file_size_bytes} bytes"
+            f"{export_result.pdf_file_size_bytes} bytes"
         )
 
         return GenerateSubmittalPdfResult(
             success=True,
-            pdf_url=pdf_url,
-            pdf_file_name=pdf_result.file_name,
-            pdf_file_size_bytes=pdf_result.file_size_bytes,
+            pdf_url=export_result.pdf_url,
+            pdf_file_name=export_result.pdf_file_name,
+            pdf_file_size_bytes=export_result.pdf_file_size_bytes,
             revision=revision,
         )
