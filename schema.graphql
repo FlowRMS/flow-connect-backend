@@ -1969,7 +1969,7 @@ type Mutation {
   createOrder(input: OrderInput!): OrderResponse!
   updateOrder(input: OrderInput!): OrderResponse!
   deleteOrder(id: UUID!): Boolean!
-  createOrderFromQuote(quoteId: UUID!, orderNumber: String!, factoryId: UUID!, dueDate: Date = null, quoteDetailIds: [UUID!] = null): OrderResponse!
+  createOrderFromQuote(quoteId: UUID!, orderNumber: String!, factoryId: UUID!, dueDate: Date = null, quoteDetailsInputs: [QuoteDetailToOrderDetailInput!] = null): OrderResponse!
   duplicateOrder(orderId: UUID!, newOrderNumber: String!, newSoldToCustomerId: UUID!): OrderResponse!
   createOrganization(input: OrganizationInput!): OrganizationType! @rolePermissionAccess
   updateOrganization(input: OrganizationInput!): OrganizationType! @rolePermissionAccess
@@ -3289,6 +3289,12 @@ enum QuoteDetailStatus {
   ORDERED
   EXPIRED
   LOST
+}
+
+input QuoteDetailToOrderDetailInput {
+  quantity: Decimal!
+  unitPrice: Decimal!
+  quoteDetailId: UUID!
 }
 
 input QuoteInput {
