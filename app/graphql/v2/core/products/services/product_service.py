@@ -185,3 +185,6 @@ class ProductService:
         self, factory_id: UUID, limit: int = 25
     ) -> list[Product]:
         return await self.repository.find_by_factory_id(factory_id, limit)
+
+    async def find_by_customer_id(self, customer_id: UUID) -> list[Product]:
+        return await self.repository.find_by_customer_id(customer_id)

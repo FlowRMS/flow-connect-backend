@@ -36,13 +36,13 @@ class DefaultRepSplitProcessor(BaseProcessor[Quote]):
             if not detail.inside_split_rates:
                 logger.error(
                     f"Inside split rates are still empty for quote detail "
-                    f"{detail.item_number} after applying defaults."
+                    f"# {detail.item_number} after applying defaults."
                 )
 
             if not detail.outside_split_rates:
                 raise OutsideRepsRequiredError(
                     f"Outside split rates are required for quote detail "
-                    f"{detail.item_number} but none were found after applying defaults."
+                    f"# {detail.item_number} but none were found after applying defaults."
                 )
 
     async def _apply_default_inside_reps(self, detail: QuoteDetail) -> None:

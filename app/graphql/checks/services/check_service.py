@@ -74,6 +74,9 @@ class CheckService:
     ) -> list[Check]:
         return await self.repository.find_by_entity(entity_type, entity_id)
 
+    async def find_by_sold_to_customer_id(self, customer_id: UUID) -> list[Check]:
+        return await self.repository.find_by_sold_to_customer_id(customer_id)
+
     async def unpost_check(self, check_id: UUID) -> Check:
         check = await self.repository.find_check_by_id(check_id)
         if check.status != CheckStatus.POSTED:

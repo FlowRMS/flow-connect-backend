@@ -32,18 +32,23 @@ class SearchQueryBuilder(ABC, Generic[T]):
     def get_extra_info_field(self) -> Any | None:
         return None
 
+    def get_computed_searchable_fields(self) -> list[Any]:
+        return []
+
     def get_joins(self) -> list[tuple[Any, Any]]:
         return []
 
     def build_search_query(self, search_term: str) -> Any:
         search_pattern = f"%{search_term}%"
         searchable_fields = self.get_searchable_fields()
+        computed_fields = self.get_computed_searchable_fields()
+        all_fields = [*searchable_fields, *computed_fields]
 
         similarity_calculations = [
-            func.similarity(field, search_term) for field in searchable_fields
+            func.similarity(field, search_term) for field in all_fields
         ]
 
-        where_conditions = [field.ilike(search_pattern) for field in searchable_fields]
+        where_conditions = [field.ilike(search_pattern) for field in all_fields]
 
         alias_field = self.get_alias_field()
         alias_column = (

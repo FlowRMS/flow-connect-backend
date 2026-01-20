@@ -108,11 +108,11 @@ def upgrade() -> None:
         sa.Column("bill_to_customer_id", sa.UUID(), nullable=True),
         sa.Column("published", sa.Boolean(), nullable=False, server_default="false"),
         sa.Column(
-            "creation_type", sa.SmallInteger(), nullable=False, server_default="0"
+            "creation_type", sa.SmallInteger(), nullable=False, server_default="1"
         ),
-        sa.Column("status", sa.SmallInteger(), nullable=False, server_default="0"),
+        sa.Column("status", sa.SmallInteger(), nullable=False, server_default="1"),
         sa.Column(
-            "pipeline_stage", sa.SmallInteger(), nullable=False, server_default="0"
+            "pipeline_stage", sa.SmallInteger(), nullable=False, server_default="1"
         ),
         sa.Column("payment_terms", sa.String(length=255), nullable=True),
         sa.Column("customer_ref", sa.String(length=255), nullable=True),
@@ -238,7 +238,7 @@ def upgrade() -> None:
         ),
         sa.Column("lead_time", sa.String(length=255), nullable=True),
         sa.Column("note", sa.String(length=2000), nullable=True),
-        sa.Column("status", sa.SmallInteger(), nullable=False, server_default="0"),
+        sa.Column("status", sa.SmallInteger(), nullable=False, server_default="1"),
         sa.Column("lost_reason_id", sa.UUID(), nullable=True),
         sa.Column("id", sa.UUID(), nullable=False),
         sa.ForeignKeyConstraint(

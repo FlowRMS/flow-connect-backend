@@ -274,3 +274,12 @@ class OrdersRepository(BaseRepository[Order]):
             await self._run_processors(RepositoryEvent.POST_CREATE, order)
 
         return orders
+
+    async def find_by_sold_to_customer_id(self, customer_id: UUID) -> list[Order]:
+        stmt = (
+            select(Order)
+            .options(lazyload("*"))
+            .where(Order.sold_to_customer_id == customer_id)
+        )
+        result = await self.session.execute(stmt)
+        return list(result.scalars().all())

@@ -191,3 +191,13 @@ class ProductsRepository(BaseRepository[Product]):
         )
         result = await self.session.execute(stmt)
         return list(result.scalars().all())
+
+    async def find_by_customer_id(self, customer_id: UUID) -> list[Product]:
+        stmt = (
+            select(Product)
+            .options(lazyload("*"))
+            .join(ProductCpn, ProductCpn.product_id == Product.id)
+            .where(ProductCpn.customer_id == customer_id)
+        )
+        result = await self.session.execute(stmt)
+        return list(result.scalars().all())
