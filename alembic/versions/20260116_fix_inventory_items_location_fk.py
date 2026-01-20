@@ -6,6 +6,7 @@ Revises: add_commission_statements
 
 from collections.abc import Sequence
 
+import sqlalchemy as sa
 from alembic import op
 
 revision: str = "fix_inventory_items_location_fk"
@@ -15,6 +16,13 @@ depends_on: str | Sequence[str] | None = None
 
 
 def upgrade() -> None:
+    bind = op.get_bind()
+    inspector = sa.inspect(bind)
+
+    # Only modify if the table exists (some tenants may not have inventory module)
+    if not inspector.has_table("inventory_items", schema="pywarehouse"):
+        return
+
     # Drop existing FK constraint
     op.drop_constraint(
         "inventory_items_location_id_fkey",
@@ -37,6 +45,13 @@ def upgrade() -> None:
 
 
 def downgrade() -> None:
+    bind = op.get_bind()
+    inspector = sa.inspect(bind)
+
+    # Only modify if the table exists
+    if not inspector.has_table("inventory_items", schema="pywarehouse"):
+        return
+
     op.drop_constraint(
         "inventory_items_location_id_fkey",
         "inventory_items",
