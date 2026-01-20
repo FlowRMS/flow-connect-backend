@@ -1,7 +1,7 @@
 """add disc_market_track and disc_data_search tables
 
 Revision ID: e1dce2e62fd5
-Revises: 6f462a3f0a59
+Revises: add_chat_folders
 Create Date: 2025-12-05 02:39:08.118907
 
 """
@@ -14,7 +14,7 @@ from sqlalchemy.dialects import postgresql
 
 # revision identifiers, used by Alembic.
 revision: str = 'e1dce2e62fd5'
-down_revision: str | None = '6f462a3f0a59'
+down_revision: str | None = 'add_chat_folders'
 branch_labels: str | Sequence[str] | None = None
 depends_on: str | Sequence[str] | None = None
 
