@@ -2,10 +2,11 @@
 
 from datetime import date
 from decimal import Decimal
-from typing import Optional
+from typing import Optional, Union
 from uuid import UUID
 
 import strawberry
+from strawberry import UNSET
 from commons.db.v6.crm.submittals import (
     Submittal,
     SubmittalItem,
@@ -88,6 +89,7 @@ class SubmittalItemInput(BaseInputGQL[SubmittalItem]):
     spec_sheet_id: Optional[UUID] = None
     highlight_version_id: Optional[UUID] = None
     part_number: Optional[str] = None
+    manufacturer: Optional[str] = None
     description: Optional[str] = None
     quantity: Optional[Decimal] = None
     approval_status: SubmittalItemApprovalStatusGQL = (
@@ -104,6 +106,7 @@ class SubmittalItemInput(BaseInputGQL[SubmittalItem]):
             spec_sheet_id=self.spec_sheet_id,
             highlight_version_id=self.highlight_version_id,
             part_number=self.part_number,
+            manufacturer=self.manufacturer,
             description=self.description,
             quantity=self.quantity,
             approval_status=SubmittalItemApprovalStatus(self.approval_status.value),
@@ -114,11 +117,17 @@ class SubmittalItemInput(BaseInputGQL[SubmittalItem]):
 
 @strawberry.input
 class UpdateSubmittalItemInput:
-    """Input for updating a submittal item."""
+    """Input for updating a submittal item.
 
-    spec_sheet_id: Optional[UUID] = None
-    highlight_version_id: Optional[UUID] = None
+    Note: spec_sheet_id and highlight_version_id use UNSET as default
+    to distinguish between "not provided" and "explicitly set to null".
+    """
+
+    # Use UNSET to distinguish "not provided" from "null"
+    spec_sheet_id: Union[UUID, None] = UNSET  # type: ignore[assignment]
+    highlight_version_id: Union[UUID, None] = UNSET  # type: ignore[assignment]
     part_number: Optional[str] = None
+    manufacturer: Optional[str] = None
     description: Optional[str] = None
     quantity: Optional[Decimal] = None
     approval_status: Optional[SubmittalItemApprovalStatusGQL] = None

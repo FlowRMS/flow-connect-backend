@@ -1,6 +1,8 @@
 from dataclasses import dataclass
 from uuid import UUID
 
+from strawberry import UNSET
+
 from commons.db.v6.crm.submittals import (
     Submittal,
     SubmittalEmail,
@@ -267,14 +269,18 @@ class SubmittalsService:
         if not item:
             raise ValueError(f"SubmittalItem with id {item_id} not found")
 
-        if input_data.spec_sheet_id is not None:
+        # Use UNSET check for nullable fields to allow setting to None
+        if input_data.spec_sheet_id is not UNSET:
             item.spec_sheet_id = input_data.spec_sheet_id
 
-        if input_data.highlight_version_id is not None:
+        if input_data.highlight_version_id is not UNSET:
             item.highlight_version_id = input_data.highlight_version_id
 
         if input_data.part_number is not None:
             item.part_number = input_data.part_number
+
+        if input_data.manufacturer is not None:
+            item.manufacturer = input_data.manufacturer
 
         if input_data.description is not None:
             item.description = input_data.description
