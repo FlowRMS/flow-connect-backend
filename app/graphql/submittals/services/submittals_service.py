@@ -123,6 +123,28 @@ class SubmittalsService:
         if input_data.description is not None:
             submittal.description = input_data.description
 
+        if input_data.job_location is not None:
+            submittal.job_location = input_data.job_location
+
+        if input_data.bid_date is not None:
+            submittal.bid_date = input_data.bid_date
+
+        if input_data.tags is not None:
+            submittal.tags = input_data.tags
+
+        # Update config if provided
+        if input_data.config is not None:
+            config = input_data.config
+            submittal.config_include_lamps = config.include_lamps
+            submittal.config_include_accessories = config.include_accessories
+            submittal.config_include_cq = config.include_cq
+            submittal.config_include_from_orders = config.include_from_orders
+            submittal.config_roll_up_kits = config.roll_up_kits
+            submittal.config_roll_up_accessories = config.roll_up_accessories
+            submittal.config_include_zero_quantity_items = config.include_zero_quantity_items
+            submittal.config_drop_descriptions = config.drop_descriptions
+            submittal.config_drop_line_notes = config.drop_line_notes
+
         updated = await self.repository.update(submittal)
         logger.info(f"Updated submittal {submittal_id}")
         return updated
@@ -212,6 +234,15 @@ class SubmittalsService:
             Created SubmittalItem
         """
         item = input_data.to_orm_model()
+
+        # Auto-calculate match_status based on spec_sheet and highlight_version
+        if item.spec_sheet_id and item.highlight_version_id:
+            item.match_status = SubmittalItemMatchStatus.EXACT_MATCH
+        elif item.spec_sheet_id:
+            item.match_status = SubmittalItemMatchStatus.PARTIAL_MATCH
+        else:
+            item.match_status = SubmittalItemMatchStatus.NO_MATCH
+
         created = await self.repository.add_item(submittal_id, item)
         logger.info(f"Added item {created.id} to submittal {submittal_id}")
         return created
@@ -258,6 +289,14 @@ class SubmittalsService:
 
         if input_data.match_status is not None:
             item.match_status = SubmittalItemMatchStatus(input_data.match_status.value)
+        else:
+            # Auto-calculate match_status based on spec_sheet and highlight_version
+            if item.spec_sheet_id and item.highlight_version_id:
+                item.match_status = SubmittalItemMatchStatus.EXACT_MATCH
+            elif item.spec_sheet_id:
+                item.match_status = SubmittalItemMatchStatus.PARTIAL_MATCH
+            else:
+                item.match_status = SubmittalItemMatchStatus.NO_MATCH
 
         if input_data.notes is not None:
             item.notes = input_data.notes
@@ -363,7 +402,7 @@ class SubmittalsService:
         # Check if user has an email provider connected
         has_provider = await self.email_provider.has_connected_provider()
         if not has_provider:
-            logger.warning(f"Cannot send submittal email: no email provider connected")
+            logger.warning("Cannot send submittal email: no email provider connected")
             return SendSubmittalEmailResult(
                 success=False,
                 error="No email provider connected. Please connect O365 or Gmail in settings.",

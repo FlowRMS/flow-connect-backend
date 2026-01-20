@@ -1,6 +1,6 @@
 """GraphQL response type for Submittal."""
 
-from datetime import datetime
+from datetime import date, datetime
 from typing import Annotated, Optional, Self
 from uuid import UUID
 
@@ -12,6 +12,7 @@ from app.graphql.submittals.strawberry.enums import (
     SubmittalStatusGQL,
     TransmittalPurposeGQL,
 )
+from app.graphql.submittals.strawberry.submittal_config import SubmittalConfigResponse
 from app.graphql.v2.core.users.strawberry.user_response import UserResponse
 
 
@@ -20,6 +21,7 @@ class SubmittalResponse(DTOMixin[Submittal]):
     """Response type for Submittal."""
 
     _instance: strawberry.Private[Submittal]
+    _created_by_response: strawberry.Private[Optional[UserResponse]]
     id: UUID
     submittal_number: str
     quote_id: Optional[UUID]
@@ -27,13 +29,28 @@ class SubmittalResponse(DTOMixin[Submittal]):
     status: SubmittalStatusGQL
     transmittal_purpose: Optional[TransmittalPurposeGQL]
     description: Optional[str]
+    job_location: Optional[str]
+    bid_date: Optional[date]
+    tags: Optional[list[str]]
     created_at: datetime
+    created_by_id: Optional[UUID]
 
     @classmethod
     def from_orm_model(cls, model: Submittal) -> Self:
         """Convert ORM model to GraphQL response."""
+        from sqlalchemy.orm import object_session
+        from sqlalchemy.orm.attributes import instance_state
+
+        # Try to extract created_by while session might still be active
+        created_by_response: Optional[UserResponse] = None
+        state = instance_state(model)
+        if "created_by" in state.dict and model.created_by is not None:
+            # Relationship is already loaded
+            created_by_response = UserResponse.from_orm_model(model.created_by)
+
         return cls(
             _instance=model,
+            _created_by_response=created_by_response,
             id=model.id,
             submittal_number=model.submittal_number,
             quote_id=model.quote_id,
@@ -45,13 +62,17 @@ class SubmittalResponse(DTOMixin[Submittal]):
                 else None
             ),
             description=model.description,
+            job_location=model.job_location,
+            bid_date=model.bid_date,
+            tags=model.tags,
             created_at=model.created_at,
+            created_by_id=model.created_by_id,
         )
 
     @strawberry.field
-    def created_by(self) -> UserResponse:
-        """Resolve created_by from the ORM instance."""
-        return UserResponse.from_orm_model(self._instance.created_by)
+    def created_by(self) -> Optional[UserResponse]:
+        """Resolve created_by from cached response."""
+        return self._created_by_response
 
     @strawberry.field
     def items(
@@ -108,3 +129,8 @@ class SubmittalResponse(DTOMixin[Submittal]):
         )
 
         return SubmittalRevisionResponse.from_orm_model_list(self._instance.revisions)
+
+    @strawberry.field
+    def config(self) -> SubmittalConfigResponse:
+        """Resolve config from the ORM instance."""
+        return SubmittalConfigResponse.from_orm_model(self._instance)

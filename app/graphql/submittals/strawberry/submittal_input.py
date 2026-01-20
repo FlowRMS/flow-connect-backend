@@ -1,5 +1,6 @@
 """GraphQL input types for Submittal."""
 
+from datetime import date
 from decimal import Decimal
 from typing import Optional
 from uuid import UUID
@@ -24,6 +25,7 @@ from app.graphql.submittals.strawberry.enums import (
     SubmittalStatusGQL,
     TransmittalPurposeGQL,
 )
+from app.graphql.submittals.strawberry.submittal_config import SubmittalConfigInput
 
 
 @strawberry.input
@@ -36,9 +38,11 @@ class CreateSubmittalInput(BaseInputGQL[Submittal]):
     status: SubmittalStatusGQL = SubmittalStatusGQL.DRAFT
     transmittal_purpose: Optional[TransmittalPurposeGQL] = None
     description: Optional[str] = None
+    config: Optional[SubmittalConfigInput] = None
 
     def to_orm_model(self) -> Submittal:
         """Convert input to ORM model."""
+        config = self.config or SubmittalConfigInput()
         return Submittal(
             submittal_number=self.submittal_number,
             quote_id=self.quote_id,
@@ -50,6 +54,15 @@ class CreateSubmittalInput(BaseInputGQL[Submittal]):
                 else None
             ),
             description=self.description,
+            config_include_lamps=config.include_lamps,
+            config_include_accessories=config.include_accessories,
+            config_include_cq=config.include_cq,
+            config_include_from_orders=config.include_from_orders,
+            config_roll_up_kits=config.roll_up_kits,
+            config_roll_up_accessories=config.roll_up_accessories,
+            config_include_zero_quantity_items=config.include_zero_quantity_items,
+            config_drop_descriptions=config.drop_descriptions,
+            config_drop_line_notes=config.drop_line_notes,
         )
 
 
@@ -60,6 +73,10 @@ class UpdateSubmittalInput:
     status: Optional[SubmittalStatusGQL] = None
     transmittal_purpose: Optional[TransmittalPurposeGQL] = None
     description: Optional[str] = None
+    job_location: Optional[str] = None
+    bid_date: Optional[date] = None
+    tags: Optional[list[str]] = None
+    config: Optional[SubmittalConfigInput] = None
 
 
 @strawberry.input
