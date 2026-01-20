@@ -2013,6 +2013,7 @@ type Mutation {
   createCustomer(input: CustomerInput!): CustomerResponse!
   updateCustomer(id: UUID!, input: CustomerInput!): CustomerResponse!
   deleteCustomer(id: UUID!): Boolean!
+  assignChildCustomers(parentId: UUID!, childIds: [UUID!]!): [CustomerLiteResponse!]!
   createFactory(input: FactoryInput!): FactoryResponse!
   updateFactory(id: UUID!, input: FactoryInput!): FactoryResponse!
   deleteFactory(id: UUID!): Boolean!
