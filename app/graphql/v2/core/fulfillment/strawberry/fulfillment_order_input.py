@@ -42,6 +42,7 @@ class UpdateFulfillmentOrderInput(BaseInputGQL[FulfillmentOrder]):
     carrier_id: UUID | None = strawberry.UNSET
     carrier_type: CarrierType | None = strawberry.UNSET
     freight_class: str | None = strawberry.UNSET
+    service_type: str | None = strawberry.UNSET
     ship_to_address: AddressInput | None = strawberry.UNSET
     ship_to_name: str | None = strawberry.UNSET
     ship_to_phone: str | None = strawberry.UNSET

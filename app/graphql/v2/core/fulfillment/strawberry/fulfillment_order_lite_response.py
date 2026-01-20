@@ -14,6 +14,13 @@ from commons.db.v6.fulfillment.enums import (
 
 from app.core.db.adapters.dto import DTOMixin
 from app.graphql.orders.strawberry.order_lite_response import OrderLiteResponse
+from app.graphql.v2.core.customers.strawberry.customer_response import CustomerLiteResponse
+from app.graphql.v2.core.fulfillment.strawberry.fulfillment_assignment_response import (
+    FulfillmentAssignmentResponse,
+)
+from app.graphql.v2.core.fulfillment.strawberry.fulfillment_line_item_lite_response import (
+    FulfillmentOrderLineItemLiteResponse,
+)
 from app.graphql.v2.core.fulfillment.strawberry.shipping_carrier_lite_response import (
     ShippingCarrierLiteResponse,
 )
@@ -36,6 +43,7 @@ class FulfillmentOrderLiteResponse(DTOMixin[FulfillmentOrder]):
     fulfillment_method: FulfillmentMethod
     carrier_type: CarrierType | None
     freight_class: str | None
+    service_type: str | None
     need_by_date: date | None
     has_backorder_items: bool
     hold_reason: str | None
@@ -67,6 +75,7 @@ class FulfillmentOrderLiteResponse(DTOMixin[FulfillmentOrder]):
             fulfillment_method=model.fulfillment_method,
             carrier_type=model.carrier_type,
             freight_class=model.freight_class,
+            service_type=model.service_type,
             need_by_date=model.need_by_date,
             has_backorder_items=model.has_backorder_items,
             hold_reason=model.hold_reason,
@@ -102,3 +111,26 @@ class FulfillmentOrderLiteResponse(DTOMixin[FulfillmentOrder]):
         if self._instance.order:
             return OrderLiteResponse.from_orm_model(self._instance.order)
         return None
+
+    @strawberry.field
+    def customer(self) -> CustomerLiteResponse | None:
+        """Get the sold-to customer via the order relationship - eager-loaded."""
+        if self._instance.order and self._instance.order.sold_to_customer:
+            return CustomerLiteResponse.from_orm_model(self._instance.order.sold_to_customer)
+        return None
+
+    @strawberry.field
+    def line_items(self) -> list[FulfillmentOrderLineItemLiteResponse]:
+        """Get line items - relationship is eager-loaded."""
+        return [
+            FulfillmentOrderLineItemLiteResponse.from_orm_model(li)
+            for li in (self._instance.line_items or [])
+        ]
+
+    @strawberry.field
+    def assignments(self) -> list[FulfillmentAssignmentResponse]:
+        """Get assignments - relationship is eager-loaded."""
+        return [
+            FulfillmentAssignmentResponse.from_orm_model(a)
+            for a in (self._instance.assignments or [])
+        ]

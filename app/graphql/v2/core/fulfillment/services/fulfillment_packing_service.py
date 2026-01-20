@@ -51,7 +51,12 @@ class FulfillmentPackingService:
         box.box_number = await self.box_repository.get_next_box_number(
             fulfillment_order_id
         )
-        return await self.box_repository.create(box)
+        created_box = await self.box_repository.create(box)
+        # Fetch with relationships to avoid lazy loading issues
+        result = await self.box_repository.get_with_items(created_box.id)
+        if not result:
+            raise NotFoundError(f"Packing box {created_box.id} not found after creation")
+        return result
 
     async def update_box(
         self,
@@ -73,7 +78,12 @@ class FulfillmentPackingService:
             input.tracking_number, box.tracking_number
         )
 
-        return await self.box_repository.update(box)
+        await self.box_repository.update(box)
+        # Fetch with relationships to avoid lazy loading issues
+        result = await self.box_repository.get_with_items(box_id)
+        if not result:
+            raise NotFoundError(f"Packing box {box_id} not found after update")
+        return result
 
     async def delete_box(self, box_id: UUID) -> bool:
         box = await self.box_repository.get_with_items(box_id)

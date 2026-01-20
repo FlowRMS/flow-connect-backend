@@ -107,6 +107,9 @@ class FulfillmentOrderService:
         order.freight_class = input.optional_field(
             input.freight_class, order.freight_class
         )
+        order.service_type = input.optional_field(
+            input.service_type, order.service_type
+        )
         order.need_by_date = input.optional_field(
             input.need_by_date, order.need_by_date
         )

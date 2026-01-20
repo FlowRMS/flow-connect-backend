@@ -61,6 +61,7 @@ class FulfillmentOrderResponse(FulfillmentOrderLiteResponse):
             fulfillment_method=model.fulfillment_method,
             carrier_type=model.carrier_type,
             freight_class=model.freight_class,
+            service_type=model.service_type,
             need_by_date=model.need_by_date,
             has_backorder_items=model.has_backorder_items,
             hold_reason=model.hold_reason,

@@ -60,6 +60,11 @@ class ProductLiteResponse(DTOMixin[Product]):
             tags=model.tags,
         )
 
+    @strawberry.field
+    def uom(self) -> ProductUomResponse | None:
+        """Get unit of measure - relationship is eager-loaded."""
+        return ProductUomResponse.from_orm_model_optional(self._instance.uom)
+
 
 @strawberry.type
 class ProductResponse(ProductLiteResponse):
@@ -70,7 +75,3 @@ class ProductResponse(ProductLiteResponse):
     @strawberry.field
     def category(self) -> ProductCategoryResponse | None:
         return ProductCategoryResponse.from_orm_model_optional(self._instance.category)
-
-    @strawberry.field
-    def uom(self) -> ProductUomResponse | None:
-        return ProductUomResponse.from_orm_model_optional(self._instance.uom)
