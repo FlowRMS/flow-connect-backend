@@ -1,6 +1,8 @@
 from datetime import UTC, datetime
 from uuid import UUID
 
+from strawberry import UNSET
+
 from commons.auth import AuthInfo
 from commons.db.v6.fulfillment import (
     FulfillmentActivity,
@@ -121,7 +123,8 @@ class FulfillmentOrderService:
             input.ship_to_phone, order.ship_to_phone
         )
 
-        await self._update_ship_to_address(order, input.ship_to_address)
+        if input.ship_to_address is not UNSET:
+            await self._update_ship_to_address(order, input.ship_to_address)
 
         return await self.repository.update(order)
 

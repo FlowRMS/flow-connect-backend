@@ -21,6 +21,7 @@ from app.graphql.v2.core.fulfillment.strawberry.fulfillment_document_response im
 from app.graphql.v2.core.fulfillment.strawberry.fulfillment_line_item_input import (
     CancelBackorderInput,
     CreateFulfillmentLineItemInput,
+    LinkShipmentRequestInput,
     MarkManufacturerFulfilledInput,
     SplitLineItemInput,
     UpdatePickedQuantityInput,
@@ -68,6 +69,7 @@ __all__ = [
     "CreateFulfillmentLineItemInput",
     "CreateFulfillmentOrderInput",
     "CreatePackingBoxInput",
+    "LinkShipmentRequestInput",
     "MarkManufacturerFulfilledInput",
     "SplitLineItemInput",
     "UpdateFulfillmentOrderInput",

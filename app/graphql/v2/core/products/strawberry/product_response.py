@@ -65,11 +65,18 @@ class ProductLiteResponse(DTOMixin[Product]):
         """Get unit of measure - relationship is eager-loaded."""
         return ProductUomResponse.from_orm_model_optional(self._instance.uom)
 
+    @strawberry.field
+    def factory(self) -> FactoryLiteResponse | None:
+        """Get factory - relationship is eager-loaded."""
+        if self._instance.factory is None:
+            return None
+        return FactoryLiteResponse.from_orm_model(self._instance.factory)
+
 
 @strawberry.type
 class ProductResponse(ProductLiteResponse):
     @strawberry.field
-    def factory(self) -> FactoryLiteResponse:
+    def factory_full(self) -> FactoryLiteResponse:
         return FactoryLiteResponse.from_orm_model(self._instance.factory)
 
     @strawberry.field
