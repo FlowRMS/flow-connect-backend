@@ -133,7 +133,8 @@ class CustomersRepository(BaseRepository[Customer]):
     ) -> list[Customer]:
         stmt = (
             select(Customer)
-            .where(Customer.company_name.ilike(f"%{search_term}%"))
+            .where(func.similarity(Customer.company_name, search_term) > 0.2)
+            .order_by(func.similarity(Customer.company_name, search_term).desc())
             .limit(limit)
         )
 
