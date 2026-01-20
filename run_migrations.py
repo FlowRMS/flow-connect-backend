@@ -22,6 +22,14 @@ async def run_migration() -> None:
             chunk_size=2
         )
 
+# downgrades the migration
+async def downgrade_migration() -> None:
+    async with create_container().context() as conn_ctx:
+        settings = await conn_ctx.resolve(Settings)
+        controller = await create_multitenant_for_migration_controller(
+            settings.pg_url.unicode_string(), settings.environment
+        )
+        MultiTenantMigration(controller, config_file="alembic.ini").downgrade()
 
 def main() -> None:
     import argparse
@@ -35,8 +43,18 @@ def main() -> None:
     )
     
     
-    _ = load_dotenv_once(f".env.{parser.parse_args().env}")
     """Main entry point for running migrations."""
+    _ = parser.add_argument(
+        "--downgrade",
+        action="store_true",
+        help="Downgrade the migration",
+    )
+    args = parser.parse_args()
+    _ = load_dotenv_once(f".env.{args.env}")
+    if args.downgrade:
+        logger.info("Downgrading migration")
+        asyncio.run(downgrade_migration())
+        return
     logger.info("Running migration")
     asyncio.run(run_migration())
     logger.success("Migration complete")
