@@ -16,3 +16,7 @@ class ExpiredTokenError(UnauthorizedError):
 
 class DuplicateRowError(FlowAIError):
     pass
+
+
+class OutsideRepsRequiredError(FlowAIError):
+    pass

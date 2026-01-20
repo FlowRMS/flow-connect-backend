@@ -9,6 +9,9 @@ from app.errors.common_errors import NameAlreadyExistsError, NotFoundError
 from app.graphql.orders.factories.order_factory import OrderFactory
 from app.graphql.orders.repositories.orders_repository import OrdersRepository
 from app.graphql.orders.strawberry.order_input import OrderInput
+from app.graphql.orders.strawberry.quote_detail_to_order_input import (
+    QuoteDetailToOrderDetailInput,
+)
 from app.graphql.quotes.repositories.quotes_repository import QuotesRepository
 
 
@@ -29,6 +32,11 @@ class OrderService:
     ) -> bool:
         return await self.repository.order_number_exists(order_number, customer_id)
 
+    async def find_by_order_number(
+        self, order_number: str, customer_id: UUID
+    ) -> Order | None:
+        return await self.repository.find_by_order_number(order_number, customer_id)
+
     async def find_order_by_id(self, order_id: UUID) -> Order:
         return await self.repository.find_order_by_id(order_id)
 
@@ -40,6 +48,33 @@ class OrderService:
 
         order = order_input.to_orm_model()
         return await self.repository.create_with_balance(order)
+
+    async def create_orders_bulk(self, order_inputs: list[OrderInput]) -> list[Order]:
+        if not order_inputs:
+            return []
+
+        order_customer_pairs = [
+            (inp.order_number, inp.sold_to_customer_id) for inp in order_inputs
+        ]
+        existing = await self.repository.order_numbers_exist_bulk(order_customer_pairs)
+
+        valid_inputs = [
+            inp
+            for inp in order_inputs
+            if (inp.order_number, inp.sold_to_customer_id) not in existing
+        ]
+
+        if not valid_inputs:
+            return []
+
+        orders = [inp.to_orm_model() for inp in valid_inputs]
+        details_list = [order.details for order in orders]
+        balances = await self.repository.create_balances_bulk(details_list)
+
+        for order, balance in zip(orders, balances, strict=True):
+            order.balance_id = balance.id
+
+        return await self.repository.create_bulk(orders)
 
     async def update_order(self, order_input: OrderInput) -> Order:
         if order_input.id is None:
@@ -94,7 +129,7 @@ class OrderService:
         order_number: str,
         factory_id: UUID,
         due_date: date | None = None,
-        quote_detail_ids: list[UUID] | None = None,
+        quote_details_inputs: list[QuoteDetailToOrderDetailInput] | None = None,
     ) -> Order:
         quote = await self.quotes_repository.find_quote_by_id(quote_id)
 
@@ -104,14 +139,18 @@ class OrderService:
             raise NameAlreadyExistsError(order_number)
 
         order = OrderFactory.from_quote(
-            quote, order_number, factory_id, due_date, quote_detail_ids
+            quote, order_number, factory_id, due_date, quote_details_inputs
         )
         created_order = await self.repository.create_with_balance(order)
 
-        if quote_detail_ids:
+        if quote_details_inputs:
+            quote_detail_ids = [inp.quote_detail_id for inp in quote_details_inputs]
             await self.quotes_repository.update_detail_order_ids(
                 detail_ids=quote_detail_ids,
                 order_id=created_order.id,
             )
 
         return created_order
+
+    async def find_by_sold_to_customer_id(self, customer_id: UUID) -> list[Order]:
+        return await self.repository.find_by_sold_to_customer_id(customer_id)

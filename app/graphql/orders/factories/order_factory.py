@@ -14,6 +14,10 @@ from commons.db.v6.commission.orders import (
 from commons.db.v6.common.creation_type import CreationType
 from commons.db.v6.crm.quotes import Quote, QuoteDetail
 
+from app.graphql.orders.strawberry.quote_detail_to_order_input import (
+    QuoteDetailToOrderDetailInput,
+)
+
 
 class OrderFactory:
     @staticmethod
@@ -93,14 +97,9 @@ class OrderFactory:
         order_number: str,
         factory_id: UUID,
         due_date: date | None = None,
-        quote_detail_ids: list[UUID] | None = None,
+        quote_details_inputs: list[QuoteDetailToOrderDetailInput] | None = None,
     ) -> Order:
         today = date.today()
-        details_to_map = quote.details
-        if quote_detail_ids:
-            detail_ids_set = set(quote_detail_ids)
-            details_to_map = [d for d in quote.details if d.id in detail_ids_set]
-
         return Order(
             inside_per_line_item=quote.inside_per_line_item,
             outside_per_line_item=quote.outside_per_line_item,
@@ -118,16 +117,27 @@ class OrderFactory:
             creation_type=CreationType.API,
             published=False,
             quote_id=quote.id,
-            details=OrderFactory._map_quote_details(details_to_map),
+            details=OrderFactory._map_quote_details(
+                quote.details, quote_details_inputs
+            ),
         )
 
     @staticmethod
-    def _map_quote_details(quote_details: list[QuoteDetail]) -> list[OrderDetail]:
-        return [
-            OrderDetail(
+    def _map_quote_details(
+        quote_details: list[QuoteDetail],
+        quote_details_inputs: list[QuoteDetailToOrderDetailInput] | None = None,
+    ) -> list[OrderDetail]:
+        quote_detail_map = {detail.id: detail for detail in quote_details}
+
+        order_details: list[OrderDetail] = []
+        for detail_input in quote_details_inputs or []:
+            detail = quote_detail_map.get(detail_input.quote_detail_id)
+            if not detail:
+                continue
+            order_detail = OrderDetail(
                 item_number=detail.item_number,
-                quantity=detail.quantity,
-                unit_price=detail.unit_price,
+                quantity=detail_input.quantity or detail.quantity,
+                unit_price=detail_input.unit_price or detail.unit_price,
                 subtotal=detail.subtotal,
                 discount_rate=detail.discount_rate,
                 discount=detail.discount,
@@ -162,5 +172,5 @@ class OrderFactory:
                     for ir in detail.inside_split_rates
                 ],
             )
-            for detail in quote_details
-        ]
+            order_details.append(order_detail)
+        return order_details

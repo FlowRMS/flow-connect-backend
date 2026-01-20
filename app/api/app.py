@@ -4,6 +4,7 @@ from typing import Any
 
 from aioinject.ext.fastapi import AioInjectMiddleware
 from commons.db.v6.models import *  # noqa: F403
+from commons.logging.datadog_logger import setup_logging
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
@@ -11,9 +12,10 @@ from loguru import logger
 from sqlalchemy.orm import configure_mappers
 from taskiq_fastapi import init
 
-# from starlette.middleware.trustedhost import TrustedHostMiddleware
+import app.graphql.checks.listeners  # noqa: F401  # pyright: ignore[reportUnusedImport]
 from app.admin.app import create_admin_graphql_app
 from app.api.o365_router import router as o365_router
+from app.core.config.settings import Settings
 from app.core.container import create_container
 from app.graphql.app import create_graphql_app
 from app.workers.broker import broker
@@ -26,7 +28,14 @@ def create_app() -> FastAPI:
     async def lifespan(_app: FastAPI):
         configure_mappers()
         async with container:
-            # Initialize TaskIQ broker on startup
+            async with container.context() as ctx:
+                settings = await ctx.resolve(Settings)
+                setup_logging(
+                    environment=settings.environment,
+                    datadog_settings=settings.datadog,
+                    # echo_sqlalchemy=False,
+                )
+
             if not broker.is_worker_process:
                 await broker.startup()
                 logger.info("TaskIQ broker started")

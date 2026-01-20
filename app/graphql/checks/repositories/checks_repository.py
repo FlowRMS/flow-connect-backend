@@ -2,7 +2,17 @@ from typing import Any, override
 from uuid import UUID
 
 from commons.db.v6 import RbacResourceEnum, User
-from commons.db.v6.commission import Adjustment, Check, CheckDetail, Credit, Invoice
+from commons.db.v6.commission import (
+    Adjustment,
+    Check,
+    CheckDetail,
+    Credit,
+    CreditDetail,
+    Invoice,
+    InvoiceDetail,
+    InvoiceSplitRate,
+    Order,
+)
 from commons.db.v6.core import Factory
 from commons.db.v6.crm.links.entity_type import EntityType
 from commons.db.v6.crm.links.link_relation_model import LinkRelation
@@ -14,10 +24,8 @@ from app.core.context_wrapper import ContextWrapper
 from app.core.exceptions import NotFoundError
 from app.core.processors import ProcessorExecutor
 from app.graphql.base_repository import BaseRepository
-from app.graphql.checks.processors.post_check_processor import PostCheckProcessor
-from app.graphql.checks.processors.unpost_check_processor import UnpostCheckProcessor
-from app.graphql.checks.processors.validate_check_status_processor import (
-    ValidateCheckStatusProcessor,
+from app.graphql.checks.processors.validate_check_entities_processor import (
+    ValidateCheckEntitiesProcessor,
 )
 from app.graphql.checks.strawberry.check_landing_page_response import (
     CheckLandingPageResponse,
@@ -37,9 +45,7 @@ class ChecksRepository(BaseRepository[Check]):
         context_wrapper: ContextWrapper,
         session: AsyncSession,
         processor_executor: ProcessorExecutor,
-        validate_status_processor: ValidateCheckStatusProcessor,
-        post_check_processor: PostCheckProcessor,
-        unpost_check_processor: UnpostCheckProcessor,
+        validate_entities_processor: ValidateCheckEntitiesProcessor,
         rbac_filter_service: RbacFilterService,
     ) -> None:
         super().__init__(
@@ -49,9 +55,7 @@ class ChecksRepository(BaseRepository[Check]):
             rbac_filter_service,
             processor_executor=processor_executor,
             processor_executor_classes=[
-                validate_status_processor,
-                post_check_processor,
-                unpost_check_processor,
+                validate_entities_processor,
             ],
         )
 
@@ -84,11 +88,35 @@ class ChecksRepository(BaseRepository[Check]):
         check = await self.get_by_id(
             check_id,
             options=[
+                joinedload(Check.created_by),
                 joinedload(Check.details),
                 joinedload(Check.details).joinedload(CheckDetail.invoice),
                 joinedload(Check.details)
                 .joinedload(CheckDetail.invoice)
+                .joinedload(Invoice.balance),
+                joinedload(Check.details)
+                .joinedload(CheckDetail.invoice)
                 .joinedload(Invoice.order),
+                joinedload(Check.details)
+                .joinedload(CheckDetail.invoice)
+                .joinedload(Invoice.order)
+                .joinedload(Order.sold_to_customer),
+                joinedload(Check.details)
+                .joinedload(CheckDetail.invoice)
+                .joinedload(Invoice.order)
+                .joinedload(Order.bill_to_customer),
+                joinedload(Check.details)
+                .joinedload(CheckDetail.invoice)
+                .joinedload(Invoice.details),
+                joinedload(Check.details)
+                .joinedload(CheckDetail.invoice)
+                .joinedload(Invoice.details)
+                .joinedload(InvoiceDetail.outside_split_rates),
+                joinedload(Check.details)
+                .joinedload(CheckDetail.invoice)
+                .joinedload(Invoice.details)
+                .joinedload(InvoiceDetail.outside_split_rates)
+                .joinedload(InvoiceSplitRate.user),
                 joinedload(Check.details).joinedload(CheckDetail.credit),
                 joinedload(Check.details)
                 .joinedload(CheckDetail.credit)
@@ -101,6 +129,16 @@ class ChecksRepository(BaseRepository[Check]):
                 .joinedload(CheckDetail.adjustment)
                 .joinedload(Adjustment.factory),
                 joinedload(Check.factory),
+                joinedload(Check.details)
+                .joinedload(CheckDetail.credit)
+                .joinedload(Credit.details),
+                joinedload(Check.details)
+                .joinedload(CheckDetail.credit)
+                .joinedload(Credit.details)
+                .joinedload(CreditDetail.outside_split_rates),
+                joinedload(Check.details)
+                .joinedload(CheckDetail.credit)
+                .joinedload(Credit.balance),
                 lazyload("*"),
             ],
         )
@@ -160,6 +198,19 @@ class ChecksRepository(BaseRepository[Check]):
                     ),
                 ),
             )
+        )
+        result = await self.session.execute(stmt)
+        return list(result.scalars().all())
+
+    async def find_by_sold_to_customer_id(self, customer_id: UUID) -> list[Check]:
+        stmt = (
+            select(Check)
+            .options(lazyload("*"))
+            .join(CheckDetail, CheckDetail.check_id == Check.id)
+            .join(Invoice, Invoice.id == CheckDetail.invoice_id)
+            .join(Order, Order.id == Invoice.order_id)
+            .where(Order.sold_to_customer_id == customer_id)
+            .distinct()
         )
         result = await self.session.execute(stmt)
         return list(result.scalars().all())

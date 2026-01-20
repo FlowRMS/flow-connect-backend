@@ -12,7 +12,7 @@ from loguru import logger
 @dataclass
 class UploadResult:
     s3_key: str
-    file_path: str
+    file_path: str | None
     file_size: int
     file_sha: str
     presigned_url: str
@@ -56,7 +56,7 @@ class FileUploadService:
 
         return UploadResult(
             s3_key=s3_key,
-            file_path=s3_key,
+            file_path=folder_path,
             file_size=file_size,
             file_sha=file_sha,
             presigned_url=presigned_url,

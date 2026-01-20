@@ -22,6 +22,11 @@ class CreditService:
     async def find_credit_by_id(self, credit_id: UUID) -> Credit:
         return await self.repository.find_credit_by_id(credit_id)
 
+    async def find_by_credit_number(
+        self, order_id: UUID, credit_number: str
+    ) -> Credit | None:
+        return await self.repository.find_by_credit_number(order_id, credit_number)
+
     async def create_credit(self, credit_input: CreditInput) -> Credit:
         if await self.repository.credit_number_exists(
             credit_input.order_id, credit_input.credit_number
@@ -60,3 +65,6 @@ class CreditService:
 
     async def find_credits_by_job_id(self, job_id: UUID) -> list[Credit]:
         return await self.repository.find_by_job_id(job_id)
+
+    async def find_credits_by_order_id(self, order_id: UUID) -> list[Credit]:
+        return await self.repository.find_by_order_id(order_id)

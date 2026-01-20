@@ -18,6 +18,9 @@ from app.core.context_wrapper import create_context_wrapper
 from app.core.db import db_provider
 from app.core.dto_providers import providers as dto_providers
 from app.core.processors.executor import ProcessorExecutor
+from app.graphql.common.services.bulk_delete_registry_factory import (
+    create_bulk_delete_registry,
+)
 from app.graphql.common.services.entity_lookup_registry_factory import (
     create_entity_lookup_registry,
 )
@@ -79,6 +82,7 @@ def providers() -> Iterable[aioinject.Provider[Any]]:
     providers.append(aioinject.Singleton(create_search_strategy_registry))
     providers.append(aioinject.Scoped(create_related_entities_registry))
     providers.append(aioinject.Scoped(create_entity_lookup_registry))
+    providers.append(aioinject.Scoped(create_bulk_delete_registry))
 
     for settings_class in settings_classes:
         providers.append(aioinject.Object(get_settings(settings_class)))

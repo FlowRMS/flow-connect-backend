@@ -1,10 +1,11 @@
 from typing import Any, override
+from uuid import UUID
 
 from commons.db.v6 import Customer, RbacResourceEnum, User
 from commons.db.v6.core.customers.customer_split_rate import CustomerSplitRate
 from commons.db.v6.crm.links.entity_type import EntityType
 from commons.db.v6.user.rep_type import RepTypeEnum
-from sqlalchemy import Select, String, func, literal, select
+from sqlalchemy import Select, String, func, literal, select, update
 from sqlalchemy.dialects.postgresql import ARRAY, array
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import aliased, lazyload
@@ -70,6 +71,8 @@ class CustomersRepository(BaseRepository[Customer]):
     def paginated_stmt(self) -> Select[Any]:
         inside_user = aliased(User)
         outside_user = aliased(User)
+        buying_group = aliased(Customer)
+        parent = aliased(Customer)
         empty_array = literal([]).cast(ARRAY(String))
 
         inside_subq = (
@@ -106,6 +109,8 @@ class CustomersRepository(BaseRepository[Customer]):
                 Customer.company_name,
                 Customer.published,
                 Customer.is_parent,
+                buying_group.company_name.label("buying_group"),
+                parent.company_name.label("parent"),
                 func.coalesce(inside_subq.c.inside_reps, empty_array).label(
                     "inside_reps"
                 ),
@@ -116,6 +121,8 @@ class CustomersRepository(BaseRepository[Customer]):
             )
             .select_from(Customer)
             .options(lazyload("*"))
+            .outerjoin(buying_group, buying_group.id == Customer.buying_group_id)
+            .outerjoin(parent, parent.id == Customer.parent_id)
             .join(User, User.id == Customer.created_by_id)
             .outerjoin(inside_subq, inside_subq.c.customer_id == Customer.id)
             .outerjoin(outside_subq, outside_subq.c.customer_id == Customer.id)
@@ -124,20 +131,10 @@ class CustomersRepository(BaseRepository[Customer]):
     async def search_by_company_name(
         self, search_term: str, published: bool = True, limit: int = 20
     ) -> list[Customer]:
-        """
-        Search customers by company name using case-insensitive pattern matching.
-
-        Args:
-            search_term: The search term to match against company name
-            published: Filter by published status (default: True)
-            limit: Maximum number of customers to return (default: 20)
-
-        Returns:
-            List of Customer objects matching the search criteria
-        """
         stmt = (
             select(Customer)
-            .where(Customer.company_name.ilike(f"%{search_term}%"))
+            .where(func.similarity(Customer.company_name, search_term) > 0.2)
+            .order_by(func.similarity(Customer.company_name, search_term).desc())
             .limit(limit)
         )
 
@@ -146,3 +143,32 @@ class CustomersRepository(BaseRepository[Customer]):
 
         result = await self.execute(stmt)
         return list(result.scalars().all())
+
+    async def get_buying_group_members(self, buying_group_id: UUID) -> list[Customer]:
+        stmt = select(Customer).where(Customer.buying_group_id == buying_group_id)
+        result = await self.execute(stmt)
+        return list(result.scalars().all())
+
+    async def get_children(self, parent_id: UUID) -> list[Customer]:
+        stmt = (
+            select(Customer)
+            .where(Customer.parent_id == parent_id)
+            .options(lazyload("*"))
+        )
+        result = await self.execute(stmt)
+        return list(result.scalars().all())
+
+    async def set_children_parent_id(
+        self,
+        parent_id: UUID,
+        child_ids: list[UUID],
+    ) -> None:
+        if child_ids:
+            set_stmt = (
+                update(Customer)
+                .where(Customer.id.in_(child_ids))
+                .values(parent_id=parent_id)
+            )
+            _ = await self.session.execute(set_stmt)
+
+        await self.session.flush()

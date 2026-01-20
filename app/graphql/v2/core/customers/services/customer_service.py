@@ -26,6 +26,8 @@ class CustomerService:
                 joinedload(Customer.created_by),
                 joinedload(Customer.outside_reps),
                 joinedload(Customer.inside_reps),
+                joinedload(Customer.buying_group),
+                joinedload(Customer.parent),
             ],
         )
         if not customer:
@@ -80,3 +82,20 @@ class CustomerService:
         self, entity_type: EntityType, entity_id: UUID
     ) -> list[Customer]:
         return await self.repository.find_by_entity(entity_type, entity_id)
+
+    async def get_children(self, parent_id: UUID) -> list[Customer]:
+        return await self.repository.get_children(parent_id)
+
+    async def get_buying_group_members(self, buying_group_id: UUID) -> list[Customer]:
+        return await self.repository.get_buying_group_members(buying_group_id)
+
+    async def assign_children(
+        self,
+        parent_id: UUID,
+        child_ids: list[UUID],
+    ) -> list[Customer]:
+        if not await self.repository.exists(parent_id):
+            raise NotFoundError(f"Parent customer with id {parent_id} not found")
+
+        await self.repository.set_children_parent_id(parent_id, child_ids)
+        return await self.repository.get_children(parent_id)

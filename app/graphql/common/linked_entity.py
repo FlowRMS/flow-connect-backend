@@ -10,6 +10,6 @@ from commons.db.v6.crm.links.entity_type import EntityType
 class LinkedEntity:
     """Represents a linked entity with its id, title, and type."""
 
-    id: UUID
-    title: str
-    entity_type: EntityType
+    id: UUID | None
+    title: str | None
+    entity_type: EntityType | None

@@ -10,6 +10,9 @@ from app.errors.common_errors import NameAlreadyExistsError, NotFoundError
 from app.graphql.invoices.factories.invoice_factory import InvoiceFactory
 from app.graphql.invoices.repositories.invoices_repository import InvoicesRepository
 from app.graphql.invoices.strawberry.invoice_input import InvoiceInput
+from app.graphql.invoices.strawberry.order_detail_to_invoice_input import (
+    OrderDetailToInvoiceDetailInput,
+)
 from app.graphql.orders.repositories.orders_repository import OrdersRepository
 
 
@@ -27,6 +30,11 @@ class InvoiceService:
 
     async def find_invoice_by_id(self, invoice_id: UUID) -> Invoice:
         return await self.repository.find_invoice_by_id(invoice_id)
+
+    async def find_by_invoice_number(
+        self, order_id: UUID, invoice_number: str
+    ) -> Invoice | None:
+        return await self.repository.find_by_invoice_number(order_id, invoice_number)
 
     async def create_invoice(self, invoice_input: InvoiceInput) -> Invoice:
         if await self.repository.invoice_number_exists(
@@ -75,9 +83,10 @@ class InvoiceService:
     async def search_open_invoices(
         self,
         factory_id: UUID,
-        start_from: date,
+        start_from: date | None = None,
+        limit: int | None = None,
     ) -> list[Invoice]:
-        return await self.repository.search_open_invoices(factory_id, start_from)
+        return await self.repository.search_open_invoices(factory_id, start_from, limit)
 
     async def find_invoices_by_order_id(self, order_id: UUID) -> list[Invoice]:
         return await self.repository.find_by_order_id(order_id)
@@ -92,7 +101,7 @@ class InvoiceService:
         order_id: UUID,
         invoice_number: str,
         factory_id: UUID,
-        order_detail_ids: list[UUID] | None = None,
+        order_details_inputs: list[OrderDetailToInvoiceDetailInput] | None = None,
         due_date: date | None = None,
     ) -> Invoice:
         order = await self.orders_repository.find_order_by_id(order_id)
@@ -104,8 +113,11 @@ class InvoiceService:
             order=order,
             invoice_number=invoice_number,
             factory_id=factory_id,
-            order_detail_ids=order_detail_ids,
+            order_details_inputs=order_details_inputs,
             due_date=due_date,
         )
         invoice.status = InvoiceStatus.OPEN
         return await self.repository.create_with_balance(invoice)
+
+    async def find_by_sold_to_customer_id(self, customer_id: UUID) -> list[Invoice]:
+        return await self.repository.find_by_sold_to_customer_id(customer_id)

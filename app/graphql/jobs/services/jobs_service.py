@@ -13,7 +13,7 @@ from app.graphql.checks.strawberry.check_response import CheckLiteResponse
 from app.graphql.companies.services.companies_service import CompaniesService
 from app.graphql.companies.strawberry.company_response import CompanyLiteResponse
 from app.graphql.contacts.services.contacts_service import ContactsService
-from app.graphql.contacts.strawberry.contact_response import ContactResponse
+from app.graphql.contacts.strawberry.contact_response import ContactLiteResponse
 from app.graphql.invoices.services.invoice_service import InvoiceService
 from app.graphql.invoices.strawberry.invoice_response import InvoiceLiteResponse
 from app.graphql.jobs.repositories.jobs_repository import JobsRepository
@@ -22,7 +22,7 @@ from app.graphql.jobs.strawberry.job_related_entities_response import (
     JobRelatedEntitiesResponse,
 )
 from app.graphql.orders.services.order_service import OrderService
-from app.graphql.orders.strawberry.order_response import OrderLiteResponse
+from app.graphql.orders.strawberry.order_lite_response import OrderLiteResponse
 from app.graphql.pre_opportunities.services.pre_opportunities_service import (
     PreOpportunitiesService,
 )
@@ -186,7 +186,7 @@ class JobsService:
             pre_opportunities=PreOpportunityLiteResponse.from_orm_model_list(
                 pre_opportunities
             ),
-            contacts=ContactResponse.from_orm_model_list(contacts),
+            contacts=ContactLiteResponse.from_orm_model_list(contacts),
             companies=CompanyLiteResponse.from_orm_model_list(companies),
             quotes=QuoteLiteResponse.from_orm_model_list(quotes),
             orders=OrderLiteResponse.from_orm_model_list(orders),

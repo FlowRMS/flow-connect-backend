@@ -60,13 +60,12 @@ jobs:
             - All dependencies must be injected via constructor
 
             ## DOCSTRING RULES
-            - NO module-level docstrings at file start
             - Only add docstrings when they provide value beyond type hints
             - Bad: `"""Get a job by ID."""` (redundant)
             - Good: Explain WHY, complex algorithms, or business rules
 
             ## CODE QUALITY
-            - Maximum 300 lines per file
+            - Maximum 400 lines per file
             - Use specific exceptions from `/app/errors/`
             - Async/await for all I/O operations
             - Use enums for constants, no magic values
@@ -108,10 +107,10 @@ jobs:
             - All functions have type hints (parameters + return)
             - Using Python 3.13 syntax (`list[str]`, `str | None`)
             - No `alembic upgrade/downgrade` commands
+            - Duplicate code removed (no commented-out code)
             - Repositories use `flush()` not `commit()`
 
             ### High Priority (Should Fix)
-            - No module-level docstrings
             - Only valuable docstrings (not redundant)
             - Dependencies injected via constructor
             - Services don't access DB directly

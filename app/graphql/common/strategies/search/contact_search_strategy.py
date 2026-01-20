@@ -23,12 +23,20 @@ class ContactSearchQueryBuilder(SearchQueryBuilder[Contact]):
         ]
 
     @override
+    def get_computed_searchable_fields(self) -> list[Any]:
+        return [func.concat(Contact.first_name, " ", Contact.last_name)]
+
+    @override
     def get_title_field(self) -> Any:
         return func.concat(Contact.first_name, " ", Contact.last_name)
 
     @override
     def get_alias_field(self) -> Any | None:
         return func.coalesce(Contact.email, Contact.phone, Contact.role)
+
+    @override
+    def get_extra_info_field(self) -> Any | None:
+        return Contact.phone
 
 
 class ContactSearchStrategy(SearchQueryStrategy):

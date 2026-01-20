@@ -39,7 +39,20 @@ class CreditConverter(BaseEntityConverter[CheckDetailDTO, CreditInput, Credit]):
         self.order_detail_matcher = order_detail_matcher
 
     @override
-    async def create_entity(self, input_data: CreditInput) -> Credit:
+    async def find_existing(self, input_data: CreditInput) -> Credit | None:
+        return await self.credit_service.find_by_credit_number(
+            input_data.order_id,
+            input_data.credit_number,
+        )
+
+    @override
+    async def create_entity(
+        self,
+        input_data: CreditInput,
+    ) -> Credit:
+        existing = await self.find_existing(input_data)
+        if existing:
+            return existing
         return await self.credit_service.create_credit(input_data)
 
     @override
@@ -48,7 +61,7 @@ class CreditConverter(BaseEntityConverter[CheckDetailDTO, CreditInput, Credit]):
         dto: CheckDetailDTO,
         entity_mapping: EntityMapping,
     ) -> ConversionResult[CreditInput]:
-        order_id = entity_mapping.order_id
+        order_id = entity_mapping.get_order_id(dto.flow_detail_index)
 
         if not order_id:
             return ConversionResult.fail(OrderRequiredError())

@@ -2,7 +2,13 @@ from typing import Any
 from uuid import UUID
 
 from commons.db.v6 import RbacResourceEnum, User
-from commons.db.v6.commission import Credit, CreditBalance, CreditDetail, Order
+from commons.db.v6.commission import (
+    Credit,
+    CreditBalance,
+    CreditDetail,
+    CreditSplitRate,
+    Order,
+)
 from commons.db.v6.commission.credits.enums import CreditStatus
 from commons.db.v6.crm.links.entity_type import EntityType
 from commons.db.v6.crm.links.link_relation_model import LinkRelation
@@ -15,6 +21,9 @@ from app.core.context_wrapper import ContextWrapper
 from app.core.exceptions import NotFoundError
 from app.core.processors import ProcessorExecutor
 from app.graphql.base_repository import BaseRepository
+from app.graphql.credits.processors.default_rep_split_processor import (
+    CreditDefaultRepSplitProcessor,
+)
 from app.graphql.credits.processors.update_order_on_credit_processor import (
     UpdateOrderOnCreditProcessor,
 )
@@ -45,6 +54,7 @@ class CreditsRepository(BaseRepository[Credit]):
         validate_status_processor: ValidateCreditStatusProcessor,
         validate_split_rate_processor: ValidateCreditSplitRateProcessor,
         update_order_processor: UpdateOrderOnCreditProcessor,
+        default_rep_split_processor: CreditDefaultRepSplitProcessor,
     ) -> None:
         super().__init__(
             session,
@@ -52,6 +62,7 @@ class CreditsRepository(BaseRepository[Credit]):
             Credit,
             processor_executor=processor_executor,
             processor_executor_classes=[
+                default_rep_split_processor,
                 validate_status_processor,
                 validate_split_rate_processor,
                 update_order_processor,
@@ -89,6 +100,9 @@ class CreditsRepository(BaseRepository[Credit]):
             options=[
                 joinedload(Credit.details),
                 joinedload(Credit.details).joinedload(CreditDetail.outside_split_rates),
+                joinedload(Credit.details)
+                .joinedload(CreditDetail.outside_split_rates)
+                .joinedload(CreditSplitRate.user),
                 joinedload(Credit.balance),
                 joinedload(Credit.order),
                 joinedload(Credit.created_by),
@@ -124,6 +138,20 @@ class CreditsRepository(BaseRepository[Credit]):
             )
         )
         return result.scalar_one() > 0
+
+    async def find_by_credit_number(
+        self, order_id: UUID, credit_number: str
+    ) -> Credit | None:
+        stmt = (
+            select(Credit)
+            .options(lazyload("*"))
+            .where(
+                Credit.order_id == order_id,
+                Credit.credit_number == credit_number,
+            )
+        )
+        result = await self.session.execute(stmt)
+        return result.scalar_one_or_none()
 
     async def search_by_credit_number(
         self,
@@ -168,5 +196,10 @@ class CreditsRepository(BaseRepository[Credit]):
                 ),
             )
         )
+        result = await self.session.execute(stmt)
+        return list(result.scalars().all())
+
+    async def find_by_order_id(self, order_id: UUID) -> list[Credit]:
+        stmt = select(Credit).options(lazyload("*")).where(Credit.order_id == order_id)
         result = await self.session.execute(stmt)
         return list(result.scalars().all())

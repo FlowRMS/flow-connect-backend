@@ -1,3 +1,4 @@
+from commons.logging.datadog_settings import DatadogSettings
 from pydantic import PostgresDsn, RedisDsn
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
@@ -7,6 +8,7 @@ class Settings(BaseSettings):
     ro_pg_host: str
     redis_url: RedisDsn
     environment: str
+    datadog: DatadogSettings
 
     log_level: str = "INFO"
 

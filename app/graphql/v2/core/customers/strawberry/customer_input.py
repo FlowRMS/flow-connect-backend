@@ -22,6 +22,8 @@ class CustomerInput(BaseInputGQL[Customer]):
     published: bool = False
     is_parent: bool = False
     parent_id: UUID | None = None
+    buying_group_id: UUID | None = None
+    territory_id: UUID | None = None
 
     def to_orm_model(self) -> Customer:
         split_rates = [rate.to_orm_model() for rate in self.inside_split_rates] + [
@@ -33,5 +35,7 @@ class CustomerInput(BaseInputGQL[Customer]):
             published=self.published,
             is_parent=self.is_parent,
             parent_id=self.parent_id,
+            buying_group_id=self.buying_group_id,
+            territory_id=self.territory_id,
             split_rates=split_rates,
         )

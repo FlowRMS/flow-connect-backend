@@ -27,6 +27,11 @@ class OrderDetailMatcherService:
             return None
 
         candidates = self._build_candidates(order.details, part_number)
+        logger.info(f"Built {len(candidates)} candidates for order detail matching")
+        logger.info(f"Candidates: {candidates}")
+        logger.info(
+            f"Matching with unit_price={unit_price}, quantity={quantity}, item_number={item_number}, part_number={part_number}"
+        )
         return self._find_best_match(
             candidates=candidates,
             unit_price=unit_price,
@@ -49,17 +54,26 @@ class OrderDetailMatcherService:
                 "quantity": detail.quantity,
                 "status": detail.status,
                 "similarity_fpn": 0.0,
-                "similarity_cpn": 0.0,
+                "similarity_description": 0.0,
             }
 
             if part_number:
-                fpn = detail.product_name_adhoc or ""
-                cpn = detail.product_description_adhoc or ""
+                fpn = (
+                    detail.product.factory_part_number
+                    if detail.product
+                    else detail.product_name_adhoc or ""
+                )
+                desc = (
+                    detail.product.description
+                    if detail.product
+                    else detail.product_description_adhoc or ""
+                )
+                desc = desc or ""
                 candidate["similarity_fpn"] = fuzz.ratio(
                     part_number.lower(), fpn.lower()
                 )
-                candidate["similarity_cpn"] = fuzz.ratio(
-                    part_number.lower(), cpn.lower()
+                candidate["similarity_description"] = fuzz.ratio(
+                    part_number.lower(), desc.lower()
                 )
 
             candidates.append(candidate)
@@ -80,7 +94,7 @@ class OrderDetailMatcherService:
             if matches:
                 if allow_multiple or len(matches) == 1:
                     best = max(matches, key=lambda c: c["shipping_balance"])
-                    logger.debug(f"Matched order detail {best['id']} using clause")
+                    logger.info(f"Matched order detail {best['id']} using clause")
                     return best["id"]
 
         logger.warning(
@@ -105,16 +119,10 @@ class OrderDetailMatcherService:
             return c["similarity_fpn"] >= threshold
 
         def cpn_match(c: dict) -> bool:
-            return c["similarity_cpn"] >= threshold
+            return c["similarity_description"] >= threshold
 
         def either_match(c: dict) -> bool:
             return fpn_match(c) or cpn_match(c)
-
-        def qty_match(c: dict) -> bool:
-            return quantity <= Decimal(str(c["shipping_balance"]))
-
-        def exact_qty_match(c: dict) -> bool:
-            return Decimal(str(c["shipping_balance"])) == quantity
 
         def item_match(c: dict) -> bool:
             return c["item_number"] == item_number
@@ -122,17 +130,42 @@ class OrderDetailMatcherService:
         def open_status(c: dict) -> bool:
             return c["status"] == OrderStatus.OPEN
 
+        def quantity_match(c: dict) -> bool:
+            return Decimal(str(c["quantity"])).quantize(
+                Decimal("0.01")
+            ) == quantity.quantize(Decimal("0.01"))
+
+        def quantity_valid(c: dict) -> bool:
+            return Decimal(str(c["quantity"])) >= quantity
+
         return [
-            (lambda c: item_match(c) and fpn_match(c) and open_status(c), False),
-            (lambda c: exact_qty_match(c) and price_match(c) and fpn_match(c), True),
-            (lambda c: qty_match(c) and price_match(c) and fpn_match(c), True),
-            (lambda c: qty_match(c) and price_match(c) and fpn_match(c), False),
-            (lambda c: qty_match(c) and price_match(c) and cpn_match(c), False),
-            (lambda c: price_match(c) and either_match(c), True),
-            (lambda c: price_match(c) and either_match(c), False),
-            (lambda c: qty_match(c) and either_match(c), False),
-            (lambda c: item_match(c) and either_match(c), False),
-            (lambda c: price_match(c) and qty_match(c), True),
-            (lambda c: item_match(c), False),
-            (lambda c: True, False),
+            (
+                lambda c: fpn_match(c) and open_status(c) and quantity_match(c),
+                False,
+            ),
+            (
+                lambda c: item_match(c)
+                and fpn_match(c)
+                and open_status(c)
+                and quantity_valid(c),
+                False,
+            ),
+            (
+                lambda c: price_match(c)
+                and fpn_match(c)
+                and open_status(c)
+                and quantity_valid(c),
+                False,
+            ),
+            (lambda c: price_match(c) and fpn_match(c) and quantity_valid(c), True),
+            (lambda c: price_match(c) and fpn_match(c) and quantity_valid(c), False),
+            (lambda c: price_match(c) and cpn_match(c) and quantity_valid(c), False),
+            (lambda c: price_match(c) and either_match(c) and quantity_valid(c), True),
+            (lambda c: price_match(c) and either_match(c) and quantity_valid(c), False),
+            (lambda c: either_match(c) and quantity_valid(c), False),
+            (lambda c: item_match(c) and either_match(c) and quantity_valid(c), False),
+            (lambda c: price_match(c) and quantity_match(c), False),
+            (lambda c: price_match(c) and quantity_valid(c), True),
+            (lambda c: item_match(c) and quantity_valid(c), False),
+            (lambda c: quantity_valid(c), False),
         ]

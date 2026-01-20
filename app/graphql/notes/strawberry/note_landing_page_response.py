@@ -19,6 +19,7 @@ class NoteLandingPageResponse(LandingPageInterfaceBase):
     content: str
     tags: list[str] | None
     mentions: list[UUID] | None
+    is_public: bool
     linked_entities: list[LinkedEntity]
 
     @classmethod

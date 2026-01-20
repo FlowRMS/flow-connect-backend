@@ -122,19 +122,18 @@ class WarehouseResponse(DTOMixin[Warehouse]):
         )
 
     @strawberry.field
-    async def members(self) -> list[WarehouseMemberResponse]:
-        """Get warehouse members."""
-        members = await self._instance.awaitable_attrs.members
-        return WarehouseMemberResponse.from_orm_model_list(members)
+    def members(self) -> list[WarehouseMemberResponse]:
+        """Get warehouse members (eager-loaded via repository)."""
+        return WarehouseMemberResponse.from_orm_model_list(self._instance.members)
 
     @strawberry.field
-    async def settings(self) -> WarehouseSettingsResponse | None:
-        """Get warehouse settings."""
-        settings = await self._instance.awaitable_attrs.settings
-        return WarehouseSettingsResponse.from_orm_model_optional(settings)
+    def settings(self) -> WarehouseSettingsResponse | None:
+        """Get warehouse settings (eager-loaded via repository)."""
+        return WarehouseSettingsResponse.from_orm_model_optional(
+            self._instance.settings
+        )
 
     @strawberry.field
-    async def structure(self) -> list[WarehouseStructureResponse]:
-        """Get warehouse structure (location level configuration)."""
-        structure = await self._instance.awaitable_attrs.structure
-        return WarehouseStructureResponse.from_orm_model_list(structure)
+    def structure(self) -> list[WarehouseStructureResponse]:
+        """Get warehouse structure (eager-loaded via repository)."""
+        return WarehouseStructureResponse.from_orm_model_list(self._instance.structure)
