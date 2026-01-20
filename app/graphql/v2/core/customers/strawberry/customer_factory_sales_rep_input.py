@@ -25,3 +25,29 @@ class CustomerFactorySalesRepInput(BaseInputGQL[CustomerFactorySalesRep]):
             rate=self.rate,
             position=self.position,
         )
+
+
+@strawberry.input
+class SalesRepSplitInput:
+    user_id: UUID
+    rate: Decimal
+    position: int = 0
+
+
+@strawberry.input
+class CustomerFactorySalesRepBulkInput:
+    customer_id: UUID
+    factory_id: UUID
+    splits: list[SalesRepSplitInput]
+
+    def to_orm_models(self) -> list[CustomerFactorySalesRep]:
+        return [
+            CustomerFactorySalesRep(
+                customer_id=self.customer_id,
+                factory_id=self.factory_id,
+                user_id=split.user_id,
+                rate=split.rate,
+                position=split.position,
+            )
+            for split in self.splits
+        ]
