@@ -1,12 +1,8 @@
-"""GraphQL input types for Submittal."""
-
 from datetime import date
 from decimal import Decimal
-from typing import Optional, Union
 from uuid import UUID
 
 import strawberry
-from strawberry import UNSET
 from commons.db.v6.crm.submittals import (
     Submittal,
     SubmittalItem,
@@ -17,6 +13,7 @@ from commons.db.v6.crm.submittals import (
     SubmittalStatus,
     TransmittalPurpose,
 )
+from strawberry import UNSET
 
 from app.core.strawberry.inputs import BaseInputGQL
 from app.graphql.submittals.strawberry.enums import (
@@ -31,15 +28,13 @@ from app.graphql.submittals.strawberry.submittal_config import SubmittalConfigIn
 
 @strawberry.input
 class CreateSubmittalInput(BaseInputGQL[Submittal]):
-    """Input for creating a new submittal."""
-
     submittal_number: str
-    quote_id: Optional[UUID] = None
-    job_id: Optional[UUID] = None
+    quote_id: UUID | None = None
+    job_id: UUID | None = None
     status: SubmittalStatusGQL = SubmittalStatusGQL.DRAFT
-    transmittal_purpose: Optional[TransmittalPurposeGQL] = None
-    description: Optional[str] = None
-    config: Optional[SubmittalConfigInput] = None
+    transmittal_purpose: TransmittalPurposeGQL | None = None
+    description: str | None = None
+    config: SubmittalConfigInput | None = None
 
     def to_orm_model(self) -> Submittal:
         """Convert input to ORM model."""
@@ -69,34 +64,30 @@ class CreateSubmittalInput(BaseInputGQL[Submittal]):
 
 @strawberry.input
 class UpdateSubmittalInput:
-    """Input for updating a submittal."""
-
-    status: Optional[SubmittalStatusGQL] = None
-    transmittal_purpose: Optional[TransmittalPurposeGQL] = None
-    description: Optional[str] = None
-    job_location: Optional[str] = None
-    bid_date: Optional[date] = None
-    tags: Optional[list[str]] = None
-    config: Optional[SubmittalConfigInput] = None
+    status: SubmittalStatusGQL | None = None
+    transmittal_purpose: TransmittalPurposeGQL | None = None
+    description: str | None = None
+    job_location: str | None = None
+    bid_date: date | None = None
+    tags: list[str] | None = None
+    config: SubmittalConfigInput | None = None
 
 
 @strawberry.input
 class SubmittalItemInput(BaseInputGQL[SubmittalItem]):
-    """Input for creating/updating a submittal item."""
-
     item_number: int
-    quote_detail_id: Optional[UUID] = None
-    spec_sheet_id: Optional[UUID] = None
-    highlight_version_id: Optional[UUID] = None
-    part_number: Optional[str] = None
-    manufacturer: Optional[str] = None
-    description: Optional[str] = None
-    quantity: Optional[Decimal] = None
+    quote_detail_id: UUID | None = None
+    spec_sheet_id: UUID | None = None
+    highlight_version_id: UUID | None = None
+    part_number: str | None = None
+    manufacturer: str | None = None
+    description: str | None = None
+    quantity: Decimal | None = None
     approval_status: SubmittalItemApprovalStatusGQL = (
         SubmittalItemApprovalStatusGQL.PENDING
     )
     match_status: SubmittalItemMatchStatusGQL = SubmittalItemMatchStatusGQL.NO_MATCH
-    notes: Optional[str] = None
+    notes: str | None = None
 
     def to_orm_model(self) -> SubmittalItem:
         """Convert input to ORM model."""
@@ -117,35 +108,27 @@ class SubmittalItemInput(BaseInputGQL[SubmittalItem]):
 
 @strawberry.input
 class UpdateSubmittalItemInput:
-    """Input for updating a submittal item.
-
-    Note: spec_sheet_id and highlight_version_id use UNSET as default
-    to distinguish between "not provided" and "explicitly set to null".
-    """
-
     # Use UNSET to distinguish "not provided" from "null"
-    spec_sheet_id: Union[UUID, None] = UNSET  # type: ignore[assignment]
-    highlight_version_id: Union[UUID, None] = UNSET  # type: ignore[assignment]
-    part_number: Optional[str] = None
-    manufacturer: Optional[str] = None
-    description: Optional[str] = None
-    quantity: Optional[Decimal] = None
-    approval_status: Optional[SubmittalItemApprovalStatusGQL] = None
-    match_status: Optional[SubmittalItemMatchStatusGQL] = None
-    notes: Optional[str] = None
+    spec_sheet_id: UUID | None = UNSET  # type: ignore[assignment]
+    highlight_version_id: UUID | None = UNSET  # type: ignore[assignment]
+    part_number: str | None = None
+    manufacturer: str | None = None
+    description: str | None = None
+    quantity: Decimal | None = None
+    approval_status: SubmittalItemApprovalStatusGQL | None = None
+    match_status: SubmittalItemMatchStatusGQL | None = None
+    notes: str | None = None
 
 
 @strawberry.input
 class SubmittalStakeholderInput(BaseInputGQL[SubmittalStakeholder]):
-    """Input for adding a stakeholder to a submittal."""
-
     role: SubmittalStakeholderRoleGQL
-    customer_id: Optional[UUID] = None
+    customer_id: UUID | None = None
     is_primary: bool = False
-    contact_name: Optional[str] = None
-    contact_email: Optional[str] = None
-    contact_phone: Optional[str] = None
-    company_name: Optional[str] = None
+    contact_name: str | None = None
+    contact_email: str | None = None
+    contact_phone: str | None = None
+    company_name: str | None = None
 
     def to_orm_model(self) -> SubmittalStakeholder:
         """Convert input to ORM model."""
@@ -162,19 +145,17 @@ class SubmittalStakeholderInput(BaseInputGQL[SubmittalStakeholder]):
 
 @strawberry.input
 class SendSubmittalEmailInput:
-    """Input for sending a submittal email."""
-
     submittal_id: UUID
-    revision_id: Optional[UUID] = None
+    revision_id: UUID | None = None
     subject: str
-    body: Optional[str] = None
+    body: str | None = None
     recipient_emails: list[str]
+    attachment_url: str | None = None
+    attachment_name: str | None = None
 
 
 @strawberry.input
 class GenerateSubmittalPdfInput:
-    """Input for generating a submittal PDF."""
-
     submittal_id: UUID
     output_type: str = "pdf"  # 'pdf', 'email', 'email_link'
 
@@ -194,21 +175,21 @@ class GenerateSubmittalPdfInput:
 
     # Finishing options
     print_duplex: bool = False
-    cap_file_size_mb: Optional[int] = None
+    cap_file_size_mb: int | None = None
 
     # Transmittal options
-    attached_items: Optional[list[str]] = None  # 'drawings', 'specifications', etc.
-    attached_other: Optional[str] = None
-    transmitted_for: Optional[list[str]] = None  # 'prior_approval', 'approval', etc.
-    transmitted_for_other: Optional[str] = None
+    attached_items: list[str] | None = None  # 'drawings', 'specifications', etc.
+    attached_other: str | None = None
+    transmitted_for: list[str] | None = None  # 'prior_approval', 'approval', etc.
+    transmitted_for_other: str | None = None
     copies: int = 1
 
     # Selected items to include
-    selected_item_ids: Optional[list[UUID]] = None
+    selected_item_ids: list[UUID] | None = None
 
     # Addressed to stakeholder IDs
-    addressed_to_ids: Optional[list[UUID]] = None
+    addressed_to_ids: list[UUID] | None = None
 
     # Create new revision after generating?
     create_revision: bool = True
-    revision_notes: Optional[str] = None
+    revision_notes: str | None = None

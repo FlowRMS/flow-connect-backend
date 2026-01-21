@@ -1,8 +1,7 @@
 from dataclasses import dataclass
 from uuid import UUID
 
-from strawberry import UNSET
-
+import httpx
 from commons.db.v6.crm.submittals import (
     Submittal,
     SubmittalEmail,
@@ -14,8 +13,12 @@ from commons.db.v6.crm.submittals import (
     SubmittalStatus,
 )
 from loguru import logger
+from strawberry import UNSET
 
-from app.graphql.campaigns.services.email_provider_service import EmailProviderService
+from app.graphql.campaigns.services.email_provider_service import (
+    EmailAttachment,
+    EmailProviderService,
+)
 from app.graphql.submittals.repositories.submittals_repository import (
     SubmittalItemsRepository,
     SubmittalsRepository,
@@ -143,7 +146,9 @@ class SubmittalsService:
             submittal.config_include_from_orders = config.include_from_orders
             submittal.config_roll_up_kits = config.roll_up_kits
             submittal.config_roll_up_accessories = config.roll_up_accessories
-            submittal.config_include_zero_quantity_items = config.include_zero_quantity_items
+            submittal.config_include_zero_quantity_items = (
+                config.include_zero_quantity_items
+            )
             submittal.config_drop_descriptions = config.drop_descriptions
             submittal.config_drop_line_notes = config.drop_line_notes
 
@@ -428,12 +433,40 @@ class SubmittalsService:
                 error="No email provider connected. Please connect O365 or Gmail in settings.",
             )
 
+        # Download attachment if URL is provided
+        attachments: list[EmailAttachment] = []
+        if input_data.attachment_url:
+            try:
+                async with httpx.AsyncClient() as client:
+                    response = await client.get(input_data.attachment_url, timeout=60.0)
+                    _ = response.raise_for_status()
+                    attachment_content = response.content
+                    attachment_name = input_data.attachment_name or "submittal.pdf"
+                    attachments.append(
+                        EmailAttachment(
+                            filename=attachment_name,
+                            content=attachment_content,
+                            content_type="application/pdf",
+                        )
+                    )
+                    logger.info(
+                        f"Downloaded attachment {attachment_name} "
+                        f"({len(attachment_content)} bytes)"
+                    )
+            except Exception as e:
+                logger.error(f"Failed to download attachment: {e}")
+                return SendSubmittalEmailResult(
+                    success=False,
+                    error=f"Failed to download PDF attachment: {e!s}",
+                )
+
         # Send the email
         send_result = await self.email_provider.send_email(
             to=input_data.recipient_emails,
             subject=input_data.subject,
             body=input_data.body or "",
             body_type="HTML",
+            attachments=attachments if attachments else None,
         )
 
         if not send_result.success:
@@ -454,6 +487,7 @@ class SubmittalsService:
                 {"email": e, "type": "to"} for e in input_data.recipient_emails
             ],
         )
+        email.created_by_id = self.email_provider.auth_info.flow_user_id
 
         created = await self.repository.add_email(input_data.submittal_id, email)
         logger.info(
