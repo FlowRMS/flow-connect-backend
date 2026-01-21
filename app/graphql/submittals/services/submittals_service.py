@@ -362,7 +362,12 @@ class SubmittalsService:
 
     # Revision operations
     async def create_revision(
-        self, submittal_id: UUID, notes: str | None = None
+        self,
+        submittal_id: UUID,
+        notes: str | None = None,
+        pdf_file_id: UUID | None = None,
+        pdf_file_url: str | None = None,
+        pdf_file_name: str | None = None,
     ) -> SubmittalRevision:
         """
         Create a new revision for a submittal.
@@ -370,6 +375,9 @@ class SubmittalsService:
         Args:
             submittal_id: UUID of the submittal
             notes: Optional notes for the revision
+            pdf_file_id: Optional UUID of the uploaded PDF file
+            pdf_file_url: Optional URL to the PDF file
+            pdf_file_name: Optional name of the PDF file
 
         Returns:
             Created SubmittalRevision
@@ -379,6 +387,9 @@ class SubmittalsService:
         revision = SubmittalRevision(
             revision_number=next_revision,
             notes=notes,
+            pdf_file_id=pdf_file_id,
+            pdf_file_url=pdf_file_url,
+            pdf_file_name=pdf_file_name,
         )
 
         created = await self.repository.add_revision(submittal_id, revision)
@@ -505,6 +516,8 @@ class SubmittalsService:
             revision = await self.create_revision(
                 submittal_id=input_data.submittal_id,
                 notes=input_data.revision_notes or "PDF generated",
+                pdf_file_url=export_result.pdf_url,
+                pdf_file_name=export_result.pdf_file_name,
             )
             logger.info(
                 f"Created revision {revision.revision_number} for submittal "
