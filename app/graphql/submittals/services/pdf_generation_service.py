@@ -1,11 +1,12 @@
-"""Service for generating submittal PDFs."""
-
 import io
 from dataclasses import dataclass
 from datetime import datetime
-from typing import Any, Optional
+from typing import TYPE_CHECKING, Any
 from uuid import UUID
 
+from commons.db.v6.crm.spec_sheets.spec_sheet_highlight_model import (
+    SpecSheetHighlightRegion,
+)
 from commons.db.v6.crm.submittals import Submittal, SubmittalItem, SubmittalStakeholder
 from loguru import logger
 from pypdf import PdfReader, PdfWriter  # pyright: ignore[reportMissingImports]
@@ -13,7 +14,7 @@ from reportlab.lib import colors
 from reportlab.lib.pagesizes import letter
 from reportlab.lib.styles import ParagraphStyle, getSampleStyleSheet
 from reportlab.lib.units import inch
-from reportlab.pdfgen import canvas  # pyright: ignore[reportUnusedImport]
+from reportlab.pdfgen import canvas
 from reportlab.platypus import (
     PageBreak,  # pyright: ignore[reportUnusedImport]
     Paragraph,
@@ -25,16 +26,21 @@ from reportlab.platypus import (
 
 from app.graphql.submittals.strawberry.submittal_input import GenerateSubmittalPdfInput
 
+if TYPE_CHECKING:
+    from app.graphql.submittals.services.submittal_pdf_export_service import (
+        SpecSheetWithHighlights,
+    )
+
 
 @dataclass
 class PdfGenerationResult:
     """Result of PDF generation."""
 
     success: bool
-    pdf_bytes: Optional[bytes] = None
-    file_name: Optional[str] = None
+    pdf_bytes: bytes | None = None
+    file_name: str | None = None
     file_size_bytes: int = 0
-    error: Optional[str] = None
+    error: str | None = None
 
 
 class PdfGenerationService:
@@ -86,7 +92,7 @@ class PdfGenerationService:
         self,
         submittal: Submittal,
         input_data: GenerateSubmittalPdfInput,
-        spec_sheet_pdfs: Optional[dict[UUID, bytes]] = None,
+        spec_sheet_data: dict[UUID, "SpecSheetWithHighlights"] | None = None,
     ) -> PdfGenerationResult:
         """
         Generate a complete submittal PDF package.
@@ -94,7 +100,7 @@ class PdfGenerationService:
         Args:
             submittal: The submittal to generate PDF for
             input_data: Generation options
-            spec_sheet_pdfs: Dict mapping spec sheet IDs to their PDF bytes
+            spec_sheet_data: Dict mapping spec sheet IDs to their PDF bytes and highlights
 
         Returns:
             PdfGenerationResult with PDF bytes and metadata
@@ -145,16 +151,23 @@ class PdfGenerationService:
                 )
                 self._add_pdf_to_writer(pdf_writer, summary_pdf)
 
-            # Add spec sheet pages
-            if input_data.include_pages and spec_sheet_pdfs:
+            # Add spec sheet pages with highlights
+            if input_data.include_pages and spec_sheet_data:
                 for item in items_to_include:
-                    if item.spec_sheet_id and item.spec_sheet_id in spec_sheet_pdfs:
-                        spec_pdf_bytes = spec_sheet_pdfs[item.spec_sheet_id]
-                        self._add_pdf_to_writer(pdf_writer, spec_pdf_bytes)
+                    if item.spec_sheet_id and item.spec_sheet_id in spec_sheet_data:
+                        data = spec_sheet_data[item.spec_sheet_id]
+                        # Apply highlights if any
+                        if data.highlight_regions:
+                            enhanced_pdf = self._apply_highlights_to_pdf(
+                                data.pdf_bytes, data.highlight_regions
+                            )
+                            self._add_pdf_to_writer(pdf_writer, enhanced_pdf)
+                        else:
+                            self._add_pdf_to_writer(pdf_writer, data.pdf_bytes)
 
             # Write final PDF to bytes
             output_buffer = io.BytesIO()
-            pdf_writer.write(output_buffer)
+            _ = pdf_writer.write(output_buffer)
             pdf_bytes = output_buffer.getvalue()
 
             # Generate filename
@@ -184,7 +197,108 @@ class PdfGenerationService:
         """Add PDF bytes to the writer."""
         reader = PdfReader(io.BytesIO(pdf_bytes))
         for page in reader.pages:
-            writer.add_page(page)
+            _ = writer.add_page(page)
+
+    def _apply_highlights_to_pdf(
+        self,
+        pdf_bytes: bytes,
+        regions: list[SpecSheetHighlightRegion],
+    ) -> bytes:
+        """
+        Apply highlight regions as overlays on PDF pages.
+
+        Args:
+            pdf_bytes: Original PDF bytes
+            regions: List of highlight regions with coordinates in percentages
+
+        Returns:
+            PDF bytes with highlights applied
+        """
+        reader = PdfReader(io.BytesIO(pdf_bytes))
+        writer = PdfWriter()
+
+        # Group regions by page number (1-indexed in model)
+        regions_by_page: dict[int, list[SpecSheetHighlightRegion]] = {}
+        for region in regions:
+            page_num = region.page_number
+            if page_num not in regions_by_page:
+                regions_by_page[page_num] = []
+            regions_by_page[page_num].append(region)
+
+        for page_index, page in enumerate(reader.pages):
+            page_num = page_index + 1  # Convert to 1-indexed
+            page_regions = regions_by_page.get(page_num, [])
+
+            if page_regions:
+                # Get page dimensions
+                media_box = page.mediabox
+                page_width = float(media_box.width)
+                page_height = float(media_box.height)
+
+                # Create overlay canvas
+                overlay_buffer = io.BytesIO()
+                c = canvas.Canvas(overlay_buffer, pagesize=(page_width, page_height))
+
+                for region in page_regions:
+                    self._draw_highlight_region(c, region, page_width, page_height)
+
+                c.save()
+                _ = overlay_buffer.seek(0)
+
+                # Merge overlay onto page
+                overlay_reader = PdfReader(overlay_buffer)
+                if overlay_reader.pages:
+                    page.merge_page(overlay_reader.pages[0])
+
+            _ = writer.add_page(page)
+
+        output_buffer = io.BytesIO()
+        _ = writer.write(output_buffer)
+        return output_buffer.getvalue()
+
+    def _draw_highlight_region(
+        self,
+        c: canvas.Canvas,
+        region: SpecSheetHighlightRegion,
+        page_width: float,
+        page_height: float,
+    ) -> None:
+        """
+        Draw a single highlight region on the canvas.
+
+        Args:
+            c: ReportLab canvas
+            region: Highlight region with percentage coordinates
+            page_width: PDF page width in points
+            page_height: PDF page height in points
+        """
+        # Convert percentage coordinates to absolute
+        # Note: PDF coordinates are from bottom-left, region y is from top
+        x = (region.x / 100.0) * page_width
+        y_from_top = (region.y / 100.0) * page_height
+        width = (region.width / 100.0) * page_width
+        height = (region.height / 100.0) * page_height
+
+        # Convert y from top-origin to bottom-origin
+        y = page_height - y_from_top - height
+
+        # Parse hex color and set with alpha for transparency
+        hex_color = region.color.lstrip("#")
+        r = int(hex_color[0:2], 16) / 255.0
+        g = int(hex_color[2:4], 16) / 255.0
+        b = int(hex_color[4:6], 16) / 255.0
+
+        # Set stroke and fill colors with transparency
+        c.setStrokeColorRGB(r, g, b)
+        c.setFillColorRGB(r, g, b, alpha=0.3)  # Semi-transparent fill
+        c.setLineWidth(2)
+
+        if region.shape_type == "oval":
+            # Draw oval (ellipse)
+            c.ellipse(x, y, x + width, y + height, stroke=1, fill=1)
+        else:
+            # Draw rectangle (default for 'rectangle' and 'highlight')
+            c.rect(x, y, width, height, stroke=1, fill=1)
 
     def _generate_cover_page(
         self,

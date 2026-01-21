@@ -1,8 +1,11 @@
 import io
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from datetime import datetime
 from uuid import UUID
 
+from commons.db.v6.crm.spec_sheets.spec_sheet_highlight_model import (
+    SpecSheetHighlightRegion,
+)
 from commons.db.v6.crm.spec_sheets.spec_sheet_model import SpecSheet
 from commons.db.v6.crm.submittals import Submittal
 from commons.s3.service import S3Service
@@ -19,6 +22,14 @@ SUBMITTAL_PDFS_S3_PREFIX = "submittal-pdfs"
 
 
 @dataclass
+class SpecSheetWithHighlights:
+    """Spec sheet PDF bytes with associated highlight regions."""
+
+    pdf_bytes: bytes
+    highlight_regions: list[SpecSheetHighlightRegion] = field(default_factory=list)
+
+
+@dataclass
 class SubmittalPdfExportResult:
     success: bool
     pdf_url: str | None = None
@@ -32,11 +43,10 @@ class SubmittalPdfExportService:
         self,
         s3_service: S3Service,
         session: AsyncSession,
-        pdf_service: PdfGenerationService | None = None,
     ) -> None:
         self.s3_service = s3_service
         self.session = session
-        self.pdf_service = pdf_service or PdfGenerationService()
+        self.pdf_service = PdfGenerationService()
 
     async def export_submittal_pdf(
         self,
@@ -44,12 +54,14 @@ class SubmittalPdfExportService:
         input_data: GenerateSubmittalPdfInput,
     ) -> SubmittalPdfExportResult:
         try:
-            spec_sheet_pdfs = await self._fetch_spec_sheet_pdfs(submittal, input_data)
+            spec_sheet_data = await self._fetch_spec_sheet_pdfs_with_highlights(
+                submittal, input_data
+            )
 
             pdf_result = await self.pdf_service.generate_submittal_pdf(
                 submittal=submittal,
                 input_data=input_data,
-                spec_sheet_pdfs=spec_sheet_pdfs,
+                spec_sheet_data=spec_sheet_data,
             )
 
             if not pdf_result.success:
@@ -60,14 +72,15 @@ class SubmittalPdfExportService:
 
             s3_url = await self._upload_pdf_to_s3(
                 pdf_bytes=pdf_result.pdf_bytes or b"",
-                file_name=pdf_result.file_name or f"Submittal_{submittal.submittal_number}.pdf",
+                file_name=pdf_result.file_name
+                or f"Submittal_{submittal.submittal_number}.pdf",
                 submittal_id=submittal.id,
             )
 
             logger.info(
                 f"Exported submittal PDF {submittal.id}: "
                 f"{pdf_result.file_size_bytes} bytes, "
-                f"{len(spec_sheet_pdfs)} spec sheets included"
+                f"{len(spec_sheet_data)} spec sheets included"
             )
 
             return SubmittalPdfExportResult(
@@ -84,11 +97,12 @@ class SubmittalPdfExportService:
                 error=str(e),
             )
 
-    async def _fetch_spec_sheet_pdfs(
+    async def _fetch_spec_sheet_pdfs_with_highlights(
         self,
         submittal: Submittal,
         input_data: GenerateSubmittalPdfInput,
-    ) -> dict[UUID, bytes]:
+    ) -> dict[UUID, SpecSheetWithHighlights]:
+        """Fetch spec sheet PDFs with their associated highlight regions."""
         if not input_data.include_pages:
             return {}
 
@@ -97,9 +111,21 @@ class SubmittalPdfExportService:
             selected_ids = set(input_data.selected_item_ids)
             items = [item for item in items if item.id in selected_ids]
 
-        spec_sheet_ids = [
-            item.spec_sheet_id for item in items if item.spec_sheet_id is not None
-        ]
+        # Build mapping of spec_sheet_id -> highlight_regions
+        spec_sheet_highlights: dict[UUID, list[SpecSheetHighlightRegion]] = {}
+        spec_sheet_ids: list[UUID] = []
+
+        for item in items:
+            if item.spec_sheet_id is not None:
+                spec_sheet_ids.append(item.spec_sheet_id)
+                # Get highlight regions if highlight_version is loaded
+                if (
+                    item.highlight_version is not None
+                    and item.highlight_version.regions
+                ):
+                    spec_sheet_highlights[item.spec_sheet_id] = list(
+                        item.highlight_version.regions
+                    )
 
         if not spec_sheet_ids:
             logger.debug("No spec sheets linked to submittal items")
@@ -107,16 +133,21 @@ class SubmittalPdfExportService:
 
         spec_sheets = await self._get_spec_sheets_by_ids(spec_sheet_ids)
 
-        spec_sheet_pdfs: dict[UUID, bytes] = {}
+        result: dict[UUID, SpecSheetWithHighlights] = {}
         for spec_sheet in spec_sheets:
             pdf_bytes = await self._download_spec_sheet_pdf(spec_sheet)
             if pdf_bytes:
-                spec_sheet_pdfs[spec_sheet.id] = pdf_bytes
+                result[spec_sheet.id] = SpecSheetWithHighlights(
+                    pdf_bytes=pdf_bytes,
+                    highlight_regions=spec_sheet_highlights.get(spec_sheet.id, []),
+                )
 
+        highlights_count = sum(len(data.highlight_regions) for data in result.values())
         logger.info(
-            f"Fetched {len(spec_sheet_pdfs)}/{len(spec_sheet_ids)} spec sheet PDFs"
+            f"Fetched {len(result)}/{len(spec_sheet_ids)} spec sheet PDFs "
+            f"with {highlights_count} highlight regions"
         )
-        return spec_sheet_pdfs
+        return result
 
     async def _get_spec_sheets_by_ids(self, ids: list[UUID]) -> list[SpecSheet]:
         stmt = select(SpecSheet).where(SpecSheet.id.in_(ids))
