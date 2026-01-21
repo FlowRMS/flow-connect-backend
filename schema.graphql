@@ -178,6 +178,34 @@ enum AdjustmentStatus {
   POSTED
 }
 
+enum AliasEntityType {
+  CUSTOMER
+  PRODUCT
+  FACTORY
+}
+
+input AliasInput {
+  entityId: UUID!
+  entityType: AliasEntityType!
+  alias: String!
+  subType: AliasSubType
+}
+
+enum AliasSubType {
+  END_USER
+  SOLD_TO
+  BILL_TO
+}
+
+type AliasType {
+  id: UUID!
+  entityId: UUID!
+  entityType: AliasEntityType!
+  subType: AliasSubType
+  alias: String!
+  createdAt: datetime!
+}
+
 input AssignItemToBoxInput {
   boxId: UUID!
   lineItemId: UUID!
@@ -1939,6 +1967,8 @@ type Mutation {
   createAdjustment(input: AdjustmentInput!): AdjustmentResponse!
   updateAdjustment(input: AdjustmentInput!): AdjustmentResponse!
   deleteAdjustment(id: UUID!): Boolean!
+  createAlias(input: AliasInput!): AliasType!
+  deleteAlias(id: UUID!): Boolean!
   updateAutoNumberSettings(inputs: [AutoNumberSettingsInput!]!): [AutoNumberSettingsResponse!]!
   createCampaign(input: CampaignInput!): CampaignResponse!
   updateCampaign(id: UUID!, input: CampaignInput!): CampaignResponse!
@@ -3127,6 +3157,9 @@ type Query {
   addressesBySourceId(sourceId: UUID!): [AddressResponse!]!
   adjustment(id: UUID!): AdjustmentResponse!
   adjustmentSearch(searchTerm: String!, limit: Int! = 20, openOnly: Boolean! = false, unlockedOnly: Boolean! = false): [AdjustmentLiteResponse!]!
+  alias(id: UUID!): AliasType!
+  aliasesByEntity(entityId: UUID!, entityType: AliasEntityType!, subType: AliasSubType = null): [AliasType!]!
+  aliasSearch(searchTerm: String!, entityType: AliasEntityType = null, subType: AliasSubType = null, limit: Int! = 20): [AliasType!]!
   autoNumberSettings: [AutoNumberSettingsResponse!]!
   autoNumberSetting(entityType: AutoNumberEntityType!): AutoNumberSettingsResponse
   campaign(id: UUID!): CampaignResponse!
