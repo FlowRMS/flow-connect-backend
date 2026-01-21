@@ -82,35 +82,56 @@ class PostedStatementService:
     def _process_invoice_detail(
         self, check: Check, check_detail: CheckDetail
     ) -> list[PostedStatementDetailResponse]:
-        details: list[PostedStatementDetailResponse] = []
         invoice = check_detail.invoice
         if not invoice:
-            return details
+            return []
 
         order_number = invoice.order.order_number if invoice.order else None
         sales_amount = invoice.balance.total if invoice.balance else Decimal(0)
+        total_invoice_commission = (
+            invoice.balance.commission if invoice.balance else Decimal(0)
+        )
 
+        rep_totals: dict[UUID, dict[str, Decimal | str]] = {}
         for invoice_detail in invoice.details:
+            detail_commission = invoice_detail.commission or Decimal(0)
+            detail_proportion = (
+                detail_commission / total_invoice_commission
+                if total_invoice_commission > 0
+                else Decimal(0)
+            )
             for split_rate in invoice_detail.outside_split_rates:
                 rate = (split_rate.split_rate or Decimal(100)) / Decimal(100)
-                expected = (invoice_detail.commission or Decimal(0)) * rate
-                received = check_detail.applied_amount * rate
-                details.append(
-                    PostedStatementDetailResponse(
-                        entity_number=invoice.invoice_number,
-                        entity_type="Invoice",
-                        expected_commission=expected,
-                        commission_received=received,
-                        outside_sales_rep_id=split_rate.user_id,
-                        outside_sales_rep_name=split_rate.user.full_name,
-                        factory_name=check.factory.title,
-                        posted_month=check.post_date,
-                        commission_month=check.commission_month,
-                        order_number=order_number,
-                        sales_amount=sales_amount,
-                    )
-                )
-        return details
+                expected = detail_commission * rate
+                received = check_detail.applied_amount * detail_proportion * rate
+                rep_id = split_rate.user_id
+                if rep_id not in rep_totals:
+                    rep_totals[rep_id] = {
+                        "expected": Decimal(0),
+                        "received": Decimal(0),
+                        "name": split_rate.user.full_name,
+                    }
+                rep_totals[rep_id]["expected"] += expected  # type: ignore[operator]
+                rep_totals[rep_id]["received"] += received  # type: ignore[operator]
+
+        return [
+            PostedStatementDetailResponse(
+                entity_number=invoice.invoice_number,
+                entity_type="Invoice",
+                expected_commission=Decimal(str(data["expected"])),
+                commission_received=Decimal(str(data["received"])).quantize(
+                    Decimal("0.01")
+                ),
+                outside_sales_rep_id=rep_id,
+                outside_sales_rep_name=str(data["name"]),
+                factory_name=check.factory.title,
+                posted_month=check.post_date,
+                commission_month=check.commission_month,
+                order_number=order_number,
+                sales_amount=sales_amount,
+            )
+            for rep_id, data in rep_totals.items()
+        ]
 
     def _process_adjustment_detail(
         self, check: Check, check_detail: CheckDetail
@@ -144,35 +165,56 @@ class PostedStatementService:
     def _process_credit_detail(
         self, check: Check, check_detail: CheckDetail
     ) -> list[PostedStatementDetailResponse]:
-        details: list[PostedStatementDetailResponse] = []
         credit = check_detail.credit
         if not credit:
-            return details
+            return []
 
         order_number = credit.order.order_number if credit.order else None
         sales_amount = credit.balance.total if credit.balance else Decimal(0)
+        total_credit_commission = (
+            credit.balance.commission if credit.balance else Decimal(0)
+        )
 
+        rep_totals: dict[UUID, dict[str, Decimal | str]] = {}
         for credit_detail in credit.details:
+            detail_commission = credit_detail.commission or Decimal(0)
+            detail_proportion = (
+                detail_commission / total_credit_commission
+                if total_credit_commission > 0
+                else Decimal(0)
+            )
             for split_rate in credit_detail.outside_split_rates:
                 rate = (split_rate.split_rate or Decimal(100)) / Decimal(100)
-                expected = (credit_detail.commission or Decimal(0)) * rate
-                received = check_detail.applied_amount * rate
-                details.append(
-                    PostedStatementDetailResponse(
-                        entity_number=credit.credit_number,
-                        entity_type="Credit",
-                        expected_commission=expected,
-                        commission_received=received,
-                        outside_sales_rep_id=split_rate.user_id,
-                        outside_sales_rep_name=split_rate.user.full_name,
-                        factory_name=check.factory.title,
-                        posted_month=check.post_date,
-                        commission_month=check.commission_month,
-                        order_number=order_number,
-                        sales_amount=sales_amount,
-                    )
-                )
-        return details
+                expected = detail_commission * rate
+                received = check_detail.applied_amount * detail_proportion * rate
+                rep_id = split_rate.user_id
+                if rep_id not in rep_totals:
+                    rep_totals[rep_id] = {
+                        "expected": Decimal(0),
+                        "received": Decimal(0),
+                        "name": split_rate.user.full_name,
+                    }
+                rep_totals[rep_id]["expected"] += expected  # type: ignore[operator]
+                rep_totals[rep_id]["received"] += received  # type: ignore[operator]
+
+        return [
+            PostedStatementDetailResponse(
+                entity_number=credit.credit_number,
+                entity_type="Credit",
+                expected_commission=Decimal(str(data["expected"])),
+                commission_received=Decimal(str(data["received"])).quantize(
+                    Decimal("0.01")
+                ),
+                outside_sales_rep_id=rep_id,
+                outside_sales_rep_name=str(data["name"]),
+                factory_name=check.factory.title,
+                posted_month=check.post_date,
+                commission_month=check.commission_month,
+                order_number=order_number,
+                sales_amount=sales_amount,
+            )
+            for rep_id, data in rep_totals.items()
+        ]
 
     def _build_rep_summaries(
         self, details: list[PostedStatementDetailResponse]
