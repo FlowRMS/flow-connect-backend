@@ -188,6 +188,7 @@ input AliasInput {
   entityId: UUID!
   entityType: AliasEntityType!
   alias: String!
+  id: UUID = null
   subType: AliasSubType
 }
 
@@ -1968,6 +1969,7 @@ type Mutation {
   updateAdjustment(input: AdjustmentInput!): AdjustmentResponse!
   deleteAdjustment(id: UUID!): Boolean!
   createAlias(input: AliasInput!): AliasType!
+  updateAlias(input: AliasInput!): AliasType!
   deleteAlias(id: UUID!): Boolean!
   updateAutoNumberSettings(inputs: [AutoNumberSettingsInput!]!): [AutoNumberSettingsResponse!]!
   createCampaign(input: CampaignInput!): CampaignResponse!

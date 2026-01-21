@@ -43,6 +43,10 @@ class AliasService:
         alias = await self.repository.create(alias_input.to_orm_model())
         return await self.get_by_id(alias.id)
 
+    async def update(self, alias_input: AliasInput) -> Alias:
+        alias = await self.repository.update(alias_input.to_orm_model())
+        return await self.get_by_id(alias.id)
+
     async def delete(self, alias_id: UUID) -> bool:
         if not await self.repository.exists(alias_id):
             raise NotFoundError(f"Alias with id {alias_id} not found")

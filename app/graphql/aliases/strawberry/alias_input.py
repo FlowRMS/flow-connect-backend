@@ -13,6 +13,7 @@ class AliasInput(BaseInputGQL[Alias]):
     entity_id: UUID
     entity_type: AliasEntityType
     alias: str
+    id: UUID | None = None
     sub_type: AliasSubType | None = strawberry.UNSET
 
     def to_orm_model(self) -> Alias:

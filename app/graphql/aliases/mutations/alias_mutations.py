@@ -22,6 +22,15 @@ class AliasMutations:
 
     @strawberry.mutation
     @inject
+    async def update_alias(
+        self,
+        input: AliasInput,
+        service: Injected[AliasService],
+    ) -> AliasType:
+        return AliasType.from_orm_model(await service.update(input))
+
+    @strawberry.mutation
+    @inject
     async def delete_alias(
         self,
         id: UUID,
