@@ -17,6 +17,7 @@ from .order_creation_handler import OrderCreationHandler
 from .product_converter import ProductConverter
 from .quote_converter import QuoteConverter
 from .set_for_creation_service import SetForCreationService
+from .statement_converter import StatementConverter
 
 converter_providers = [
     aioinject.Scoped(OrderConverter),
@@ -29,6 +30,7 @@ converter_providers = [
     aioinject.Scoped(AdjustmentConverter),
     aioinject.Scoped(CheckConverter),
     aioinject.Scoped(OrderAckConverter),
+    aioinject.Scoped(StatementConverter),
     aioinject.Scoped(OrderDetailMatcherService),
     aioinject.Scoped(OrderCreationHandler),
     aioinject.Scoped(InvoiceCreationHandler),

@@ -37,6 +37,9 @@ from app.workers.document_execution.converters.quote_converter import QuoteConve
 from app.workers.document_execution.converters.set_for_creation_service import (
     SetForCreationService,
 )
+from app.workers.document_execution.converters.statement_converter import (
+    StatementConverter,
+)
 
 from .batch_processor import DocumentBatchProcessor
 from .converters.base import DEFAULT_BATCH_SIZE, BaseEntityConverter
@@ -50,6 +53,7 @@ DOCUMENT_TO_LINK_ENTITY_TYPE: dict[DocumentEntityType, EntityType] = {
     DocumentEntityType.FACTORIES: EntityType.FACTORY,
     DocumentEntityType.PRODUCTS: EntityType.PRODUCT,
     DocumentEntityType.ORDER_ACKNOWLEDGEMENTS: EntityType.ORDER_ACKNOWLEDGEMENT,
+    DocumentEntityType.COMMISSION_STATEMENTS: EntityType.COMMISSION_STATEMENTS,
 }
 
 
@@ -68,6 +72,7 @@ class DocumentExecutorService:
         invoice_converter: InvoiceConverter,
         check_converter: CheckConverter,
         order_ack_converter: OrderAckConverter,
+        statement_converter: StatementConverter,
         set_for_creation_service: SetForCreationService,
     ) -> None:
         super().__init__()
@@ -83,6 +88,7 @@ class DocumentExecutorService:
         self.invoice_converter = invoice_converter
         self.check_converter = check_converter
         self.order_ack_converter = order_ack_converter
+        self.statement_converter = statement_converter
         self.set_for_creation_service = set_for_creation_service
         self._batch_processor = DocumentBatchProcessor()
 
@@ -107,6 +113,8 @@ class DocumentExecutorService:
                 return self.check_converter
             case DocumentEntityType.ORDER_ACKNOWLEDGEMENTS:
                 return self.order_ack_converter
+            case DocumentEntityType.COMMISSION_STATEMENTS:
+                return self.statement_converter
             case _:
                 raise ValueError(f"Unsupported entity type: {entity_type}")
 
