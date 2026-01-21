@@ -194,17 +194,20 @@ class PostedStatementService:
                         "received": Decimal(0),
                         "name": split_rate.user.full_name,
                     }
-                rep_totals[rep_id]["expected"] += expected  # type: ignore[operator]
-                rep_totals[rep_id]["received"] += received  # type: ignore[operator]
+                rep_totals[rep_id]["expected"] = (
+                    Decimal(rep_totals[rep_id]["expected"]) + expected
+                )
+                rep_totals[rep_id]["received"] = (
+                    Decimal(rep_totals[rep_id]["received"]) + received
+                )
 
         return [
             PostedStatementDetailResponse(
                 entity_number=credit.credit_number,
                 entity_type="Credit",
-                expected_commission=Decimal(str(data["expected"])),
-                commission_received=Decimal(str(data["received"])).quantize(
-                    Decimal("0.01")
-                ),
+                expected_commission=Decimal("-1") * Decimal(str(data["expected"])),
+                commission_received=Decimal("-1")
+                * Decimal(str(data["received"])).quantize(Decimal("0.01")),
                 outside_sales_rep_id=rep_id,
                 outside_sales_rep_name=str(data["name"]),
                 factory_name=check.factory.title,
@@ -229,12 +232,8 @@ class PostedStatementService:
         )
         for detail in details:
             rep_id = detail.outside_sales_rep_id
-            if detail.entity_type == "Credit":
-                summaries[rep_id]["expected"] -= detail.expected_commission  # type: ignore[operator]
-                summaries[rep_id]["received"] -= detail.commission_received  # type: ignore[operator]
-            else:
-                summaries[rep_id]["expected"] += detail.expected_commission  # type: ignore[operator]
-                summaries[rep_id]["received"] += detail.commission_received  # type: ignore[operator]
+            summaries[rep_id]["expected"] += detail.expected_commission  # type: ignore[operator]
+            summaries[rep_id]["received"] += detail.commission_received  # type: ignore[operator]
             summaries[rep_id]["name"] = detail.outside_sales_rep_name
             summaries[rep_id]["id"] = rep_id
         return [
@@ -294,7 +293,7 @@ class PostedStatementService:
         self._write_header_section(ws, header)
         self._write_summary_section(ws, summary)
         self._write_rep_summary_section(ws, rep_summaries)
-        self._write_detail_section(ws, details)
+        self._write_detail_section(ws, details, len(rep_summaries))
         self._adjust_column_widths(ws)
         output = io.BytesIO()
         wb.save(output)
@@ -389,9 +388,10 @@ class PostedStatementService:
     def _write_detail_section(
         self,
         ws,
-        details: list[PostedStatementDetailResponse],  # noqa: ANN001
+        details: list[PostedStatementDetailResponse],
+        rep_summary_count: int,
     ) -> None:
-        start_row = 8 + len(details) + 5
+        start_row = 8 + rep_summary_count + 2
         headers = [
             "Entity Number",
             "Expected Commission",
