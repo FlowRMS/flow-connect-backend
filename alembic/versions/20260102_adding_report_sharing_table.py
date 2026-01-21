@@ -1,7 +1,7 @@
 """adding_report_sharing_table
 
 Revision ID: add_report_sharing_table
-Revises: add_chat_folders
+Revises: add_sidebar_configurations
 Create Date: 2026-01-02 16:59:25.626923
 
 """
@@ -14,7 +14,7 @@ from alembic import op
 
 # revision identifiers, used by Alembic.
 revision: str = "add_report_sharing_table"
-down_revision: str | None = "add_chat_folders"
+down_revision: str | None = "add_sidebar_configurations"
 branch_labels: str | Sequence[str] | None = None
 depends_on: str | Sequence[str] | None = None
 
