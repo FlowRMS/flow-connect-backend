@@ -103,8 +103,10 @@ class TenantCreationService:
             raise ValueError(f"Database '{url_slug}' already exists")
 
         logger.info(f"Creating tenant: {name} (url: {url_slug}, db: {url_slug})")
-
-        workos_org = await self.workos_service.create_tenant(name)
+        external_id = uuid.uuid4()
+        workos_org = await self.workos_service.create_tenant(
+            name, external_id=str(external_id)
+        )
         if not workos_org:
             raise RuntimeError("Failed to create WorkOS organization")
         logger.info(f"Created WorkOS organization: {workos_org.id}")
@@ -119,7 +121,7 @@ class TenantCreationService:
         db_host = host["host"]
 
         tenant = Tenant(
-            id=uuid.uuid4(),
+            id=external_id,
             initialize=True,
             name=name,
             url=url_slug,
