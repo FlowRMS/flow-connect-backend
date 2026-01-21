@@ -44,7 +44,12 @@ class AliasService:
         return await self.get_by_id(alias.id)
 
     async def update(self, alias_input: AliasInput) -> Alias:
-        alias = await self.repository.update(alias_input.to_orm_model())
+        if not alias_input.id:
+            raise NotFoundError("Alias id is required for update")
+
+        alias = alias_input.to_orm_model()
+        alias.id = alias_input.id
+        alias = await self.repository.update(alias)
         return await self.get_by_id(alias.id)
 
     async def delete(self, alias_id: UUID) -> bool:
