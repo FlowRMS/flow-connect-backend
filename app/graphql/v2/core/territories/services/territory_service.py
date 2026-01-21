@@ -79,8 +79,11 @@ class TerritoryService:
                     f"Parent territory with id {input.parent_id} not found"
                 )
 
+        existing_managers = await self.manager_repository.get_by_territory(territory_id)
+
         territory = input.to_orm_model()
         territory.id = territory_id
+        territory.managers = existing_managers
         _ = await self.repository.update(territory)
         return await self.get_by_id(territory_id)
 
