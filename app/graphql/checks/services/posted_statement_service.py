@@ -229,8 +229,12 @@ class PostedStatementService:
         )
         for detail in details:
             rep_id = detail.outside_sales_rep_id
-            summaries[rep_id]["expected"] += detail.expected_commission  # type: ignore[operator]
-            summaries[rep_id]["received"] += detail.commission_received  # type: ignore[operator]
+            if detail.entity_type == "Credit":
+                summaries[rep_id]["expected"] -= detail.expected_commission  # type: ignore[operator]
+                summaries[rep_id]["received"] -= detail.commission_received  # type: ignore[operator]
+            else:
+                summaries[rep_id]["expected"] += detail.expected_commission  # type: ignore[operator]
+                summaries[rep_id]["received"] += detail.commission_received  # type: ignore[operator]
             summaries[rep_id]["name"] = detail.outside_sales_rep_name
             summaries[rep_id]["id"] = rep_id
         return [
