@@ -1040,6 +1040,7 @@ enum EntityType {
   SHIPPING_CARRIER
   ORDER_ACKNOWLEDGEMENT
   DELIVERY
+  COMMISSION_STATEMENTS
 }
 
 type EstimateRecipientsResponse {
