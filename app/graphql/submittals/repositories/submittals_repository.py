@@ -56,7 +56,7 @@ class SubmittalsRepository(BaseRepository[Submittal]):
                 .selectinload(SubmittalItem.highlight_version)
                 .selectinload(SpecSheetHighlightVersion.regions),
                 selectinload(Submittal.stakeholders),
-                selectinload(Submittal.revisions),
+                selectinload(Submittal.revisions).selectinload(SubmittalRevision.emails),
                 selectinload(Submittal.created_by),
             )
             .where(Submittal.id == submittal_id)
