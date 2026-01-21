@@ -8,7 +8,9 @@ import strawberry
 from commons.db.v6.fulfillment import FulfillmentOrderLineItem
 
 from app.core.db.adapters.dto import DTOMixin
-from app.graphql.v2.core.products.strawberry.product_response import ProductLiteResponse
+from app.graphql.v2.core.fulfillment.strawberry.fulfillment_product_response import (
+    FulfillmentProductResponse,
+)
 
 
 @strawberry.type
@@ -52,8 +54,8 @@ class FulfillmentOrderLineItemLiteResponse(DTOMixin[FulfillmentOrderLineItem]):
         )
 
     @strawberry.field
-    def product(self) -> ProductLiteResponse | None:
+    def product(self) -> FulfillmentProductResponse | None:
         """Get product - relationship is eager-loaded."""
         if self._instance.product:
-            return ProductLiteResponse.from_orm_model(self._instance.product)
+            return FulfillmentProductResponse.from_orm_model(self._instance.product)
         return None
