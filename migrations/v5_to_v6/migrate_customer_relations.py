@@ -140,6 +140,7 @@ async def migrate_factory_split_rates(
             0 as position,
             COALESCE(f.entry_date, now()) as created_at
         FROM core.factories f
+        JOIN "user".users u ON u.id = f.inside_rep_id
         WHERE f.inside_rep_id IS NOT NULL
     """
 )

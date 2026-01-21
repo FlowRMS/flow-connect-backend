@@ -17,6 +17,79 @@ class MigrationConfig:
     batch_size: int = 500
 
 
+def map_creation_type(value: str | None) -> int:
+    """Map v4 string creation_type to v6 IntEnum value.
+
+    v6 CreationType values:
+        MANUAL = 0
+        IMPORT = 1
+        API = 2
+        DUPLICATION = 3
+    """
+    if value is None:
+        return 0  # MANUAL
+    value_lower = value.lower()
+    if value_lower == "manual":
+        return 0
+    if value_lower in ("spreadsheet", "import"):
+        return 1
+    if value_lower == "api":
+        return 2
+    if value_lower == "duplication":
+        return 3
+    return 0  # Default to MANUAL
+
+
+def map_freight_discount_type(value: str | None) -> int:
+    """Map v4 string freight_discount_type to v6 IntEnum value.
+
+    v6 FreightDiscountTypeEnum values:
+        ADD = 0
+        ALLOWED = 1
+    """
+    if value is None or value == "":
+        return 0  # ADD (default)
+    value_lower = value.lower()
+    if value_lower == "allowed":
+        return 1
+    return 0  # Default to ADD
+
+
+def map_order_status(v4_status: int | None) -> int:
+    """Map v4 order_status id to v6 OrderStatus IntEnum value.
+
+    v4 order_status:
+        1 = Open
+        2 = Partial Shipped
+        3 = Shipped Complete
+        5 = Needs Reconciling
+        6 = Paid - Matched
+        7 = Over Shipped
+        8 = Cancelled
+
+    v6 OrderStatus (IntEnum with auto() starting at 1):
+        1 = OPEN
+        2 = PARTIAL_SHIPPED
+        3 = SHIPPED_COMPLETE
+        4 = CANCELLED
+        5 = OVER_SHIPPED
+        6 = PARTIAL_CANCELLED
+        7 = OVER_CANCELLED
+    """
+    if v4_status is None:
+        return 1  # OPEN
+    mapping = {
+        1: 1,  # Open -> OPEN
+        2: 2,  # Partial Shipped -> PARTIAL_SHIPPED
+        3: 3,  # Shipped Complete -> SHIPPED_COMPLETE
+        5: 1,  # Needs Reconciling -> OPEN (no direct equivalent)
+        6: 3,  # Paid - Matched -> SHIPPED_COMPLETE (closest match)
+        7: 5,  # Over Shipped -> OVER_SHIPPED
+        8: 4,  # Cancelled -> CANCELLED
+    }
+    return mapping.get(v4_status, 1)  # Default to OPEN
+
+
 async def migrate_users(source: asyncpg.Connection, dest: asyncpg.Connection) -> int:
     """Migrate users from v4 (public.users) to v6 (pyuser.users)."""
     logger.info("Starting user migration...")
@@ -96,6 +169,8 @@ async def migrate_customers(
             c.company_name,
             COALESCE(c.status, true) as published,
             COALESCE(c.is_parent, false) as is_parent,
+            c.contact_email,
+            c.contact_number,
             c.created_by as created_by_id,
             COALESCE(c.create_date, now()) as created_at
         FROM public.customers c
@@ -110,18 +185,23 @@ async def migrate_customers(
         await dest.executemany(
             """
             INSERT INTO pycore.customers (
-                id, company_name, parent_id, published, is_parent, created_by_id, created_at
-            ) VALUES ($1, $2, NULL, $3, $4, $5, $6)
+                id, company_name, parent_id, published, is_parent,
+                contact_email, contact_number, created_by_id, created_at
+            ) VALUES ($1, $2, NULL, $3, $4, $5, $6, $7, $8)
             ON CONFLICT (id) DO UPDATE SET
                 company_name = EXCLUDED.company_name,
                 published = EXCLUDED.published,
-                is_parent = EXCLUDED.is_parent
+                is_parent = EXCLUDED.is_parent,
+                contact_email = EXCLUDED.contact_email,
+                contact_number = EXCLUDED.contact_number
             """,
             [(
                 c["id"],
                 c["company_name"],
                 c["published"],
                 c["is_parent"],
+                c["contact_email"],
+                c["contact_number"],
                 c["created_by_id"] if c["created_by_id"] in valid_user_ids else default_user_id,
                 c["created_at"],
             ) for c in parent_customers],
@@ -135,6 +215,8 @@ async def migrate_customers(
             parent.uuid as parent_id,
             COALESCE(c.status, true) as published,
             COALESCE(c.is_parent, false) as is_parent,
+            c.contact_email,
+            c.contact_number,
             c.created_by as created_by_id,
             COALESCE(c.create_date, now()) as created_at
         FROM public.customers c
@@ -146,13 +228,16 @@ async def migrate_customers(
         await dest.executemany(
             """
             INSERT INTO pycore.customers (
-                id, company_name, parent_id, published, is_parent, created_by_id, created_at
-            ) VALUES ($1, $2, $3, $4, $5, $6, $7)
+                id, company_name, parent_id, published, is_parent,
+                contact_email, contact_number, created_by_id, created_at
+            ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
             ON CONFLICT (id) DO UPDATE SET
                 company_name = EXCLUDED.company_name,
                 parent_id = EXCLUDED.parent_id,
                 published = EXCLUDED.published,
-                is_parent = EXCLUDED.is_parent
+                is_parent = EXCLUDED.is_parent,
+                contact_email = EXCLUDED.contact_email,
+                contact_number = EXCLUDED.contact_number
             """,
             [(
                 c["id"],
@@ -160,6 +245,8 @@ async def migrate_customers(
                 c["parent_id"],
                 c["published"],
                 c["is_parent"],
+                c["contact_email"],
+                c["contact_number"],
                 c["created_by_id"] if c["created_by_id"] in valid_user_ids else default_user_id,
                 c["created_at"],
             ) for c in child_customers],
@@ -257,8 +344,8 @@ async def migrate_factories(
             f["freight_terms"],
             f["external_payment_terms"],
             f["published"],
-            f["freight_discount_type"],
-            f["creation_type"],
+            map_freight_discount_type(f["freight_discount_type"]),
+            map_creation_type(f["creation_type"]),
             f["created_by_id"] if f["created_by_id"] in valid_user_ids else default_user_id,
             f["created_at"],
         ) for f in factories],
@@ -277,7 +364,6 @@ async def migrate_product_uoms(source: asyncpg.Connection, dest: asyncpg.Connect
             u.uom_id as id,
             u.title,
             u.description,
-            'migration' as creation_type,
             now() as created_at,
             CASE
                 WHEN u.multiply AND u.multiply_by > 0 THEN u.multiply_by
@@ -305,7 +391,7 @@ async def migrate_product_uoms(source: asyncpg.Connection, dest: asyncpg.Connect
             u["id"],
             u["title"],
             u["description"],
-            u["creation_type"],
+            1,  # IMPORT (CreationType.IMPORT = 1)
             u["created_at"],
             u["division_factor"],
         ) for u in uoms],
@@ -388,7 +474,10 @@ async def migrate_products(
             END AS lead_time,
             p.discount_rate as unit_price_discount_rate,
             p.commission_discount_rate,
-            p.approval_date,
+            CASE
+                WHEN p.approval_date ~ '^\d{4}-\d{2}-\d{2}' THEN p.approval_date::date
+                ELSE NULL
+            END AS approval_date,
             p.approval_comments
         FROM public.products p
         LEFT JOIN public.factories f ON p.factory_id = f.factory_id
@@ -442,7 +531,7 @@ async def migrate_products(
             p["published"],
             p["approval_needed"],
             p["description"],
-            p["creation_type"],
+            map_creation_type(p["creation_type"]),
             p["created_at"],
             p["created_by_id"] if p["created_by_id"] in valid_user_ids else default_user_id,
             p["upc"],
@@ -511,6 +600,10 @@ async def migrate_customer_split_rates(source: asyncpg.Connection, dest: asyncpg
     """Migrate customer split rates from v4 to v6."""
     logger.info("Starting customer split rate migration...")
 
+    # Get list of migrated customer IDs from destination
+    migrated_customers = await dest.fetch("SELECT id FROM pycore.customers")
+    migrated_customer_ids = {row["id"] for row in migrated_customers}
+
     # Map integer customer_id to customer's uuid
     split_rates = await source.fetch("""
         SELECT
@@ -524,6 +617,9 @@ async def migrate_customer_split_rates(source: asyncpg.Connection, dest: asyncpg
         FROM public.default_outside_rep_customer_split csr
         JOIN public.customers c ON csr.customer_id = c.customer_id
     """)
+
+    # Filter to only include split rates for customers that were migrated
+    split_rates = [sr for sr in split_rates if sr["customer_id"] in migrated_customer_ids]
 
     if not split_rates:
         logger.info("No customer split rates to migrate")
@@ -560,6 +656,12 @@ async def migrate_customer_factory_sales_reps(source: asyncpg.Connection, dest: 
     """Migrate customer factory sales reps from v4 to v6."""
     logger.info("Starting customer factory sales rep migration...")
 
+    # Get list of migrated customer and factory IDs from destination
+    migrated_customers = await dest.fetch("SELECT id FROM pycore.customers")
+    migrated_customer_ids = {row["id"] for row in migrated_customers}
+    migrated_factories = await dest.fetch("SELECT id FROM pycore.factories")
+    migrated_factory_ids = {row["id"] for row in migrated_factories}
+
     # Join sales_rep_selection with default_outside_rep_split
     sales_reps = await source.fetch("""
         SELECT
@@ -567,8 +669,7 @@ async def migrate_customer_factory_sales_reps(source: asyncpg.Connection, dest: 
             c.uuid as customer_id,
             f.uuid as factory_id,
             dors.user_id,
-            COALESCE(dors.split_rate, 0) as split_rate,
-            1 as rep_type,
+            COALESCE(dors.split_rate, 0) as rate,
             0 as position,
             COALESCE(dors.create_date, now()) as created_at
         FROM public.default_outside_rep_split dors
@@ -578,6 +679,12 @@ async def migrate_customer_factory_sales_reps(source: asyncpg.Connection, dest: 
         WHERE dors.user_id IS NOT NULL
     """)
 
+    # Filter to only include sales reps for customers and factories that were migrated
+    sales_reps = [
+        sr for sr in sales_reps
+        if sr["customer_id"] in migrated_customer_ids and sr["factory_id"] in migrated_factory_ids
+    ]
+
     if not sales_reps:
         logger.info("No customer factory sales reps to migrate")
         return 0
@@ -585,14 +692,13 @@ async def migrate_customer_factory_sales_reps(source: asyncpg.Connection, dest: 
     await dest.executemany(
         """
         INSERT INTO pycore.customer_factory_sales_reps (
-            id, customer_id, factory_id, user_id, split_rate, rep_type, "position", created_at
-        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+            id, customer_id, factory_id, user_id, rate, "position", created_at
+        ) VALUES ($1, $2, $3, $4, $5, $6, $7)
         ON CONFLICT (id) DO UPDATE SET
             customer_id = EXCLUDED.customer_id,
             factory_id = EXCLUDED.factory_id,
             user_id = EXCLUDED.user_id,
-            split_rate = EXCLUDED.split_rate,
-            rep_type = EXCLUDED.rep_type,
+            rate = EXCLUDED.rate,
             "position" = EXCLUDED."position"
         """,
         [(
@@ -600,8 +706,7 @@ async def migrate_customer_factory_sales_reps(source: asyncpg.Connection, dest: 
             sr["customer_id"],
             sr["factory_id"],
             sr["user_id"],
-            sr["split_rate"],
-            sr["rep_type"],
+            sr["rate"],
             sr["position"],
             sr["created_at"],
         ) for sr in sales_reps],
@@ -622,15 +727,16 @@ async def migrate_orders(
     orders = await source.fetch("""
         SELECT
             o.uuid as id,
+            gen_random_uuid() as balance_id,
             o.order_number,
             COALESCE(o.order_date, o.create_date) as entity_date,
-            o.due_date,
+            COALESCE(o.due_date, o.order_date, o.create_date) as due_date,
             c.uuid as sold_to_customer_id,
             c.uuid as bill_to_customer_id,
             NOT COALESCE(o.draft, false) as published,
             o.creation_type,
-            o.status,
-            o.order_type,
+            COALESCE(o.status, 1) as status,
+            COALESCE(o.order_type, 0) + 1 as order_type,
             1 as header_status,
             f.uuid as factory_id,
             o.payment_terms as shipping_terms,
@@ -639,15 +745,66 @@ async def migrate_orders(
             o.ship_date,
             o.fact_so_number,
             o.created_by as created_by_id,
-            COALESCE(o.create_date, now()) as created_at
+            COALESCE(o.create_date, now()) as created_at,
+            COALESCE(o.quantity, 0) as quantity,
+            COALESCE(o.order_balance, 0) as subtotal,
+            COALESCE(o.order_amount, 0) as total,
+            COALESCE(o.commission, 0) as commission,
+            COALESCE(o.discount, 0) as discount,
+            COALESCE(o.commission_rate, 0) as commission_rate,
+            COALESCE(o.commission_discount, 0) as commission_discount,
+            COALESCE(o.shipping_balance, 0) as shipping_balance
         FROM public.orders o
-        LEFT JOIN public.customers c ON o.customer = c.customer_id
-        LEFT JOIN public.factories f ON o.factory_id = f.factory_id
+        JOIN public.customers c ON o.customer = c.customer_id
+        JOIN public.factories f ON o.factory_id = f.factory_id
+        WHERE c.uuid IS NOT NULL AND f.uuid IS NOT NULL
     """)
 
     if not orders:
         logger.info("No orders to migrate")
         return 0
+
+    # Get list of migrated customer IDs from destination
+    migrated_customers = await dest.fetch("SELECT id FROM pycore.customers")
+    migrated_customer_ids = {row["id"] for row in migrated_customers}
+
+    # Get list of migrated factory IDs from destination
+    migrated_factories = await dest.fetch("SELECT id FROM pycore.factories")
+    migrated_factory_ids = {row["id"] for row in migrated_factories}
+
+    # Filter to only include orders for customers and factories that were migrated
+    orders = [
+        o for o in orders
+        if o["sold_to_customer_id"] in migrated_customer_ids
+        and o["factory_id"] in migrated_factory_ids
+    ]
+
+    if not orders:
+        logger.info("No orders to migrate after filtering for migrated customers/factories")
+        return 0
+
+    # First, create order_balances records
+    await dest.executemany(
+        """
+        INSERT INTO pycommission.order_balances (
+            id, quantity, subtotal, total, commission, discount, discount_rate,
+            commission_rate, commission_discount, commission_discount_rate,
+            shipping_balance, cancelled_balance, freight_charge_balance
+        ) VALUES ($1, $2, $3, $4, $5, $6, 0, $7, $8, 0, $9, 0, 0)
+        ON CONFLICT (id) DO NOTHING
+        """,
+        [(
+            o["balance_id"],
+            o["quantity"],
+            o["subtotal"],
+            o["total"],
+            o["commission"],
+            o["discount"],
+            o["commission_rate"],
+            o["commission_discount"],
+            o["shipping_balance"],
+        ) for o in orders],
+    )
 
     # Get valid user IDs from destination
     valid_users = await dest.fetch("SELECT id FROM pyuser.users")
@@ -660,7 +817,7 @@ async def migrate_orders(
             published, creation_type, status, order_type, header_status, factory_id,
             shipping_terms, freight_terms, mark_number, ship_date, projected_ship_date,
             fact_so_number, quote_id, balance_id, created_by_id, created_at, job_id
-        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, NULL, $17, NULL, NULL, $18, $19, NULL)
+        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, NULL, $17, NULL, $18, $19, $20, NULL)
         ON CONFLICT (id) DO UPDATE SET
             order_number = EXCLUDED.order_number,
             entity_date = EXCLUDED.entity_date,
@@ -677,7 +834,8 @@ async def migrate_orders(
             freight_terms = EXCLUDED.freight_terms,
             mark_number = EXCLUDED.mark_number,
             ship_date = EXCLUDED.ship_date,
-            fact_so_number = EXCLUDED.fact_so_number
+            fact_so_number = EXCLUDED.fact_so_number,
+            balance_id = EXCLUDED.balance_id
         """,
         [(
             o["id"],
@@ -687,8 +845,8 @@ async def migrate_orders(
             o["sold_to_customer_id"],
             o["bill_to_customer_id"],
             o["published"],
-            o["creation_type"],
-            o["status"],
+            map_creation_type(o["creation_type"]),
+            map_order_status(o["status"]),
             o["order_type"],
             o["header_status"],
             o["factory_id"],
@@ -697,6 +855,7 @@ async def migrate_orders(
             o["mark_number"],
             o["ship_date"],
             o["fact_so_number"],
+            o["balance_id"],
             o["created_by_id"] if o["created_by_id"] in valid_user_ids else default_user_id,
             o["created_at"],
         ) for o in orders],
@@ -714,7 +873,7 @@ async def migrate_order_details(source: asyncpg.Connection, dest: asyncpg.Connec
         SELECT
             gen_random_uuid() as id,
             o.uuid as order_id,
-            od.item_number,
+            COALESCE(od.item_number, 1) as item_number,
             COALESCE(od.quantity, 0) as quantity,
             COALESCE(od.unit_price, 0) as unit_price,
             COALESCE(od.quantity * od.unit_price, 0) as subtotal,
@@ -727,20 +886,44 @@ async def migrate_order_details(source: asyncpg.Connection, dest: asyncpg.Connec
             COALESCE(od.discount_rate, 0) as discount_rate,
             COALESCE(od.discount, 0) as discount,
             p.uuid as product_id,
-            f.uuid as factory_id,
             eu.uuid as end_user_id,
             od.lead_time,
-            od.status,
+            COALESCE(od.status, 1) as status,
             COALESCE(od.shipping_balance, 0) as shipping_balance
         FROM public.order_details od
         JOIN public.orders o ON od.order_id = o.order_id
+        JOIN public.customers c ON o.customer = c.customer_id
+        JOIN public.factories f ON o.factory_id = f.factory_id
         LEFT JOIN public.products p ON od.product_id = p.product_id
-        LEFT JOIN public.factories f ON o.factory_id = f.factory_id
         LEFT JOIN public.customers eu ON od.end_user = eu.customer_id
-    """)
+        WHERE c.uuid IS NOT NULL AND f.uuid IS NOT NULL
+    """, timeout=600)
 
     if not details:
         logger.info("No order details to migrate")
+        return 0
+
+    # Get list of migrated order IDs from destination
+    migrated_orders = await dest.fetch("SELECT id FROM pycommission.orders")
+    migrated_order_ids = {row["id"] for row in migrated_orders}
+
+    # Get list of migrated customer IDs from destination
+    migrated_customers = await dest.fetch("SELECT id FROM pycore.customers")
+    migrated_customer_ids = {row["id"] for row in migrated_customers}
+
+    # Filter to only include details for orders that were migrated
+    # and nullify end_user_id if that customer wasn't migrated
+    details = [
+        {
+            **d,
+            "end_user_id": d["end_user_id"] if d["end_user_id"] in migrated_customer_ids else None,
+        }
+        for d in details
+        if d["order_id"] in migrated_order_ids
+    ]
+
+    if not details:
+        logger.info("No order details to migrate after filtering for migrated orders")
         return 0
 
     await dest.executemany(
@@ -749,9 +932,9 @@ async def migrate_order_details(source: asyncpg.Connection, dest: asyncpg.Connec
             id, order_id, item_number, quantity, unit_price, subtotal, total,
             total_line_commission, commission_rate, commission, commission_discount_rate,
             commission_discount, discount_rate, discount, division_factor, product_id,
-            product_name_adhoc, product_description_adhoc, factory_id, end_user_id,
+            product_name_adhoc, product_description_adhoc, end_user_id,
             uom_id, lead_time, note, status, freight_charge, shipping_balance, cancelled_balance
-        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, NULL, $15, NULL, NULL, $16, $17, NULL, $18, NULL, $19, 0, $20, 0)
+        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, NULL, $15, NULL, NULL, $16, NULL, $17, NULL, $18, 0, $19, 0)
         """,
         [(
             d["id"],
@@ -769,7 +952,6 @@ async def migrate_order_details(source: asyncpg.Connection, dest: asyncpg.Connec
             d["discount_rate"],
             d["discount"],
             d["product_id"],
-            d["factory_id"],
             d["end_user_id"],
             d["lead_time"],
             d["status"],
@@ -789,32 +971,71 @@ async def migrate_quotes(
     """Migrate quotes from v4 (public.quotes) to v6 (pycrm.quotes)."""
     logger.info("Starting quote migration...")
 
-    quotes = await source.fetch("""
+    quotes = await source.fetch(r"""
         SELECT
             q.uuid as id,
+            gen_random_uuid() as balance_id,
             q.quote_number,
-            COALESCE(q.quote_date, q.create_date) as entity_date,
+            COALESCE(q.quote_date, q.create_date::date) as entity_date,
             c.uuid as sold_to_customer_id,
             c.uuid as bill_to_customer_id,
             NOT COALESCE(q.draft, false) as published,
             q.creation_type,
-            q.status,
+            COALESCE(q.status, 1) as status,
             q.payment_terms,
             q.customer_ref,
             q.freight_terms,
-            q.exp_date,
-            q.revise_date,
-            q.accept_date,
+            CASE
+                WHEN q.exp_date ~ '^\d{4}-\d{2}-\d{2}' THEN q.exp_date::date
+                ELSE NULL
+            END AS exp_date,
+            CASE
+                WHEN q.revise_date ~ '^\d{4}-\d{2}-\d{2}' THEN q.revise_date::date
+                ELSE NULL
+            END AS revise_date,
+            CASE
+                WHEN q.accept_date ~ '^\d{4}-\d{2}-\d{2}' THEN q.accept_date::date
+                ELSE NULL
+            END AS accept_date,
             COALESCE(q.blanket, false) as blanket,
             q.created_by as created_by_id,
-            COALESCE(q.create_date, now()) as created_at
+            COALESCE(q.create_date, now()) as created_at,
+            COALESCE(q.total_items, 0) as quantity,
+            COALESCE(q.total, 0) as subtotal,
+            COALESCE(q.total, 0) as total,
+            COALESCE(q.commission, 0) as commission,
+            COALESCE(q.discount, 0) as discount,
+            COALESCE(q.commission_rate, 0) as commission_rate,
+            COALESCE(q.commission_discount, 0) as commission_discount
         FROM public.quotes q
-        LEFT JOIN public.customers c ON q.customer = c.customer_id
+        JOIN public.customers c ON q.customer = c.customer_id
+        WHERE c.uuid IS NOT NULL
     """)
 
     if not quotes:
         logger.info("No quotes to migrate")
         return 0
+
+    # First, create quote_balances records
+    await dest.executemany(
+        """
+        INSERT INTO pycrm.quote_balances (
+            id, quantity, subtotal, total, commission, discount, discount_rate,
+            commission_rate, commission_discount, commission_discount_rate
+        ) VALUES ($1, $2, $3, $4, $5, $6, 0, $7, $8, 0)
+        ON CONFLICT (id) DO NOTHING
+        """,
+        [(
+            q["balance_id"],
+            q["quantity"],
+            q["subtotal"],
+            q["total"],
+            q["commission"],
+            q["discount"],
+            q["commission_rate"],
+            q["commission_discount"],
+        ) for q in quotes],
+    )
 
     # Get valid user IDs from destination
     valid_users = await dest.fetch("SELECT id FROM pyuser.users")
@@ -828,7 +1049,7 @@ async def migrate_quotes(
             customer_ref, freight_terms, exp_date, revise_date, accept_date,
             blanket, duplicated_from, version_of, balance_id, created_by_id,
             created_at, job_id
-        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, 0, $9, $10, $11, $12, $13, $14, $15, NULL, NULL, NULL, $16, $17, NULL)
+        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, 0, $9, $10, $11, $12, $13, $14, $15, NULL, NULL, $16, $17, $18, NULL)
         ON CONFLICT (id) DO UPDATE SET
             quote_number = EXCLUDED.quote_number,
             entity_date = EXCLUDED.entity_date,
@@ -843,7 +1064,8 @@ async def migrate_quotes(
             exp_date = EXCLUDED.exp_date,
             revise_date = EXCLUDED.revise_date,
             accept_date = EXCLUDED.accept_date,
-            blanket = EXCLUDED.blanket
+            blanket = EXCLUDED.blanket,
+            balance_id = EXCLUDED.balance_id
         """,
         [(
             q["id"],
@@ -852,7 +1074,7 @@ async def migrate_quotes(
             q["sold_to_customer_id"],
             q["bill_to_customer_id"],
             q["published"],
-            q["creation_type"],
+            map_creation_type(q["creation_type"]),
             q["status"],
             q["payment_terms"],
             q["customer_ref"],
@@ -861,6 +1083,7 @@ async def migrate_quotes(
             q["revise_date"],
             q["accept_date"],
             q["blanket"],
+            q["balance_id"],
             q["created_by_id"] if q["created_by_id"] in valid_user_ids else default_user_id,
             q["created_at"],
         ) for q in quotes],
@@ -878,7 +1101,7 @@ async def migrate_quote_details(source: asyncpg.Connection, dest: asyncpg.Connec
         SELECT
             gen_random_uuid() as id,
             q.uuid as quote_id,
-            qd.item_number,
+            COALESCE(qd.item_number, 1) as item_number,
             COALESCE(qd.quantity, 0) as quantity,
             COALESCE(qd.unit_price, 0) as unit_price,
             COALESCE(qd.quantity * qd.unit_price, 0) as subtotal,
@@ -894,14 +1117,16 @@ async def migrate_quote_details(source: asyncpg.Connection, dest: asyncpg.Connec
             f.uuid as factory_id,
             eu.uuid as end_user_id,
             qd.lead_time,
-            qd.status,
+            COALESCE(qd.status, 1) as status,
             qd.lost_reason as lost_reason_id
         FROM public.quote_details qd
         JOIN public.quotes q ON qd.quote_id = q.quote_id
+        JOIN public.customers c ON q.customer = c.customer_id
         LEFT JOIN public.products p ON qd.product_id = p.product_id
         LEFT JOIN public.factories f ON p.factory_id = f.factory_id
         LEFT JOIN public.customers eu ON qd.end_user = eu.customer_id
-    """)
+        WHERE c.uuid IS NOT NULL
+    """, timeout=600)
 
     if not details:
         logger.info("No quote details to migrate")
@@ -956,33 +1181,50 @@ async def migrate_invoices(
     invoices = await source.fetch("""
         SELECT
             i.uuid as id,
+            gen_random_uuid() as balance_id,
             i.invoice_number,
-            COALESCE(i.invoice_date, i.create_date) as entity_date,
-            i.due_date,
-            i.status,
-            i.invoice_type,
-            COALESCE(i.invoice_amount, 0) as total,
-            COALESCE(i.commission, 0) as commission,
-            COALESCE(i.commission_rate, 0) as commission_rate,
-            COALESCE(i.paid_amount, 0) as paid_amount,
-            COALESCE(i.commission_paid_amount, 0) as commission_paid_amount,
+            COALESCE(i.invoice_date, i.create_date)::date as entity_date,
+            i.due_date::date as due_date,
+            COALESCE(i.status, 1) as status,
             NOT COALESCE(i.draft, false) as published,
+            COALESCE(i.locked, false) as locked,
             i.creation_type,
             o.uuid as order_id,
             f.uuid as factory_id,
-            c.uuid as customer_id,
             i.created_by as created_by_id,
             COALESCE(i.create_date, now()) as created_at,
-            i.batch_id
+            COALESCE(i.invoice_amount, 0) as total,
+            COALESCE(i.commission, 0) as commission,
+            COALESCE(i.commission_rate, 0) as commission_rate,
+            COALESCE(i.paid_amount, 0) as paid_balance
         FROM public.invoices i
-        LEFT JOIN public.orders o ON i.order_id = o.order_id
-        LEFT JOIN public.factories f ON i.factory_id = f.factory_id
-        LEFT JOIN public.customers c ON i.customer_id = c.customer_id
-    """)
+        JOIN public.orders o ON i.order_id = o.order_id
+        JOIN public.customers c ON o.customer = c.customer_id
+        JOIN public.factories f ON i.factory_id = f.factory_id
+        WHERE o.uuid IS NOT NULL AND f.uuid IS NOT NULL AND c.uuid IS NOT NULL
+    """, timeout=600)
 
     if not invoices:
         logger.info("No invoices to migrate")
         return 0
+
+    # First, create invoice_balances records
+    await dest.executemany(
+        """
+        INSERT INTO pycommission.invoice_balances (
+            id, quantity, subtotal, total, commission, discount, discount_rate,
+            commission_rate, commission_discount, commission_discount_rate, paid_balance
+        ) VALUES ($1, 0, $2, $2, $3, 0, 0, $4, 0, 0, $5)
+        ON CONFLICT (id) DO NOTHING
+        """,
+        [(
+            inv["balance_id"],
+            inv["total"],
+            inv["commission"],
+            inv["commission_rate"],
+            inv["paid_balance"],
+        ) for inv in invoices],
+    )
 
     # Get valid user IDs from destination
     valid_users = await dest.fetch("SELECT id FROM pyuser.users")
@@ -991,48 +1233,35 @@ async def migrate_invoices(
     await dest.executemany(
         """
         INSERT INTO pycommission.invoices (
-            id, invoice_number, entity_date, due_date, status, invoice_type, total,
-            commission, commission_rate, paid_amount, commission_paid_amount,
-            published, creation_type, order_id, factory_id, customer_id, balance_id,
-            created_by_id, created_at, batch_id
-        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, NULL, $17, $18, $19)
+            id, invoice_number, factory_id, order_id, entity_date, due_date,
+            published, locked, creation_type, status, balance_id, created_by_id, created_at
+        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)
         ON CONFLICT (id) DO UPDATE SET
             invoice_number = EXCLUDED.invoice_number,
+            factory_id = EXCLUDED.factory_id,
+            order_id = EXCLUDED.order_id,
             entity_date = EXCLUDED.entity_date,
             due_date = EXCLUDED.due_date,
-            status = EXCLUDED.status,
-            invoice_type = EXCLUDED.invoice_type,
-            total = EXCLUDED.total,
-            commission = EXCLUDED.commission,
-            commission_rate = EXCLUDED.commission_rate,
-            paid_amount = EXCLUDED.paid_amount,
-            commission_paid_amount = EXCLUDED.commission_paid_amount,
             published = EXCLUDED.published,
+            locked = EXCLUDED.locked,
             creation_type = EXCLUDED.creation_type,
-            order_id = EXCLUDED.order_id,
-            factory_id = EXCLUDED.factory_id,
-            customer_id = EXCLUDED.customer_id
+            status = EXCLUDED.status,
+            balance_id = EXCLUDED.balance_id
         """,
         [(
             inv["id"],
             inv["invoice_number"],
+            inv["factory_id"],
+            inv["order_id"],
             inv["entity_date"],
             inv["due_date"],
-            inv["status"],
-            inv["invoice_type"],
-            inv["total"],
-            inv["commission"],
-            inv["commission_rate"],
-            inv["paid_amount"],
-            inv["commission_paid_amount"],
             inv["published"],
-            inv["creation_type"],
-            inv["order_id"],
-            inv["factory_id"],
-            inv["customer_id"],
+            inv["locked"],
+            map_creation_type(inv["creation_type"]),
+            inv["status"],
+            inv["balance_id"],
             inv["created_by_id"] if inv["created_by_id"] in valid_user_ids else default_user_id,
             inv["created_at"],
-            inv["batch_id"],
         ) for inv in invoices],
     )
 
@@ -1048,8 +1277,8 @@ async def migrate_invoice_details(source: asyncpg.Connection, dest: asyncpg.Conn
         SELECT
             gen_random_uuid() as id,
             inv.uuid as invoice_id,
-            id.item_number,
-            COALESCE(id.quantity_shipped, 0) as quantity_shipped,
+            COALESCE(id.item_number, 1) as item_number,
+            COALESCE(id.quantity_shipped, 0) as quantity,
             COALESCE(id.unit_price, 0) as unit_price,
             COALESCE(id.quantity_shipped * id.unit_price, 0) as subtotal,
             COALESCE(id.total, 0) as total,
@@ -1062,13 +1291,16 @@ async def migrate_invoice_details(source: asyncpg.Connection, dest: asyncpg.Conn
             COALESCE(id.discount, 0) as discount,
             p.uuid as product_id,
             eu.uuid as end_user_id,
-            id.shipped_date,
-            id.status
+            COALESCE(id.status, 1) as status
         FROM public.invoice_details id
         JOIN public.invoices inv ON id.invoice_id = inv.invoice_id
+        JOIN public.orders o ON inv.order_id = o.order_id
+        JOIN public.customers c ON o.customer = c.customer_id
+        JOIN public.factories f ON inv.factory_id = f.factory_id
         LEFT JOIN public.products p ON id.product_id = p.product_id
         LEFT JOIN public.customers eu ON id.end_user = eu.customer_id
-    """)
+        WHERE inv.uuid IS NOT NULL AND c.uuid IS NOT NULL AND f.uuid IS NOT NULL
+    """, timeout=600)
 
     if not details:
         logger.info("No invoice details to migrate")
@@ -1077,17 +1309,18 @@ async def migrate_invoice_details(source: asyncpg.Connection, dest: asyncpg.Conn
     await dest.executemany(
         """
         INSERT INTO pycommission.invoice_details (
-            id, invoice_id, item_number, quantity_shipped, unit_price, subtotal, total,
+            id, invoice_id, item_number, quantity, unit_price, subtotal, total,
             total_line_commission, commission_rate, commission, commission_discount_rate,
-            commission_discount, discount_rate, discount, product_id, order_detail_id,
-            end_user_id, shipped_date, status
-        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, NULL, $16, $17, $18)
+            commission_discount, discount_rate, discount, division_factor, product_id,
+            product_name_adhoc, product_description_adhoc, uom_id, end_user_id,
+            lead_time, note, status, invoiced_balance, order_detail_id
+        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, NULL, $15, NULL, NULL, NULL, $16, NULL, NULL, $17, 0, NULL)
         """,
         [(
             d["id"],
             d["invoice_id"],
             d["item_number"],
-            d["quantity_shipped"],
+            d["quantity"],
             d["unit_price"],
             d["subtotal"],
             d["total"],
@@ -1100,13 +1333,309 @@ async def migrate_invoice_details(source: asyncpg.Connection, dest: asyncpg.Conn
             d["discount"],
             d["product_id"],
             d["end_user_id"],
-            d["shipped_date"],
             d["status"],
         ) for d in details],
     )
 
     logger.info(f"Migrated {len(details)} invoice details")
     return len(details)
+
+
+async def migrate_order_split_rates(source: asyncpg.Connection, dest: asyncpg.Connection) -> int:
+    """Migrate order split rates from v4 order_sales_rep_split to v6 order_split_rates."""
+    logger.info("Starting order split rate migration...")
+
+    # Get the mapping of v4 order_detail_id to v6 order_detail uuid
+    # We need to join through orders to get the mapping
+    split_rates = await source.fetch("""
+        SELECT
+            osrs.id,
+            osrs.user_id,
+            od.order_detail_id as v4_order_detail_id,
+            o.uuid as order_id,
+            od.item_number,
+            COALESCE(osrs.split_rate, 0) as split_rate,
+            COALESCE(osrs.create_date, now()) as created_at
+        FROM public.order_sales_rep_split osrs
+        JOIN public.order_details od ON osrs.order_detail_id = od.order_detail_id
+        JOIN public.orders o ON od.order_id = o.order_id
+        JOIN public.customers c ON o.customer = c.customer_id
+        JOIN public.factories f ON o.factory_id = f.factory_id
+        WHERE osrs.user_id IS NOT NULL
+          AND c.uuid IS NOT NULL
+          AND f.uuid IS NOT NULL
+          AND o.uuid IS NOT NULL
+    """, timeout=600)
+
+    if not split_rates:
+        logger.info("No order split rates to migrate")
+        return 0
+
+    # Get order_detail IDs from destination by matching order_id + item_number
+    order_detail_map = await dest.fetch("""
+        SELECT id, order_id, item_number
+        FROM pycommission.order_details
+    """)
+    detail_lookup = {(d["order_id"], d["item_number"]): d["id"] for d in order_detail_map}
+
+    # Get valid user IDs
+    valid_users = await dest.fetch("SELECT id FROM pyuser.users")
+    valid_user_ids = {u["id"] for u in valid_users}
+
+    # Build records with mapped order_detail_id
+    records = []
+    for sr in split_rates:
+        order_detail_id = detail_lookup.get((sr["order_id"], sr["item_number"]))
+        if order_detail_id and sr["user_id"] in valid_user_ids:
+            records.append((
+                sr["id"],
+                order_detail_id,
+                sr["user_id"],
+                sr["split_rate"],
+                0,  # position
+                sr["created_at"],
+            ))
+
+    if not records:
+        logger.info("No valid order split rates to migrate")
+        return 0
+
+    await dest.executemany(
+        """
+        INSERT INTO pycommission.order_split_rates (
+            id, order_detail_id, user_id, split_rate, position, created_at
+        ) VALUES ($1, $2, $3, $4, $5, $6)
+        ON CONFLICT (id) DO UPDATE SET
+            order_detail_id = EXCLUDED.order_detail_id,
+            user_id = EXCLUDED.user_id,
+            split_rate = EXCLUDED.split_rate,
+            position = EXCLUDED.position
+        """,
+        records,
+    )
+
+    logger.info(f"Migrated {len(records)} order split rates")
+    return len(records)
+
+
+async def migrate_quote_split_rates(source: asyncpg.Connection, dest: asyncpg.Connection) -> int:
+    """Migrate quote split rates from v4 quote_sales_rep_split to v6 quote_split_rates."""
+    logger.info("Starting quote split rate migration...")
+
+    split_rates = await source.fetch("""
+        SELECT
+            qsrs.id,
+            qsrs.user_id,
+            qd.quote_detail_id as v4_quote_detail_id,
+            q.uuid as quote_id,
+            qd.item_number,
+            COALESCE(qsrs.split_rate, 0) as split_rate,
+            COALESCE(qsrs.create_date, now()) as created_at
+        FROM public.quote_sales_rep_split qsrs
+        JOIN public.quote_details qd ON qsrs.quote_detail_id = qd.quote_detail_id
+        JOIN public.quotes q ON qd.quote_id = q.quote_id
+        JOIN public.customers c ON q.customer = c.customer_id
+        WHERE qsrs.user_id IS NOT NULL
+          AND c.uuid IS NOT NULL
+          AND q.uuid IS NOT NULL
+    """, timeout=600)
+
+    if not split_rates:
+        logger.info("No quote split rates to migrate")
+        return 0
+
+    # Get quote_detail IDs from destination by matching quote_id + item_number
+    quote_detail_map = await dest.fetch("""
+        SELECT id, quote_id, item_number
+        FROM pycrm.quote_details
+    """)
+    detail_lookup = {(d["quote_id"], d["item_number"]): d["id"] for d in quote_detail_map}
+
+    # Get valid user IDs
+    valid_users = await dest.fetch("SELECT id FROM pyuser.users")
+    valid_user_ids = {u["id"] for u in valid_users}
+
+    # Build records with mapped quote_detail_id
+    records = []
+    for sr in split_rates:
+        quote_detail_id = detail_lookup.get((sr["quote_id"], sr["item_number"]))
+        if quote_detail_id and sr["user_id"] in valid_user_ids:
+            records.append((
+                sr["id"],
+                quote_detail_id,
+                sr["user_id"],
+                sr["split_rate"],
+                0,  # position
+                sr["created_at"],
+            ))
+
+    if not records:
+        logger.info("No valid quote split rates to migrate")
+        return 0
+
+    await dest.executemany(
+        """
+        INSERT INTO pycrm.quote_split_rates (
+            id, quote_detail_id, user_id, split_rate, position, created_at
+        ) VALUES ($1, $2, $3, $4, $5, $6)
+        ON CONFLICT (id) DO UPDATE SET
+            quote_detail_id = EXCLUDED.quote_detail_id,
+            user_id = EXCLUDED.user_id,
+            split_rate = EXCLUDED.split_rate,
+            position = EXCLUDED.position
+        """,
+        records,
+    )
+
+    logger.info(f"Migrated {len(records)} quote split rates")
+    return len(records)
+
+
+async def migrate_invoice_split_rates(dest: asyncpg.Connection) -> int:
+    """Create invoice split rates by inheriting from order split rates."""
+    logger.info("Starting invoice split rate migration (inheriting from orders)...")
+
+    # Get invoice details and their related order details
+    # Then copy the order split rates to invoice split rates
+    invoice_details = await dest.fetch("""
+        SELECT
+            id.id as invoice_detail_id,
+            id.order_detail_id
+        FROM pycommission.invoice_details id
+        WHERE id.order_detail_id IS NOT NULL
+    """)
+
+    if not invoice_details:
+        logger.info("No invoice details with order_detail_id to migrate split rates")
+        return 0
+
+    # Get order split rates
+    order_split_rates = await dest.fetch("""
+        SELECT
+            order_detail_id,
+            user_id,
+            split_rate,
+            position
+        FROM pycommission.order_split_rates
+    """)
+
+    # Build lookup by order_detail_id
+    order_splits_lookup: dict[uuid.UUID, list[tuple]] = {}
+    for osr in order_split_rates:
+        if osr["order_detail_id"] not in order_splits_lookup:
+            order_splits_lookup[osr["order_detail_id"]] = []
+        order_splits_lookup[osr["order_detail_id"]].append((
+            osr["user_id"],
+            osr["split_rate"],
+            osr["position"],
+        ))
+
+    # Build invoice split rate records
+    records = []
+    for inv_detail in invoice_details:
+        order_detail_id = inv_detail["order_detail_id"]
+        if order_detail_id in order_splits_lookup:
+            for user_id, split_rate, position in order_splits_lookup[order_detail_id]:
+                records.append((
+                    uuid.uuid4(),  # new id
+                    inv_detail["invoice_detail_id"],
+                    user_id,
+                    split_rate,
+                    position,
+                ))
+
+    if not records:
+        logger.info("No invoice split rates to create from orders")
+        return 0
+
+    await dest.executemany(
+        """
+        INSERT INTO pycommission.invoice_split_rates (
+            id, invoice_detail_id, user_id, split_rate, position, created_at
+        ) VALUES ($1, $2, $3, $4, $5, now())
+        ON CONFLICT (id) DO NOTHING
+        """,
+        records,
+    )
+
+    logger.info(f"Created {len(records)} invoice split rates from order split rates")
+    return len(records)
+
+
+async def migrate_checks(
+    source: asyncpg.Connection,
+    dest: asyncpg.Connection,
+    default_user_id: uuid.UUID,
+) -> int:
+    """Migrate checks from v4 to v6."""
+    logger.info("Starting check migration...")
+
+    checks = await source.fetch(r"""
+        SELECT
+            c.uuid as id,
+            c.check_number,
+            COALESCE(c.check_date, c.create_date::date) as entity_date,
+            CASE
+                WHEN c.post_date ~ '^\d{4}-\d{2}-\d{2}' THEN c.post_date::date
+                ELSE NULL
+            END AS post_date,
+            CASE
+                WHEN c.commission_month ~ '^\d{4}-\d{2}-\d{2}' THEN c.commission_month::date
+                ELSE NULL
+            END AS commission_month,
+            COALESCE(c.commission_amount, 0) as entered_commission_amount,
+            f.uuid as factory_id,
+            1 as status,
+            c.creation_type,
+            c.created_by as created_by_id,
+            COALESCE(c.create_date, now()) as created_at
+        FROM public.checks c
+        JOIN public.factories f ON c.factory = f.factory_id
+        WHERE f.uuid IS NOT NULL
+    """, timeout=600)
+
+    if not checks:
+        logger.info("No checks to migrate")
+        return 0
+
+    # Get valid user IDs from destination
+    valid_users = await dest.fetch("SELECT id FROM pyuser.users")
+    valid_user_ids = {u["id"] for u in valid_users}
+
+    await dest.executemany(
+        """
+        INSERT INTO pycommission.checks (
+            id, check_number, entity_date, post_date, commission_month,
+            entered_commission_amount, factory_id, status, creation_type,
+            created_by_id, created_at
+        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
+        ON CONFLICT (id) DO UPDATE SET
+            check_number = EXCLUDED.check_number,
+            entity_date = EXCLUDED.entity_date,
+            post_date = EXCLUDED.post_date,
+            commission_month = EXCLUDED.commission_month,
+            entered_commission_amount = EXCLUDED.entered_commission_amount,
+            factory_id = EXCLUDED.factory_id,
+            status = EXCLUDED.status,
+            creation_type = EXCLUDED.creation_type
+        """,
+        [(
+            c["id"],
+            c["check_number"],
+            c["entity_date"],
+            c["post_date"],
+            c["commission_month"],
+            c["entered_commission_amount"],
+            c["factory_id"],
+            c["status"],
+            map_creation_type(c["creation_type"]),
+            c["created_by_id"] if c["created_by_id"] in valid_user_ids else default_user_id,
+            c["created_at"],
+        ) for c in checks],
+    )
+
+    logger.info(f"Migrated {len(checks)} checks")
+    return len(checks)
 
 
 async def run_migration(config: MigrationConfig) -> dict[str, int]:
@@ -1150,10 +1679,14 @@ async def run_migration(config: MigrationConfig) -> dict[str, int]:
         results["customer_factory_sales_reps"] = await migrate_customer_factory_sales_reps(source, dest)
         results["orders"] = await migrate_orders(source, dest, default_user_id)
         results["order_details"] = await migrate_order_details(source, dest)
+        results["order_split_rates"] = await migrate_order_split_rates(source, dest)
         results["quotes"] = await migrate_quotes(source, dest, default_user_id)
         results["quote_details"] = await migrate_quote_details(source, dest)
+        results["quote_split_rates"] = await migrate_quote_split_rates(source, dest)
         results["invoices"] = await migrate_invoices(source, dest, default_user_id)
         results["invoice_details"] = await migrate_invoice_details(source, dest)
+        results["invoice_split_rates"] = await migrate_invoice_split_rates(dest)
+        results["checks"] = await migrate_checks(source, dest, default_user_id)
 
         logger.info("Migration completed successfully!")
         logger.info(f"Results: {results}")

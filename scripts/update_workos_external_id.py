@@ -81,9 +81,9 @@ async def update_external_id(
 
 def main() -> None:
     parser = argparse.ArgumentParser(description="Update a user's external_id in WorkOS")
-    parser.add_argument("env", choices=["local", "staging", "production"], help="Environment")
-    parser.add_argument("user_id", help="WorkOS user ID (e.g., user_01ABC123)")
-    parser.add_argument("external_id", help="New external ID (UUID format)")
+    _ = parser.add_argument("--env", choices=["local", "staging", "production"], help="Environment")
+    _ = parser.add_argument("--user_id", help="WorkOS user ID (e.g., user_01ABC123)")
+    _ = parser.add_argument("--external_id", help="New external ID (UUID format)")
 
     args = parser.parse_args()
 

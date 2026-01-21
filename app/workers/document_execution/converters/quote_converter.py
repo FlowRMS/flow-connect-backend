@@ -1,8 +1,9 @@
-from datetime import date, datetime, timezone
+from datetime import date
 from decimal import Decimal
 from typing import override
 from uuid import UUID
 
+from commons.db.v6 import AutoNumberEntityType
 from commons.db.v6.ai.documents.enums.entity_type import DocumentEntityType
 from commons.db.v6.crm.quotes import PipelineStage, Quote, QuoteStatus
 from commons.dtos.common.dto_loader_service import DTOLoaderService
@@ -10,6 +11,9 @@ from commons.dtos.quote.quote_detail_dto import BaseQuoteDetailDTO
 from commons.dtos.quote.quote_dto import QuoteDTO
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.graphql.auto_numbers.services.auto_number_settings_service import (
+    AutoNumberSettingsService,
+)
 from app.graphql.quotes.services.quote_service import QuoteService
 from app.graphql.quotes.strawberry.quote_detail_input import QuoteDetailInput
 from app.graphql.quotes.strawberry.quote_input import QuoteInput
@@ -28,9 +32,11 @@ class QuoteConverter(BaseEntityConverter[QuoteDTO, QuoteInput, Quote]):
         session: AsyncSession,
         dto_loader_service: DTOLoaderService,
         quote_service: QuoteService,
+        auto_number_settings_service: AutoNumberSettingsService,
     ) -> None:
         super().__init__(session, dto_loader_service)
         self.quote_service = quote_service
+        self.auto_number_settings_service = auto_number_settings_service
 
     @override
     async def create_entity(
@@ -59,7 +65,12 @@ class QuoteConverter(BaseEntityConverter[QuoteDTO, QuoteInput, Quote]):
         )
         default_discount_rate = await self.get_factory_discount_rate(factory_id)
 
-        quote_number = dto.quote_number or self._generate_quote_number()
+        quote_number = dto.quote_number
+        if self.auto_number_settings_service.needs_generation(quote_number):
+            quote_number = await self.auto_number_settings_service.generate_number(
+                AutoNumberEntityType.QUOTE
+            )
+
         entity_date = dto.quote_date or date.today()
 
         details = [
@@ -76,7 +87,7 @@ class QuoteConverter(BaseEntityConverter[QuoteDTO, QuoteInput, Quote]):
 
         return ConversionResult.ok(
             QuoteInput(
-                quote_number=quote_number,
+                quote_number=quote_number or f"Q-{date.today().strftime('%Y%m%d')}-GEN",
                 entity_date=entity_date,
                 sold_to_customer_id=sold_to_id,
                 status=QuoteStatus.OPEN,
@@ -142,8 +153,3 @@ class QuoteConverter(BaseEntityConverter[QuoteDTO, QuoteInput, Quote]):
         if detail.description:
             return detail.description[:100]
         return None
-
-    @staticmethod
-    def _generate_quote_number() -> str:
-        timestamp = datetime.now(timezone.utc).strftime("%Y%m%d%H%M%S")
-        return f"QTE-{timestamp}"

@@ -2,6 +2,12 @@ from typing import Any
 from uuid import UUID
 
 from commons.auth import AuthInfo
+from commons.logging.datadog_logger import (
+    current_process_id,
+    current_tenant,
+    current_user,
+    setup_logging,
+)
 from taskiq import TaskiqScheduler
 from taskiq.schedule_sources import LabelScheduleSource
 from taskiq_redis import RedisStreamBroker
@@ -23,6 +29,11 @@ configure_mappers()
 
 settings = get_settings(Settings)
 
+setup_logging(
+    environment=settings.environment,
+    datadog_settings=settings.datadog,
+)
+
 broker = RedisStreamBroker(url=settings.redis_url.unicode_string())
 
 scheduler = TaskiqScheduler(
@@ -42,9 +53,17 @@ async def execute_pending_document_task(
     auth_info: dict[str, Any],
 ) -> dict[str, object]:
     auth_info_model = AuthInfo.model_validate(auth_info)
-    return await inner_execute_pending_document_task(
-        pending_document_id, auth_info_model
-    )
+    user_tok = current_user.set(str(auth_info_model.flow_user_id))
+    tenant_tok = current_tenant.set(auth_info_model.tenant_name)
+    process_tok = current_process_id.set(str(pending_document_id))
+    try:
+        return await inner_execute_pending_document_task(
+            pending_document_id, auth_info_model
+        )
+    finally:
+        current_user.reset(user_tok)
+        current_tenant.reset(tenant_tok)
+        current_process_id.reset(process_tok)
 
 
 @broker.task

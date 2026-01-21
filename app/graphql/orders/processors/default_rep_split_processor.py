@@ -54,7 +54,7 @@ class OrderDefaultRepSplitProcessor(BaseProcessor[Order]):
 
             if not detail.outside_split_rates:
                 raise OutsideRepsRequiredError(
-                    f"Outside split rates are required for order detail {detail.id} "
+                    f"Outside split rates are required for order detail # {detail.item_number} "
                     f"but none were found after applying defaults."
                 )
 

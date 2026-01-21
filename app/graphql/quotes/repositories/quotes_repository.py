@@ -20,7 +20,7 @@ from sqlalchemy.sql.selectable import Subquery
 
 from app.core.context_wrapper import ContextWrapper
 from app.core.exceptions import NotFoundError
-from app.core.processors import ProcessorExecutor
+from app.core.processors import ProcessorExecutor, ValidateCommissionRateProcessor
 from app.graphql.base_repository import BaseRepository
 from app.graphql.quotes.processors.default_rep_split_processor import (
     DefaultRepSplitProcessor,
@@ -53,6 +53,7 @@ class QuotesRepository(BaseRepository[Quote]):
         processor_executor: ProcessorExecutor,
         default_rep_split_processor: DefaultRepSplitProcessor,
         validate_rep_split_processor: ValidateRepSplitProcessor,
+        validate_commission_rate_processor: ValidateCommissionRateProcessor,
     ) -> None:
         super().__init__(
             session,
@@ -63,6 +64,7 @@ class QuotesRepository(BaseRepository[Quote]):
             processor_executor_classes=[
                 default_rep_split_processor,
                 validate_rep_split_processor,
+                validate_commission_rate_processor,
             ],
         )
         self.balance_repository = balance_repository
@@ -222,6 +224,7 @@ class QuotesRepository(BaseRepository[Quote]):
                 joinedload(Quote.details).joinedload(QuoteDetail.uom),
                 joinedload(Quote.details).joinedload(QuoteDetail.order),
                 joinedload(Quote.details).joinedload(QuoteDetail.factory),
+                joinedload(Quote.details).joinedload(QuoteDetail.end_user),
                 joinedload(Quote.balance),
                 joinedload(Quote.sold_to_customer),
                 joinedload(Quote.bill_to_customer),
@@ -302,3 +305,12 @@ class QuotesRepository(BaseRepository[Quote]):
             .values(order_id=order_id)
         )
         _ = await self.session.execute(stmt)
+
+    async def find_by_sold_to_customer_id(self, customer_id: UUID) -> list[Quote]:
+        stmt = (
+            select(Quote)
+            .options(lazyload("*"))
+            .where(Quote.sold_to_customer_id == customer_id)
+        )
+        result = await self.session.execute(stmt)
+        return list(result.scalars().all())

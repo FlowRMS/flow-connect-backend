@@ -39,7 +39,20 @@ class AdjustmentConverter(
         self.adjustment_service = adjustment_service
 
     @override
-    async def create_entity(self, input_data: AdjustmentInput) -> Adjustment:
+    async def find_existing(self, input_data: AdjustmentInput) -> Adjustment | None:
+        return await self.adjustment_service.find_by_adjustment_number(
+            input_data.factory_id,
+            input_data.adjustment_number,
+        )
+
+    @override
+    async def create_entity(
+        self,
+        input_data: AdjustmentInput,
+    ) -> Adjustment:
+        existing = await self.find_existing(input_data)
+        if existing:
+            return existing
         return await self.adjustment_service.create_adjustment(input_data)
 
     @override

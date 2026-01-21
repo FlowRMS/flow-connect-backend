@@ -5,7 +5,7 @@ description = "Add your description here"
 readme = "README.md"
 requires-python = ">=3.13"
 dependencies = [
-    "strawberry-graphql[debug-server, fastapi]>=0.278.0",
+    "strawberry-graphql[cli, debug-server, fastapi]>=0.278.0",
     "pydantic-settings>=2.2.1,<3",
     "fastapi[standard]>=0.110.0",
     "sqlalchemy>=2.0.30,<3",
@@ -50,4 +50,4 @@ dev = [
 ]
 
 [tool.uv.sources]
-flow-py-commons = { path = "../flowbot-commons" }
+flow-py-commons = { git = "ssh://git@github.com/FlowRMS/flowbot-commons.git", tag = "2.06.00" }

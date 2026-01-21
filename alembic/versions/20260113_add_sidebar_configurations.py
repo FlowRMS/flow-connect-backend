@@ -1,7 +1,7 @@
 """add sidebar configurations tables
 
 Revision ID: add_sidebar_configurations
-Revises: add_job_company_links
+Revises: c44a69ade93f
 Create Date: 2026-01-13
 
 """
@@ -14,7 +14,7 @@ from sqlalchemy.dialects import postgresql
 from alembic import op
 
 revision: str = "add_sidebar_configurations"
-down_revision: str | None = "add_job_company_links"
+down_revision: str | None = "c44a69ade93f"
 branch_labels: str | Sequence[str] | None = None
 depends_on: str | Sequence[str] | None = None
 

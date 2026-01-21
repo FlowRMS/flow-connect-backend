@@ -5,7 +5,7 @@ from commons.db.v6 import Customer, RbacResourceEnum, User
 from commons.db.v6.core.customers.customer_split_rate import CustomerSplitRate
 from commons.db.v6.crm.links.entity_type import EntityType
 from commons.db.v6.user.rep_type import RepTypeEnum
-from sqlalchemy import Select, String, func, literal, select
+from sqlalchemy import Select, String, func, literal, select, update
 from sqlalchemy.dialects.postgresql import ARRAY, array
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import aliased, lazyload
@@ -133,7 +133,8 @@ class CustomersRepository(BaseRepository[Customer]):
     ) -> list[Customer]:
         stmt = (
             select(Customer)
-            .where(Customer.company_name.ilike(f"%{search_term}%"))
+            .where(func.similarity(Customer.company_name, search_term) > 0.2)
+            .order_by(func.similarity(Customer.company_name, search_term).desc())
             .limit(limit)
         )
 
@@ -149,6 +150,25 @@ class CustomersRepository(BaseRepository[Customer]):
         return list(result.scalars().all())
 
     async def get_children(self, parent_id: UUID) -> list[Customer]:
-        stmt = select(Customer).where(Customer.parent_id == parent_id)
+        stmt = (
+            select(Customer)
+            .where(Customer.parent_id == parent_id)
+            .options(lazyload("*"))
+        )
         result = await self.execute(stmt)
         return list(result.scalars().all())
+
+    async def set_children_parent_id(
+        self,
+        parent_id: UUID,
+        child_ids: list[UUID],
+    ) -> None:
+        if child_ids:
+            set_stmt = (
+                update(Customer)
+                .where(Customer.id.in_(child_ids))
+                .values(parent_id=parent_id)
+            )
+            _ = await self.session.execute(set_stmt)
+
+        await self.session.flush()

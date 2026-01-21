@@ -1,8 +1,9 @@
-from datetime import date, datetime, timezone
+from datetime import date
 from decimal import Decimal
 from typing import override
 from uuid import UUID
 
+from commons.db.v6 import AutoNumberEntityType
 from commons.db.v6.ai.documents.enums.entity_type import DocumentEntityType
 from commons.db.v6.commission import Adjustment, Check, Credit, Invoice
 from commons.dtos.check.check_detail_dto import CheckDetailDTO
@@ -12,6 +13,9 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import lazyload
 
+from app.graphql.auto_numbers.services.auto_number_settings_service import (
+    AutoNumberSettingsService,
+)
 from app.graphql.checks.services.check_service import CheckService
 from app.graphql.checks.strawberry.check_detail_input import CheckDetailInput
 from app.graphql.checks.strawberry.check_input import CheckInput
@@ -39,11 +43,13 @@ class CheckConverter(BaseEntityConverter[CheckDTO, CheckInput, Check]):
         check_service: CheckService,
         credit_converter: CreditConverter,
         adjustment_converter: AdjustmentConverter,
+        auto_number_settings_service: AutoNumberSettingsService,
     ) -> None:
         super().__init__(session, dto_loader_service)
         self.check_service = check_service
         self.credit_converter = credit_converter
         self.adjustment_converter = adjustment_converter
+        self.auto_number_settings_service = auto_number_settings_service
         self._invoice_cache: dict[tuple[str, UUID], Invoice | None] = {}
         self._credit_cache: dict[tuple[str, UUID], Credit | None] = {}
         self._adjustment_cache: dict[tuple[str, UUID], Adjustment | None] = {}
@@ -63,7 +69,11 @@ class CheckConverter(BaseEntityConverter[CheckDTO, CheckInput, Check]):
         if not factory_id:
             return ConversionResult.fail(FactoryRequiredError())
 
-        check_number = dto.check_number or self._generate_check_number()
+        check_number = dto.check_number
+        if self.auto_number_settings_service.needs_generation(check_number):
+            check_number = await self.auto_number_settings_service.generate_number(
+                AutoNumberEntityType.CHECK
+            )
         entity_date = dto.check_date or date.today()
 
         details: list[CheckDetailInput] = []
@@ -77,17 +87,19 @@ class CheckConverter(BaseEntityConverter[CheckDTO, CheckInput, Check]):
                 return ConversionResult.fail(detail_result.unwrap_error())
             details.append(detail_result.unwrap())
 
+        grouped_details = self._group_details_by_entity(details)
+
         entered_commission_amount = sum(
-            (detail.applied_amount for detail in details), Decimal("0")
+            (detail.applied_amount for detail in grouped_details), Decimal("0")
         )
 
         return ConversionResult.ok(
             CheckInput(
-                check_number=check_number,
+                check_number=check_number or f"C-{date.today().strftime('%Y%m%d')}-GEN",
                 entity_date=entity_date,
                 factory_id=factory_id,
                 entered_commission_amount=entered_commission_amount,
-                details=details,
+                details=grouped_details,
                 post_date=dto.post_date,
                 commission_month=dto.commission_month,
             )
@@ -146,6 +158,33 @@ class CheckConverter(BaseEntityConverter[CheckDTO, CheckInput, Check]):
         return await self._get_or_create_adjustment_detail(
             detail, entity_mapping, applied_amount
         )
+
+    def _group_details_by_entity(
+        self,
+        details: list[CheckDetailInput],
+    ) -> list[CheckDetailInput]:
+        """
+        Groups check details by their entity (invoice, credit, or adjustment)
+        and sums the applied_amount for details referencing the same entity.
+        """
+        grouped: dict[tuple[UUID | None, UUID | None, UUID | None], Decimal] = {}
+
+        for detail in details:
+            key = (detail.invoice_id, detail.credit_id, detail.adjustment_id)
+            if key in grouped:
+                grouped[key] += detail.applied_amount
+            else:
+                grouped[key] = detail.applied_amount
+
+        return [
+            CheckDetailInput(
+                applied_amount=amount,
+                invoice_id=key[0],
+                credit_id=key[1],
+                adjustment_id=key[2],
+            )
+            for key, amount in grouped.items()
+        ]
 
     async def _get_or_create_credit_detail(
         self,
@@ -295,8 +334,3 @@ class CheckConverter(BaseEntityConverter[CheckDTO, CheckInput, Check]):
 
         self._adjustment_cache[cache_key] = adjustment
         return adjustment
-
-    @staticmethod
-    def _generate_check_number() -> str:
-        timestamp = datetime.now(timezone.utc).strftime("%Y%m%d%H%M%S")
-        return f"CHK-{timestamp}"

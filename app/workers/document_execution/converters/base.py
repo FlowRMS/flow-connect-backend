@@ -102,6 +102,9 @@ class BaseEntityConverter(ABC, Generic[TDto, TInput, TOutput]):
         input_data: TInput,
     ) -> TOutput: ...
 
+    async def find_existing(self, input_data: TInput) -> TOutput | None:
+        return None
+
     @abstractmethod
     async def to_input(
         self,

@@ -1,295 +1,66 @@
 from uuid import UUID
 
-from commons.db.v6.ai.entities.enums import ConfirmationStatus, EntityPendingType
 from commons.db.v6.ai.entities.pending_entity import PendingEntity
-from commons.dtos.check.check_detail_dto import CheckDetailDTO
-from commons.dtos.order.order_dto import OrderDTO
 from loguru import logger
 
-from .adjustment_converter import AdjustmentConverter
-from .credit_converter import CreditConverter
-from .dto_grouper import GroupedInvoiceDTO, group_invoice_dtos, group_order_dtos
+from .adjustment_creation_handler import AdjustmentCreationHandler
+from .creation_types import CreationResult
+from .credit_creation_handler import CreditCreationHandler
 from .entity_mapping import EntityMapping
-from .invoice_converter import InvoiceConverter
-from .order_converter import OrderConverter
-
-type DTOType = OrderDTO | CheckDetailDTO
+from .invoice_creation_handler import InvoiceCreationHandler
+from .order_creation_handler import OrderCreationHandler
 
 
 class SetForCreationService:
     def __init__(
         self,
-        order_converter: OrderConverter,
-        invoice_converter: InvoiceConverter,
-        credit_converter: CreditConverter,
-        adjustment_converter: AdjustmentConverter,
+        order_creation_handler: OrderCreationHandler,
+        invoice_creation_handler: InvoiceCreationHandler,
+        credit_creation_handler: CreditCreationHandler,
+        adjustment_creation_handler: AdjustmentCreationHandler,
     ) -> None:
         super().__init__()
-        self._order_converter = order_converter
-        self._invoice_converter = invoice_converter
-        self._credit_converter = credit_converter
-        self._adjustment_converter = adjustment_converter
+        self._order_handler = order_creation_handler
+        self._invoice_handler = invoice_creation_handler
+        self._credit_handler = credit_creation_handler
+        self._adjustment_handler = adjustment_creation_handler
 
     async def process_set_for_creation(
         self,
         pending_entities: list[PendingEntity],
         entity_mappings: dict[UUID, EntityMapping],
-    ) -> None:
-        await self._create_orders(pending_entities, entity_mappings)
-        await self._create_invoices(pending_entities, entity_mappings)
-        await self._create_credits(pending_entities, entity_mappings)
-        await self._create_adjustments(pending_entities, entity_mappings)
+    ) -> CreationResult:
+        result = CreationResult()
 
-    async def _create_orders(
-        self,
-        pending_entities: list[PendingEntity],
-        entity_mappings: dict[UUID, EntityMapping],
-    ) -> None:
-        order_entities = [
-            pe
-            for pe in pending_entities
-            if pe.confirmation_status == ConfirmationStatus.SET_FOR_CREATION
-            and pe.entity_type == EntityPendingType.ORDERS
-        ]
+        result.orders_created = await self._order_handler.create_orders(
+            pending_entities, entity_mappings, result
+        )
+        if result.has_issues:
+            return result
 
-        if not order_entities:
-            return
+        logger.debug(
+            f"Orders created: {result.orders_created}. Proceeding to invoice creation."
+        )
 
-        grouped_orders = group_order_dtos(order_entities, entity_mappings)
-        if not grouped_orders:
-            return
+        result.invoices_created = await self._invoice_handler.create_invoices(
+            pending_entities, entity_mappings, result
+        )
 
-        dtos: list[OrderDTO] = []
-        mappings: list[EntityMapping] = []
+        logger.debug(
+            f"Invoices created: {result.invoices_created}. Proceeding to credit creation."
+        )
 
-        for grouped in grouped_orders:
-            if not grouped.dto_ids:
-                continue
-            first_dto_id = grouped.dto_ids[0]
-            mapping = entity_mappings.get(first_dto_id, EntityMapping())
-            dtos.append(grouped.dto)
-            mappings.append(mapping)
+        if result.has_issues:
+            return result
 
-        if not dtos:
-            return
+        result.credits_created = await self._credit_handler.create_credits(
+            pending_entities, entity_mappings, result
+        )
+        if result.has_issues:
+            return result
 
-        inputs = await self._order_converter.to_inputs_bulk(dtos, mappings)
-        if not inputs:
-            return
+        result.adjustments_created = await self._adjustment_handler.create_adjustments(
+            pending_entities, entity_mappings, result
+        )
 
-        result = await self._order_converter.create_entities_bulk(inputs)
-
-        for order, grouped in zip(result.created, grouped_orders, strict=False):
-            for pe in grouped.pending_entities:
-                self._update_mappings_with_order_id(entity_mappings, pe, order.id)
-            logger.info(
-                f"Created order {order.id} with {len(grouped.dto.details)} details "
-                f"(grouped from {len(grouped.pending_entities)} records)"
-            )
-
-    async def _create_invoices(
-        self,
-        pending_entities: list[PendingEntity],
-        entity_mappings: dict[UUID, EntityMapping],
-    ) -> None:
-        invoice_entities = [
-            pe
-            for pe in pending_entities
-            if pe.confirmation_status == ConfirmationStatus.SET_FOR_CREATION
-            and pe.entity_type == EntityPendingType.INVOICES
-        ]
-
-        if not invoice_entities:
-            return
-
-        grouped_invoices = group_invoice_dtos(invoice_entities, entity_mappings)
-
-        for grouped in grouped_invoices:
-            invoice_id = await self._create_grouped_invoice(grouped, entity_mappings)
-            if invoice_id:
-                for pe in grouped.pending_entities:
-                    self._update_mappings_with_invoice_id(
-                        entity_mappings, pe, invoice_id
-                    )
-
-    async def _create_grouped_invoice(
-        self,
-        grouped: GroupedInvoiceDTO,
-        entity_mappings: dict[UUID, EntityMapping],
-    ) -> UUID | None:
-        if not grouped.dto_ids:
-            logger.warning("Grouped invoice has no dto_ids for SET_FOR_CREATION")
-            return None
-
-        first_dto_id = grouped.dto_ids[0]
-        mapping = entity_mappings.get(first_dto_id, EntityMapping())
-
-        try:
-            result = await self._invoice_converter.to_input(grouped.dto, mapping)
-            if result.is_error() or result.value is None:
-                logger.error(f"Failed to convert invoice: {result.unwrap_error()}")
-                return None
-            invoice = await self._invoice_converter.create_entity(result.value)
-            logger.info(
-                f"Created invoice {invoice.id} with {len(grouped.dto.details)} details "
-                f"(grouped from {len(grouped.pending_entities)} records)"
-            )
-            return invoice.id
-        except Exception as e:
-            logger.error(f"Failed to create invoice for SET_FOR_CREATION: {e}")
-            return None
-
-    def _update_mappings_with_order_id(
-        self,
-        entity_mappings: dict[UUID, EntityMapping],
-        pe: PendingEntity,
-        order_id: UUID,
-    ) -> None:
-        flow_idx = pe.flow_index_detail if pe.flow_index_detail is not None else 0
-        for dto_id in pe.dto_ids or []:
-            mapping = entity_mappings.setdefault(dto_id, EntityMapping())
-            mapping.orders[flow_idx] = order_id
-            logger.info(
-                f"Updated mapping for DTO {dto_id} with order_id {order_id} "
-                f"at flow_index {flow_idx}"
-            )
-
-    def _update_mappings_with_invoice_id(
-        self,
-        entity_mappings: dict[UUID, EntityMapping],
-        pe: PendingEntity,
-        invoice_id: UUID,
-    ) -> None:
-        flow_idx = pe.flow_index_detail if pe.flow_index_detail is not None else 0
-        for dto_id in pe.dto_ids or []:
-            mapping = entity_mappings.setdefault(dto_id, EntityMapping())
-            mapping.invoices[flow_idx] = invoice_id
-            logger.info(
-                f"Updated mapping for DTO {dto_id} with invoice_id {invoice_id} "
-                f"at flow_index {flow_idx}"
-            )
-
-    async def _create_credits(
-        self,
-        pending_entities: list[PendingEntity],
-        entity_mappings: dict[UUID, EntityMapping],
-    ) -> None:
-        credit_entities = [
-            pe
-            for pe in pending_entities
-            if pe.confirmation_status == ConfirmationStatus.SET_FOR_CREATION
-            and pe.entity_type == EntityPendingType.CREDITS
-        ]
-
-        for pe in credit_entities:
-            credit_id = await self._create_credit_for_pending_entity(
-                pe, entity_mappings
-            )
-            if credit_id:
-                self._update_mappings_with_credit_id(entity_mappings, pe, credit_id)
-
-    async def _create_credit_for_pending_entity(
-        self,
-        pe: PendingEntity,
-        entity_mappings: dict[UUID, EntityMapping],
-    ) -> UUID | None:
-        if not pe.dto_ids:
-            logger.warning(f"PendingEntity {pe.id} has no dto_ids for SET_FOR_CREATION")
-            return None
-
-        dto_id = pe.dto_ids[0]
-        dto = CheckDetailDTO.model_validate(pe.extracted_data)
-
-        if not isinstance(dto, CheckDetailDTO):
-            logger.warning(f"DTO {dto_id} is not a CheckDetailDTO for credit creation")
-            return None
-
-        mapping = entity_mappings.get(dto_id, EntityMapping())
-
-        try:
-            result = await self._credit_converter.to_input(dto, mapping)
-            if result.is_error() or result.value is None:
-                logger.error(f"Failed to convert credit: {result.unwrap_error()}")
-                return None
-            credit = await self._credit_converter.create_entity(result.value)
-            logger.info(f"Created credit {credit.id} for SET_FOR_CREATION")
-            return credit.id
-        except Exception as e:
-            logger.error(f"Failed to create credit for SET_FOR_CREATION: {e}")
-            return None
-
-    def _update_mappings_with_credit_id(
-        self,
-        entity_mappings: dict[UUID, EntityMapping],
-        pe: PendingEntity,
-        credit_id: UUID,
-    ) -> None:
-        flow_idx = pe.flow_index_detail if pe.flow_index_detail is not None else 0
-        for dto_id in pe.dto_ids or []:
-            mapping = entity_mappings.setdefault(dto_id, EntityMapping())
-            mapping.credits[flow_idx] = credit_id
-            logger.info(
-                f"Updated mapping for DTO {dto_id} with credit_id {credit_id} "
-                f"at flow_index {flow_idx}"
-            )
-
-    async def _create_adjustments(
-        self,
-        pending_entities: list[PendingEntity],
-        entity_mappings: dict[UUID, EntityMapping],
-    ) -> None:
-        adjustment_entities = [
-            pe
-            for pe in pending_entities
-            if pe.confirmation_status == ConfirmationStatus.SET_FOR_CREATION
-            and pe.entity_type == EntityPendingType.ADJUSTMENTS
-        ]
-
-        for pe in adjustment_entities:
-            adjustment_id = await self._create_adjustment_for_pending_entity(
-                pe, entity_mappings
-            )
-            if adjustment_id:
-                self._update_mappings_with_adjustment_id(
-                    entity_mappings, pe, adjustment_id
-                )
-
-    async def _create_adjustment_for_pending_entity(
-        self,
-        pe: PendingEntity,
-        entity_mappings: dict[UUID, EntityMapping],
-    ) -> UUID | None:
-        if not pe.dto_ids:
-            logger.warning(f"PendingEntity {pe.id} has no dto_ids for SET_FOR_CREATION")
-            return None
-
-        dto_id = pe.dto_ids[0]
-        dto = CheckDetailDTO.model_validate(pe.extracted_data)
-        mapping = entity_mappings.get(dto_id, EntityMapping())
-
-        try:
-            result = await self._adjustment_converter.to_input(dto, mapping)
-            if result.is_error() or result.value is None:
-                logger.error(f"Failed to convert adjustment: {result.unwrap_error()}")
-                return None
-            adjustment = await self._adjustment_converter.create_entity(result.value)
-            logger.info(f"Created adjustment {adjustment.id} for SET_FOR_CREATION")
-            return adjustment.id
-        except Exception as e:
-            logger.error(f"Failed to create adjustment for SET_FOR_CREATION: {e}")
-            return None
-
-    def _update_mappings_with_adjustment_id(
-        self,
-        entity_mappings: dict[UUID, EntityMapping],
-        pe: PendingEntity,
-        adjustment_id: UUID,
-    ) -> None:
-        flow_idx = pe.flow_index_detail if pe.flow_index_detail is not None else 0
-        for dto_id in pe.dto_ids or []:
-            mapping = entity_mappings.setdefault(dto_id, EntityMapping())
-            mapping.adjustments[flow_idx] = adjustment_id
-            logger.info(
-                f"Updated mapping for DTO {dto_id} with adjustment_id {adjustment_id} "
-                f"at flow_index {flow_idx}"
-            )
+        return result

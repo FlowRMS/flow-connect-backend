@@ -125,8 +125,11 @@ async def migrate_orders(source: asyncpg.Connection, dest: asyncpg.Connection) -
             COALESCE(o.entry_date, now()) as created_at
         FROM commission.orders o
         JOIN "user".users u ON u.id = o.created_by
-        WHERE 
-            o.sold_to_customer_id IS NOT NULL AND o.factory_id IS NOT NULL
+        LEFT JOIN crm.quotes q ON q.id = o.quote_id
+        WHERE
+            o.sold_to_customer_id IS NOT NULL
+            AND o.factory_id IS NOT NULL
+            AND (o.quote_id IS NULL OR q.sold_to_customer_id IS NOT NULL)
     """)
 
     if not orders:
@@ -205,9 +208,13 @@ async def migrate_order_inside_reps(source: asyncpg.Connection, dest: asyncpg.Co
         FROM commission.order_inside_reps oir
         JOIN commission.orders o ON o.id = oir.order_id
         JOIN commission.order_details od ON od.order_id = o.id
-        JOIN "user".users u ON u.id = o.created_by
+        JOIN "user".users u ON u.id = oir.user_id
         JOIN core.products p ON p.id = od.product_id
-        WHERE o.sold_to_customer_id IS NOT NULL 
+        LEFT JOIN crm.quotes q ON q.id = o.quote_id
+        WHERE
+            o.sold_to_customer_id IS NOT NULL
+            AND o.factory_id IS NOT NULL
+            AND (o.quote_id IS NULL OR q.sold_to_customer_id IS NOT NULL)
     """)
 
     if not inside_reps:
@@ -269,8 +276,11 @@ async def migrate_order_details(source: asyncpg.Connection, dest: asyncpg.Connec
         JOIN core.products p ON p.id = od.product_id
         JOIN commission.orders o ON o.id = od.order_id
         JOIN "user".users u ON u.id = o.created_by
-        WHERE 
-        o.sold_to_customer_id IS NOT NULL 
+        LEFT JOIN crm.quotes q ON q.id = o.quote_id
+        WHERE
+            o.sold_to_customer_id IS NOT NULL
+            AND o.factory_id IS NOT NULL
+            AND (o.quote_id IS NULL OR q.sold_to_customer_id IS NOT NULL)
     """)
 
     if not details:
@@ -375,8 +385,11 @@ async def migrate_order_split_rates(source: asyncpg.Connection, dest: asyncpg.Co
         JOIN commission.orders o ON o.id = od.order_id
         JOIN "user".users u ON u.id = o.created_by
         JOIN core.products p ON p.id = od.product_id
-        WHERE 
-        o.sold_to_customer_id IS NOT NULL 
+        LEFT JOIN crm.quotes q ON q.id = o.quote_id
+        WHERE
+            o.sold_to_customer_id IS NOT NULL
+            AND o.factory_id IS NOT NULL
+            AND (o.quote_id IS NULL OR q.sold_to_customer_id IS NOT NULL)
     """)
 
     if not split_rates:
@@ -411,7 +424,11 @@ async def migrate_order_split_rates(source: asyncpg.Connection, dest: asyncpg.Co
 async def migrate_order_acknowledgements(
     source: asyncpg.Connection, dest: asyncpg.Connection
 ) -> int:
-    """Migrate order acknowledgements from v5 to v6."""
+    """Migrate order acknowledgements from v5 to v6.
+
+    Schema changed to many-to-many: order_detail_id moved to junction table
+    order_acknowledgement_details.
+    """
     logger.info("Starting order acknowledgement migration...")
 
     acknowledgements = await source.fetch("""
@@ -420,7 +437,7 @@ async def migrate_order_acknowledgements(
             od.order_id,
             oa.order_detail_id,
             oa.order_acknowledgement_number,
-            oa.entity_date, 
+            oa.entity_date,
             COALESCE(od.quantity, 0) as quantity,
             oa.creation_type,
             oa.created_by as created_by_id,
@@ -429,23 +446,27 @@ async def migrate_order_acknowledgements(
         JOIN commission.order_details od ON od.id = oa.order_detail_id
         JOIN commission.orders o ON o.id = od.order_id
         JOIN "user".users u ON u.id = oa.created_by
-        WHERE o.sold_to_customer_id IS NOT NULL
-        AND o.entry_date < now() - INTERVAL '2 days'
+        LEFT JOIN crm.quotes q ON q.id = o.quote_id
+        WHERE
+            o.sold_to_customer_id IS NOT NULL
+            AND o.factory_id IS NOT NULL
+            AND (o.quote_id IS NULL OR q.sold_to_customer_id IS NOT NULL)
+            AND o.entry_date < now() - INTERVAL '2 days'
     """)
 
     if not acknowledgements:
         logger.info("No order acknowledgements to migrate")
         return 0
 
+    # Insert into order_acknowledgements (without order_detail_id)
     await dest.executemany(
         """
         INSERT INTO pycommission.order_acknowledgements (
-            id, order_id, order_detail_id, order_acknowledgement_number,
+            id, order_id, order_acknowledgement_number,
             entity_date, quantity, creation_type, created_by_id, created_at
-        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
         ON CONFLICT (id) DO UPDATE SET
             order_id = EXCLUDED.order_id,
-            order_detail_id = EXCLUDED.order_detail_id,
             order_acknowledgement_number = EXCLUDED.order_acknowledgement_number,
             entity_date = EXCLUDED.entity_date,
             quantity = EXCLUDED.quantity,
@@ -454,12 +475,26 @@ async def migrate_order_acknowledgements(
         [(
             a["id"],
             a["order_id"],
-            a["order_detail_id"],
             a["order_acknowledgement_number"],
             a["entity_date"],
             a["quantity"],
             a["creation_type"],
             a["created_by_id"],
+            a["created_at"],
+        ) for a in acknowledgements],
+    )
+
+    # Insert into junction table order_acknowledgement_details
+    await dest.executemany(
+        """
+        INSERT INTO pycommission.order_acknowledgement_details (
+            id, order_acknowledgement_id, order_detail_id, created_at
+        ) VALUES (gen_random_uuid(), $1, $2, $3)
+        ON CONFLICT (order_acknowledgement_id, order_detail_id) DO NOTHING
+        """,
+        [(
+            a["id"],
+            a["order_detail_id"],
             a["created_at"],
         ) for a in acknowledgements],
     )

@@ -19,4 +19,5 @@ O365_SCOPES = [
     "User.Read",  # Read user profile
     "Mail.Send",  # Send mail as user
     "Calendars.Read",  # Read calendar events
+    "Contacts.Read",  # Read user contacts
 ]

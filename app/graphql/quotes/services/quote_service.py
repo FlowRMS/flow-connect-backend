@@ -95,3 +95,6 @@ class QuoteService:
         self, entity_type: EntityType, entity_id: UUID
     ) -> list[Quote]:
         return await self.repository.find_by_entity(entity_type, entity_id)
+
+    async def find_by_sold_to_customer_id(self, customer_id: UUID) -> list[Quote]:
+        return await self.repository.find_by_sold_to_customer_id(customer_id)

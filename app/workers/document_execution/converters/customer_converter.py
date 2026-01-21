@@ -1,13 +1,19 @@
 from decimal import Decimal
 from typing import Any, override
+from uuid import UUID
 
 from commons.db.v6 import Customer, RepTypeEnum
 from commons.db.v6.ai.documents.enums.entity_type import DocumentEntityType
+from commons.db.v6.core.addresses.address import AddressSourceTypeEnum, AddressTypeEnum
 from commons.dtos.common.dto_loader_service import DTOLoaderService
+from commons.dtos.core.address_dto import AddressDTO
 from commons.dtos.core.customer_dto import CustomerDTO
+from loguru import logger
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.processors.split_rate_validator import distribute_split_rates
+from app.graphql.addresses.services.address_service import AddressService
+from app.graphql.addresses.strawberry.address_input import AddressInput
 from app.graphql.v2.core.customers.services.customer_service import CustomerService
 from app.graphql.v2.core.customers.strawberry.customer_input import CustomerInput
 from app.graphql.v2.core.customers.strawberry.customer_split_rate_input import (
@@ -29,9 +35,12 @@ class CustomerConverter(BaseEntityConverter[CustomerDTO, CustomerInput, Customer
         session: AsyncSession,
         dto_loader_service: DTOLoaderService,
         customer_service: CustomerService,
+        address_service: AddressService,
     ) -> None:
         super().__init__(session, dto_loader_service)
         self.customer_service = customer_service
+        self.address_service = address_service
+        self._address_cache: dict[str, list[AddressDTO]] = {}
 
     @override
     def get_dedup_key(
@@ -58,7 +67,49 @@ class CustomerConverter(BaseEntityConverter[CustomerDTO, CustomerInput, Customer
         skipped = [
             i for i, inp in enumerate(inputs) if inp.company_name not in created_names
         ]
+
+        await self._create_addresses_for_customers(created)
+
         return BulkCreateResult(created=created, skipped_indices=skipped)
+
+    async def _create_addresses_for_customers(
+        self,
+        customers: list[Customer],
+    ) -> None:
+        address_inputs: list[AddressInput] = []
+        for customer in customers:
+            address_dtos = self._address_cache.get(customer.company_name, [])
+            for i, addr_dto in enumerate(address_dtos):
+                if not addr_dto.address_line_one and not addr_dto.address_line_two:
+                    continue
+                address_inputs.append(
+                    self._build_address_input(customer.id, addr_dto, i)
+                )
+
+        if address_inputs:
+            try:
+                _ = await self.address_service.bulk_create(address_inputs)
+            except Exception as e:
+                logger.warning(f"Failed to bulk create addresses: {e}")
+
+    def _build_address_input(
+        self,
+        customer_id: UUID,
+        addr_dto: AddressDTO,
+        position: int,
+    ) -> AddressInput:
+        return AddressInput(
+            source_id=customer_id,
+            source_type=AddressSourceTypeEnum.CUSTOMER,
+            address_types=[AddressTypeEnum.SHIPPING, AddressTypeEnum.BILLING],
+            line_1=addr_dto.address_line_one or addr_dto.address_line_two or "",
+            line_2=addr_dto.address_line_two if addr_dto.address_line_one else None,
+            city=addr_dto.city or "",
+            state=addr_dto.state,
+            zip_code=str(addr_dto.zip_code) if addr_dto.zip_code else "00000",
+            country="US",
+            is_primary=position == 0,
+        )
 
     @override
     async def to_input(
@@ -70,6 +121,9 @@ class CustomerConverter(BaseEntityConverter[CustomerDTO, CustomerInput, Customer
             return ConversionResult.fail(
                 ConversionError("CustomerDTO missing company_name")
             )
+
+        if dto.addresses:
+            self._address_cache[dto.company_name] = dto.addresses
 
         outside_split_rates = await self._build_outside_split_rates(dto)
         inside_split_rates = await self._build_inside_split_rates(dto)
@@ -92,8 +146,8 @@ class CustomerConverter(BaseEntityConverter[CustomerDTO, CustomerInput, Customer
         if not dto.outside_sales_reps:
             return []
 
-        default_rates = distribute_split_rates(len(dto.outside_sales_reps))
         split_rates: list[OutsideSplitRateInput] = []
+        seen_user_ids: set[str] = set()
 
         for position, sales_rep in enumerate(dto.outside_sales_reps):
             user = await self.get_user_by_full_name(
@@ -101,13 +155,22 @@ class CustomerConverter(BaseEntityConverter[CustomerDTO, CustomerInput, Customer
             )
             if not user:
                 continue
+            if str(user.id) in seen_user_ids:
+                continue
+            seen_user_ids.add(str(user.id))
             split_rates.append(
                 OutsideSplitRateInput(
                     user_id=user.id,
-                    split_rate=sales_rep.split_rate or default_rates[position],
+                    split_rate=Decimal("0"),
+                    # split_rate=sales_rep.split_rate or default_rates[position],
                     position=position,
                 )
             )
+
+        defaulted_split_rates = distribute_split_rates(len(split_rates))
+        for i in range(len(split_rates)):
+            split_rates[i].split_rate = defaulted_split_rates[i]
+
         return split_rates
 
     async def _build_inside_split_rates(
