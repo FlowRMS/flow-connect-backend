@@ -40,6 +40,12 @@ class ProductCategoryService:
             grandparent_id=grandparent_id,
         )
 
+    async def get_root_categories(
+        self, factory_id: UUID | None = None
+    ) -> list[ProductCategory]:
+        """Get all categories with no parent (Level 1 / root categories)."""
+        return await self.repository.get_root_categories(factory_id)
+
     async def create(self, category_input: ProductCategoryInput) -> ProductCategory:
         if await self.repository.name_exists(
             category_input.factory_id, category_input.title

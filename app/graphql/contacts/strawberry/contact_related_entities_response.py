@@ -1,12 +1,8 @@
-"""GraphQL response type for contact related entities."""
-
 import strawberry
 
-from app.graphql.companies.strawberry.company_response import CompanyResponse
+from app.graphql.companies.strawberry.company_response import CompanyLiteResponse
 
 
 @strawberry.type
 class ContactRelatedEntitiesResponse:
-    """Response containing all entities related to a contact."""
-
-    companies: list[CompanyResponse]
+    companies: list[CompanyLiteResponse]

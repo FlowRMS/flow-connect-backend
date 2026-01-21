@@ -10,6 +10,7 @@ from app.graphql.v2.core.customers.repositories.customer_factory_sales_rep_repos
     CustomerFactorySalesRepRepository,
 )
 from app.graphql.v2.core.customers.strawberry.customer_factory_sales_rep_input import (
+    CustomerFactorySalesRepBulkInput,
     CustomerFactorySalesRepInput,
 )
 
@@ -72,6 +73,25 @@ class CustomerFactorySalesRepService:
         if not await self.repository.exists(rep_id):
             raise NotFoundError(f"CustomerFactorySalesRep with id {rep_id} not found")
         return await self.repository.delete(rep_id)
+
+    async def create_bulk(
+        self,
+        bulk_input: CustomerFactorySalesRepBulkInput,
+    ) -> list[CustomerFactorySalesRep]:
+        total = Decimal(sum(split.rate for split in bulk_input.splits))
+        if total.quantize(Decimal("0.01")) != Decimal("100").quantize(Decimal("0.01")):
+            raise ValidationError(
+                f"Total rates must equal 100%. Current total: {total}%"
+            )
+
+        await self.repository.delete_by_customer_and_factory(
+            bulk_input.customer_id, bulk_input.factory_id
+        )
+
+        _ = await self.repository.bulk_create(bulk_input.to_orm_models())
+        return await self.repository.list_by_customer_and_factory(
+            bulk_input.customer_id, bulk_input.factory_id
+        )
 
     async def _validate_rates_sum(
         self,

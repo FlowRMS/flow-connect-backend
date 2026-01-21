@@ -25,6 +25,17 @@ class CreditsQueries:
 
     @strawberry.field
     @inject
+    async def credits_by_order_id(
+        self,
+        service: Injected[CreditService],
+        order_id: UUID,
+    ) -> list[CreditLiteResponse]:
+        return CreditLiteResponse.from_orm_model_list(
+            await service.find_credits_by_order_id(order_id)
+        )
+
+    @strawberry.field
+    @inject
     async def credit_search(
         self,
         service: Injected[CreditService],

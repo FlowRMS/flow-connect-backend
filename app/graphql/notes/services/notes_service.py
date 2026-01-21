@@ -38,6 +38,7 @@ class NotesService:
             note_id,
             options=[
                 joinedload(Note.created_by),
+                joinedload(Note.mentioned_users),
                 lazyload("*"),
             ],
         )
@@ -61,18 +62,11 @@ class NotesService:
         _ = await self.repository.update(note)
         return await self.find_note_by_id(note_id)
 
-    async def delete_note(self, note_id: UUID | str) -> bool:
+    async def delete_note(self, note_id: UUID) -> bool:
         """Delete a note by ID."""
         if not await self.repository.exists(note_id):
             raise NotFoundError(str(note_id))
         return await self.repository.delete(note_id)
-
-    async def get_note(self, note_id: UUID | str) -> Note:
-        """Get a note by ID."""
-        note = await self.repository.get_by_id(note_id)
-        if not note:
-            raise NotFoundError(str(note_id))
-        return note
 
     async def list_notes(self, limit: int = 20, offset: int = 0) -> list[Note]:
         """List notes with pagination."""

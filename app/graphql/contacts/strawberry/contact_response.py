@@ -9,12 +9,9 @@ from app.core.db.adapters.dto import DTOMixin
 
 
 @strawberry.type
-class ContactResponse(DTOMixin[Contact]):
-    """GraphQL type for Contact entity (output/query results)."""
-
+class ContactLiteResponse(DTOMixin[Contact]):
     id: UUID
     created_at: datetime
-    # created_by: UUID
     first_name: str
     last_name: str
     email: str | None
@@ -23,13 +20,13 @@ class ContactResponse(DTOMixin[Contact]):
     territory: str | None
     tags: list[str] | None
     notes: str | None
+    external_id: str | None
 
     @classmethod
     def from_orm_model(cls, model: Contact) -> Self:
         return cls(
             id=model.id,
             created_at=model.created_at,
-            # created_by=model.created_by,
             first_name=model.first_name,
             last_name=model.last_name,
             email=model.email,
@@ -38,4 +35,10 @@ class ContactResponse(DTOMixin[Contact]):
             territory=model.territory,
             tags=model.tags,
             notes=model.notes,
+            external_id=model.external_id,
         )
+
+
+@strawberry.type
+class ContactResponse(ContactLiteResponse):
+    pass

@@ -26,6 +26,7 @@ from app.graphql.v2.core.warehouses.repositories import (
 )
 from app.graphql.v2.core.warehouses.services import (
     WarehouseLocationAssignmentService,
+    WarehouseLocationBulkService,
     WarehouseLocationService,
     WarehouseService,
 )
@@ -64,6 +65,7 @@ __all__ = [
     "WarehouseStructureRepository",
     # Services
     "WarehouseLocationAssignmentService",
+    "WarehouseLocationBulkService",
     "WarehouseLocationService",
     "WarehouseService",
     # GraphQL Types

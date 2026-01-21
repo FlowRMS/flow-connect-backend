@@ -2,6 +2,9 @@ from typing import Any
 from uuid import UUID
 
 from commons.db.v6.ai.documents.enums.entity_type import DocumentEntityType
+from commons.db.v6.ai.documents.enums.processing_result_status import (
+    ProcessingResultStatus,
+)
 from commons.db.v6.ai.documents.pending_document import PendingDocument
 from commons.db.v6.ai.documents.pending_document_processing import (
     PendingDocumentProcessing,
@@ -25,23 +28,32 @@ from app.workers.document_execution.converters.entity_mapping_builder import (
 )
 from app.workers.document_execution.converters.factory_converter import FactoryConverter
 from app.workers.document_execution.converters.invoice_converter import InvoiceConverter
+from app.workers.document_execution.converters.order_ack_converter import (
+    OrderAckConverter,
+)
 from app.workers.document_execution.converters.order_converter import OrderConverter
 from app.workers.document_execution.converters.product_converter import ProductConverter
 from app.workers.document_execution.converters.quote_converter import QuoteConverter
 from app.workers.document_execution.converters.set_for_creation_service import (
     SetForCreationService,
 )
+from app.workers.document_execution.converters.statement_converter import (
+    StatementConverter,
+)
 
 from .batch_processor import DocumentBatchProcessor
 from .converters.base import DEFAULT_BATCH_SIZE, BaseEntityConverter
 
 DOCUMENT_TO_LINK_ENTITY_TYPE: dict[DocumentEntityType, EntityType] = {
+    DocumentEntityType.QUOTES: EntityType.QUOTE,
     DocumentEntityType.ORDERS: EntityType.ORDER,
+    DocumentEntityType.INVOICES: EntityType.INVOICE,
+    DocumentEntityType.CHECKS: EntityType.CHECK,
     DocumentEntityType.CUSTOMERS: EntityType.CUSTOMER,
     DocumentEntityType.FACTORIES: EntityType.FACTORY,
     DocumentEntityType.PRODUCTS: EntityType.PRODUCT,
-    DocumentEntityType.INVOICES: EntityType.INVOICE,
-    DocumentEntityType.CHECKS: EntityType.CHECK,
+    DocumentEntityType.ORDER_ACKNOWLEDGEMENTS: EntityType.ORDER_ACKNOWLEDGEMENT,
+    DocumentEntityType.COMMISSION_STATEMENTS: EntityType.COMMISSION_STATEMENTS,
 }
 
 
@@ -59,6 +71,8 @@ class DocumentExecutorService:
         product_converter: ProductConverter,
         invoice_converter: InvoiceConverter,
         check_converter: CheckConverter,
+        order_ack_converter: OrderAckConverter,
+        statement_converter: StatementConverter,
         set_for_creation_service: SetForCreationService,
     ) -> None:
         super().__init__()
@@ -73,6 +87,8 @@ class DocumentExecutorService:
         self.product_converter = product_converter
         self.invoice_converter = invoice_converter
         self.check_converter = check_converter
+        self.order_ack_converter = order_ack_converter
+        self.statement_converter = statement_converter
         self.set_for_creation_service = set_for_creation_service
         self._batch_processor = DocumentBatchProcessor()
 
@@ -95,6 +111,10 @@ class DocumentExecutorService:
                 return self.invoice_converter
             case DocumentEntityType.CHECKS:
                 return self.check_converter
+            case DocumentEntityType.ORDER_ACKNOWLEDGEMENTS:
+                return self.order_ack_converter
+            case DocumentEntityType.COMMISSION_STATEMENTS:
+                return self.statement_converter
             case _:
                 raise ValueError(f"Unsupported entity type: {entity_type}")
 
@@ -116,28 +136,56 @@ class DocumentExecutorService:
             logger.info(f"Built entity mapping: {entity_mappings}")
 
             converter = self.get_converter(pending_document.entity_type)
+            logger.info(
+                f"Using converter {converter.__class__.__name__} for entity type {pending_document.entity_type.name}"
+            )
             dtos = await self._parse_dtos(converter, pending_document)
             logger.info(f"Parsed {len(dtos)} DTOs from extracted_data_json")
 
-            await self.set_for_creation_service.process_set_for_creation(
-                pending_entities=pending_document.pending_entities,
-                dtos=dtos,
-                entity_mappings=entity_mappings,
+            creation_result = (
+                await self.set_for_creation_service.process_set_for_creation(
+                    pending_entities=pending_document.pending_entities,
+                    entity_mappings=entity_mappings,
+                )
             )
+            processing_records: list[PendingDocumentProcessing] = []
+            if creation_result.has_issues:
+                for issue in creation_result.issues:
+                    error = issue.error_message
+                    processing_records.append(
+                        PendingDocumentProcessing(
+                            pending_document_id=pending_document.id,
+                            entity_id=None,
+                            status=ProcessingResultStatus.ERROR,
+                            dto_json=issue.dto_json,
+                            error_message=error,
+                        )
+                    )
+                pending_document.workflow_status = WorkflowStatus.FAILED
+            else:
+                logger.info(
+                    f"SET_FOR_CREATION completed: orders={creation_result.orders_created}, "
+                    f"invoices={creation_result.invoices_created}, "
+                    f"credits={creation_result.credits_created}, "
+                    f"adjustments={creation_result.adjustments_created}"
+                )
 
-            processing_records = await self._batch_processor.execute_bulk(
-                converter=converter,
-                dtos=dtos,
-                entity_mappings=entity_mappings,
-                pending_document=pending_document,
-                batch_size=batch_size,
-                link_callback=self._link_file_to_entity,
-            )
+                processing_records = await self._batch_processor.execute_bulk(
+                    converter=converter,
+                    dtos=dtos,
+                    entity_mappings=entity_mappings,
+                    pending_document=pending_document,
+                    batch_size=batch_size,
+                )
+                created_entity_ids = [
+                    r.entity_id for r in processing_records if r.entity_id is not None
+                ]
+                await self._link_file_to_entities(pending_document, created_entity_ids)
+                pending_document.workflow_status = WorkflowStatus.COMPLETED
 
             self.session.add_all(processing_records)
             await self.session.flush()
 
-            pending_document.workflow_status = WorkflowStatus.COMPLETED
             return processing_records
         except Exception as e:
             _ = await self.transient_session.execute(
@@ -160,12 +208,12 @@ class DocumentExecutorService:
         loaded_dtos = await converter.parse_dtos_from_json(pending_document)
         return [converter.dto_class.model_validate(d) for d in loaded_dtos.dtos]
 
-    async def _link_file_to_entity(
+    async def _link_file_to_entities(
         self,
         pending_document: PendingDocument,
-        entity_id: UUID,
+        entity_ids: list[UUID],
     ) -> None:
-        if not pending_document.entity_type:
+        if not entity_ids or not pending_document.entity_type:
             return
 
         link_entity_type = DOCUMENT_TO_LINK_ENTITY_TYPE.get(
@@ -178,14 +226,14 @@ class DocumentExecutorService:
             return
 
         try:
-            _ = await self.links_service.create_link(
+            links = await self.links_service.bulk_create_links(
                 source_type=EntityType.FILE,
                 source_id=pending_document.file_id,
                 target_type=link_entity_type,
-                target_id=entity_id,
+                target_ids=entity_ids,
             )
             logger.info(
-                f"Linked file {pending_document.file_id} to {link_entity_type.name} {entity_id}"
+                f"Linked file {pending_document.file_id} to {len(links)} {link_entity_type.name} entities"
             )
         except Exception as e:
-            logger.warning(f"Failed to link file to entity: {e}")
+            logger.warning(f"Failed to bulk link file to entities: {e}")

@@ -28,6 +28,9 @@ from app.graphql.pre_opportunities.repositories.pre_opportunities_repository imp
     PreOpportunitiesRepository,
 )
 from app.graphql.quotes.repositories.quotes_repository import QuotesRepository
+from app.graphql.statements.repositories.statements_repository import (
+    StatementsRepository,
+)
 from app.graphql.tasks.repositories.tasks_repository import TasksRepository
 from app.graphql.v2.core.customers.repositories.customers_repository import (
     CustomersRepository,
@@ -67,6 +70,7 @@ class LandingPageService:
         checks_repository: ChecksRepository,
         order_acknowledgement_repository: OrderAcknowledgementRepository,
         pending_document_repository: PendingDocumentRepository,
+        statements_repository: StatementsRepository,
         rbac_filter_service: RbacFilterService,
     ) -> None:
         super().__init__()
@@ -93,6 +97,7 @@ class LandingPageService:
             LandingSourceType.CHECKS: checks_repository,
             LandingSourceType.ORDER_ACKNOWLEDGEMENTS: order_acknowledgement_repository,
             LandingSourceType.PENDING_DOCUMENTS: pending_document_repository,
+            LandingSourceType.STATEMENTS: statements_repository,
         }
 
     async def find_landing_pages(

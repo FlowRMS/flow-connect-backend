@@ -1,8 +1,14 @@
 from app.graphql.common.strategies.related_entities.check_related_entities_strategy import (
     CheckRelatedEntitiesStrategy,
 )
+from app.graphql.common.strategies.related_entities.company_related_entities_strategy import (
+    CompanyRelatedEntitiesStrategy,
+)
 from app.graphql.common.strategies.related_entities.contact_related_entities_strategy import (
     ContactRelatedEntitiesStrategy,
+)
+from app.graphql.common.strategies.related_entities.customer_related_entities_strategy import (
+    CustomerRelatedEntitiesStrategy,
 )
 from app.graphql.common.strategies.related_entities.factory_related_entities_strategy import (
     FactoryRelatedEntitiesStrategy,
@@ -34,7 +40,9 @@ from app.graphql.common.strategies.related_entities.task_related_entities_strate
 
 __all__ = [
     "CheckRelatedEntitiesStrategy",
+    "CompanyRelatedEntitiesStrategy",
     "ContactRelatedEntitiesStrategy",
+    "CustomerRelatedEntitiesStrategy",
     "FactoryRelatedEntitiesStrategy",
     "FileRelatedEntitiesStrategy",
     "InvoiceRelatedEntitiesStrategy",

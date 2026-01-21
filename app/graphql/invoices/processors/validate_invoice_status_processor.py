@@ -19,8 +19,3 @@ class ValidateInvoiceStatusProcessor(BaseProcessor[Invoice]):
             raise ValidationError(
                 f"Cannot modify invoice '{original.invoice_number}': invoice is paid"
             )
-
-        if original.locked:
-            raise ValidationError(
-                f"Cannot modify invoice '{original.invoice_number}': invoice is locked"
-            )

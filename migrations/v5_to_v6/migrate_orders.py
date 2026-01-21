@@ -9,20 +9,44 @@ async def migrate_order_balances(source: asyncpg.Connection, dest: asyncpg.Conne
     """Migrate order balances from v5 (commission.order_balances) to v6 (pycommission.order_balances)."""
     logger.info("Starting order balance migration...")
 
-    balances = await source.fetch("""
+    # Max value for NUMERIC(18,6) is 10^12 - 1 (999999999999.999999)
+    max_val = 999999999999
+
+    # Log any records with overflow values before clamping
+    overflow_records = await source.fetch(f"""
+        SELECT ob.id
+        FROM commission.order_balances ob
+        WHERE ABS(COALESCE(ob.quantity, 0)) >= {max_val}
+           OR ABS(COALESCE(ob.subtotal, 0)) >= {max_val}
+           OR ABS(COALESCE(ob.total, 0)) >= {max_val}
+           OR ABS(COALESCE(ob.commission, 0)) >= {max_val}
+           OR ABS(COALESCE(ob.discount, 0)) >= {max_val}
+           OR ABS(COALESCE(ob.commission_rate, 0)) >= {max_val}
+           OR ABS(COALESCE(ob.commission_discount, 0)) >= {max_val}
+           OR ABS(COALESCE(ob.shipping_balance, 0)) >= {max_val}
+           OR ABS(COALESCE(ob.freight_charge, 0)) >= {max_val}
+    """)
+    if overflow_records:
+        overflow_ids = [str(r["id"]) for r in overflow_records]
+        logger.warning(
+            f"Found {len(overflow_records)} order_balances with overflow values "
+            f"(will be clamped to {max_val}): {overflow_ids}"
+        )
+
+    balances = await source.fetch(f"""
         SELECT
             ob.id,
-            COALESCE(ob.quantity, 0) as quantity,
-            COALESCE(ob.subtotal, 0) as subtotal,
-            COALESCE(ob.total, 0) as total,
-            COALESCE(ob.commission, 0) as commission,
-            COALESCE(ob.discount, 0) as discount,
-            COALESCE(ob.discount_rate, 0) as discount_rate,
-            COALESCE(ob.commission_rate, 0) as commission_rate,
-            COALESCE(ob.commission_discount, 0) as commission_discount,
-            COALESCE(ob.commission_discount_rate, 0) as commission_discount_rate,
-            COALESCE(ob.shipping_balance, 0) as shipping_balance,
-            COALESCE(ob.freight_charge, 0) as freight_charge_balance
+            LEAST(GREATEST(COALESCE(ob.quantity, 0), -{max_val}), {max_val}) as quantity,
+            LEAST(GREATEST(COALESCE(ob.subtotal, 0), -{max_val}), {max_val}) as subtotal,
+            LEAST(GREATEST(COALESCE(ob.total, 0), -{max_val}), {max_val}) as total,
+            LEAST(GREATEST(COALESCE(ob.commission, 0), -{max_val}), {max_val}) as commission,
+            LEAST(GREATEST(COALESCE(ob.discount, 0), -{max_val}), {max_val}) as discount,
+            LEAST(GREATEST(COALESCE(ob.discount_rate, 0), -{max_val}), {max_val}) as discount_rate,
+            LEAST(GREATEST(COALESCE(ob.commission_rate, 0), -{max_val}), {max_val}) as commission_rate,
+            LEAST(GREATEST(COALESCE(ob.commission_discount, 0), -{max_val}), {max_val}) as commission_discount,
+            LEAST(GREATEST(COALESCE(ob.commission_discount_rate, 0), -{max_val}), {max_val}) as commission_discount_rate,
+            LEAST(GREATEST(COALESCE(ob.shipping_balance, 0), -{max_val}), {max_val}) as shipping_balance,
+            LEAST(GREATEST(COALESCE(ob.freight_charge, 0), -{max_val}), {max_val}) as freight_charge_balance
         FROM commission.order_balances ob
     """)
 
@@ -101,8 +125,11 @@ async def migrate_orders(source: asyncpg.Connection, dest: asyncpg.Connection) -
             COALESCE(o.entry_date, now()) as created_at
         FROM commission.orders o
         JOIN "user".users u ON u.id = o.created_by
-        WHERE 
+        LEFT JOIN crm.quotes q ON q.id = o.quote_id
+        WHERE
             o.sold_to_customer_id IS NOT NULL
+            AND o.factory_id IS NOT NULL
+            AND (o.quote_id IS NULL OR q.sold_to_customer_id IS NOT NULL)
     """)
 
     if not orders:
@@ -181,9 +208,13 @@ async def migrate_order_inside_reps(source: asyncpg.Connection, dest: asyncpg.Co
         FROM commission.order_inside_reps oir
         JOIN commission.orders o ON o.id = oir.order_id
         JOIN commission.order_details od ON od.order_id = o.id
-        JOIN "user".users u ON u.id = o.created_by
+        JOIN "user".users u ON u.id = oir.user_id
         JOIN core.products p ON p.id = od.product_id
-        WHERE o.sold_to_customer_id IS NOT NULL 
+        LEFT JOIN crm.quotes q ON q.id = o.quote_id
+        WHERE
+            o.sold_to_customer_id IS NOT NULL
+            AND o.factory_id IS NOT NULL
+            AND (o.quote_id IS NULL OR q.sold_to_customer_id IS NOT NULL)
     """)
 
     if not inside_reps:
@@ -245,8 +276,11 @@ async def migrate_order_details(source: asyncpg.Connection, dest: asyncpg.Connec
         JOIN core.products p ON p.id = od.product_id
         JOIN commission.orders o ON o.id = od.order_id
         JOIN "user".users u ON u.id = o.created_by
-        WHERE 
-        o.sold_to_customer_id IS NOT NULL 
+        LEFT JOIN crm.quotes q ON q.id = o.quote_id
+        WHERE
+            o.sold_to_customer_id IS NOT NULL
+            AND o.factory_id IS NOT NULL
+            AND (o.quote_id IS NULL OR q.sold_to_customer_id IS NOT NULL)
     """)
 
     if not details:
@@ -351,8 +385,11 @@ async def migrate_order_split_rates(source: asyncpg.Connection, dest: asyncpg.Co
         JOIN commission.orders o ON o.id = od.order_id
         JOIN "user".users u ON u.id = o.created_by
         JOIN core.products p ON p.id = od.product_id
-        WHERE 
-        o.sold_to_customer_id IS NOT NULL 
+        LEFT JOIN crm.quotes q ON q.id = o.quote_id
+        WHERE
+            o.sold_to_customer_id IS NOT NULL
+            AND o.factory_id IS NOT NULL
+            AND (o.quote_id IS NULL OR q.sold_to_customer_id IS NOT NULL)
     """)
 
     if not split_rates:
@@ -387,7 +424,11 @@ async def migrate_order_split_rates(source: asyncpg.Connection, dest: asyncpg.Co
 async def migrate_order_acknowledgements(
     source: asyncpg.Connection, dest: asyncpg.Connection
 ) -> int:
-    """Migrate order acknowledgements from v5 to v6."""
+    """Migrate order acknowledgements from v5 to v6.
+
+    Schema changed to many-to-many: order_detail_id moved to junction table
+    order_acknowledgement_details.
+    """
     logger.info("Starting order acknowledgement migration...")
 
     acknowledgements = await source.fetch("""
@@ -396,7 +437,7 @@ async def migrate_order_acknowledgements(
             od.order_id,
             oa.order_detail_id,
             oa.order_acknowledgement_number,
-            oa.entity_date, 
+            oa.entity_date,
             COALESCE(od.quantity, 0) as quantity,
             oa.creation_type,
             oa.created_by as created_by_id,
@@ -405,23 +446,27 @@ async def migrate_order_acknowledgements(
         JOIN commission.order_details od ON od.id = oa.order_detail_id
         JOIN commission.orders o ON o.id = od.order_id
         JOIN "user".users u ON u.id = oa.created_by
-        WHERE o.sold_to_customer_id IS NOT NULL
-        AND o.entry_date < now() - INTERVAL '2 days'
+        LEFT JOIN crm.quotes q ON q.id = o.quote_id
+        WHERE
+            o.sold_to_customer_id IS NOT NULL
+            AND o.factory_id IS NOT NULL
+            AND (o.quote_id IS NULL OR q.sold_to_customer_id IS NOT NULL)
+            AND o.entry_date < now() - INTERVAL '2 days'
     """)
 
     if not acknowledgements:
         logger.info("No order acknowledgements to migrate")
         return 0
 
+    # Insert into order_acknowledgements (without order_detail_id)
     await dest.executemany(
         """
         INSERT INTO pycommission.order_acknowledgements (
-            id, order_id, order_detail_id, order_acknowledgement_number,
+            id, order_id, order_acknowledgement_number,
             entity_date, quantity, creation_type, created_by_id, created_at
-        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
         ON CONFLICT (id) DO UPDATE SET
             order_id = EXCLUDED.order_id,
-            order_detail_id = EXCLUDED.order_detail_id,
             order_acknowledgement_number = EXCLUDED.order_acknowledgement_number,
             entity_date = EXCLUDED.entity_date,
             quantity = EXCLUDED.quantity,
@@ -430,12 +475,26 @@ async def migrate_order_acknowledgements(
         [(
             a["id"],
             a["order_id"],
-            a["order_detail_id"],
             a["order_acknowledgement_number"],
             a["entity_date"],
             a["quantity"],
             a["creation_type"],
             a["created_by_id"],
+            a["created_at"],
+        ) for a in acknowledgements],
+    )
+
+    # Insert into junction table order_acknowledgement_details
+    await dest.executemany(
+        """
+        INSERT INTO pycommission.order_acknowledgement_details (
+            id, order_acknowledgement_id, order_detail_id, created_at
+        ) VALUES (gen_random_uuid(), $1, $2, $3)
+        ON CONFLICT (order_acknowledgement_id, order_detail_id) DO NOTHING
+        """,
+        [(
+            a["id"],
+            a["order_detail_id"],
             a["created_at"],
         ) for a in acknowledgements],
     )

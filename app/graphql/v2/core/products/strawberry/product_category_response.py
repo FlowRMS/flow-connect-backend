@@ -3,7 +3,7 @@ from typing import Self
 from uuid import UUID
 
 import strawberry
-from commons.db.v6.core.products.product import ProductCategory
+from commons.db.v6.core.products.product_category import ProductCategory
 
 from app.core.db.adapters.dto import DTOMixin
 
@@ -46,3 +46,10 @@ class ProductCategoryResponse(ProductCategoryLiteResponse):
             return None
 
         return ProductCategoryLiteResponse.from_orm_model(self._instance.grandparent)
+
+    @strawberry.field
+    def children(
+        self,
+    ) -> list[ProductCategoryLiteResponse]:
+        """Get direct children of this category (where parent_id = self.id)."""
+        return ProductCategoryLiteResponse.from_orm_model_list(self._instance.children)

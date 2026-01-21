@@ -24,6 +24,13 @@ class AdjustmentService:
     async def find_adjustment_by_id(self, adjustment_id: UUID) -> Adjustment:
         return await self.repository.find_adjustment_by_id(adjustment_id)
 
+    async def find_by_adjustment_number(
+        self, factory_id: UUID, adjustment_number: str
+    ) -> Adjustment | None:
+        return await self.repository.find_by_adjustment_number(
+            factory_id, adjustment_number
+        )
+
     async def create_adjustment(self, adjustment_input: AdjustmentInput) -> Adjustment:
         adjustment = adjustment_input.to_orm_model()
         adjustment.locked = False

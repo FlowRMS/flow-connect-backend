@@ -9,16 +9,21 @@ from commons.db.v6.crm.contact_model import Contact
 from commons.db.v6.crm.jobs.jobs_model import Job
 from commons.db.v6.crm.links.entity_type import EntityType
 from commons.db.v6.crm.links.link_relation_model import LinkRelation
+from commons.db.v6.crm.notes.note_model import Note
 from commons.db.v6.crm.pre_opportunities.pre_opportunity_model import PreOpportunity
+from commons.db.v6.crm.tasks.task_assignee_model import TaskAssignee
+from commons.db.v6.crm.tasks.task_category_model import TaskCategory
 from commons.db.v6.crm.tasks.task_model import Task
 from commons.db.v6.user import User
 from sqlalchemy import Select, case, func, literal, or_, select
 from sqlalchemy.dialects.postgresql import JSONB, array
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.orm import aliased, joinedload, lazyload
+from sqlalchemy.orm import aliased, joinedload, lazyload, selectinload
 
 from app.core.context_wrapper import ContextWrapper
+from app.core.processors import ProcessorExecutor
 from app.graphql.base_repository import BaseRepository
+from app.graphql.tasks.processors import SyncTaskAssigneesProcessor
 from app.graphql.tasks.strawberry.task_landing_page_response import (
     TaskLandingPageResponse,
 )
@@ -28,168 +33,213 @@ class TasksRepository(BaseRepository[Task]):
     landing_model = TaskLandingPageResponse
     rbac_resource: RbacResourceEnum | None = RbacResourceEnum.TASK
 
-    def __init__(self, context_wrapper: ContextWrapper, session: AsyncSession) -> None:
-        super().__init__(session, context_wrapper, Task)
+    def __init__(
+        self,
+        context_wrapper: ContextWrapper,
+        session: AsyncSession,
+        processor_executor: ProcessorExecutor,
+        sync_assignees_processor: SyncTaskAssigneesProcessor,
+    ) -> None:
+        super().__init__(
+            session,
+            context_wrapper,
+            Task,
+            processor_executor=processor_executor,
+            processor_executor_classes=[sync_assignees_processor],
+        )
+        self.sync_assignees_processor = sync_assignees_processor
 
     def paginated_stmt(self) -> Select[Any]:
-        """
-        Build paginated query for tasks landing page.
+        assignee_user_alias = aliased(User)
 
-        Returns:
-            SQLAlchemy select statement with columns for landing page
-        """
-        # Lazy import to avoid circular dependency
-        from commons.db.v6.crm.notes.note_model import Note
-
-        assigned_to_alias = aliased(User)
-
-        # Build a CTE that flattens link relations with entity info
-        # This ensures proper handling of the bidirectional link structure
-        task_id_col = case(
-            (
-                LinkRelation.source_entity_type == EntityType.TASK,
-                LinkRelation.source_entity_id,
-            ),
-            else_=LinkRelation.target_entity_id,
-        ).label("task_id")
-
-        entity_type_col = case(
-            (
-                LinkRelation.source_entity_type == EntityType.TASK,
-                LinkRelation.target_entity_type,
-            ),
-            else_=LinkRelation.source_entity_type,
-        ).label("entity_type")
-
-        entity_id_col = case(
-            (
-                LinkRelation.source_entity_type == EntityType.TASK,
-                LinkRelation.target_entity_id,
-            ),
-            else_=LinkRelation.source_entity_id,
-        ).label("entity_id")
-
-        # CTE to extract task links with entity type and id
-        links_cte = (
-            select(task_id_col, entity_type_col, entity_id_col)
-            .select_from(LinkRelation)
-            .where(
-                or_(
-                    LinkRelation.source_entity_type == EntityType.TASK,
-                    LinkRelation.target_entity_type == EntityType.TASK,
-                )
-            )
-            .cte("task_links")
-        )
-
-        # Build CASE expression to get title based on entity type
-        linked_title = case(
-            (links_cte.c.entity_type == EntityType.JOB, Job.job_name),
-            (links_cte.c.entity_type == EntityType.NOTE, Note.title),
-            (
-                links_cte.c.entity_type == EntityType.CONTACT,
-                Contact.first_name + literal(" ") + Contact.last_name,
-            ),
-            (links_cte.c.entity_type == EntityType.COMPANY, Company.name),
-            (
-                links_cte.c.entity_type == EntityType.PRE_OPPORTUNITY,
-                PreOpportunity.entity_number,
-            ),
-            (links_cte.c.entity_type == EntityType.QUOTE, Quote.quote_number),
-            # (links_cte.c.entity_type == EntityType.ORDER, Order.order_number),
-            # (links_cte.c.entity_type == EntityType.INVOICE, Invoice.invoice_number),
-            # (links_cte.c.entity_type == EntityType.CHECK, Check.check_number),
-            (links_cte.c.entity_type == EntityType.FACTORY, Factory.title),
-            (
-                links_cte.c.entity_type == EntityType.PRODUCT,
-                Product.factory_part_number,
-            ),
-            (links_cte.c.entity_type == EntityType.CUSTOMER, Customer.company_name),
-            else_=literal(None),
-        )
-
-        # Build JSON object for linked entity with id, title, and entity_type
-        linked_entity_json = func.jsonb_build_object(
-            literal("id"),
-            links_cte.c.entity_id,
-            literal("title"),
-            linked_title,
-            literal("entity_type"),
-            links_cte.c.entity_type,
-        )
-
-        # Subquery to aggregate linked entities for each task
         linked_entities_subq = (
             select(
-                links_cte.c.task_id,
                 func.coalesce(
-                    func.jsonb_agg(linked_entity_json).filter(linked_title.isnot(None)),
+                    func.jsonb_agg(
+                        func.jsonb_build_object(
+                            literal("id"),
+                            case(
+                                (
+                                    LinkRelation.source_entity_type == EntityType.TASK,
+                                    LinkRelation.target_entity_id,
+                                ),
+                                else_=LinkRelation.source_entity_id,
+                            ),
+                            literal("title"),
+                            func.coalesce(
+                                Job.job_name,
+                                Note.title,
+                                Contact.first_name + literal(" ") + Contact.last_name,
+                                Company.name,
+                                PreOpportunity.entity_number,
+                                Quote.quote_number,
+                                Factory.title,
+                                Product.factory_part_number,
+                                Customer.company_name,
+                            ),
+                            literal("entity_type"),
+                            case(
+                                (
+                                    LinkRelation.source_entity_type == EntityType.TASK,
+                                    LinkRelation.target_entity_type,
+                                ),
+                                else_=LinkRelation.source_entity_type,
+                            ),
+                        )
+                    ),
                     literal("[]").cast(JSONB),
-                ).label("linked_entities"),
+                )
             )
-            .select_from(links_cte)
+            .select_from(LinkRelation)
             .outerjoin(
                 Job,
-                (links_cte.c.entity_type == EntityType.JOB)
-                & (links_cte.c.entity_id == Job.id),
+                (
+                    (LinkRelation.source_entity_type == EntityType.TASK)
+                    & (LinkRelation.target_entity_type == EntityType.JOB)
+                    & (Job.id == LinkRelation.target_entity_id)
+                )
+                | (
+                    (LinkRelation.target_entity_type == EntityType.TASK)
+                    & (LinkRelation.source_entity_type == EntityType.JOB)
+                    & (Job.id == LinkRelation.source_entity_id)
+                ),
             )
             .outerjoin(
                 Note,
-                (links_cte.c.entity_type == EntityType.NOTE)
-                & (links_cte.c.entity_id == Note.id),
+                (
+                    (LinkRelation.source_entity_type == EntityType.TASK)
+                    & (LinkRelation.target_entity_type == EntityType.NOTE)
+                    & (Note.id == LinkRelation.target_entity_id)
+                )
+                | (
+                    (LinkRelation.target_entity_type == EntityType.TASK)
+                    & (LinkRelation.source_entity_type == EntityType.NOTE)
+                    & (Note.id == LinkRelation.source_entity_id)
+                ),
             )
             .outerjoin(
                 Contact,
-                (links_cte.c.entity_type == EntityType.CONTACT)
-                & (links_cte.c.entity_id == Contact.id),
+                (
+                    (LinkRelation.source_entity_type == EntityType.TASK)
+                    & (LinkRelation.target_entity_type == EntityType.CONTACT)
+                    & (Contact.id == LinkRelation.target_entity_id)
+                )
+                | (
+                    (LinkRelation.target_entity_type == EntityType.TASK)
+                    & (LinkRelation.source_entity_type == EntityType.CONTACT)
+                    & (Contact.id == LinkRelation.source_entity_id)
+                ),
             )
             .outerjoin(
                 Company,
-                (links_cte.c.entity_type == EntityType.COMPANY)
-                & (links_cte.c.entity_id == Company.id),
+                (
+                    (LinkRelation.source_entity_type == EntityType.TASK)
+                    & (LinkRelation.target_entity_type == EntityType.COMPANY)
+                    & (Company.id == LinkRelation.target_entity_id)
+                )
+                | (
+                    (LinkRelation.target_entity_type == EntityType.TASK)
+                    & (LinkRelation.source_entity_type == EntityType.COMPANY)
+                    & (Company.id == LinkRelation.source_entity_id)
+                ),
             )
             .outerjoin(
                 PreOpportunity,
-                (links_cte.c.entity_type == EntityType.PRE_OPPORTUNITY)
-                & (links_cte.c.entity_id == PreOpportunity.id),
+                (
+                    (LinkRelation.source_entity_type == EntityType.TASK)
+                    & (LinkRelation.target_entity_type == EntityType.PRE_OPPORTUNITY)
+                    & (PreOpportunity.id == LinkRelation.target_entity_id)
+                )
+                | (
+                    (LinkRelation.target_entity_type == EntityType.TASK)
+                    & (LinkRelation.source_entity_type == EntityType.PRE_OPPORTUNITY)
+                    & (PreOpportunity.id == LinkRelation.source_entity_id)
+                ),
             )
             .outerjoin(
                 Quote,
-                (links_cte.c.entity_type == EntityType.QUOTE)
-                & (links_cte.c.entity_id == Quote.id),
+                (
+                    (LinkRelation.source_entity_type == EntityType.TASK)
+                    & (LinkRelation.target_entity_type == EntityType.QUOTE)
+                    & (Quote.id == LinkRelation.target_entity_id)
+                )
+                | (
+                    (LinkRelation.target_entity_type == EntityType.TASK)
+                    & (LinkRelation.source_entity_type == EntityType.QUOTE)
+                    & (Quote.id == LinkRelation.source_entity_id)
+                ),
             )
-            # .outerjoin(
-            #     Order,
-            #     (links_cte.c.entity_type == EntityType.ORDER)
-            #     & (links_cte.c.entity_id == Order.id),
-            # )
-            # .outerjoin(
-            #     Invoice,
-            #     (links_cte.c.entity_type == EntityType.INVOICE)
-            #     & (links_cte.c.entity_id == Invoice.id),
-            # )
-            # .outerjoin(
-            #     Check,
-            #     (links_cte.c.entity_type == EntityType.CHECK)
-            #     & (links_cte.c.entity_id == Check.id),
-            # )
             .outerjoin(
                 Factory,
-                (links_cte.c.entity_type == EntityType.FACTORY)
-                & (links_cte.c.entity_id == Factory.id),
+                (
+                    (LinkRelation.source_entity_type == EntityType.TASK)
+                    & (LinkRelation.target_entity_type == EntityType.FACTORY)
+                    & (Factory.id == LinkRelation.target_entity_id)
+                )
+                | (
+                    (LinkRelation.target_entity_type == EntityType.TASK)
+                    & (LinkRelation.source_entity_type == EntityType.FACTORY)
+                    & (Factory.id == LinkRelation.source_entity_id)
+                ),
             )
             .outerjoin(
                 Product,
-                (links_cte.c.entity_type == EntityType.PRODUCT)
-                & (links_cte.c.entity_id == Product.id),
+                (
+                    (LinkRelation.source_entity_type == EntityType.TASK)
+                    & (LinkRelation.target_entity_type == EntityType.PRODUCT)
+                    & (Product.id == LinkRelation.target_entity_id)
+                )
+                | (
+                    (LinkRelation.target_entity_type == EntityType.TASK)
+                    & (LinkRelation.source_entity_type == EntityType.PRODUCT)
+                    & (Product.id == LinkRelation.source_entity_id)
+                ),
             )
             .outerjoin(
                 Customer,
-                (links_cte.c.entity_type == EntityType.CUSTOMER)
-                & (links_cte.c.entity_id == Customer.id),
+                (
+                    (LinkRelation.source_entity_type == EntityType.TASK)
+                    & (LinkRelation.target_entity_type == EntityType.CUSTOMER)
+                    & (Customer.id == LinkRelation.target_entity_id)
+                )
+                | (
+                    (LinkRelation.target_entity_type == EntityType.TASK)
+                    & (LinkRelation.source_entity_type == EntityType.CUSTOMER)
+                    & (Customer.id == LinkRelation.source_entity_id)
+                ),
             )
-            .group_by(links_cte.c.task_id)
-            .subquery()
+            .where(
+                or_(
+                    (LinkRelation.source_entity_type == EntityType.TASK)
+                    & (LinkRelation.source_entity_id == Task.id),
+                    (LinkRelation.target_entity_type == EntityType.TASK)
+                    & (LinkRelation.target_entity_id == Task.id),
+                )
+            )
+            .correlate(Task)
+            .scalar_subquery()
+        )
+
+        # Correlated scalar subquery for assignees
+        assignees_subq = (
+            select(
+                func.coalesce(
+                    func.jsonb_agg(
+                        func.jsonb_build_object(
+                            literal("id"),
+                            assignee_user_alias.id,
+                            literal("name"),
+                            assignee_user_alias.full_name,
+                        )
+                    ),
+                    literal("[]").cast(JSONB),
+                )
+            )
+            .select_from(TaskAssignee)
+            .join(assignee_user_alias, assignee_user_alias.id == TaskAssignee.user_id)
+            .where(TaskAssignee.task_id == Task.id)
+            .correlate(Task)
+            .scalar_subquery()
         )
 
         return (
@@ -199,22 +249,20 @@ class TasksRepository(BaseRepository[Task]):
                 User.full_name.label("created_by"),
                 Task.title,
                 Task.status,
+                TaskCategory.name.label("category"),
                 Task.priority,
                 Task.description,
-                assigned_to_alias.full_name.label("assigned_to"),
+                assignees_subq.label("assignees"),
                 Task.due_date,
                 Task.reminder_date,
                 Task.tags,
-                func.coalesce(
-                    linked_entities_subq.c.linked_entities, literal("[]").cast(JSONB)
-                ).label("linked_entities"),
+                linked_entities_subq.label("linked_entities"),
                 array([Task.created_by_id]).label("user_ids"),
             )
             .select_from(Task)
             .options(lazyload("*"))
             .join(User, User.id == Task.created_by_id)
-            .outerjoin(assigned_to_alias, assigned_to_alias.id == Task.assigned_to_id)
-            .outerjoin(linked_entities_subq, linked_entities_subq.c.task_id == Task.id)
+            .outerjoin(TaskCategory, Task.category_id == TaskCategory.id)
         )
 
     async def search_by_title(self, search_term: str, limit: int = 20) -> list[Task]:
@@ -228,7 +276,17 @@ class TasksRepository(BaseRepository[Task]):
         Returns:
             List of Task objects matching the search criteria
         """
-        stmt = select(Task).where(Task.title.ilike(f"%{search_term}%")).limit(limit)
+        stmt = (
+            select(Task)
+            .options(
+                joinedload(Task.created_by),
+                joinedload(Task.category),
+                selectinload(Task.assignees).joinedload(TaskAssignee.user),
+                lazyload("*"),
+            )
+            .where(Task.title.ilike(f"%{search_term}%"))
+            .limit(limit)
+        )
         result = await self.session.execute(stmt)
         return list(result.scalars().all())
 
@@ -237,10 +295,14 @@ class TasksRepository(BaseRepository[Task]):
         entity_type: EntityType,
         entity_id: UUID,
     ) -> list[Task]:
-        """Find all tasks linked to a specific entity via link relations."""
         stmt = (
             select(Task)
-            .options(joinedload(Task.created_by), lazyload("*"))
+            .options(
+                joinedload(Task.created_by),
+                joinedload(Task.category),
+                selectinload(Task.assignees).joinedload(TaskAssignee.user),
+                lazyload("*"),
+            )
             .join(
                 LinkRelation,
                 or_(
@@ -262,4 +324,4 @@ class TasksRepository(BaseRepository[Task]):
             )
         )
         result = await self.session.execute(stmt)
-        return list(result.scalars().all())
+        return list(result.unique().scalars().all())

@@ -94,7 +94,6 @@ class LinkRelationsRepository(BaseRepository[LinkRelation]):
         target_type: EntityType,
         target_id: UUID,
     ) -> bool:
-        """Delete a specific link between two entities (in either direction)."""
         # First find the link
         stmt = select(LinkRelation).where(
             (
@@ -117,3 +116,33 @@ class LinkRelationsRepository(BaseRepository[LinkRelation]):
             return False
 
         return await self.delete(link.id)
+
+    async def get_existing_target_ids(
+        self,
+        source_type: EntityType,
+        source_id: UUID,
+        target_type: EntityType,
+        target_ids: list[UUID],
+    ) -> set[UUID]:
+        if not target_ids:
+            return set()
+
+        stmt = select(LinkRelation.target_entity_id).where(
+            (LinkRelation.source_entity_type == source_type)
+            & (LinkRelation.source_entity_id == source_id)
+            & (LinkRelation.target_entity_type == target_type)
+            & (LinkRelation.target_entity_id.in_(target_ids))
+        )
+        result = await self.session.execute(stmt)
+        return set(result.scalars().all())
+
+    async def bulk_create(self, links: list[LinkRelation]) -> list[LinkRelation]:
+        if not links:
+            return []
+
+        for link in links:
+            link.created_by_id = self.auth_info.flow_user_id
+
+        self.session.add_all(links)
+        await self.session.flush(links)
+        return links

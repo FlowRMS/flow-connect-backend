@@ -52,3 +52,21 @@ class InvoiceNotFoundError(ConversionError):
         super().__init__(
             f"Invoice '{invoice_number}' not found for factory {factory_id}"
         )
+
+
+class CreditCreationFailedError(ConversionError):
+    def __init__(self, detail_index: int, reason: str) -> None:
+        self.detail_index = detail_index
+        self.reason = reason
+        super().__init__(
+            f"Failed to create credit for detail at index {detail_index}: {reason}"
+        )
+
+
+class AdjustmentCreationFailedError(ConversionError):
+    def __init__(self, detail_index: int, reason: str) -> None:
+        self.detail_index = detail_index
+        self.reason = reason
+        super().__init__(
+            f"Failed to create adjustment for detail at index {detail_index}: {reason}"
+        )
