@@ -66,6 +66,8 @@ enum AddressSourceTypeEnum {
   FACTORY
   SHIPPING_CARRIER
   FULFILLMENT_ORDER
+  CONTACT
+  COMPANY
 }
 
 enum AddressTypeEnum {
@@ -176,10 +178,44 @@ enum AdjustmentStatus {
   POSTED
 }
 
+enum AliasEntityType {
+  CUSTOMER
+  PRODUCT
+  FACTORY
+}
+
+input AliasInput {
+  entityId: UUID!
+  entityType: AliasEntityType!
+  alias: String!
+  id: UUID = null
+  subType: AliasSubType
+}
+
+enum AliasSubType {
+  END_USER
+  SOLD_TO
+  BILL_TO
+}
+
+type AliasType {
+  id: UUID!
+  entityId: UUID!
+  entityType: AliasEntityType!
+  subType: AliasSubType
+  alias: String!
+  createdAt: datetime!
+}
+
 input AssignItemToBoxInput {
   boxId: UUID!
   lineItemId: UUID!
   quantity: Decimal!
+}
+
+input AssignSidebarToRoleInput {
+  role: RbacRoleEnum!
+  configurationId: UUID!
 }
 
 enum AutoNumberEntityType {
@@ -541,6 +577,10 @@ input CompleteShippingInput {
   pickupCustomerName: String = null
 }
 
+type ConfigurableSidebarResponse {
+  adminHiddenItems: [String!]!
+}
+
 input ContactInput {
   firstName: String!
   lastName: String!
@@ -551,6 +591,7 @@ input ContactInput {
   tags: [String!]
   notes: String
   companyId: UUID
+  externalId: String
 }
 
 type ContactLandingPage implements LandingPageInterfaceBase {
@@ -578,6 +619,7 @@ type ContactLiteResponse {
   territory: String
   tags: [String!]
   notes: String
+  externalId: String
 }
 
 type ContactRelatedEntitiesResponse {
@@ -595,6 +637,7 @@ type ContactResponse {
   territory: String
   tags: [String!]
   notes: String
+  externalId: String
 }
 
 input ContainerTypeInput {
@@ -858,6 +901,12 @@ enum CriteriaOperator {
   NOT_IN
 }
 
+input CustomerFactorySalesRepBulkInput {
+  customerId: UUID!
+  factoryId: UUID!
+  splits: [SalesRepSplitInput!]!
+}
+
 input CustomerFactorySalesRepInput {
   customerId: UUID!
   factoryId: UUID!
@@ -965,6 +1014,26 @@ enum DocumentEntityType {
   COMMISSION_STATEMENTS
 }
 
+type EffectiveSidebarGroupResponse {
+  groupId: SidebarGroupId!
+  order: Int!
+  collapsed: Boolean!
+  items: [EffectiveSidebarItemResponse!]!
+}
+
+type EffectiveSidebarItemResponse {
+  itemId: String!
+  order: Int!
+  enabled: Boolean!
+  isConfigurable: Boolean!
+}
+
+type EffectiveSidebarResponse {
+  groups: [EffectiveSidebarGroupResponse!]!
+  sourceType: String!
+  sourceName: String
+}
+
 enum EmailStatus {
   PENDING
   SENT
@@ -1000,6 +1069,7 @@ enum EntityType {
   SHIPPING_CARRIER
   ORDER_ACKNOWLEDGEMENT
   DELIVERY
+  COMMISSION_STATEMENTS
 }
 
 type EstimateRecipientsResponse {
@@ -1253,11 +1323,9 @@ enum FulfillmentActivityType {
 
 type FulfillmentAssignmentResponse {
   id: UUID!
-  userId: UUID!
   role: FulfillmentAssignmentRole!
   createdAt: datetime!
-  userName: String!
-  userEmail: String!
+  user: UserLiteResponse
 }
 
 enum FulfillmentAssignmentRole {
@@ -1276,9 +1344,8 @@ type FulfillmentDocumentResponse {
   notes: String
   uploadedAt: datetime!
   createdAt: datetime!
-  createdById: UUID!
   fileId: UUID
-  uploadedByName: String!
+  uploadedBy: UserLiteResponse
 }
 
 enum FulfillmentDocumentType {
@@ -1293,6 +1360,24 @@ enum FulfillmentDocumentType {
 enum FulfillmentMethod {
   SHIP
   WILL_CALL
+}
+
+type FulfillmentOrderLineItemLiteResponse {
+  id: UUID!
+  productId: UUID!
+  orderDetailId: UUID
+  orderedQty: Decimal!
+  allocatedQty: Decimal!
+  pickedQty: Decimal!
+  packedQty: Decimal!
+  shippedQty: Decimal!
+  backorderQty: Decimal!
+  fulfilledByManufacturer: Boolean!
+  manufacturerFulfillmentStatus: String
+  linkedShipmentRequestId: UUID
+  shortReason: String
+  notes: String
+  product: FulfillmentProductResponse
 }
 
 type FulfillmentOrderLineItemResponse {
@@ -1310,15 +1395,11 @@ type FulfillmentOrderLineItemResponse {
   linkedShipmentRequestId: UUID
   shortReason: String
   notes: String
-  productName: String!
-  partNumber: String!
-  uom: String!
+  product: FulfillmentProductResponse
   packingBoxItems: [PackingBoxItemResponse!]!
-  factoryId: UUID
-  factoryName: String
 }
 
-type FulfillmentOrderResponse {
+type FulfillmentOrderLiteResponse {
   id: UUID!
   fulfillmentOrderNumber: String!
   orderId: UUID!
@@ -1328,6 +1409,7 @@ type FulfillmentOrderResponse {
   fulfillmentMethod: FulfillmentMethod!
   carrierType: CarrierType
   freightClass: String
+  serviceType: String
   needByDate: Date
   hasBackorderItems: Boolean!
   holdReason: String
@@ -1341,18 +1423,50 @@ type FulfillmentOrderResponse {
   trackingNumbers: [String!]!
   bolNumber: String
   proNumber: String
+  warehouse: WarehouseLiteResponse
+  carrier: ShippingCarrierLiteResponse
+  order: OrderLiteResponse
+  customer: CustomerLiteResponse
+  lineItems: [FulfillmentOrderLineItemLiteResponse!]!
+  assignments: [FulfillmentAssignmentResponse!]!
+}
+
+type FulfillmentOrderResponse {
+  id: UUID!
+  fulfillmentOrderNumber: String!
+  orderId: UUID!
+  warehouseId: UUID!
+  carrierId: UUID
+  status: FulfillmentOrderStatus!
+  fulfillmentMethod: FulfillmentMethod!
+  carrierType: CarrierType
+  freightClass: String
+  serviceType: String
+  needByDate: Date
+  hasBackorderItems: Boolean!
+  holdReason: String
+  releasedAt: datetime
+  pickStartedAt: datetime
+  pickCompletedAt: datetime
+  packCompletedAt: datetime
+  shipConfirmedAt: datetime
+  deliveredAt: datetime
+  createdAt: datetime!
+  trackingNumbers: [String!]!
+  bolNumber: String
+  proNumber: String
+  warehouse: WarehouseLiteResponse
+  carrier: ShippingCarrierLiteResponse
+  order: OrderLiteResponse
+  customer: CustomerLiteResponse
+  lineItems: [FulfillmentOrderLineItemLiteResponse!]!
+  assignments: [FulfillmentAssignmentResponse!]!
   pickupSignature: String
   pickupTimestamp: datetime
   pickupCustomerName: String
   driverName: String
-  warehouseName: String!
-  carrierName: String
-  orderNumber: String!
-  customerName: String!
   shipToAddress: ShipToAddressResponse
-  lineItems: [FulfillmentOrderLineItemResponse!]!
   packingBoxes: [PackingBoxResponse!]!
-  assignments: [FulfillmentAssignmentResponse!]!
   documents: [FulfillmentDocumentResponse!]!
   activities: [FulfillmentActivityResponse!]!
 }
@@ -1369,6 +1483,26 @@ enum FulfillmentOrderStatus {
   BACKORDER_REVIEW
   PARTIAL_SHIPPED
   CANCELLED
+}
+
+type FulfillmentProductResponse {
+  id: UUID!
+  factoryPartNumber: String!
+  unitPrice: Decimal!
+  defaultCommissionRate: Decimal
+  published: Boolean!
+  approvalNeeded: Boolean
+  description: String
+  upc: String
+  defaultDivisor: Decimal
+  minOrderQty: Decimal
+  leadTime: Int
+  unitPriceDiscountRate: Decimal
+  commissionDiscountRate: Decimal
+  approvalDate: Date
+  approvalComments: String
+  tags: [String!]
+  factory: FactoryLiteResponse
 }
 
 type FulfillmentStatsResponse {
@@ -1852,6 +1986,12 @@ type LinkRelationType {
   createdAt: datetime!
 }
 
+input LinkShipmentRequestInput {
+  fulfillmentOrderId: UUID!
+  lineItemIds: [UUID!]!
+  shipmentRequestId: UUID!
+}
+
 type LinkedEntity {
   id: UUID
   title: String
@@ -1898,6 +2038,9 @@ type Mutation {
   createAdjustment(input: AdjustmentInput!): AdjustmentResponse!
   updateAdjustment(input: AdjustmentInput!): AdjustmentResponse!
   deleteAdjustment(id: UUID!): Boolean!
+  createAlias(input: AliasInput!): AliasType!
+  updateAlias(input: AliasInput!): AliasType!
+  deleteAlias(id: UUID!): Boolean!
   updateAutoNumberSettings(inputs: [AutoNumberSettingsInput!]!): [AutoNumberSettingsResponse!]!
   createCampaign(input: CampaignInput!): CampaignResponse!
   updateCampaign(id: UUID!, input: CampaignInput!): CampaignResponse!
@@ -1961,7 +2104,7 @@ type Mutation {
   createOrder(input: OrderInput!): OrderResponse!
   updateOrder(input: OrderInput!): OrderResponse!
   deleteOrder(id: UUID!): Boolean!
-  createOrderFromQuote(quoteId: UUID!, orderNumber: String!, factoryId: UUID!, dueDate: Date = null, quoteDetailIds: [UUID!] = null): OrderResponse!
+  createOrderFromQuote(quoteId: UUID!, orderNumber: String!, factoryId: UUID!, dueDate: Date = null, quoteDetailsInputs: [QuoteDetailToOrderDetailInput!] = null): OrderResponse!
   duplicateOrder(orderId: UUID!, newOrderNumber: String!, newSoldToCustomerId: UUID!): OrderResponse!
   createOrganization(input: OrganizationInput!): OrganizationType! @rolePermissionAccess
   updateOrganization(input: OrganizationInput!): OrganizationType! @rolePermissionAccess
@@ -2001,9 +2144,11 @@ type Mutation {
   createCustomerFactorySalesRep(input: CustomerFactorySalesRepInput!): CustomerFactorySalesRepResponse!
   updateCustomerFactorySalesRep(id: UUID!, input: CustomerFactorySalesRepInput!): CustomerFactorySalesRepResponse!
   deleteCustomerFactorySalesRep(id: UUID!): Boolean!
+  createCustomerFactorySalesReps(input: CustomerFactorySalesRepBulkInput!): [CustomerFactorySalesRepResponse!]!
   createCustomer(input: CustomerInput!): CustomerResponse!
   updateCustomer(id: UUID!, input: CustomerInput!): CustomerResponse!
   deleteCustomer(id: UUID!): Boolean!
+  assignChildCustomers(parentId: UUID!, childIds: [UUID!]!): [CustomerLiteResponse!]!
   createFactory(input: FactoryInput!): FactoryResponse!
   updateFactory(id: UUID!, input: FactoryInput!): FactoryResponse!
   deleteFactory(id: UUID!): Boolean!
@@ -2032,6 +2177,7 @@ type Mutation {
   markManufacturerFulfilled(input: MarkManufacturerFulfilledInput!): FulfillmentOrderResponse!
   splitFulfillmentLineItem(input: SplitLineItemInput!): FulfillmentOrderLineItemResponse!
   cancelBackorderItems(input: CancelBackorderInput!): FulfillmentOrderResponse!
+  linkShipmentRequest(input: LinkShipmentRequestInput!): FulfillmentOrderResponse!
   resolveBackorder(fulfillmentOrderId: UUID!): FulfillmentOrderResponse!
   addDocument(input: AddDocumentInput!): FulfillmentDocumentResponse!
   uploadDocument(input: UploadDocumentInput!): FulfillmentDocumentResponse!
@@ -2107,6 +2253,11 @@ type Mutation {
   deleteFolder(folderId: UUID!): Boolean!
   updateRbacGrid(rbacGrid: [RbacGridInput!]!): [RbacGridResponse!]! @rolePermissionAccess
   updateCommissionVisibility(input: UpdateCommissionVisibilityInput!): RbacRoleSettingResponse! @rolePermissionAccess
+  saveSidebarConfiguration(input: SaveSidebarConfigurationInput!): SidebarConfigurationResponse!
+  deleteSidebarConfiguration(id: UUID!): Boolean!
+  assignSidebarConfigurationToRole(input: AssignSidebarToRoleInput!): RoleSidebarAssignmentResponse!
+  removeRoleSidebarAssignment(role: RbacRoleEnum!): Boolean!
+  setActiveSidebarConfiguration(configurationId: UUID): Boolean!
 }
 
 input NoteConversationInput {
@@ -2218,6 +2369,34 @@ type O365ConnectionStatusType {
   microsoftEmail: String
   expiresAt: datetime
   lastUsedAt: datetime
+}
+
+type O365ContactEmailType {
+  address: String!
+  name: String
+}
+
+type O365ContactType {
+  id: String!
+  displayName: String!
+  givenName: String
+  surname: String
+  emailAddresses: [O365ContactEmailType!]
+  businessPhones: [String!]
+  mobilePhone: String
+  homePhones: [String!]
+  jobTitle: String
+  companyName: String
+  department: String
+  businessAddressCity: String
+  businessAddressState: String
+  businessAddressCountry: String
+}
+
+type O365ContactsResultType {
+  success: Boolean!
+  contacts: [O365ContactType!]
+  error: String
 }
 
 input O365SendEmailInput {
@@ -3051,6 +3230,9 @@ type Query {
   addressesBySourceId(sourceId: UUID!): [AddressResponse!]!
   adjustment(id: UUID!): AdjustmentResponse!
   adjustmentSearch(searchTerm: String!, limit: Int! = 20, openOnly: Boolean! = false, unlockedOnly: Boolean! = false): [AdjustmentLiteResponse!]!
+  alias(id: UUID!): AliasType!
+  aliasesByEntity(entityId: UUID!, entityType: AliasEntityType!, subType: AliasSubType = null): [AliasType!]!
+  aliasSearch(searchTerm: String!, entityType: AliasEntityType = null, subType: AliasSubType = null, limit: Int! = 20): [AliasType!]!
   autoNumberSettings: [AutoNumberSettingsResponse!]!
   autoNumberSetting(entityType: AutoNumberEntityType!): AutoNumberSettingsResponse
   campaign(id: UUID!): CampaignResponse!
@@ -3083,6 +3265,7 @@ type Query {
   o365ConnectionStatus: O365ConnectionStatusType!
   o365CalendarEvents(top: Int! = 50, skip: Int! = 0): O365CalendarEventsResultType!
   o365CalendarEventsInRange(startDate: datetime!, endDate: datetime!, top: Int! = 100): O365CalendarEventsResultType!
+  o365Contacts(top: Int! = 50, skip: Int! = 0, search: String = null): O365ContactsResultType!
   invoice(id: UUID!): InvoiceResponse!
   invoiceSearch(searchTerm: String!, limit: Int! = 20, openOnly: Boolean! = false, unlockedOnly: Boolean! = false): [InvoiceLiteResponse!]!
   searchOpenInvoices(factoryId: UUID!, startFrom: Date = null, limit: Int = null): [InvoiceLiteCheckResponse!]!
@@ -3142,10 +3325,10 @@ type Query {
   customerBuyingGroupMembers(buyingGroupId: UUID!): [CustomerLiteResponse!]!
   factory(id: UUID!): FactoryResponse!
   factorySearch(searchTerm: String!, published: Boolean! = true, limit: Int! = 20, useCustomOrder: Boolean! = false): [FactoryResponse!]!
-  fulfillmentOrders(warehouseId: UUID = null, status: [FulfillmentOrderStatus!] = null, search: String = null, limit: Int! = 50, offset: Int! = 0): [FulfillmentOrderResponse!]!
+  fulfillmentOrders(warehouseId: UUID = null, status: [FulfillmentOrderStatus!] = null, search: String = null, limit: Int! = 50, offset: Int! = 0): [FulfillmentOrderLiteResponse!]!
   fulfillmentOrder(id: UUID!): FulfillmentOrderResponse
   fulfillmentStats(warehouseId: UUID = null): FulfillmentStatsResponse!
-  backorderItems(fulfillmentOrderId: UUID!): [FulfillmentOrderLineItemResponse!]!
+  backorderItems(fulfillmentOrderId: UUID!): [FulfillmentOrderLineItemLiteResponse!]!
   inventoryStatuses: [InventoryStatusOption!]!
   inventories(warehouseId: UUID!, factoryId: UUID = null, status: String = null, search: String = null, limit: Int! = 100, offset: Int! = 0): [InventoryResponse!]!
   inventoryStats(warehouseId: UUID!): InventoryStatsResponse!
@@ -3206,6 +3389,11 @@ type Query {
   getRbacGrid: [RbacGridResponse!]! @rolePermissionAccess
   getUserRbac(resource: RbacResourceEnum!): UserRbac!
   getRoleSettings: [RbacRoleSettingResponse!]! @rolePermissionAccess
+  adminSidebarConfigurations: [SidebarConfigurationResponse!]!
+  userSidebarConfigurations: [SidebarConfigurationResponse!]!
+  roleSidebarAssignments: [RoleSidebarAssignmentResponse!]!
+  effectiveSidebar: EffectiveSidebarResponse!
+  configurableSidebar: ConfigurableSidebarResponse!
 }
 
 type QuoteBalanceResponse {
@@ -3280,6 +3468,12 @@ enum QuoteDetailStatus {
   ORDERED
   EXPIRED
   LOST
+}
+
+input QuoteDetailToOrderDetailInput {
+  quantity: Decimal!
+  unitPrice: Decimal!
+  quoteDetailId: UUID!
 }
 
 input QuoteInput {
@@ -3536,10 +3730,30 @@ enum RepTypeEnum {
   INSIDE
 }
 
+type RoleSidebarAssignmentResponse {
+  role: RbacRoleEnum!
+  configuration: SidebarConfigurationResponse!
+  assignedAt: datetime!
+}
+
+input SalesRepSplitInput {
+  userId: UUID!
+  rate: Decimal!
+  position: Int! = 0
+}
+
 type SalesRepSummary {
   fullName: String!
   total: Decimal!
   avgSplitRate: Decimal!
+}
+
+input SaveSidebarConfigurationInput {
+  name: String!
+  isAdminConfig: Boolean!
+  groups: [SidebarGroupInput!]!
+  id: UUID = null
+  isDefault: Boolean = null
 }
 
 type SearchResult {
@@ -3663,6 +3877,15 @@ input ShippingCarrierInput {
   internalNotes: String = null
 }
 
+type ShippingCarrierLiteResponse {
+  id: UUID!
+  name: String!
+  carrierType: CarrierType
+  code: String
+  isActive: Boolean
+  createdAt: datetime!
+}
+
 type ShippingCarrierResponse {
   id: UUID!
   name: String!
@@ -3685,6 +3908,55 @@ type ShippingCarrierResponse {
   pickupLocation: String
   remarks: String
   internalNotes: String
+}
+
+type SidebarConfigurationResponse {
+  id: UUID!
+  name: String!
+  ownerType: String!
+  isDefault: Boolean!
+  createdAt: datetime!
+  updatedAt: datetime!
+  groups: [SidebarGroupResponse!]!
+}
+
+enum SidebarGroupId {
+  CRM
+  FLOW_AI
+  EMAIL
+  QUOTES
+  FINANCIAL
+  WAREHOUSE
+  ANALYTICS
+  FOUNDATIONAL
+  ADMIN
+  PREVIEW
+}
+
+input SidebarGroupInput {
+  groupId: SidebarGroupId!
+  order: Int!
+  collapsed: Boolean!
+  items: [SidebarItemInput!]!
+}
+
+type SidebarGroupResponse {
+  groupId: SidebarGroupId!
+  order: Int!
+  collapsed: Boolean!
+  items: [SidebarItemResponse!]!
+}
+
+input SidebarItemInput {
+  itemId: String!
+  order: Int!
+  enabled: Boolean!
+}
+
+type SidebarItemResponse {
+  itemId: String!
+  order: Int!
+  enabled: Boolean!
 }
 
 enum SourceType {
@@ -4074,6 +4346,7 @@ input UpdateFulfillmentOrderInput {
   carrierId: UUID
   carrierType: CarrierType
   freightClass: String
+  serviceType: String
   shipToAddress: AddressInput
   shipToName: String
   shipToPhone: String
@@ -4162,6 +4435,12 @@ input UserInput {
   visible: Boolean = true
 }
 
+type UserLiteResponse {
+  id: UUID!
+  fullName: String!
+  email: String!
+}
+
 type UserRbac {
   privileges: [Privilege!]!
   commission: Boolean!
@@ -4189,6 +4468,17 @@ input WarehouseInput {
   longitude: Decimal = null
   description: String = null
   isActive: Boolean! = true
+}
+
+type WarehouseLiteResponse {
+  id: UUID!
+  name: String!
+  status: String!
+  latitude: Decimal
+  longitude: Decimal
+  description: String
+  isActive: Boolean
+  createdAt: datetime!
 }
 
 input WarehouseLocationInput {

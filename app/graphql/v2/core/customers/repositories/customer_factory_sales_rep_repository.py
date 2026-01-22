@@ -3,7 +3,7 @@ from uuid import UUID
 from commons.db.v6.core.customers.customer_factory_sales_rep import (
     CustomerFactorySalesRep,
 )
-from sqlalchemy import select
+from sqlalchemy import delete, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import joinedload
 
@@ -26,10 +26,6 @@ class CustomerFactorySalesRepRepository(BaseRepository[CustomerFactorySalesRep])
     ) -> list[CustomerFactorySalesRep]:
         stmt = (
             select(CustomerFactorySalesRep)
-            # .where(
-            #     CustomerFactorySalesRep.customer_id == customer_id,
-            #     CustomerFactorySalesRep.factory_id == factory_id,
-            # )
             .options(
                 joinedload(CustomerFactorySalesRep.customer),
                 joinedload(CustomerFactorySalesRep.factory),
@@ -43,6 +39,18 @@ class CustomerFactorySalesRepRepository(BaseRepository[CustomerFactorySalesRep])
             stmt = stmt.where(CustomerFactorySalesRep.factory_id == factory_id)
         result = await self.session.execute(stmt)
         return list(result.unique().scalars().all())
+
+    async def delete_by_customer_and_factory(
+        self,
+        customer_id: UUID,
+        factory_id: UUID,
+    ) -> None:
+        stmt = delete(CustomerFactorySalesRep).where(
+            CustomerFactorySalesRep.customer_id == customer_id,
+            CustomerFactorySalesRep.factory_id == factory_id,
+        )
+        _ = await self.session.execute(stmt)
+        await self.session.flush()
 
     async def get_by_id_with_relations(
         self,

@@ -1077,7 +1077,7 @@ async def run_migration(config: MigrationConfig) -> dict[str, int]:
         results["contacts"] = await migrate_contacts(source, dest)
         results["contact_links"] = await migrate_contact_links(source, dest)
         results["notes"] = await migrate_notes(source, dest)
-        # results["tasks"] = await migrate_tasks(source, dest)
+        results["tasks"] = await migrate_tasks(source, dest)
         results["link_relations"] = await migrate_link_relations(source, dest)
         results["file_entity_links"] = await migrate_file_entity_links(source, dest)
         results["companies"] = await migrate_companies(source, dest)

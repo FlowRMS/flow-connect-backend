@@ -10,6 +10,7 @@ from commons.db.v6.fulfillment import (
     FulfillmentOrder,
     FulfillmentOrderStatus,
 )
+from strawberry import UNSET
 
 from app.errors.common_errors import NotFoundError
 from app.graphql.addresses.services.address_service import AddressService
@@ -107,6 +108,9 @@ class FulfillmentOrderService:
         order.freight_class = input.optional_field(
             input.freight_class, order.freight_class
         )
+        order.service_type = input.optional_field(
+            input.service_type, order.service_type
+        )
         order.need_by_date = input.optional_field(
             input.need_by_date, order.need_by_date
         )
@@ -118,7 +122,8 @@ class FulfillmentOrderService:
             input.ship_to_phone, order.ship_to_phone
         )
 
-        await self._update_ship_to_address(order, input.ship_to_address)
+        if input.ship_to_address is not UNSET:
+            await self._update_ship_to_address(order, input.ship_to_address)
 
         return await self.repository.update(order)
 

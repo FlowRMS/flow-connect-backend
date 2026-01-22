@@ -37,12 +37,10 @@ class AdminUserService:
             self.settings.pg_url.unicode_string().rsplit("/", 1)[0] + f"/{tenant.url}"
         )
 
-    async def _get_workos_org_id_for_tenant(self, tenant: Tenant) -> str | None:
-        orgs = await self.workos_service.client.organizations.list_organizations()
-        for org in orgs.data:
-            if org.name == tenant.name:
-                return org.id
-        return None
+    async def _get_workos_org_id_for_tenant(self, tenant: Tenant):
+        return await self.workos_service.client.organizations.get_organization_by_external_id(
+            str(tenant.id)
+        )
 
     async def _query_users_from_tenant(
         self,
@@ -132,8 +130,8 @@ class AdminUserService:
         if await self._check_user_exists_by_email(tenant, input.email):
             raise ValueError(f"User with email {input.email} already exists")
 
-        workos_org_id = await self._get_workos_org_id_for_tenant(tenant)
-        if not workos_org_id:
+        workos_org = await self._get_workos_org_id_for_tenant(tenant)
+        if not workos_org:
             raise ValueError(f"WorkOS organization not found for tenant {tenant.name}")
 
         username = input.username or input.email
@@ -141,7 +139,7 @@ class AdminUserService:
         auth_user = await self.workos_service.create_user(
             AuthUserInput(
                 email=input.email,
-                tenant_id=workos_org_id,
+                tenant_id=workos_org.id,
                 role=input.role,
                 external_id=uuid.uuid4(),
                 first_name=input.first_name,

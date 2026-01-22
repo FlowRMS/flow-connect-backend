@@ -20,6 +20,7 @@ class ContactLiteResponse(DTOMixin[Contact]):
     territory: str | None
     tags: list[str] | None
     notes: str | None
+    external_id: str | None
 
     @classmethod
     def from_orm_model(cls, model: Contact) -> Self:
@@ -34,6 +35,7 @@ class ContactLiteResponse(DTOMixin[Contact]):
             territory=model.territory,
             tags=model.tags,
             notes=model.notes,
+            external_id=model.external_id,
         )
 
 

@@ -11,10 +11,16 @@ from app.graphql.integrations.o365_types import (
     O365CalendarEventsResultType,
     O365CalendarEventType,
     O365ConnectionStatusType,
+    O365ContactEmailType,
+    O365ContactsResultType,
+    O365ContactType,
 )
 from app.integrations.microsoft_o365.services.o365_auth_service import O365AuthService
 from app.integrations.microsoft_o365.services.o365_calendar_service import (
     O365CalendarService,
+)
+from app.integrations.microsoft_o365.services.o365_contacts_service import (
+    O365ContactsService,
 )
 
 
@@ -170,3 +176,55 @@ class O365Queries:
         ]
 
         return O365CalendarEventsResultType(success=True, events=events)
+
+    @strawberry.field
+    @inject
+    async def o365_contacts(
+        self,
+        service: Injected[O365ContactsService],
+        top: int = 50,
+        skip: int = 0,
+        search: str | None = None,
+    ) -> O365ContactsResultType:
+        """
+        Get contacts from Microsoft 365.
+
+        Args:
+            top: Maximum number of contacts to return (default 50)
+            skip: Number of contacts to skip for pagination
+            search: Optional search query to filter contacts by name
+
+        Returns:
+            O365ContactsResultType with contacts or error
+        """
+        result = await service.get_contacts(top=top, skip=skip, search=search)
+
+        if not result.success:
+            return O365ContactsResultType(success=False, error=result.error)
+
+        contacts = [
+            O365ContactType(
+                id=c.id,
+                display_name=c.display_name,
+                given_name=c.given_name,
+                surname=c.surname,
+                email_addresses=[
+                    O365ContactEmailType(address=e.address, name=e.name)
+                    for e in c.email_addresses
+                ]
+                if c.email_addresses
+                else None,
+                business_phones=c.business_phones,
+                mobile_phone=c.mobile_phone,
+                home_phones=c.home_phones,
+                job_title=c.job_title,
+                company_name=c.company_name,
+                department=c.department,
+                business_address_city=c.business_address_city,
+                business_address_state=c.business_address_state,
+                business_address_country=c.business_address_country,
+            )
+            for c in (result.contacts or [])
+        ]
+
+        return O365ContactsResultType(success=True, contacts=contacts)
