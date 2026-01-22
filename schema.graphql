@@ -3207,6 +3207,7 @@ type ProductResponse {
   tags: [String!]
   factory: FactoryLiteResponse!
   category: ProductCategoryResponse
+  uom: ProductUomResponse
 }
 
 input ProductUomInput {
