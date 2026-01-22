@@ -1,10 +1,16 @@
 from typing import Any
 from uuid import UUID
 
-from commons.db.v6.fulfillment import FulfillmentOrder, FulfillmentOrderStatus
+from commons.db.v6.commission.orders.order import Order
+from commons.db.v6.core import Product
+from commons.db.v6.fulfillment import (
+    FulfillmentOrder,
+    FulfillmentOrderLineItem,
+    FulfillmentOrderStatus,
+)
 from sqlalchemy import Select, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.orm import selectinload
+from sqlalchemy.orm import joinedload, selectinload
 
 from app.core.context_wrapper import ContextWrapper
 from app.graphql.base_repository import BaseRepository
@@ -18,20 +24,38 @@ class FulfillmentOrderRepository(BaseRepository[FulfillmentOrder]):
     ) -> None:
         super().__init__(session, context_wrapper, FulfillmentOrder)
 
-    async def get_with_relations(self, order_id: UUID) -> FulfillmentOrder | None:
-        stmt = (
-            select(FulfillmentOrder)
-            .options(
-                selectinload(FulfillmentOrder.warehouse),
-                selectinload(FulfillmentOrder.carrier),
-                selectinload(FulfillmentOrder.line_items),
-                selectinload(FulfillmentOrder.packing_boxes),
-                selectinload(FulfillmentOrder.assignments),
-                selectinload(FulfillmentOrder.activities),
-                selectinload(FulfillmentOrder.documents),
-            )
-            .where(FulfillmentOrder.id == order_id)
+    @property
+    def base_query(self) -> Select[tuple[FulfillmentOrder]]:
+        """Base query with comprehensive eager loading for detail views."""
+        return select(FulfillmentOrder).options(
+            joinedload(FulfillmentOrder.warehouse),
+            joinedload(FulfillmentOrder.carrier),
+            joinedload(FulfillmentOrder.ship_to_address),
+            joinedload(FulfillmentOrder.order).joinedload(Order.sold_to_customer),
+            selectinload(FulfillmentOrder.line_items).options(
+                joinedload(FulfillmentOrderLineItem.product).options(
+                    joinedload(Product.uom),
+                    joinedload(Product.factory),
+                ),
+                joinedload(FulfillmentOrderLineItem.order_detail),
+            ),
+            selectinload(FulfillmentOrder.packing_boxes),
+            selectinload(FulfillmentOrder.assignments),
+            selectinload(FulfillmentOrder.activities),
+            selectinload(FulfillmentOrder.documents),
         )
+
+    @property
+    def list_query(self) -> Select[tuple[FulfillmentOrder]]:
+        """Lighter query for list endpoints - no nested collections."""
+        return select(FulfillmentOrder).options(
+            joinedload(FulfillmentOrder.warehouse),
+            joinedload(FulfillmentOrder.carrier),
+            joinedload(FulfillmentOrder.order).joinedload(Order.sold_to_customer),
+        )
+
+    async def get_with_relations(self, order_id: UUID) -> FulfillmentOrder | None:
+        stmt = self.base_query.where(FulfillmentOrder.id == order_id)
         result = await self.session.execute(stmt)
         return result.unique().scalar_one_or_none()
 
@@ -43,11 +67,7 @@ class FulfillmentOrderRepository(BaseRepository[FulfillmentOrder]):
         limit: int = 50,
         offset: int = 0,
     ) -> list[FulfillmentOrder]:
-        stmt = select(FulfillmentOrder).options(
-            selectinload(FulfillmentOrder.warehouse),
-            selectinload(FulfillmentOrder.line_items),
-            selectinload(FulfillmentOrder.documents),
-        )
+        stmt = self.list_query
 
         if warehouse_id:
             stmt = stmt.where(FulfillmentOrder.warehouse_id == warehouse_id)

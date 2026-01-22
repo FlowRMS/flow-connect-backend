@@ -4,7 +4,7 @@ import logging
 from decimal import Decimal
 from uuid import UUID
 
-from commons.db.v6 import WarehouseLocation, WarehouseStructureCode
+from commons.db.v6 import WarehouseLocation
 from commons.db.v6.warehouse.inventory.inventory_item import InventoryItem
 from sqlalchemy import select
 
@@ -210,7 +210,7 @@ class WarehouseLocationBulkService:
                 existing = existing_by_id[loc.id]
                 existing.warehouse_id = warehouse_id
                 existing.parent_id = parent_id
-                existing.level = WarehouseStructureCode(loc.level.value)
+                existing.level = loc.level
                 existing.name = loc.name
                 existing.code = loc.code
                 existing.description = loc.description
@@ -252,7 +252,7 @@ class WarehouseLocationBulkService:
         return WarehouseLocation(
             warehouse_id=warehouse_id,
             parent_id=parent_id,
-            level=WarehouseStructureCode(inp.level.value),
+            level=inp.level,
             name=inp.name,
             code=inp.code,
             description=inp.description,

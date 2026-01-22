@@ -1,22 +1,21 @@
 """Strawberry response types for warehouses."""
 
 from datetime import datetime
-from decimal import Decimal
 from typing import Self
 from uuid import UUID
 
 import strawberry
 from commons.db.v6 import (
-    Warehouse,
     WarehouseMember,
     WarehouseSettings,
     WarehouseStructure,
 )
+from commons.db.v6.warehouse.warehouse_member_role import WarehouseMemberRole
+from commons.db.v6.warehouse.warehouse_structure_code import WarehouseStructureCode
 
 from app.core.db.adapters.dto import DTOMixin
-from app.graphql.v2.core.warehouses.strawberry.warehouse_input import (
-    WarehouseMemberRole,
-    WarehouseStructureCode,
+from app.graphql.v2.core.warehouses.strawberry.warehouse_lite_response import (
+    WarehouseLiteResponse,
 )
 
 
@@ -36,7 +35,7 @@ class WarehouseStructureResponse(DTOMixin[WarehouseStructure]):
             _instance=model,
             id=model.id,
             warehouse_id=model.warehouse_id,
-            code=WarehouseStructureCode(model.code.value),
+            code=model.code,
             level_order=model.level_order,
         )
 
@@ -84,42 +83,18 @@ class WarehouseMemberResponse(DTOMixin[WarehouseMember]):
             id=model.id,
             warehouse_id=model.warehouse_id,
             user_id=model.user_id,
-            role=WarehouseMemberRole(model.role.value),
+            role=model.role,
             created_at=model.created_at,
         )
 
 
 @strawberry.type
-class WarehouseResponse(DTOMixin[Warehouse]):
-    """Response type for warehouses.
+class WarehouseResponse(WarehouseLiteResponse):
+    """Full response for warehouses - extends Lite with collections.
 
     Note: Address information is managed separately via the Address model
     using source_id = warehouse.id and source_type = FACTORY.
     """
-
-    _instance: strawberry.Private[Warehouse]
-    id: UUID
-    name: str
-    status: str
-    latitude: Decimal | None
-    longitude: Decimal | None
-    description: str | None
-    is_active: bool | None
-    created_at: datetime
-
-    @classmethod
-    def from_orm_model(cls, model: Warehouse) -> Self:
-        return cls(
-            _instance=model,
-            id=model.id,
-            name=model.name,
-            status=model.status,
-            latitude=model.latitude,
-            longitude=model.longitude,
-            description=model.description,
-            is_active=model.is_active,
-            created_at=model.created_at,
-        )
 
     @strawberry.field
     def members(self) -> list[WarehouseMemberResponse]:

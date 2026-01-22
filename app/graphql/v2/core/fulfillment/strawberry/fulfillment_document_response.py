@@ -3,9 +3,11 @@ from typing import Self
 from uuid import UUID
 
 import strawberry
-from commons.db.v6.fulfillment import FulfillmentDocument, FulfillmentDocumentType
+from commons.db.v6.fulfillment import FulfillmentDocument
+from commons.db.v6.fulfillment.enums import FulfillmentDocumentType
 
 from app.core.db.adapters.dto import DTOMixin
+from app.graphql.v2.core.users.strawberry import UserLiteResponse
 
 
 @strawberry.type
@@ -20,7 +22,6 @@ class FulfillmentDocumentResponse(DTOMixin[FulfillmentDocument]):
     notes: str | None
     uploaded_at: datetime
     created_at: datetime
-    created_by_id: UUID
     file_id: UUID | None
 
     @classmethod
@@ -36,11 +37,12 @@ class FulfillmentDocumentResponse(DTOMixin[FulfillmentDocument]):
             notes=model.notes,
             uploaded_at=model.uploaded_at,
             created_at=model.created_at,
-            created_by_id=model.created_by_id,
             file_id=model.file_id,
         )
 
     @strawberry.field
-    async def uploaded_by_name(self) -> str:
-        user = await self._instance.awaitable_attrs.uploaded_by_user
-        return user.full_name if user else ""
+    def uploaded_by(self) -> UserLiteResponse | None:
+        """Get uploaded by user - relationship is eager-loaded."""
+        if self._instance.uploaded_by_user:
+            return UserLiteResponse.from_orm_model(self._instance.uploaded_by_user)
+        return None
