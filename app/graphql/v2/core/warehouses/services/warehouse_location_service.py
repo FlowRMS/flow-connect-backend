@@ -63,9 +63,7 @@ class WarehouseLocationService:
         if not existing:
             raise NotFoundError(f"Location with id {location_id} not found")
         if input.parent_id != existing.parent_id:
-            await self._validate_hierarchy(
-                WarehouseStructureCode(input.level.value), input.parent_id
-            )
+            await self._validate_hierarchy(input.level, input.parent_id)
 
         location = self._build_location(input, input.warehouse_id, input.parent_id)
         location.id = location_id

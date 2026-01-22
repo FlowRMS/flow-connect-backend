@@ -3,7 +3,7 @@ from uuid import UUID
 
 import strawberry
 from aioinject import Injected
-from commons.db.v6.fulfillment import FulfillmentAssignmentRole
+from commons.db.v6.fulfillment.enums import FulfillmentAssignmentRole
 
 from app.graphql.inject import inject
 from app.graphql.v2.core.fulfillment.services import (
@@ -26,6 +26,7 @@ from app.graphql.v2.core.fulfillment.strawberry import (
     FulfillmentDocumentResponse,
     FulfillmentOrderLineItemResponse,
     FulfillmentOrderResponse,
+    LinkShipmentRequestInput,
     MarkManufacturerFulfilledInput,
     PackingBoxResponse,
     SplitLineItemInput,
@@ -337,6 +338,21 @@ class FulfillmentMutations:
             input.fulfillment_order_id,
             input.line_item_ids,
             input.reason,
+        )
+        return FulfillmentOrderResponse.from_orm_model(order)
+
+    @strawberry.mutation
+    @inject
+    async def link_shipment_request(
+        self,
+        input: LinkShipmentRequestInput,
+        service: Injected[FulfillmentBackorderService],
+    ) -> FulfillmentOrderResponse:
+        """Link line items to a shipment request for inventory replenishment."""
+        order = await service.link_shipment_request(
+            input.fulfillment_order_id,
+            input.line_item_ids,
+            input.shipment_request_id,
         )
         return FulfillmentOrderResponse.from_orm_model(order)
 

@@ -259,7 +259,7 @@ async def migrate_activity_journals(
         logger.warning(f"Unmapped users ({len(unmapped_users)}): {sorted(unmapped_users)[:10]}...")
 
     if dry_run:
-        logger.info(f"[DRY RUN] Would insert:")
+        logger.info("[DRY RUN] Would insert:")
         logger.info(f"  - {len(task_records)} tasks")
         logger.info(f"  - {len(note_records)} notes")
         logger.info(f"  - {len(contact_records)} contacts")
