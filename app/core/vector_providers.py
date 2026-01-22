@@ -1,16 +1,17 @@
 from collections.abc import Iterable
 from typing import Any
+
 import aiohttp
 import aioinject
-
 from commons.utils.pdf_extractor.pdf import PDFExtractor
 from commons.vector.vector_embedding_service import VectorEmbeddingService
 from commons.vector.vector_service import VectorService
 from qdrant_client.models import (
     PayloadSchemaType,
 )
+
 from app.core.config.vector_settings import VectorSettings
-from app.graphql.v2.files.repositories.vector_repository import COLLECTION_NAME, VectorRepository
+from app.graphql.v2.files.repositories.vector_repository import COLLECTION_NAME
 
 indexes = [
     ("tenant_id", PayloadSchemaType.KEYWORD),
@@ -33,13 +34,13 @@ def create_vector_embedding_service(settings: VectorSettings) -> VectorEmbedding
     service = VectorEmbeddingService(settings.voyage_api_key)
     return service
 
-def create_pdf_extractor(aiohttp_session: aiohttp.ClientSession) -> PDFExtractor:
-    return PDFExtractor(aiohttp_session=aiohttp_session)
+
+def create_pdf_extractor(http_client: aiohttp.ClientSession) -> PDFExtractor:
+    return PDFExtractor(http_client=http_client)
 
 
-providers: Iterable[aioinject.Provider[Any]] = [
+vector_providers: Iterable[aioinject.Provider[Any]] = [
     aioinject.Singleton(create_vector_service),
     aioinject.Singleton(create_vector_embedding_service),
-    aioinject.Scoped(VectorRepository),
-    aioinject.Scoped(PDFExtractor),
+    aioinject.Scoped(create_pdf_extractor),
 ]

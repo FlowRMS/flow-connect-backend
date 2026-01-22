@@ -19,6 +19,7 @@ from app.core.context_wrapper import create_context_wrapper
 from app.core.db import db_provider
 from app.core.dto_providers import providers as dto_providers
 from app.core.processors.executor import ProcessorExecutor
+from app.core.vector_providers import vector_providers
 from app.graphql.common.services.bulk_delete_registry_factory import (
     create_bulk_delete_registry,
 )
@@ -41,6 +42,7 @@ from app.workers.document_execution.executor_service import DocumentExecutorServ
 
 modules: Iterable[Iterable[aioinject.Provider[Any]]] = [
     auth_provider.providers,
+    vector_providers,
     db_provider.providers,
     s3_provider.providers,
     converter_providers,

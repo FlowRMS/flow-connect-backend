@@ -99,7 +99,7 @@ class FileService:
         folder_id: UUID | None = None,
         folder_path: str | None = None,
     ) -> File:
-        content:bytes = await file_upload.read()
+        content: bytes = await file_upload.read()
         upload_result = await self.upload_service.upload_file(
             file_content=content,
             file_name=file_name,
@@ -140,7 +140,10 @@ class FileService:
 
     async def vectorize_file(self, file_bytes: bytes, file: File) -> None:
         if file.file_type == FileType.PDF:
-            page_contents: list[str] = await self.pdf_extractor.extract_text_from_bytes(file_bytes)
+            page_contents: list[str] = self.pdf_extractor.extract_text_from_bytes(
+                file_bytes
+            )
+
             async def insert_page(idx: int, page_content: str):
                 await self.vector_repository.insert_document(
                     file.id,
@@ -148,12 +151,14 @@ class FileService:
                     page_content,
                     page_number=idx + 1,
                 )
+
             batch_size = 5
             for start in range(0, len(page_contents), batch_size):
-                batch = page_contents[start:start + batch_size]
-                batch_tasks = [insert_page(i + start, content) for i, content in enumerate(batch)]
+                batch = page_contents[start : start + batch_size]
+                batch_tasks = [
+                    insert_page(i + start, content) for i, content in enumerate(batch)
+                ]
                 _ = await gather(*batch_tasks)
-            
 
     async def archive_file(self, file_id: UUID) -> bool:
         return await self.repository.archive(file_id)
