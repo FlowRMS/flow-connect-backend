@@ -45,7 +45,7 @@ async def upload_file(
     if not path.exists():
         raise FileNotFoundError(f"File not found: {file_path}")
 
-    token = await generate_token(tenant=tenant, env=env, role=role)
+    token = await generate_token(tenant_name=tenant, env=env, role=role)
 
     file_name = custom_file_name or path.name
 
@@ -160,4 +160,7 @@ def main() -> None:
 
 
 if __name__ == "__main__":
+    import dotenv
+    _ = dotenv.load_dotenv()
     main()
+# python scripts/upload_file.py --file_path /path/to/document.pdf --tenant demosupport --env staging
