@@ -3,11 +3,12 @@ from typing import Self
 from uuid import UUID
 
 import strawberry
-from aioinject import Injected
-from commons.db.v6.crm.links.entity_type import EntityType
 from commons.db.v6.crm.tasks.task_model import Task
 from commons.db.v6.crm.tasks.task_priority import TaskPriority
 from commons.db.v6.crm.tasks.task_status import TaskStatus
+
+from aioinject import Injected
+from commons.db.v6.crm.links.entity_type import EntityType
 
 from app.core.db.adapters.dto import DTOMixin
 from app.graphql.inject import inject
