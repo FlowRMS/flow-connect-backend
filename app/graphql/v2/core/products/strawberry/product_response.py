@@ -13,6 +13,9 @@ from app.graphql.v2.core.factories.strawberry.factory_response import (
 from app.graphql.v2.core.products.strawberry.product_category_response import (
     ProductCategoryResponse,
 )
+from app.graphql.v2.core.products.strawberry.product_uom_response import (
+    ProductUomResponse,
+)
 
 
 @strawberry.type
@@ -67,3 +70,7 @@ class ProductResponse(ProductLiteResponse):
     @strawberry.field
     def category(self) -> ProductCategoryResponse | None:
         return ProductCategoryResponse.from_orm_model_optional(self._instance.category)
+
+    @strawberry.field
+    def uom(self) -> ProductUomResponse | None:
+        return ProductUomResponse.from_orm_model_optional(self._instance.uom)
