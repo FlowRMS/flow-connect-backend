@@ -1377,7 +1377,7 @@ type FulfillmentOrderLineItemLiteResponse {
   linkedShipmentRequestId: UUID
   shortReason: String
   notes: String
-  product: ProductLiteResponse
+  product: FulfillmentProductResponse
 }
 
 type FulfillmentOrderLineItemResponse {
@@ -1395,7 +1395,7 @@ type FulfillmentOrderLineItemResponse {
   linkedShipmentRequestId: UUID
   shortReason: String
   notes: String
-  product: ProductLiteResponse
+  product: FulfillmentProductResponse
   packingBoxItems: [PackingBoxItemResponse!]!
 }
 
@@ -1483,6 +1483,26 @@ enum FulfillmentOrderStatus {
   BACKORDER_REVIEW
   PARTIAL_SHIPPED
   CANCELLED
+}
+
+type FulfillmentProductResponse {
+  id: UUID!
+  factoryPartNumber: String!
+  unitPrice: Decimal!
+  defaultCommissionRate: Decimal
+  published: Boolean!
+  approvalNeeded: Boolean
+  description: String
+  upc: String
+  defaultDivisor: Decimal
+  minOrderQty: Decimal
+  leadTime: Int
+  unitPriceDiscountRate: Decimal
+  commissionDiscountRate: Decimal
+  approvalDate: Date
+  approvalComments: String
+  tags: [String!]
+  factory: FactoryLiteResponse
 }
 
 type FulfillmentStatsResponse {
@@ -3151,8 +3171,6 @@ type ProductLiteResponse {
   approvalDate: Date
   approvalComments: String
   tags: [String!]
-  uom: ProductUomResponse
-  factory: FactoryLiteResponse
 }
 
 input ProductQuantityPricingInput {
@@ -3187,9 +3205,7 @@ type ProductResponse {
   approvalDate: Date
   approvalComments: String
   tags: [String!]
-  uom: ProductUomResponse
-  factory: FactoryLiteResponse
-  factoryFull: FactoryLiteResponse!
+  factory: FactoryLiteResponse!
   category: ProductCategoryResponse
 }
 

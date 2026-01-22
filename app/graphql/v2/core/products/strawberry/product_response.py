@@ -13,9 +13,6 @@ from app.graphql.v2.core.factories.strawberry.factory_response import (
 from app.graphql.v2.core.products.strawberry.product_category_response import (
     ProductCategoryResponse,
 )
-from app.graphql.v2.core.products.strawberry.product_uom_response import (
-    ProductUomResponse,
-)
 
 
 @strawberry.type
@@ -59,12 +56,6 @@ class ProductLiteResponse(DTOMixin[Product]):
             approval_comments=model.approval_comments,
             tags=model.tags,
         )
-
-    @strawberry.field
-    def uom(self) -> ProductUomResponse | None:
-        """Get unit of measure - relationship is eager-loaded."""
-        return ProductUomResponse.from_orm_model_optional(self._instance.uom)
-
 
 
 @strawberry.type

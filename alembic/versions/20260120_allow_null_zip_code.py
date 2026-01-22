@@ -1,7 +1,7 @@
 """allow null zip_code in addresses
 
 Revision ID: allow_null_zip_code
-Revises: add_commission_statements
+Revises: add_aliases_table
 Create Date: 2026-01-20
 
 """
@@ -11,7 +11,7 @@ from collections.abc import Sequence
 from alembic import op
 
 revision: str = "allow_null_zip_code"
-down_revision: str | None = "add_commission_statements"
+down_revision: str | None = "add_aliases_table"
 branch_labels: str | Sequence[str] | None = None
 depends_on: str | Sequence[str] | None = None
 
