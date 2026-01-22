@@ -6,7 +6,10 @@ from aioinject import Injected
 from app.graphql.inject import inject
 from app.graphql.v2.core.customers.services.customer_service import CustomerService
 from app.graphql.v2.core.customers.strawberry.customer_input import CustomerInput
-from app.graphql.v2.core.customers.strawberry.customer_response import CustomerResponse
+from app.graphql.v2.core.customers.strawberry.customer_response import (
+    CustomerLiteResponse,
+    CustomerResponse,
+)
 
 
 @strawberry.type
@@ -40,3 +43,14 @@ class CustomersMutations:
         service: Injected[CustomerService],
     ) -> bool:
         return await service.delete(id)
+
+    @strawberry.mutation
+    @inject
+    async def assign_child_customers(
+        self,
+        parent_id: UUID,
+        child_ids: list[UUID],
+        service: Injected[CustomerService],
+    ) -> list[CustomerLiteResponse]:
+        children = await service.assign_children(parent_id, child_ids)
+        return [CustomerLiteResponse.from_orm_model(child) for child in children]

@@ -9,6 +9,9 @@ from app.errors.common_errors import NameAlreadyExistsError, NotFoundError
 from app.graphql.orders.factories.order_factory import OrderFactory
 from app.graphql.orders.repositories.orders_repository import OrdersRepository
 from app.graphql.orders.strawberry.order_input import OrderInput
+from app.graphql.orders.strawberry.quote_detail_to_order_input import (
+    QuoteDetailToOrderDetailInput,
+)
 from app.graphql.quotes.repositories.quotes_repository import QuotesRepository
 
 
@@ -126,7 +129,7 @@ class OrderService:
         order_number: str,
         factory_id: UUID,
         due_date: date | None = None,
-        quote_detail_ids: list[UUID] | None = None,
+        quote_details_inputs: list[QuoteDetailToOrderDetailInput] | None = None,
     ) -> Order:
         quote = await self.quotes_repository.find_quote_by_id(quote_id)
 
@@ -136,11 +139,12 @@ class OrderService:
             raise NameAlreadyExistsError(order_number)
 
         order = OrderFactory.from_quote(
-            quote, order_number, factory_id, due_date, quote_detail_ids
+            quote, order_number, factory_id, due_date, quote_details_inputs
         )
         created_order = await self.repository.create_with_balance(order)
 
-        if quote_detail_ids:
+        if quote_details_inputs:
+            quote_detail_ids = [inp.quote_detail_id for inp in quote_details_inputs]
             await self.quotes_repository.update_detail_order_ids(
                 detail_ids=quote_detail_ids,
                 order_id=created_order.id,

@@ -86,7 +86,7 @@ def validate_split_rate_range[T](
             )
 
 
-MAX_COMMISSION_RATE = Decimal("25")
+MAX_COMMISSION_RATE = Decimal("50")
 
 
 def validate_commission_rate_max(

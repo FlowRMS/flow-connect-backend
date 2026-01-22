@@ -178,10 +178,44 @@ enum AdjustmentStatus {
   POSTED
 }
 
+enum AliasEntityType {
+  CUSTOMER
+  PRODUCT
+  FACTORY
+}
+
+input AliasInput {
+  entityId: UUID!
+  entityType: AliasEntityType!
+  alias: String!
+  id: UUID = null
+  subType: AliasSubType
+}
+
+enum AliasSubType {
+  END_USER
+  SOLD_TO
+  BILL_TO
+}
+
+type AliasType {
+  id: UUID!
+  entityId: UUID!
+  entityType: AliasEntityType!
+  subType: AliasSubType
+  alias: String!
+  createdAt: datetime!
+}
+
 input AssignItemToBoxInput {
   boxId: UUID!
   lineItemId: UUID!
   quantity: Decimal!
+}
+
+input AssignSidebarToRoleInput {
+  role: RbacRoleEnum!
+  configurationId: UUID!
 }
 
 enum AutoNumberEntityType {
@@ -543,6 +577,10 @@ input CompleteShippingInput {
   pickupCustomerName: String = null
 }
 
+type ConfigurableSidebarResponse {
+  adminHiddenItems: [String!]!
+}
+
 input ContactInput {
   firstName: String!
   lastName: String!
@@ -553,6 +591,7 @@ input ContactInput {
   tags: [String!]
   notes: String
   companyId: UUID
+  externalId: String
 }
 
 type ContactLandingPage implements LandingPageInterfaceBase {
@@ -580,6 +619,7 @@ type ContactLiteResponse {
   territory: String
   tags: [String!]
   notes: String
+  externalId: String
 }
 
 type ContactRelatedEntitiesResponse {
@@ -597,6 +637,7 @@ type ContactResponse {
   territory: String
   tags: [String!]
   notes: String
+  externalId: String
 }
 
 input ContainerTypeInput {
@@ -860,6 +901,12 @@ enum CriteriaOperator {
   NOT_IN
 }
 
+input CustomerFactorySalesRepBulkInput {
+  customerId: UUID!
+  factoryId: UUID!
+  splits: [SalesRepSplitInput!]!
+}
+
 input CustomerFactorySalesRepInput {
   customerId: UUID!
   factoryId: UUID!
@@ -967,6 +1014,26 @@ enum DocumentEntityType {
   COMMISSION_STATEMENTS
 }
 
+type EffectiveSidebarGroupResponse {
+  groupId: SidebarGroupId!
+  order: Int!
+  collapsed: Boolean!
+  items: [EffectiveSidebarItemResponse!]!
+}
+
+type EffectiveSidebarItemResponse {
+  itemId: String!
+  order: Int!
+  enabled: Boolean!
+  isConfigurable: Boolean!
+}
+
+type EffectiveSidebarResponse {
+  groups: [EffectiveSidebarGroupResponse!]!
+  sourceType: String!
+  sourceName: String
+}
+
 enum EmailStatus {
   PENDING
   SENT
@@ -1002,6 +1069,7 @@ enum EntityType {
   SHIPPING_CARRIER
   ORDER_ACKNOWLEDGEMENT
   DELIVERY
+  COMMISSION_STATEMENTS
 }
 
 type EstimateRecipientsResponse {
@@ -1950,6 +2018,9 @@ type Mutation {
   createAdjustment(input: AdjustmentInput!): AdjustmentResponse!
   updateAdjustment(input: AdjustmentInput!): AdjustmentResponse!
   deleteAdjustment(id: UUID!): Boolean!
+  createAlias(input: AliasInput!): AliasType!
+  updateAlias(input: AliasInput!): AliasType!
+  deleteAlias(id: UUID!): Boolean!
   updateAutoNumberSettings(inputs: [AutoNumberSettingsInput!]!): [AutoNumberSettingsResponse!]!
   createCampaign(input: CampaignInput!): CampaignResponse!
   updateCampaign(id: UUID!, input: CampaignInput!): CampaignResponse!
@@ -2013,7 +2084,7 @@ type Mutation {
   createOrder(input: OrderInput!): OrderResponse!
   updateOrder(input: OrderInput!): OrderResponse!
   deleteOrder(id: UUID!): Boolean!
-  createOrderFromQuote(quoteId: UUID!, orderNumber: String!, factoryId: UUID!, dueDate: Date = null, quoteDetailIds: [UUID!] = null): OrderResponse!
+  createOrderFromQuote(quoteId: UUID!, orderNumber: String!, factoryId: UUID!, dueDate: Date = null, quoteDetailsInputs: [QuoteDetailToOrderDetailInput!] = null): OrderResponse!
   duplicateOrder(orderId: UUID!, newOrderNumber: String!, newSoldToCustomerId: UUID!): OrderResponse!
   createOrganization(input: OrganizationInput!): OrganizationType! @rolePermissionAccess
   updateOrganization(input: OrganizationInput!): OrganizationType! @rolePermissionAccess
@@ -2053,9 +2124,11 @@ type Mutation {
   createCustomerFactorySalesRep(input: CustomerFactorySalesRepInput!): CustomerFactorySalesRepResponse!
   updateCustomerFactorySalesRep(id: UUID!, input: CustomerFactorySalesRepInput!): CustomerFactorySalesRepResponse!
   deleteCustomerFactorySalesRep(id: UUID!): Boolean!
+  createCustomerFactorySalesReps(input: CustomerFactorySalesRepBulkInput!): [CustomerFactorySalesRepResponse!]!
   createCustomer(input: CustomerInput!): CustomerResponse!
   updateCustomer(id: UUID!, input: CustomerInput!): CustomerResponse!
   deleteCustomer(id: UUID!): Boolean!
+  assignChildCustomers(parentId: UUID!, childIds: [UUID!]!): [CustomerLiteResponse!]!
   createFactory(input: FactoryInput!): FactoryResponse!
   updateFactory(id: UUID!, input: FactoryInput!): FactoryResponse!
   deleteFactory(id: UUID!): Boolean!
@@ -2160,6 +2233,11 @@ type Mutation {
   deleteFolder(folderId: UUID!): Boolean!
   updateRbacGrid(rbacGrid: [RbacGridInput!]!): [RbacGridResponse!]! @rolePermissionAccess
   updateCommissionVisibility(input: UpdateCommissionVisibilityInput!): RbacRoleSettingResponse! @rolePermissionAccess
+  saveSidebarConfiguration(input: SaveSidebarConfigurationInput!): SidebarConfigurationResponse!
+  deleteSidebarConfiguration(id: UUID!): Boolean!
+  assignSidebarConfigurationToRole(input: AssignSidebarToRoleInput!): RoleSidebarAssignmentResponse!
+  removeRoleSidebarAssignment(role: RbacRoleEnum!): Boolean!
+  setActiveSidebarConfiguration(configurationId: UUID): Boolean!
 }
 
 input NoteConversationInput {
@@ -2271,6 +2349,34 @@ type O365ConnectionStatusType {
   microsoftEmail: String
   expiresAt: datetime
   lastUsedAt: datetime
+}
+
+type O365ContactEmailType {
+  address: String!
+  name: String
+}
+
+type O365ContactType {
+  id: String!
+  displayName: String!
+  givenName: String
+  surname: String
+  emailAddresses: [O365ContactEmailType!]
+  businessPhones: [String!]
+  mobilePhone: String
+  homePhones: [String!]
+  jobTitle: String
+  companyName: String
+  department: String
+  businessAddressCity: String
+  businessAddressState: String
+  businessAddressCountry: String
+}
+
+type O365ContactsResultType {
+  success: Boolean!
+  contacts: [O365ContactType!]
+  error: String
 }
 
 input O365SendEmailInput {
@@ -3107,6 +3213,9 @@ type Query {
   addressesBySourceId(sourceId: UUID!): [AddressResponse!]!
   adjustment(id: UUID!): AdjustmentResponse!
   adjustmentSearch(searchTerm: String!, limit: Int! = 20, openOnly: Boolean! = false, unlockedOnly: Boolean! = false): [AdjustmentLiteResponse!]!
+  alias(id: UUID!): AliasType!
+  aliasesByEntity(entityId: UUID!, entityType: AliasEntityType!, subType: AliasSubType = null): [AliasType!]!
+  aliasSearch(searchTerm: String!, entityType: AliasEntityType = null, subType: AliasSubType = null, limit: Int! = 20): [AliasType!]!
   autoNumberSettings: [AutoNumberSettingsResponse!]!
   autoNumberSetting(entityType: AutoNumberEntityType!): AutoNumberSettingsResponse
   campaign(id: UUID!): CampaignResponse!
@@ -3139,6 +3248,7 @@ type Query {
   o365ConnectionStatus: O365ConnectionStatusType!
   o365CalendarEvents(top: Int! = 50, skip: Int! = 0): O365CalendarEventsResultType!
   o365CalendarEventsInRange(startDate: datetime!, endDate: datetime!, top: Int! = 100): O365CalendarEventsResultType!
+  o365Contacts(top: Int! = 50, skip: Int! = 0, search: String = null): O365ContactsResultType!
   invoice(id: UUID!): InvoiceResponse!
   invoiceSearch(searchTerm: String!, limit: Int! = 20, openOnly: Boolean! = false, unlockedOnly: Boolean! = false): [InvoiceLiteResponse!]!
   searchOpenInvoices(factoryId: UUID!, startFrom: Date = null, limit: Int = null): [InvoiceLiteCheckResponse!]!
@@ -3262,6 +3372,11 @@ type Query {
   getRbacGrid: [RbacGridResponse!]! @rolePermissionAccess
   getUserRbac(resource: RbacResourceEnum!): UserRbac!
   getRoleSettings: [RbacRoleSettingResponse!]! @rolePermissionAccess
+  adminSidebarConfigurations: [SidebarConfigurationResponse!]!
+  userSidebarConfigurations: [SidebarConfigurationResponse!]!
+  roleSidebarAssignments: [RoleSidebarAssignmentResponse!]!
+  effectiveSidebar: EffectiveSidebarResponse!
+  configurableSidebar: ConfigurableSidebarResponse!
 }
 
 type QuoteBalanceResponse {
@@ -3336,6 +3451,12 @@ enum QuoteDetailStatus {
   ORDERED
   EXPIRED
   LOST
+}
+
+input QuoteDetailToOrderDetailInput {
+  quantity: Decimal!
+  unitPrice: Decimal!
+  quoteDetailId: UUID!
 }
 
 input QuoteInput {
@@ -3592,10 +3713,30 @@ enum RepTypeEnum {
   INSIDE
 }
 
+type RoleSidebarAssignmentResponse {
+  role: RbacRoleEnum!
+  configuration: SidebarConfigurationResponse!
+  assignedAt: datetime!
+}
+
+input SalesRepSplitInput {
+  userId: UUID!
+  rate: Decimal!
+  position: Int! = 0
+}
+
 type SalesRepSummary {
   fullName: String!
   total: Decimal!
   avgSplitRate: Decimal!
+}
+
+input SaveSidebarConfigurationInput {
+  name: String!
+  isAdminConfig: Boolean!
+  groups: [SidebarGroupInput!]!
+  id: UUID = null
+  isDefault: Boolean = null
 }
 
 type SearchResult {
@@ -3750,6 +3891,55 @@ type ShippingCarrierResponse {
   pickupLocation: String
   remarks: String
   internalNotes: String
+}
+
+type SidebarConfigurationResponse {
+  id: UUID!
+  name: String!
+  ownerType: String!
+  isDefault: Boolean!
+  createdAt: datetime!
+  updatedAt: datetime!
+  groups: [SidebarGroupResponse!]!
+}
+
+enum SidebarGroupId {
+  CRM
+  FLOW_AI
+  EMAIL
+  QUOTES
+  FINANCIAL
+  WAREHOUSE
+  ANALYTICS
+  FOUNDATIONAL
+  ADMIN
+  PREVIEW
+}
+
+input SidebarGroupInput {
+  groupId: SidebarGroupId!
+  order: Int!
+  collapsed: Boolean!
+  items: [SidebarItemInput!]!
+}
+
+type SidebarGroupResponse {
+  groupId: SidebarGroupId!
+  order: Int!
+  collapsed: Boolean!
+  items: [SidebarItemResponse!]!
+}
+
+input SidebarItemInput {
+  itemId: String!
+  order: Int!
+  enabled: Boolean!
+}
+
+type SidebarItemResponse {
+  itemId: String!
+  order: Int!
+  enabled: Boolean!
 }
 
 enum SourceType {
