@@ -21,9 +21,13 @@ from app.graphql.v2.core.fulfillment.strawberry.fulfillment_document_response im
 from app.graphql.v2.core.fulfillment.strawberry.fulfillment_line_item_input import (
     CancelBackorderInput,
     CreateFulfillmentLineItemInput,
+    LinkShipmentRequestInput,
     MarkManufacturerFulfilledInput,
     SplitLineItemInput,
     UpdatePickedQuantityInput,
+)
+from app.graphql.v2.core.fulfillment.strawberry.fulfillment_line_item_lite_response import (
+    FulfillmentOrderLineItemLiteResponse,
 )
 from app.graphql.v2.core.fulfillment.strawberry.fulfillment_line_item_response import (
     FulfillmentOrderLineItemResponse,
@@ -32,6 +36,9 @@ from app.graphql.v2.core.fulfillment.strawberry.fulfillment_order_input import (
     CompleteShippingInput,
     CreateFulfillmentOrderInput,
     UpdateFulfillmentOrderInput,
+)
+from app.graphql.v2.core.fulfillment.strawberry.fulfillment_order_lite_response import (
+    FulfillmentOrderLiteResponse,
 )
 from app.graphql.v2.core.fulfillment.strawberry.fulfillment_order_response import (
     FulfillmentOrderResponse,
@@ -62,6 +69,7 @@ __all__ = [
     "CreateFulfillmentLineItemInput",
     "CreateFulfillmentOrderInput",
     "CreatePackingBoxInput",
+    "LinkShipmentRequestInput",
     "MarkManufacturerFulfilledInput",
     "SplitLineItemInput",
     "UpdateFulfillmentOrderInput",
@@ -72,7 +80,9 @@ __all__ = [
     "FulfillmentActivityResponse",
     "FulfillmentAssignmentResponse",
     "FulfillmentDocumentResponse",
+    "FulfillmentOrderLineItemLiteResponse",
     "FulfillmentOrderLineItemResponse",
+    "FulfillmentOrderLiteResponse",
     "FulfillmentOrderResponse",
     "FulfillmentStatsResponse",
     "PackingBoxItemResponse",

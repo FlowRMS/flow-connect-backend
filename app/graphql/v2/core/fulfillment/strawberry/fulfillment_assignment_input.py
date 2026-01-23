@@ -1,7 +1,7 @@
 from uuid import UUID
 
 import strawberry
-from commons.db.v6.fulfillment import FulfillmentAssignmentRole
+from commons.db.v6.fulfillment.enums import FulfillmentAssignmentRole
 
 
 @strawberry.input

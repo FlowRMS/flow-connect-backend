@@ -7,11 +7,11 @@ import strawberry
 from commons.db.v6 import (
     Warehouse,
     WarehouseMember,
-    WarehouseMemberRole,
     WarehouseSettings,
     WarehouseStructure,
-    WarehouseStructureCode,
 )
+from commons.db.v6.warehouse.warehouse_member_role import WarehouseMemberRole
+from commons.db.v6.warehouse.warehouse_structure_code import WarehouseStructureCode
 
 from app.core.strawberry.inputs import BaseInputGQL
 
@@ -54,7 +54,7 @@ class WarehouseMemberInput(BaseInputGQL[WarehouseMember]):
         return WarehouseMember(
             warehouse_id=self.warehouse_id,
             user_id=self.user_id,
-            role=WarehouseMemberRole(self.role.value),
+            role=self.role,
         )
 
 
@@ -97,6 +97,6 @@ class WarehouseStructureInput(BaseInputGQL[WarehouseStructure]):
     def to_orm_model(self) -> WarehouseStructure:
         return WarehouseStructure(
             warehouse_id=self.warehouse_id,
-            code=WarehouseStructureCode(self.code.value),
+            code=self.code,
             level_order=self.level_order,
         )

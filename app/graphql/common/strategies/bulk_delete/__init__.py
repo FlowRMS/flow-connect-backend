@@ -25,6 +25,9 @@ from app.graphql.common.strategies.bulk_delete.product_bulk_delete_strategy impo
 from app.graphql.common.strategies.bulk_delete.quote_bulk_delete_strategy import (
     QuoteBulkDeleteStrategy,
 )
+from app.graphql.common.strategies.bulk_delete.statement_bulk_delete_strategy import (
+    StatementBulkDeleteStrategy,
+)
 
 __all__ = [
     "CheckBulkDeleteStrategy",
@@ -36,4 +39,5 @@ __all__ = [
     "PreOpportunityBulkDeleteStrategy",
     "ProductBulkDeleteStrategy",
     "QuoteBulkDeleteStrategy",
+    "StatementBulkDeleteStrategy",
 ]
