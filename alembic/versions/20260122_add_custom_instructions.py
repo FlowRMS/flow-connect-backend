@@ -1,7 +1,7 @@
 """add custom_instructions table
 
 Revision ID: add_custom_instructions
-Revises: add_aliases_table
+Revises: warehouse_deliveries_001
 Create Date: 2026-01-22
 
 """
@@ -14,7 +14,7 @@ from sqlalchemy.dialects import postgresql
 from alembic import op
 
 revision: str = "add_custom_instructions"
-down_revision: str | None = "add_aliases_table"
+down_revision: str | None = "warehouse_deliveries_001"
 branch_labels: str | Sequence[str] | None = None
 depends_on: str | Sequence[str] | None = None
 
