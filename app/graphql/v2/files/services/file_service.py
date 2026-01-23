@@ -144,12 +144,7 @@ class FileService:
         file = await self.repository.get_by_id(file_id)
         if not file:
             return None
-        # s3_key = str(Path(folder_path) / file_name) if folder_path else file_name
-        s3_key = (
-            file.file_path + file.file_name if file.file_path else file.file_name
-        )
-        # Use file_path + file_name
-        return await self.upload_service.get_presigned_url(s3_key)
+        return await self.upload_service.get_presigned_url(file.full_path)
 
     async def find_by_linked_entity(
         self,
