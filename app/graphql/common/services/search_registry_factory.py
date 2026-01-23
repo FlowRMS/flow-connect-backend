@@ -2,7 +2,7 @@ from app.graphql.common.interfaces.search_query_interface import (
     SearchQueryStrategyRegistry,
 )
 from app.graphql.common.strategies.search import (
-    AddressSearchStrategy,
+    # AddressSearchStrategy,
     AdjustmentSearchStrategy,
     CampaignSearchStrategy,
     CheckSearchStrategy,
@@ -49,7 +49,7 @@ def create_search_strategy_registry() -> SearchQueryStrategyRegistry:
         CreditSearchStrategy(),
         CheckSearchStrategy(),
         AdjustmentSearchStrategy(),
-        AddressSearchStrategy(),
+        # AddressSearchStrategy(),
         ShippingCarrierSearchStrategy(),
         ContainerTypeSearchStrategy(),
         WarehouseSearchStrategy(),

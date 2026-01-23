@@ -121,10 +121,13 @@ async def migrate_orders(source: asyncpg.Connection, dest: asyncpg.Connection) -
             o.quote_id,
             o.balance_id,
             o.job_id,
-            o.created_by as created_by_id,
+            COALESCE(
+                u.id,
+                (SELECT id FROM "user".users WHERE username = 'support@flowrms.com' LIMIT 1)
+            ) as created_by_id,
             COALESCE(o.entry_date, now()) as created_at
         FROM commission.orders o
-        JOIN "user".users u ON u.id = o.created_by
+        LEFT JOIN "user".users u ON u.id = o.created_by
         LEFT JOIN crm.quotes q ON q.id = o.quote_id
         WHERE
             o.sold_to_customer_id IS NOT NULL
@@ -209,7 +212,7 @@ async def migrate_order_inside_reps(source: asyncpg.Connection, dest: asyncpg.Co
         JOIN commission.orders o ON o.id = oir.order_id
         JOIN commission.order_details od ON od.order_id = o.id
         JOIN "user".users u ON u.id = oir.user_id
-        JOIN core.products p ON p.id = od.product_id
+        LEFT JOIN core.products p ON p.id = od.product_id
         LEFT JOIN crm.quotes q ON q.id = o.quote_id
         WHERE
             o.sold_to_customer_id IS NOT NULL
@@ -263,7 +266,7 @@ async def migrate_order_details(source: asyncpg.Connection, dest: asyncpg.Connec
             COALESCE(od.discount_rate, 0) as discount_rate,
             COALESCE(od.discount, 0) as discount,
             od.product_id,
-            od.end_user_id,
+            CASE WHEN end_user.id IS NOT NULL THEN od.end_user_id ELSE o.sold_to_customer_id END as end_user_id,
             od.lead_time,
             od.status + 1 AS status,
             COALESCE(od.freight_charge, 0) as freight_charge,
@@ -273,10 +276,11 @@ async def migrate_order_details(source: asyncpg.Connection, dest: asyncpg.Connec
                 ELSE NULL
             END AS division_factor
         FROM commission.order_details od
-        JOIN core.products p ON p.id = od.product_id
+        LEFT JOIN core.products p ON p.id = od.product_id
         JOIN commission.orders o ON o.id = od.order_id
-        JOIN "user".users u ON u.id = o.created_by
+        LEFT JOIN "user".users u ON u.id = o.created_by
         LEFT JOIN crm.quotes q ON q.id = o.quote_id
+        LEFT JOIN core.customers end_user ON end_user.id = od.end_user_id
         WHERE
             o.sold_to_customer_id IS NOT NULL
             AND o.factory_id IS NOT NULL
@@ -376,16 +380,17 @@ async def migrate_order_split_rates(source: asyncpg.Connection, dest: asyncpg.Co
         SELECT
             osr.id,
             osr.order_detail_id,
-            osr.user_id,
+            COALESCE(split_user.id, (SELECT id FROM "user".users WHERE username = 'support@flowrms.com' LIMIT 1)) as user_id,
             COALESCE(osr.split_rate, 0) as split_rate,
             COALESCE(osr."position", 0) as position,
             COALESCE(osr.entry_date, now()) as created_at
         FROM commission.order_split_rates osr
         JOIN commission.order_details od ON od.id = osr.order_detail_id
         JOIN commission.orders o ON o.id = od.order_id
-        JOIN "user".users u ON u.id = o.created_by
-        JOIN core.products p ON p.id = od.product_id
+        LEFT JOIN "user".users u ON u.id = o.created_by
+        LEFT JOIN core.products p ON p.id = od.product_id
         LEFT JOIN crm.quotes q ON q.id = o.quote_id
+        LEFT JOIN "user".users split_user ON split_user.id = osr.user_id
         WHERE
             o.sold_to_customer_id IS NOT NULL
             AND o.factory_id IS NOT NULL
@@ -440,12 +445,15 @@ async def migrate_order_acknowledgements(
             oa.entity_date,
             COALESCE(od.quantity, 0) as quantity,
             oa.creation_type,
-            oa.created_by as created_by_id,
+            COALESCE(
+                u.id,
+                (SELECT id FROM "user".users WHERE username = 'support@flowrms.com' LIMIT 1)
+            ) as created_by_id,
             COALESCE(oa.entry_date, now()) as created_at
         FROM commission.order_acknowledgements oa
         JOIN commission.order_details od ON od.id = oa.order_detail_id
         JOIN commission.orders o ON o.id = od.order_id
-        JOIN "user".users u ON u.id = oa.created_by
+        LEFT JOIN "user".users u ON u.id = oa.created_by
         LEFT JOIN crm.quotes q ON q.id = o.quote_id
         WHERE
             o.sold_to_customer_id IS NOT NULL
