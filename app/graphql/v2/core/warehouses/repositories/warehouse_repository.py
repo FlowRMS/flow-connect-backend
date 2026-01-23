@@ -36,6 +36,17 @@ class WarehouseRepository(BaseRepository[Warehouse]):
         return result.scalar_one_or_none()
 
     async def list_all_with_relations(self) -> list[Warehouse]:
-        stmt = self.base_query
+        stmt = self.base_query.where(Warehouse.is_active != False)  # noqa: E712
         result = await self.session.execute(stmt)
         return list(result.scalars().all())
+
+    async def soft_delete(self, warehouse_id: UUID) -> Warehouse | None:
+        """Soft-delete a warehouse by setting is_active = False."""
+        stmt = select(Warehouse).where(Warehouse.id == warehouse_id)
+        result = await self.session.execute(stmt)
+        warehouse = result.scalar_one_or_none()
+        if not warehouse:
+            return None
+        warehouse.is_active = False
+        await self.session.flush()
+        return warehouse

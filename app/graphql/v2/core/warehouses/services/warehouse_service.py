@@ -70,10 +70,11 @@ class WarehouseService:
         return await self.repository.update(warehouse)
 
     async def delete(self, warehouse_id: UUID) -> bool:
-        """Delete a warehouse."""
-        if not await self.repository.exists(warehouse_id):
+        """Soft-delete a warehouse by setting is_active = False."""
+        warehouse = await self.repository.soft_delete(warehouse_id)
+        if not warehouse:
             raise NotFoundError(f"Warehouse with id {warehouse_id} not found")
-        return await self.repository.delete(warehouse_id)
+        return True
 
     # Worker management
     async def assign_worker(
