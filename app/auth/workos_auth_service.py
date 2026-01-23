@@ -225,9 +225,11 @@ class WorkOSAuthService:
             logger.exception(f"Error removing user from tenant: {e}")
             return False
 
-    async def create_tenant(self, name: str) -> AuthTenant | None:
+    async def create_tenant(self, name: str, external_id: str) -> AuthTenant | None:
         try:
-            response = await self.client.organizations.create_organization(name=name)
+            response = await self.client.organizations.create_organization(
+                name=name, external_id=external_id
+            )
             return AuthTenant(id=response.id, name=response.name)
         except Exception as e:
             logger.exception(f"Error creating tenant: {e}")

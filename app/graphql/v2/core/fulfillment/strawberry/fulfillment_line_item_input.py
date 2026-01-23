@@ -53,3 +53,12 @@ class CancelBackorderInput:
     fulfillment_order_id: UUID
     line_item_ids: list[UUID]
     reason: str
+
+
+@strawberry.input
+class LinkShipmentRequestInput:
+    """Input for linking line items to a shipment request."""
+
+    fulfillment_order_id: UUID
+    line_item_ids: list[UUID]
+    shipment_request_id: UUID

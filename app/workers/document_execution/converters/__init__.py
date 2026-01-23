@@ -9,6 +9,7 @@ from .invoice_converter import InvoiceConverter
 from .order_converter import OrderConverter
 from .product_converter import ProductConverter
 from .quote_converter import QuoteConverter
+from .statement_converter import StatementConverter
 
 __all__ = [
     "AdjustmentConverter",
@@ -22,4 +23,5 @@ __all__ = [
     "OrderConverter",
     "ProductConverter",
     "QuoteConverter",
+    "StatementConverter",
 ]

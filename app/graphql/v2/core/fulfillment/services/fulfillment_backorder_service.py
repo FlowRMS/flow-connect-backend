@@ -169,6 +169,41 @@ class FulfillmentBackorderService:
             raise NotFoundError(f"Fulfillment order {fulfillment_order_id} not found")
         return result
 
+    async def link_shipment_request(
+        self,
+        fulfillment_order_id: UUID,
+        line_item_ids: list[UUID],
+        shipment_request_id: UUID,
+    ) -> FulfillmentOrder:
+        """Link line items to a shipment request for inventory replenishment."""
+        order = await self._get_order_or_raise(fulfillment_order_id)
+
+        linked_count = 0
+        for line_item in order.line_items:
+            if line_item.id in line_item_ids:
+                line_item.linked_shipment_request_id = shipment_request_id
+                _ = await self.line_repository.update(line_item)
+                linked_count += 1
+
+        # Update hold reason
+        order.hold_reason = "Pending inventory from shipment request"
+        _ = await self.order_repository.update(order)
+
+        _ = await self._log_activity(
+            fulfillment_order_id,
+            FulfillmentActivityType.NOTE_ADDED,
+            f"Linked {linked_count} item(s) to shipment request {shipment_request_id}",
+            {
+                "line_item_ids": [str(id) for id in line_item_ids],
+                "shipment_request_id": str(shipment_request_id),
+            },
+        )
+
+        result = await self.order_repository.get_with_relations(fulfillment_order_id)
+        if not result:
+            raise NotFoundError(f"Fulfillment order {fulfillment_order_id} not found")
+        return result
+
     async def resolve_backorder(
         self,
         fulfillment_order_id: UUID,

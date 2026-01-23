@@ -103,10 +103,12 @@ async def migrate_users(source: asyncpg.Connection, dest: asyncpg.Connection) ->
             u.email,
             gen_random_uuid()::text as auth_provider_id,
             CASE
-                WHEN u.keycloak_role = 1 THEN 1
-                WHEN u.keycloak_role = 2 THEN 2
-                WHEN u.keycloak_role = 3 THEN 3
-                ELSE 4
+                WHEN u.keycloak_role = 6 THEN 1  -- owner
+                WHEN u.keycloak_role = 4 THEN 2  -- administrator
+                WHEN u.keycloak_role = 3 THEN 3  -- inside-rep
+                WHEN u.keycloak_role = 2 THEN 4  -- outside-rep
+                WHEN u.keycloak_role = 5 THEN 5  -- manager -> warehouse_manager
+                ELSE 1  -- default to owner
             END AS role,
             COALESCE(u.status, true) as enabled,
             COALESCE(u.is_inside, false) as inside,
@@ -954,7 +956,7 @@ async def migrate_order_details(source: asyncpg.Connection, dest: asyncpg.Connec
             d["product_id"],
             d["end_user_id"],
             d["lead_time"],
-            d["status"],
+            map_order_status(d["status"]),
             d["shipping_balance"],
         ) for d in details],
     )
@@ -1014,6 +1016,20 @@ async def migrate_quotes(
 
     if not quotes:
         logger.info("No quotes to migrate")
+        return 0
+
+    # Get list of migrated customer IDs from destination
+    migrated_customers = await dest.fetch("SELECT id FROM pycore.customers")
+    migrated_customer_ids = {row["id"] for row in migrated_customers}
+
+    # Filter to only include quotes for customers that were migrated
+    quotes = [
+        q for q in quotes
+        if q["sold_to_customer_id"] in migrated_customer_ids
+    ]
+
+    if not quotes:
+        logger.info("No quotes to migrate after filtering for migrated customers")
         return 0
 
     # First, create quote_balances records
@@ -1132,6 +1148,29 @@ async def migrate_quote_details(source: asyncpg.Connection, dest: asyncpg.Connec
         logger.info("No quote details to migrate")
         return 0
 
+    # Get list of migrated quote IDs from destination
+    migrated_quotes = await dest.fetch("SELECT id FROM pycrm.quotes")
+    migrated_quote_ids = {row["id"] for row in migrated_quotes}
+
+    # Get list of migrated customer IDs from destination
+    migrated_customers = await dest.fetch("SELECT id FROM pycore.customers")
+    migrated_customer_ids = {row["id"] for row in migrated_customers}
+
+    # Filter to only include details for quotes that were migrated
+    # and nullify end_user_id if that customer wasn't migrated
+    details = [
+        {
+            **d,
+            "end_user_id": d["end_user_id"] if d["end_user_id"] in migrated_customer_ids else None,
+        }
+        for d in details
+        if d["quote_id"] in migrated_quote_ids
+    ]
+
+    if not details:
+        logger.info("No quote details to migrate after filtering for migrated quotes")
+        return 0
+
     await dest.executemany(
         """
         INSERT INTO pycrm.quote_details (
@@ -1162,7 +1201,7 @@ async def migrate_quote_details(source: asyncpg.Connection, dest: asyncpg.Connec
             d["end_user_id"],
             d["lead_time"],
             d["status"],
-            d["lost_reason_id"],
+            None,  # lost_reason_id - not migrated
         ) for d in details],
     )
 
@@ -1206,6 +1245,24 @@ async def migrate_invoices(
 
     if not invoices:
         logger.info("No invoices to migrate")
+        return 0
+
+    # Get list of migrated order IDs from destination
+    migrated_orders = await dest.fetch("SELECT id FROM pycommission.orders")
+    migrated_order_ids = {row["id"] for row in migrated_orders}
+
+    # Get list of migrated factory IDs from destination
+    migrated_factories = await dest.fetch("SELECT id FROM pycore.factories")
+    migrated_factory_ids = {row["id"] for row in migrated_factories}
+
+    # Filter to only include invoices for orders and factories that were migrated
+    invoices = [
+        inv for inv in invoices
+        if inv["order_id"] in migrated_order_ids and inv["factory_id"] in migrated_factory_ids
+    ]
+
+    if not invoices:
+        logger.info("No invoices to migrate after filtering for migrated orders/factories")
         return 0
 
     # First, create invoice_balances records
@@ -1277,6 +1334,7 @@ async def migrate_invoice_details(source: asyncpg.Connection, dest: asyncpg.Conn
         SELECT
             gen_random_uuid() as id,
             inv.uuid as invoice_id,
+            id.order_detail_id as v4_order_detail_id,
             COALESCE(id.item_number, 1) as item_number,
             COALESCE(id.quantity_shipped, 0) as quantity,
             COALESCE(id.unit_price, 0) as unit_price,
@@ -1306,6 +1364,55 @@ async def migrate_invoice_details(source: asyncpg.Connection, dest: asyncpg.Conn
         logger.info("No invoice details to migrate")
         return 0
 
+    # Get list of migrated invoice IDs from destination
+    migrated_invoices = await dest.fetch("SELECT id FROM pycommission.invoices")
+    migrated_invoice_ids = {row["id"] for row in migrated_invoices}
+
+    # Get list of migrated customer IDs from destination
+    migrated_customers = await dest.fetch("SELECT id FROM pycore.customers")
+    migrated_customer_ids = {row["id"] for row in migrated_customers}
+
+    # Build mapping from v4 order_detail_id (int) to v6 order_detail.id (uuid)
+    # by joining source order_details with destination via order_id + item_number
+    order_detail_mapping = await source.fetch("""
+        SELECT
+            od.order_detail_id as v4_id,
+            o.uuid as order_id,
+            od.item_number
+        FROM public.order_details od
+        JOIN public.orders o ON od.order_id = o.order_id
+    """)
+
+    dest_order_details = await dest.fetch("""
+        SELECT id, order_id, item_number
+        FROM pycommission.order_details
+    """)
+    dest_detail_lookup = {(d["order_id"], d["item_number"]): d["id"] for d in dest_order_details}
+
+    # Map v4 order_detail_id -> v6 order_detail.id
+    v4_to_v6_order_detail: dict[int, uuid.UUID] = {}
+    for od in order_detail_mapping:
+        v6_id = dest_detail_lookup.get((od["order_id"], od["item_number"]))
+        if v6_id:
+            v4_to_v6_order_detail[od["v4_id"]] = v6_id
+
+    # Filter to only include details for invoices that were migrated
+    # and nullify end_user_id if that customer wasn't migrated
+    # Also map v4 order_detail_id to v6 uuid
+    details = [
+        {
+            **d,
+            "end_user_id": d["end_user_id"] if d["end_user_id"] in migrated_customer_ids else None,
+            "order_detail_id": v4_to_v6_order_detail.get(d["v4_order_detail_id"]),
+        }
+        for d in details
+        if d["invoice_id"] in migrated_invoice_ids
+    ]
+
+    if not details:
+        logger.info("No invoice details to migrate after filtering for migrated invoices")
+        return 0
+
     await dest.executemany(
         """
         INSERT INTO pycommission.invoice_details (
@@ -1314,7 +1421,7 @@ async def migrate_invoice_details(source: asyncpg.Connection, dest: asyncpg.Conn
             commission_discount, discount_rate, discount, division_factor, product_id,
             product_name_adhoc, product_description_adhoc, uom_id, end_user_id,
             lead_time, note, status, invoiced_balance, order_detail_id
-        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, NULL, $15, NULL, NULL, NULL, $16, NULL, NULL, $17, 0, NULL)
+        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, NULL, $15, NULL, NULL, NULL, $16, NULL, NULL, $17, 0, $18)
         """,
         [(
             d["id"],
@@ -1334,6 +1441,7 @@ async def migrate_invoice_details(source: asyncpg.Connection, dest: asyncpg.Conn
             d["product_id"],
             d["end_user_id"],
             d["status"],
+            d["order_detail_id"],
         ) for d in details],
     )
 
