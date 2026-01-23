@@ -68,6 +68,7 @@ enum AddressSourceTypeEnum {
   FULFILLMENT_ORDER
   CONTACT
   COMPANY
+  JOB
 }
 
 enum AddressTypeEnum {
