@@ -50,7 +50,13 @@ class VectorRepository:
         file_content: str,
         page_number: int | None = None,
     ) -> None:
+        if file_content is None or len(file_content) == 0:
+            logger.error(f"File content is empty for file {file_id} - {file_name} - {page_number}")
+            return
         embedding = await self.vector_embedding_service.generate_embedding(file_content)
+        if len(embedding) == 0:
+            logger.error(f"Failed to generate embedding for file {file_id} - {file_name} - {page_number}")
+            return
         await self._insert_document(
             file_id=file_id,
             embedding=embedding,
