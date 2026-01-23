@@ -279,6 +279,7 @@ enum BulkDeleteEntityType {
   QUOTES
   CHECKS
   PRE_OPS
+  STATEMENTS
 }
 
 type BulkDeleteFailure {

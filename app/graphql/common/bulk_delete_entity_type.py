@@ -14,3 +14,4 @@ class BulkDeleteEntityType(Enum):
     QUOTES = "quotes"
     CHECKS = "checks"
     PRE_OPS = "pre_ops"
+    STATEMENTS = "statements"
