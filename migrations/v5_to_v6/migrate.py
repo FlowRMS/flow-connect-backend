@@ -17,7 +17,15 @@ from migrations.v5_to_v6.migrate_adjustments import (
     migrate_adjustment_split_rates,
     migrate_adjustments,
 )
-from migrations.v5_to_v6.migrate_ai import AI_TABLES, migrate_ai_table
+from migrations.v5_to_v6.migrate_ai import (
+    AI_TABLES,
+    migrate_ai_table,
+    migrate_pending_documents,
+    migrate_pending_document_pages,
+    migrate_pending_document_entities,
+    migrate_pending_document_correction_changes,
+    migrate_extracted_data_versions,
+)
 from migrations.v5_to_v6.migrate_checks import (
     migrate_check_details,
     migrate_checks,
@@ -148,6 +156,7 @@ async def migrate_customers(source: asyncpg.Connection, dest: asyncpg.Connection
             c.created_by as created_by_id,
             COALESCE(c.entry_date, now()) as created_at
         FROM core.customers c
+        JOIN "user".users u ON c.created_by = u.id
         WHERE c.parent_id IS NULL
     """)
 
@@ -184,6 +193,7 @@ async def migrate_customers(source: asyncpg.Connection, dest: asyncpg.Connection
             c.created_by as created_by_id,
             COALESCE(c.entry_date, now()) as created_at
         FROM core.customers c
+        JOIN "user".users u ON c.created_by = u.id
         WHERE c.parent_id IS NOT NULL
     """)
 
@@ -410,7 +420,10 @@ async def migrate_products(source: asyncpg.Connection, dest: asyncpg.Connection)
             p.description,
             p.creation_type,
             COALESCE(p.entry_date, now()) as created_at,
-            p.created_by as created_by_id,
+            COALESCE(
+                u.id,
+                (SELECT id FROM "user".users WHERE username = 'support@flowrms.com' LIMIT 1)
+            ) as created_by_id,
             p.individual_upc as upc,
             p.min_order_qty,
             CASE
@@ -422,6 +435,7 @@ async def migrate_products(source: asyncpg.Connection, dest: asyncpg.Connection)
             p.approval_date,
             p.approval_comments
         FROM core.products p
+        LEFT JOIN "user".users u ON p.created_by = u.id
     """)
 
     if not products:
@@ -760,10 +774,14 @@ async def migrate_quotes(source: asyncpg.Connection, dest: asyncpg.Connection) -
             COALESCE(q.blanket, false) as blanket,
             q.duplicated_from,
             q.balance_id,
-            q.created_by as created_by_id,
+            COALESCE(
+                u.id,
+                (SELECT id FROM "user".users WHERE username = 'support@flowrms.com' LIMIT 1)
+            ) as created_by_id,
             COALESCE(q.entry_date, now()) as created_at,
             q.job_id
         FROM crm.quotes q
+        LEFT JOIN "user".users u ON q.created_by = u.id
         WHERE
             q.sold_to_customer_id IS NOT NULL
     """)
@@ -1051,54 +1069,54 @@ async def run_migration(config: MigrationConfig) -> dict[str, int]:
     results: dict[str, int] = {}
 
     try:
-        # Order matters due to foreign key dependencies
-        results["users"] = await migrate_users(source, dest)
-        results["folders"] = await migrate_folders(source, dest)
+        # # Order matters due to foreign key dependencies
+        # results["users"] = await migrate_users(source, dest)
+        # results["folders"] = await migrate_folders(source, dest)
         results["files"] = await migrate_files(source, dest)
-        results["customers"] = await migrate_customers(source, dest)
-        results["factories"] = await migrate_factories(source, dest)
-        results["product_uoms"] = await migrate_product_uoms(source, dest)
-        results["product_categories"] = await migrate_product_categories(source, dest)
-        results["products"] = await migrate_products(source, dest)
-        results["product_cpns"] = await migrate_product_cpns(source, dest)
-        results["job_statuses"] = await migrate_job_statuses(source, dest)
-        results["jobs"] = await migrate_jobs(source, dest)
-        results["quote_balances"] = await migrate_quote_balances(source, dest)
-        results["quote_lost_reasons"] = await migrate_quote_lost_reasons(source, dest)
-        results["quotes"] = await migrate_quotes(source, dest)
-        results["quote_details"] = await migrate_quote_details(source, dest)
-        results["quote_split_rates"] = await migrate_quote_split_rates(source, dest)
-        results["quote_inside_reps"] = await migrate_quote_inside_reps(source, dest)
-        results["customer_factory_sales_reps"] = await migrate_customer_factory_sales_reps(source, dest)
-        results["inside_customer_split_rates"] = await migrate_inside_customer_split_rates(source, dest)
-        results["customer_split_rates"] = await migrate_customer_split_rates(source, dest)
-        results["factory_split_rates"] = await migrate_factory_split_rates(source, dest)
-        results["addresses"] = await migrate_addresses(source, dest)
-        results["contacts"] = await migrate_contacts(source, dest)
-        results["contact_links"] = await migrate_contact_links(source, dest)
-        results["notes"] = await migrate_notes(source, dest)
-        results["tasks"] = await migrate_tasks(source, dest)
-        results["link_relations"] = await migrate_link_relations(source, dest)
-        results["file_entity_links"] = await migrate_file_entity_links(source, dest)
-        results["companies"] = await migrate_companies(source, dest)
-        results["order_balances"] = await migrate_order_balances(source, dest)
-        results["orders"] = await migrate_orders(source, dest)
-        results["order_details"] = await migrate_order_details(source, dest)
-        results["order_inside_reps"] = await migrate_order_inside_reps(source, dest)
-        results["order_split_rates"] = await migrate_order_split_rates(source, dest)
-        results["order_acknowledgements"] = await migrate_order_acknowledgements(source, dest)
-        results["invoice_balances"] = await migrate_invoice_balances(source, dest)
-        results["invoices"] = await migrate_invoices(source, dest)
-        results["invoice_details"] = await migrate_invoice_details(source, dest)
-        results["invoice_split_rates"] = await migrate_invoice_split_rates(source, dest)
-        results["credit_balances"] = await migrate_credit_balances(source, dest)
-        results["credits"] = await migrate_credits(source, dest)
-        results["credit_details"] = await migrate_credit_details(source, dest)
-        results["credit_split_rates"] = await migrate_credit_split_rates(source, dest)
-        results["adjustments"] = await migrate_adjustments(source, dest)
-        results["adjustment_split_rates"] = await migrate_adjustment_split_rates(source, dest)
-        results["checks"] = await migrate_checks(source, dest)
-        results["check_details"] = await migrate_check_details(source, dest)
+        # results["customers"] = await migrate_customers(source, dest)
+        # results["factories"] = await migrate_factories(source, dest)
+        # # results["product_uoms"] = await migrate_product_uoms(source, dest)
+        # # results["product_categories"] = await migrate_product_categories(source, dest)
+        # results["products"] = await migrate_products(source, dest)
+        # results["product_cpns"] = await migrate_product_cpns(source, dest)
+        # results["job_statuses"] = await migrate_job_statuses(source, dest)
+        # results["jobs"] = await migrate_jobs(source, dest)
+        # results["quote_balances"] = await migrate_quote_balances(source, dest)
+        # results["quote_lost_reasons"] = await migrate_quote_lost_reasons(source, dest)
+        # results["quotes"] = await migrate_quotes(source, dest)
+        # results["quote_details"] = await migrate_quote_details(source, dest)
+        # results["quote_split_rates"] = await migrate_quote_split_rates(source, dest)
+        # results["quote_inside_reps"] = await migrate_quote_inside_reps(source, dest)
+        # results["customer_factory_sales_reps"] = await migrate_customer_factory_sales_reps(source, dest)
+        # results["inside_customer_split_rates"] = await migrate_inside_customer_split_rates(source, dest)
+        # results["customer_split_rates"] = await migrate_customer_split_rates(source, dest)
+        # results["factory_split_rates"] = await migrate_factory_split_rates(source, dest)
+        # results["addresses"] = await migrate_addresses(source, dest)
+        # results["contacts"] = await migrate_contacts(source, dest)
+        # results["contact_links"] = await migrate_contact_links(source, dest)
+        # results["notes"] = await migrate_notes(source, dest)
+        # # results["tasks"] = await migrate_tasks(source, dest)
+        # results["link_relations"] = await migrate_link_relations(source, dest)
+        # results["file_entity_links"] = await migrate_file_entity_links(source, dest)
+        # results["companies"] = await migrate_companies(source, dest)
+        # results["order_balances"] = await migrate_order_balances(source, dest)
+        # results["orders"] = await migrate_orders(source, dest)
+        # results["order_details"] = await migrate_order_details(source, dest)
+        # results["order_inside_reps"] = await migrate_order_inside_reps(source, dest)
+        # results["order_split_rates"] = await migrate_order_split_rates(source, dest)
+        # results["order_acknowledgements"] = await migrate_order_acknowledgements(source, dest)
+        # results["invoice_balances"] = await migrate_invoice_balances(source, dest)
+        # results["invoices"] = await migrate_invoices(source, dest)
+        # results["invoice_details"] = await migrate_invoice_details(source, dest)
+        # results["invoice_split_rates"] = await migrate_invoice_split_rates(source, dest)
+        # results["credit_balances"] = await migrate_credit_balances(source, dest)
+        # results["credits"] = await migrate_credits(source, dest)
+        # results["credit_details"] = await migrate_credit_details(source, dest)
+        # results["credit_split_rates"] = await migrate_credit_split_rates(source, dest)
+        # results["adjustments"] = await migrate_adjustments(source, dest)
+        # results["adjustment_split_rates"] = await migrate_adjustment_split_rates(source, dest)
+        # results["checks"] = await migrate_checks(source, dest)
+        # results["check_details"] = await migrate_check_details(source, dest)
 
         # AI tables (same schema in both source and dest)
         for table in AI_TABLES:

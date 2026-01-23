@@ -14,7 +14,8 @@ async def migrate_customer_split_rates(
     v5: core.customer_split_rates (id, user_id, customer_id, split_rate, position)
     v6: pycore.customer_split_rates adds rep_type field (1=OUTSIDE, 2=INSIDE)
 
-    Rep type is determined by the user's inside flag from pyuser.users.
+    All entries from customer_split_rates are OUTSIDE reps (rep_type = 1).
+    INSIDE reps come from customers.inside_rep_id in migrate_inside_customer_split_rates.
     """
     logger.info("Starting customer split rate migration...")
 
@@ -26,9 +27,11 @@ async def migrate_customer_split_rates(
             COALESCE(csr.split_rate, 0) as split_rate,
             COALESCE(csr."position", 0)::integer as position,
             COALESCE(csr.entry_date, now()) as created_at,
-            CASE WHEN COALESCE(u.inside, false) = true THEN 2 ELSE 1 END as rep_type
+            1 as rep_type  -- Always OUTSIDE
         FROM core.customer_split_rates csr
         JOIN "user".users u ON u.id = csr.user_id
+        JOIN core.customers c ON c.id = csr.customer_id
+        JOIN "user".users cu ON cu.id = c.created_by
     """)
 
     if not split_rates:
@@ -65,30 +68,62 @@ async def migrate_inside_customer_split_rates(
     source: asyncpg.Connection,
     dest: asyncpg.Connection,
 ) -> int:
-    """Migrate customer split rates from v5 to v6.
+    """Migrate inside reps from customers.inside_rep_id to v6.
 
-    v5: core.customer_split_rates (id, user_id, customer_id, split_rate, position)
-    v6: pycore.customer_split_rates adds rep_type field (1=OUTSIDE, 2=INSIDE)
+    v6: pycore.customer_split_rates with rep_type field (1=OUTSIDE, 2=INSIDE)
 
-    Rep type is determined by the user's inside flag from pyuser.users.
+    Creates INSIDE rep entries from customers.inside_rep_id.
+    Split rate is calculated as 100% divided by number of inside reps per customer.
     """
-    logger.info("Starting customer split rate migration...")
+    logger.info("Starting inside customer split rate migration...")
 
     split_rates = await source.fetch("""
+        WITH inside_reps AS (
+            SELECT
+                c.inside_rep_id as user_id,
+                c.id as customer_id,
+                COALESCE(c.entry_date, now()) as created_at
+            FROM core.customers c
+            JOIN "user".users u ON u.id = c.inside_rep_id
+            JOIN "user".users cu ON cu.id = c.created_by
+            WHERE c.inside_rep_id IS NOT NULL
+        ),
+        rep_counts AS (
+            SELECT customer_id, COUNT(*) as cnt
+            FROM inside_reps
+            GROUP BY customer_id
+        )
         SELECT
             gen_random_uuid() as id,
-            c.inside_rep_id as user_id,
-            c.id as customer_id,
-            100 as split_rate,
+            ir.user_id,
+            ir.customer_id,
+            ROUND(100.0 / rc.cnt, 2) as split_rate,
             0 as position,
-            COALESCE(c.entry_date, now()) as created_at,
-            2 as rep_type
-        FROM core.customers c
-        JOIN "user".users u ON u.id = c.inside_rep_id
+            ir.created_at,
+            2 as rep_type  -- INSIDE
+        FROM inside_reps ir
+        JOIN rep_counts rc ON rc.customer_id = ir.customer_id
     """)
 
     if not split_rates:
-        logger.info("No customer split rates to migrate")
+        logger.info("No inside customer split rates to migrate")
+        return 0
+
+    # Filter out records that already exist (same user_id, customer_id, rep_type)
+    existing = await dest.fetch("""
+        SELECT user_id, customer_id, rep_type
+        FROM pycore.customer_split_rates
+        WHERE rep_type = 2
+    """)
+    existing_keys = {(r["user_id"], r["customer_id"], r["rep_type"]) for r in existing}
+
+    new_split_rates = [
+        sr for sr in split_rates
+        if (sr["user_id"], sr["customer_id"], sr["rep_type"]) not in existing_keys
+    ]
+
+    if not new_split_rates:
+        logger.info("No new inside customer split rates to migrate (all exist)")
         return 0
 
     await dest.executemany(
@@ -97,10 +132,7 @@ async def migrate_inside_customer_split_rates(
             id, user_id, customer_id, split_rate, rep_type, "position", created_at
         ) VALUES ($1, $2, $3, $4, $5, $6, $7)
         ON CONFLICT (id) DO UPDATE SET
-            user_id = EXCLUDED.user_id,
-            customer_id = EXCLUDED.customer_id,
             split_rate = EXCLUDED.split_rate,
-            rep_type = EXCLUDED.rep_type,
             "position" = EXCLUDED."position"
         """,
         [(
@@ -111,11 +143,11 @@ async def migrate_inside_customer_split_rates(
             sr["rep_type"],
             sr["position"],
             sr["created_at"],
-        ) for sr in split_rates],
+        ) for sr in new_split_rates],
     )
 
-    logger.info(f"Migrated {len(split_rates)} customer split rates")
-    return len(split_rates)
+    logger.info(f"Migrated {len(new_split_rates)} inside customer split rates")
+    return len(new_split_rates)
 
 
 async def migrate_factory_split_rates(
@@ -197,6 +229,8 @@ async def migrate_customer_factory_sales_reps(
         FROM core.sales_rep_selection_split_rates srsr
         JOIN "user".users u ON u.id = srsr.user_id
         JOIN core.sales_rep_selections srs ON srs.id = srsr.sales_pep_selection_id
+        JOIN core.customers c ON c.id = srs.customer_id
+        JOIN "user".users cu ON cu.id = c.created_by
     """)
 
     if not sales_reps:
@@ -233,7 +267,7 @@ async def migrate_addresses(
 ) -> int:
     """Migrate addresses from v5 (core.addresses) to v6 (pycore.addresses).
 
-    v5 entity_type: 0 = customer, 1 = factory
+    v5 entity_type: 0 = factory, 1 = customer
     v6 source_type: 1 = CUSTOMER, 2 = FACTORY (IntEnum auto())
     v5 address_type: 0 = billing, 1 = shipping, etc.
     v6 address_types table: type = 1 = BILLING, 2 = SHIPPING, 3 = MAILING, 4 = OTHER
@@ -245,8 +279,8 @@ async def migrate_addresses(
             a.id,
             a.source_id,
             CASE
-                WHEN a.entity_type = 0 THEN 1
-                WHEN a.entity_type = 1 THEN 2
+                WHEN a.entity_type = 0 THEN 2
+                WHEN a.entity_type = 1 THEN 1
                 ELSE 1
             END AS source_type,
             CASE
@@ -380,7 +414,7 @@ async def migrate_contact_links(
 ) -> int:
     """Migrate contact-to-customer/factory relationships via link_relations.
 
-    v5 contacts have entity_type (0=customer, 1=factory) and source_id.
+    v5 contacts have entity_type (0=factory, 1=customer) and source_id.
     v6 uses link_relations table with entity types:
     - 3 = CONTACT
     - 12 = CUSTOMER
@@ -388,7 +422,7 @@ async def migrate_contact_links(
     """
     logger.info("Starting contact link migration...")
 
-    # Customer contacts (entity_type = 0)
+    # Customer contacts (entity_type = 1 in v5)
     customer_links = await source.fetch("""
         SELECT
             gen_random_uuid() as id,
@@ -397,7 +431,7 @@ async def migrate_contact_links(
             c.created_by as created_by_id,
             COALESCE(c.entry_date, now()) as created_at
         FROM core.contacts c
-        WHERE c.entity_type = 0 AND c.source_id IS NOT NULL
+        WHERE c.entity_type = 1 AND c.source_id IS NOT NULL
     """)
 
     if customer_links:

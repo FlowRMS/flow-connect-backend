@@ -70,30 +70,42 @@ async def migrate_check_details(source: asyncpg.Connection, dest: asyncpg.Connec
     """Migrate check details from v5 (commission.check_details) to v6 (pycommission.check_details).
 
     Maps v5 deduction_id to v6 credit_id (deductions were stored in credits table).
+    Aggregates duplicate invoice_ids by summing applied_amount.
     """
     logger.info("Starting check detail migration...")
 
     details = await source.fetch("""
+        WITH filtered AS (
+            SELECT
+                cd.id,
+                cd.check_id,
+                cd.invoice_id,
+                cd.adjustment_id,
+                cd.deduction_id as credit_id,
+                COALESCE(cd.applied_amount, 0) as applied_amount
+            FROM commission.check_details cd
+            JOIN commission.checks c ON c.id = cd.check_id
+            JOIN "user".users u ON u.id = c.created_by
+            LEFT JOIN commission.invoices i ON i.id = cd.invoice_id
+            LEFT JOIN commission.orders o ON o.id = i.order_id
+            LEFT JOIN crm.quotes q ON q.id = o.quote_id
+            WHERE
+                cd.invoice_id IS NULL
+                OR (
+                    o.sold_to_customer_id IS NOT NULL
+                    AND o.factory_id IS NOT NULL
+                    AND (o.quote_id IS NULL OR q.sold_to_customer_id IS NOT NULL)
+                )
+        )
         SELECT
-            cd.id,
-            cd.check_id,
-            cd.invoice_id,
-            cd.adjustment_id,
-            cd.deduction_id as credit_id,
-            COALESCE(cd.applied_amount, 0) as applied_amount
-        FROM commission.check_details cd
-        JOIN commission.checks c ON c.id = cd.check_id
-        JOIN "user".users u ON u.id = c.created_by
-        LEFT JOIN commission.invoices i ON i.id = cd.invoice_id
-        LEFT JOIN commission.orders o ON o.id = i.order_id
-        LEFT JOIN crm.quotes q ON q.id = o.quote_id
-        WHERE
-            cd.invoice_id IS NULL
-            OR (
-                o.sold_to_customer_id IS NOT NULL
-                AND o.factory_id IS NOT NULL
-                AND (o.quote_id IS NULL OR q.sold_to_customer_id IS NOT NULL)
-            )
+            gen_random_uuid() as id,
+            check_id,
+            invoice_id,
+            adjustment_id,
+            credit_id,
+            SUM(applied_amount) as applied_amount
+        FROM filtered
+        GROUP BY check_id, invoice_id, adjustment_id, credit_id
     """)
 
     if not details:

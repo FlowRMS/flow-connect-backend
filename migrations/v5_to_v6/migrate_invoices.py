@@ -85,11 +85,14 @@ async def migrate_invoices(source: asyncpg.Connection, dest: asyncpg.Connection)
             i.creation_type,
             i.status + 1 AS status,
             i.balance_id,
-            i.created_by as created_by_id,
+            COALESCE(
+                u.id,
+                (SELECT id FROM "user".users WHERE username = 'support@flowrms.com' LIMIT 1)
+            ) as created_by_id,
             COALESCE(i.entry_date, now()) as created_at
         FROM commission.invoices i
         JOIN commission.orders o ON o.id = i.order_id
-        JOIN "user".users u ON u.id = i.created_by
+        LEFT JOIN "user".users u ON u.id = i.created_by
         LEFT JOIN crm.quotes q ON q.id = o.quote_id
         WHERE
             o.sold_to_customer_id IS NOT NULL
@@ -172,7 +175,7 @@ async def migrate_invoice_details(source: asyncpg.Connection, dest: asyncpg.Conn
         JOIN commission.invoices i ON i.id = id.invoice_id
         JOIN commission.orders o ON o.id = i.order_id
         JOIN commission.order_details od ON od.id = id.order_detail_id
-        JOIN "user".users u ON u.id = i.created_by
+        LEFT JOIN "user".users u ON u.id = i.created_by
         LEFT JOIN crm.quotes q ON q.id = o.quote_id
         WHERE
             o.sold_to_customer_id IS NOT NULL
@@ -258,7 +261,7 @@ async def migrate_invoice_split_rates(source: asyncpg.Connection, dest: asyncpg.
         JOIN commission.invoice_details id ON id.id = isr.invoice_detail_id
         JOIN commission.invoices i ON i.id = id.invoice_id
         JOIN commission.orders o ON o.id = i.order_id
-        JOIN "user".users u ON u.id = isr.user_id
+        LEFT JOIN "user".users u ON u.id = isr.user_id
         LEFT JOIN crm.quotes q ON q.id = o.quote_id
         WHERE
             o.sold_to_customer_id IS NOT NULL
