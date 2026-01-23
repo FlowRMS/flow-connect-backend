@@ -1,3 +1,4 @@
+from copy import deepcopy
 from uuid import UUID
 
 from commons.db.v6.ai.entities.enums import ConfirmationStatus, EntityPendingType
@@ -105,7 +106,7 @@ class EntityMappingBuilder:
             existing.skipped_order_indices.update(source.skipped_order_indices)
             existing.skipped_invoice_indices.update(source.skipped_invoice_indices)
         else:
-            self._mappings[dto_id] = source
+            self._mappings[dto_id] = deepcopy(source)
 
     def _mark_product_skipped(self, pe: PendingEntity) -> None:
         if pe.flow_index_detail is None:

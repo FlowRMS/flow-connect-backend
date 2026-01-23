@@ -68,6 +68,7 @@ enum AddressSourceTypeEnum {
   FULFILLMENT_ORDER
   CONTACT
   COMPANY
+  JOB
 }
 
 enum AddressTypeEnum {
@@ -997,6 +998,291 @@ input DeleteLinkByEntitiesInput {
   sourceEntityId: UUID!
   targetEntityType: EntityType!
   targetEntityId: UUID!
+}
+
+input DeliveryAssigneeInput {
+  deliveryId: UUID!
+  userId: UUID!
+  role: WarehouseMemberRole!
+}
+
+type DeliveryAssigneeLiteResponse {
+  id: UUID!
+  deliveryId: UUID!
+  userId: UUID!
+  role: WarehouseMemberRole!
+}
+
+type DeliveryAssigneeResponse {
+  id: UUID!
+  deliveryId: UUID!
+  userId: UUID!
+  role: WarehouseMemberRole!
+}
+
+input DeliveryDocumentInput {
+  deliveryId: UUID!
+  fileId: UUID!
+  docType: DeliveryDocumentType!
+  uploadedById: UUID = null
+  notes: String = null
+}
+
+type DeliveryDocumentLiteResponse {
+  id: UUID!
+  deliveryId: UUID!
+  fileId: UUID
+  name: String!
+  docType: DeliveryDocumentType!
+  fileUrl: String!
+  mimeType: String!
+  fileSize: Int
+  uploadedById: UUID
+  uploadedAt: datetime!
+  notes: String
+}
+
+type DeliveryDocumentResponse {
+  id: UUID!
+  deliveryId: UUID!
+  fileId: UUID
+  name: String!
+  docType: DeliveryDocumentType!
+  fileUrl: String!
+  mimeType: String!
+  fileSize: Int
+  uploadedById: UUID
+  uploadedAt: datetime!
+  notes: String
+}
+
+enum DeliveryDocumentType {
+  PACKING_SLIP
+  BOL
+  PHOTO
+  OTHER
+}
+
+input DeliveryInput {
+  poNumber: String!
+  warehouseId: UUID!
+  vendorId: UUID!
+  carrierId: UUID = null
+  trackingNumber: String = null
+  status: DeliveryStatus! = DRAFT
+  expectedDate: Date = null
+  arrivedAt: datetime = null
+  receivingStartedAt: datetime = null
+  receivedAt: datetime = null
+  originAddressId: UUID = null
+  destinationAddressId: UUID = null
+  recurringShipmentId: UUID = null
+  vendorContactName: String = null
+  vendorContactEmail: String = null
+  notes: String = null
+  updatedById: UUID = null
+}
+
+input DeliveryIssueInput {
+  deliveryId: UUID!
+  deliveryItemId: UUID!
+  receiptId: UUID = null
+  issueType: DeliveryIssueType!
+  customIssueType: String = null
+  quantity: Int! = 0
+  status: DeliveryIssueStatus! = OPEN
+  description: String = null
+  notes: String = null
+  communicatedAt: datetime = null
+}
+
+type DeliveryIssueLiteResponse {
+  id: UUID!
+  deliveryId: UUID!
+  deliveryItemId: UUID!
+  receiptId: UUID
+  issueType: DeliveryIssueType!
+  customIssueType: String
+  quantity: Int!
+  status: DeliveryIssueStatus!
+  description: String
+  notes: String
+  communicatedAt: datetime
+  createdAt: datetime!
+  createdById: UUID
+}
+
+type DeliveryIssueResponse {
+  id: UUID!
+  deliveryId: UUID!
+  deliveryItemId: UUID!
+  receiptId: UUID
+  issueType: DeliveryIssueType!
+  customIssueType: String
+  quantity: Int!
+  status: DeliveryIssueStatus!
+  description: String
+  notes: String
+  communicatedAt: datetime
+  createdAt: datetime!
+  createdById: UUID
+}
+
+enum DeliveryIssueStatus {
+  OPEN
+  COMMUNICATED
+  RESOLVED
+  CLOSED
+}
+
+enum DeliveryIssueType {
+  DAMAGED
+  MISSING
+  OVERAGE
+  WRONG_ITEM
+  OTHER
+}
+
+input DeliveryItemInput {
+  deliveryId: UUID!
+  productId: UUID!
+  expectedQuantity: Int! = 0
+  receivedQuantity: Int! = 0
+  damagedQuantity: Int! = 0
+  status: DeliveryItemStatus! = PENDING
+  discrepancyNotes: String = null
+}
+
+input DeliveryItemReceiptInput {
+  deliveryItemId: UUID!
+  receiptType: DeliveryReceiptType! = RECEIPT
+  receivedQuantity: Int! = 0
+  damagedQuantity: Int! = 0
+  locationId: UUID = null
+  receivedById: UUID = null
+  receivedAt: datetime = null
+  note: String = null
+}
+
+type DeliveryItemReceiptResponse {
+  id: UUID!
+  deliveryItemId: UUID!
+  receiptType: DeliveryReceiptType!
+  receivedQuantity: Int!
+  damagedQuantity: Int!
+  locationId: UUID
+  receivedById: UUID
+  receivedAt: datetime
+  note: String
+}
+
+type DeliveryItemResponse {
+  id: UUID!
+  deliveryId: UUID!
+  productId: UUID!
+  expectedQuantity: Int!
+  receivedQuantity: Int!
+  damagedQuantity: Int!
+  status: DeliveryItemStatus!
+  discrepancyNotes: String
+  receipts: [DeliveryItemReceiptResponse!]!
+  issues: [DeliveryIssueResponse!]!
+  product: ProductLiteResponse!
+}
+
+enum DeliveryItemStatus {
+  PENDING
+  RECEIVED
+  PARTIAL
+  DISCREPANCY
+}
+
+type DeliveryLiteResponse {
+  id: UUID!
+  poNumber: String!
+  warehouseId: UUID!
+  vendorId: UUID!
+  carrierId: UUID
+  trackingNumber: String
+  status: DeliveryStatus!
+  expectedDate: Date
+  arrivedAt: datetime
+  receivingStartedAt: datetime
+  receivedAt: datetime
+  originAddressId: UUID
+  destinationAddressId: UUID
+  recurringShipmentId: UUID
+  vendorContactName: String
+  vendorContactEmail: String
+  notes: String
+  createdAt: datetime!
+  createdById: UUID
+  updatedById: UUID
+  updatedAt: datetime
+}
+
+enum DeliveryReceiptType {
+  RECEIPT
+  ADJUSTMENT
+  RETURN
+}
+
+type DeliveryResponse {
+  id: UUID!
+  poNumber: String!
+  warehouseId: UUID!
+  vendorId: UUID!
+  carrierId: UUID
+  trackingNumber: String
+  status: DeliveryStatus!
+  expectedDate: Date
+  arrivedAt: datetime
+  receivingStartedAt: datetime
+  receivedAt: datetime
+  originAddressId: UUID
+  destinationAddressId: UUID
+  recurringShipmentId: UUID
+  vendorContactName: String
+  vendorContactEmail: String
+  notes: String
+  createdAt: datetime!
+  createdById: UUID
+  updatedById: UUID
+  updatedAt: datetime
+  items: [DeliveryItemResponse!]!
+  statusHistory: [DeliveryStatusHistoryResponse!]!
+  issues: [DeliveryIssueResponse!]!
+  assignees: [DeliveryAssigneeResponse!]!
+  documents: [DeliveryDocumentResponse!]!
+  vendor: FactoryLiteResponse!
+  carrier: ShippingCarrierResponse
+}
+
+enum DeliveryStatus {
+  DRAFT
+  PENDING
+  CONFIRMED
+  ARRIVED
+  RECEIVING
+  RECEIVED
+  CANCELLED
+}
+
+input DeliveryStatusHistoryInput {
+  deliveryId: UUID!
+  status: DeliveryStatus!
+  timestamp: datetime = null
+  userId: UUID = null
+  note: String = null
+}
+
+type DeliveryStatusHistoryResponse {
+  id: UUID!
+  deliveryId: UUID!
+  status: DeliveryStatus!
+  timestamp: datetime!
+  userId: UUID
+  note: String
 }
 
 enum DocumentEntityType {
@@ -2149,6 +2435,30 @@ type Mutation {
   updateCustomer(id: UUID!, input: CustomerInput!): CustomerResponse!
   deleteCustomer(id: UUID!): Boolean!
   assignChildCustomers(parentId: UUID!, childIds: [UUID!]!): [CustomerLiteResponse!]!
+  createDelivery(input: DeliveryInput!): DeliveryResponse!
+  updateDelivery(id: UUID!, input: DeliveryInput!): DeliveryResponse!
+  deleteDelivery(id: UUID!): Boolean!
+  createDeliveryAssignee(input: DeliveryAssigneeInput!): DeliveryAssigneeResponse!
+  updateDeliveryAssignee(id: UUID!, input: DeliveryAssigneeInput!): DeliveryAssigneeResponse!
+  deleteDeliveryAssignee(id: UUID!): Boolean!
+  createDeliveryDocument(input: DeliveryDocumentInput!): DeliveryDocumentResponse!
+  updateDeliveryDocument(id: UUID!, input: DeliveryDocumentInput!): DeliveryDocumentResponse!
+  deleteDeliveryDocument(id: UUID!): Boolean!
+  createDeliveryIssue(input: DeliveryIssueInput!): DeliveryIssueResponse!
+  updateDeliveryIssue(id: UUID!, input: DeliveryIssueInput!): DeliveryIssueResponse!
+  deleteDeliveryIssue(id: UUID!): Boolean!
+  createDeliveryItemReceipt(input: DeliveryItemReceiptInput!): DeliveryItemReceiptResponse!
+  updateDeliveryItemReceipt(id: UUID!, input: DeliveryItemReceiptInput!): DeliveryItemReceiptResponse!
+  deleteDeliveryItemReceipt(id: UUID!): Boolean!
+  createDeliveryItem(input: DeliveryItemInput!): DeliveryItemResponse!
+  updateDeliveryItem(id: UUID!, input: DeliveryItemInput!): DeliveryItemResponse!
+  deleteDeliveryItem(id: UUID!): Boolean!
+  createDeliveryStatusHistory(input: DeliveryStatusHistoryInput!): DeliveryStatusHistoryResponse!
+  updateDeliveryStatusHistory(id: UUID!, input: DeliveryStatusHistoryInput!): DeliveryStatusHistoryResponse!
+  deleteDeliveryStatusHistory(id: UUID!): Boolean!
+  createRecurringShipment(input: RecurringShipmentInput!): RecurringShipmentResponse!
+  updateRecurringShipment(id: UUID!, input: RecurringShipmentInput!): RecurringShipmentResponse!
+  deleteRecurringShipment(id: UUID!): Boolean!
   createFactory(input: FactoryInput!): FactoryResponse!
   updateFactory(id: UUID!, input: FactoryInput!): FactoryResponse!
   deleteFactory(id: UUID!): Boolean!
@@ -3207,6 +3517,7 @@ type ProductResponse {
   tags: [String!]
   factory: FactoryLiteResponse!
   category: ProductCategoryResponse
+  uom: ProductUomResponse
 }
 
 input ProductUomInput {
@@ -3322,6 +3633,22 @@ type Query {
   customerSearch(searchTerm: String!, published: Boolean! = true, limit: Int! = 20): [CustomerResponse!]!
   customerChildren(parentId: UUID!): [CustomerLiteResponse!]!
   customerBuyingGroupMembers(buyingGroupId: UUID!): [CustomerLiteResponse!]!
+  deliveries(warehouseId: UUID = null, limit: Int = null, offset: Int = null): [DeliveryLiteResponse!]!
+  delivery(id: UUID!): DeliveryResponse!
+  deliveryAssignees(deliveryId: UUID!): [DeliveryAssigneeLiteResponse!]!
+  deliveryAssignee(id: UUID!): DeliveryAssigneeResponse!
+  deliveryDocuments(deliveryId: UUID!): [DeliveryDocumentLiteResponse!]!
+  deliveryDocument(id: UUID!): DeliveryDocumentResponse!
+  deliveryIssues(deliveryId: UUID!): [DeliveryIssueLiteResponse!]!
+  deliveryIssue(id: UUID!): DeliveryIssueResponse!
+  deliveryItemReceipts(deliveryItemId: UUID!): [DeliveryItemReceiptResponse!]!
+  deliveryItemReceipt(id: UUID!): DeliveryItemReceiptResponse!
+  deliveryItems(deliveryId: UUID!): [DeliveryItemResponse!]!
+  deliveryItem(id: UUID!): DeliveryItemResponse!
+  deliveryStatusHistory(deliveryId: UUID!): [DeliveryStatusHistoryResponse!]!
+  deliveryStatusEntry(id: UUID!): DeliveryStatusHistoryResponse!
+  recurringShipments(warehouseId: UUID = null): [RecurringShipmentResponse!]!
+  recurringShipment(id: UUID!): RecurringShipmentResponse!
   factory(id: UUID!): FactoryResponse!
   factorySearch(searchTerm: String!, published: Boolean! = true, limit: Int! = 20, useCustomOrder: Boolean! = false): [FactoryResponse!]!
   fulfillmentOrders(warehouseId: UUID = null, status: [FulfillmentOrderStatus!] = null, search: String = null, limit: Int! = 50, offset: Int! = 0): [FulfillmentOrderLiteResponse!]!
@@ -3698,6 +4025,50 @@ enum RecipientListType {
   STATIC
   CRITERIA_BASED
   DYNAMIC
+}
+
+input RecurringShipmentInput {
+  name: String!
+  vendorId: UUID!
+  warehouseId: UUID!
+  recurrencePattern: JSON!
+  startDate: Date!
+  vendorContactName: String = null
+  vendorContactEmail: String = null
+  carrier: String = null
+  notes: String = null
+  endDate: Date = null
+  status: RecurringShipmentStatus! = ACTIVE
+  lastGeneratedDate: Date = null
+  nextExpectedDate: Date = null
+  updatedById: UUID = null
+}
+
+type RecurringShipmentResponse {
+  id: UUID!
+  name: String!
+  vendorId: UUID!
+  vendorContactName: String
+  vendorContactEmail: String
+  warehouseId: UUID!
+  carrier: String
+  notes: String
+  recurrencePattern: JSON!
+  startDate: Date!
+  endDate: Date
+  status: RecurringShipmentStatus!
+  lastGeneratedDate: Date
+  nextExpectedDate: Date
+  createdAt: datetime!
+  updatedAt: datetime
+  createdById: UUID
+  updatedById: UUID
+}
+
+enum RecurringShipmentStatus {
+  ACTIVE
+  PAUSED
+  CANCELLED
 }
 
 type RelatedEntitiesResponse {

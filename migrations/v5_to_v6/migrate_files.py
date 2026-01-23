@@ -59,8 +59,9 @@ async def migrate_files(source: asyncpg.Connection, dest: asyncpg.Connection) ->
             COALESCE(f.archived, false) as archived,
             f.folder_id,
             COALESCE(f.created_at, now()) as created_at,
-            f.created_by as created_by_id
+            COALESCE(u.id, (SELECT id FROM "user".users LIMIT 1)) as created_by_id
         FROM files.files f
+        LEFT JOIN "user".users u ON f.created_by = u.id
     """)
 
     if not files:

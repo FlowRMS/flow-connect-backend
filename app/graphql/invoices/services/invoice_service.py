@@ -106,18 +106,14 @@ class InvoiceService:
     ) -> Invoice:
         order = await self.orders_repository.find_order_by_id(order_id)
 
-        if await self.repository.invoice_number_exists(order_id, invoice_number):
-            raise NameAlreadyExistsError(invoice_number)
-
-        invoice = InvoiceFactory.from_order(
+        invoice_input = InvoiceFactory.from_order(
             order=order,
             invoice_number=invoice_number,
             factory_id=factory_id,
             order_details_inputs=order_details_inputs,
             due_date=due_date,
         )
-        invoice.status = InvoiceStatus.OPEN
-        return await self.repository.create_with_balance(invoice)
+        return await self.create_invoice(invoice_input)
 
     async def find_by_sold_to_customer_id(self, customer_id: UUID) -> list[Invoice]:
         return await self.repository.find_by_sold_to_customer_id(customer_id)

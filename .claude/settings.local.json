@@ -58,7 +58,8 @@
       "Bash(task typecheck-basedpy:*)",
       "Bash(alembic heads:*)",
       "Bash(alembic history:*)",
-      "Bash(uv lock:*)"
+      "Bash(uv lock:*)",
+      "Bash(task check:*)"
     ]
   },
   "enableAllProjectMcpServers": true,
