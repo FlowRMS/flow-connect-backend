@@ -37,7 +37,7 @@ class VectorRepository:
             payload=metadata,
         )
 
-        _ = self.vector_service.client.upsert(
+        _ = await self.vector_service.client.upsert(
             collection_name=self.collection_name,
             points=[point],
         )
