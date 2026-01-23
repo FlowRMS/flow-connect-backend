@@ -1049,8 +1049,8 @@ async def run_migration(config: MigrationConfig) -> dict[str, int]:
 
     # Server settings to keep connection alive
     server_settings = {
-        "statement_timeout": "0",  # No statement timeout
-        "idle_in_transaction_session_timeout": "0",  # No idle timeout
+        # "statement_timeout": "0",  # No statement timeout
+        # "idle_in_transaction_session_timeout": "0",  # No idle timeout
     }
 
     source = await asyncpg.connect(
@@ -1072,7 +1072,7 @@ async def run_migration(config: MigrationConfig) -> dict[str, int]:
         # # Order matters due to foreign key dependencies
         # results["users"] = await migrate_users(source, dest)
         # results["folders"] = await migrate_folders(source, dest)
-        results["files"] = await migrate_files(source, dest)
+        # results["files"] = await migrate_files(source, dest)
         # results["customers"] = await migrate_customers(source, dest)
         # results["factories"] = await migrate_factories(source, dest)
         # # results["product_uoms"] = await migrate_product_uoms(source, dest)
@@ -1093,7 +1093,7 @@ async def run_migration(config: MigrationConfig) -> dict[str, int]:
         # results["factory_split_rates"] = await migrate_factory_split_rates(source, dest)
         # results["addresses"] = await migrate_addresses(source, dest)
         # results["contacts"] = await migrate_contacts(source, dest)
-        # results["contact_links"] = await migrate_contact_links(source, dest)
+        results["contact_links"] = await migrate_contact_links(source, dest)
         # results["notes"] = await migrate_notes(source, dest)
         # # results["tasks"] = await migrate_tasks(source, dest)
         # results["link_relations"] = await migrate_link_relations(source, dest)
@@ -1119,8 +1119,8 @@ async def run_migration(config: MigrationConfig) -> dict[str, int]:
         # results["check_details"] = await migrate_check_details(source, dest)
 
         # AI tables (same schema in both source and dest)
-        for table in AI_TABLES:
-            results[table] = await migrate_ai_table(source, dest, table)
+        # for table in AI_TABLES:
+        #     results[table] = await migrate_ai_table(source, dest, table)
 
         logger.info("Migration completed successfully!")
         logger.info(f"Results: {results}")

@@ -414,44 +414,64 @@ async def migrate_contact_links(
 ) -> int:
     """Migrate contact-to-customer/factory relationships via link_relations.
 
-    v5 contacts have entity_type (0=factory, 1=customer) and source_id.
-    v6 uses link_relations table with entity types:
+    Uses source_id from contacts and left joins to factories/customers tables
+    to determine the target entity type.
+
+    v6 EntityType values:
     - 3 = CONTACT
+    - 11 = FACTORY
     - 12 = CUSTOMER
-    - 13 = FACTORY (assumed based on pattern)
     """
     logger.info("Starting contact link migration...")
 
-    # Customer contacts (entity_type = 1 in v5)
-    customer_links = await source.fetch("""
+    # Get contacts with source_id and determine if linked to factory or customer
+    contact_links = await source.fetch("""
         SELECT
             gen_random_uuid() as id,
             c.id as contact_id,
-            c.source_id as customer_id,
+            c.source_id,
+            CASE
+                WHEN f.id IS NOT NULL THEN 11  -- FACTORY
+                WHEN cust.id IS NOT NULL THEN 12  -- CUSTOMER
+                ELSE NULL
+            END AS target_entity_type,
             c.created_by as created_by_id,
             COALESCE(c.entry_date, now()) as created_at
         FROM core.contacts c
-        WHERE c.entity_type = 1 AND c.source_id IS NOT NULL
+        LEFT JOIN core.factories f ON f.id = c.source_id
+        LEFT JOIN core.customers cust ON cust.id = c.source_id
+        WHERE c.source_id IS NOT NULL
+          AND (f.id IS NOT NULL OR cust.id IS NOT NULL)
     """)
 
-    if customer_links:
-        await dest.executemany(
-            """
-            INSERT INTO pycrm.link_relations (
-                id, source_entity_type, source_entity_id,
-                target_entity_type, target_entity_id,
-                created_by_id, created_at
-            ) VALUES ($1, 3, $2, 12, $3, $4, $5)
-            ON CONFLICT DO NOTHING
-            """,
-            [(
-                link["id"],
-                link["contact_id"],
-                link["customer_id"],
-                link["created_by_id"],
-                link["created_at"],
-            ) for link in customer_links],
-        )
+    if not contact_links:
+        logger.info("No contact links to migrate")
+        return 0
 
-    logger.info(f"Migrated {len(customer_links)} contact-customer links")
-    return len(customer_links)
+    await dest.executemany(
+        """
+        INSERT INTO pycrm.link_relations (
+            id, source_entity_type, source_entity_id,
+            target_entity_type, target_entity_id,
+            created_by_id, created_at
+        ) VALUES ($1, 3, $2, $3, $4, $5, $6)
+        ON CONFLICT DO NOTHING
+        """,
+        [(
+            link["id"],
+            link["contact_id"],
+            link["target_entity_type"],
+            link["source_id"],
+            link["created_by_id"],
+            link["created_at"],
+        ) for link in contact_links],
+    )
+
+    # Log breakdown by type
+    factory_count = sum(1 for link in contact_links if link["target_entity_type"] == 11)
+    customer_count = sum(1 for link in contact_links if link["target_entity_type"] == 12)
+    logger.info(
+        f"Migrated {len(contact_links)} contact links "
+        f"({factory_count} factory, {customer_count} customer)"
+    )
+    return len(contact_links)
