@@ -56,7 +56,7 @@ class FileUploadService:
 
         return UploadResult(
             s3_key=s3_key,
-            file_path=s3_key.replace(file_name, ""),
+            file_path=s3_key.replace(file_name, "") if folder_path else None,
             file_size=file_size,
             file_sha=file_sha,
             presigned_url=presigned_url,
