@@ -70,3 +70,23 @@ class AdjustmentCreationFailedError(ConversionError):
         super().__init__(
             f"Failed to create adjustment for detail at index {detail_index}: {reason}"
         )
+
+
+class DeliveryVendorRequiredError(ConversionError):
+    def __init__(self) -> None:
+        super().__init__("Vendor ID is required but not found in entity_mapping")
+
+
+class DeliveryWarehouseRequiredError(ConversionError):
+    def __init__(self) -> None:
+        super().__init__("Warehouse ID is required but not provided in the DTO")
+
+
+class DeliveryProductRequiredError(ConversionError):
+    def __init__(self, flow_index: int | None, part_number: str) -> None:
+        self.flow_index = flow_index
+        self.part_number = part_number
+        super().__init__(
+            "Product ID is required for delivery item at index "
+            f"{flow_index} (part_number='{part_number}')"
+        )
