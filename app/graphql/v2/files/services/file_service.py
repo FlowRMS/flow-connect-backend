@@ -101,7 +101,7 @@ class FileService:
         file_type = detect_file_type(file_name)
         new_file = File(
             file_name=file_name,
-            file_path=upload_result.file_path,
+            file_path=upload_result.file_path, # folder_path without filename
             file_size=upload_result.file_size,
             file_type=file_type,
             file_sha=upload_result.file_sha,
@@ -146,9 +146,9 @@ class FileService:
             return None
         # s3_key = str(Path(folder_path) / file_name) if folder_path else file_name
         s3_key = (
-            file.file_path + "/" + file.file_name if file.file_path else file.file_name
+            file.file_path + file.file_name if file.file_path else file.file_name
         )
-        # Use file_path directly since it now stores the full S3 key including filename
+        # Use file_path + file_name
         return await self.upload_service.get_presigned_url(s3_key)
 
     async def find_by_linked_entity(
