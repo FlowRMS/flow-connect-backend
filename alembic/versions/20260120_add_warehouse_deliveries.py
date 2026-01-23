@@ -6,7 +6,7 @@ from sqlalchemy.dialects import postgresql
 from alembic import op
 
 revision: str = "warehouse_deliveries_001"
-down_revision: str | None = "insert_default_job_statuses"
+down_revision: str | None = "add_service_type_to_fulfillment"
 branch_labels: str | Sequence[str] | None = None
 depends_on: str | Sequence[str] | None = None
 
