@@ -1,4 +1,3 @@
-
 from uuid import UUID
 
 import strawberry
@@ -8,10 +7,10 @@ from app.graphql.inject import inject
 from app.graphql.v2.core.deliveries.services.delivery_item_receipt_service import (
     DeliveryItemReceiptService,
 )
-from app.graphql.v2.core.deliveries.strawberry.inputs import DeliveryItemReceiptInput
 from app.graphql.v2.core.deliveries.strawberry.delivery_item_receipt_response import (
     DeliveryItemReceiptResponse,
 )
+from app.graphql.v2.core.deliveries.strawberry.inputs import DeliveryItemReceiptInput
 
 
 @strawberry.type

@@ -1,4 +1,3 @@
-
 from app.graphql.v2.core.deliveries.strawberry.inputs.delivery_assignee_input import (
     DeliveryAssigneeInput,
 )

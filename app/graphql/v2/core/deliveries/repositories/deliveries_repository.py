@@ -25,24 +25,21 @@ class DeliveriesRepository(BaseRepository[Delivery]):
         Uses selectinload for collections to avoid cartesian products.
         Uses joinedload for single/scalar relationships.
         """
-        return (
-            select(Delivery)
-            .options(
-                # Collections - use selectinload
-                selectinload(Delivery.items).options(
-                    joinedload(DeliveryItem.product),
-                    selectinload(DeliveryItem.receipts),
-                    selectinload(DeliveryItem.issues),
-                ),
-                selectinload(Delivery.status_history),
-                selectinload(Delivery.issues),
-                selectinload(Delivery.assignees),
-                selectinload(Delivery.documents).selectinload(DeliveryDocument.file),
-                # Single relationships - use joinedload
-                joinedload(Delivery.recurring_shipment),
-                joinedload(Delivery.vendor),
-                joinedload(Delivery.carrier),
-            )
+        return select(Delivery).options(
+            # Collections - use selectinload
+            selectinload(Delivery.items).options(
+                joinedload(DeliveryItem.product),
+                selectinload(DeliveryItem.receipts),
+                selectinload(DeliveryItem.issues),
+            ),
+            selectinload(Delivery.status_history),
+            selectinload(Delivery.issues),
+            selectinload(Delivery.assignees),
+            selectinload(Delivery.documents).selectinload(DeliveryDocument.file),
+            # Single relationships - use joinedload
+            joinedload(Delivery.recurring_shipment),
+            joinedload(Delivery.vendor),
+            joinedload(Delivery.carrier),
         )
 
     @property
@@ -88,7 +85,9 @@ class DeliveriesRepository(BaseRepository[Delivery]):
         limit: int | None = None,
         offset: int | None = None,
     ) -> list[Delivery]:
-        return await self.list_by_warehouse_lite(warehouse_id, limit=limit, offset=offset)
+        return await self.list_by_warehouse_lite(
+            warehouse_id, limit=limit, offset=offset
+        )
 
     async def list_all(
         self,

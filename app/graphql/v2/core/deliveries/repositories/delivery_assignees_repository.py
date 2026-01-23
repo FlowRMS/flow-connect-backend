@@ -17,6 +17,8 @@ class DeliveryAssigneesRepository(BaseRepository[DeliveryAssignee]):
         super().__init__(session, context_wrapper, DeliveryAssignee)
 
     async def list_by_delivery(self, delivery_id: UUID) -> list[DeliveryAssignee]:
-        stmt = select(DeliveryAssignee).where(DeliveryAssignee.delivery_id == delivery_id)
+        stmt = select(DeliveryAssignee).where(
+            DeliveryAssignee.delivery_id == delivery_id
+        )
         result = await self.session.execute(stmt)
         return list(result.scalars().all())

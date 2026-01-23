@@ -1,4 +1,3 @@
-
 from datetime import date, datetime, timezone
 from uuid import UUID
 
@@ -10,15 +9,14 @@ from app.errors.common_errors import NotFoundError
 from app.graphql.v2.core.deliveries.repositories.deliveries_repository import (
     DeliveriesRepository,
 )
-from app.graphql.v2.core.deliveries.strawberry.inputs import DeliveryInput
 from app.graphql.v2.core.deliveries.services.delivery_inventory_sync_service import (
     DeliveryInventorySyncService,
 )
+from app.graphql.v2.core.deliveries.strawberry.inputs import DeliveryInput
 from app.graphql.v2.core.deliveries.utils.recurrence_utils import calculate_next_date
 
 
 class DeliveryService:
-
     def __init__(
         self,
         repository: DeliveriesRepository,
@@ -36,11 +34,17 @@ class DeliveryService:
             raise NotFoundError(f"Delivery with id {delivery_id} not found")
         return delivery
 
-    async def list_all(self, limit: int | None = None, offset: int | None = None) -> list[Delivery]:
+    async def list_all(
+        self, limit: int | None = None, offset: int | None = None
+    ) -> list[Delivery]:
         return await self.repository.list_all(limit=limit, offset=offset)
 
-    async def list_by_warehouse(self, warehouse_id: UUID, limit: int | None = None, offset: int | None = None) -> list[Delivery]:
-        return await self.repository.list_by_warehouse(warehouse_id, limit=limit, offset=offset)
+    async def list_by_warehouse(
+        self, warehouse_id: UUID, limit: int | None = None, offset: int | None = None
+    ) -> list[Delivery]:
+        return await self.repository.list_by_warehouse(
+            warehouse_id, limit=limit, offset=offset
+        )
 
     async def create(self, input: DeliveryInput) -> Delivery:
         """
@@ -87,7 +91,9 @@ class DeliveryService:
             if recurring and recurring.recurrence_pattern:
                 # Calculate next date from the delivery's expected_date
                 delivery_date = created_delivery.expected_date or date.today()
-                next_date = calculate_next_date(recurring.recurrence_pattern, delivery_date)
+                next_date = calculate_next_date(
+                    recurring.recurrence_pattern, delivery_date
+                )
                 recurring.last_generated_date = delivery_date
                 recurring.next_expected_date = next_date
 
@@ -112,8 +118,12 @@ class DeliveryService:
             and input.status == DeliveryStatus(DeliveryStatus.RECEIVED.value)
         )
 
-        should_sync_inventory = is_being_received and existing.inventory_synced_at is None
-        should_generate_next = is_being_received and existing.recurring_shipment_id is not None
+        should_sync_inventory = (
+            is_being_received and existing.inventory_synced_at is None
+        )
+        should_generate_next = (
+            is_being_received and existing.recurring_shipment_id is not None
+        )
 
         # Update only scalar fields on existing entity (preserves relationships automatically)
         existing.po_number = input.po_number
@@ -179,8 +189,8 @@ class DeliveryService:
         """
         from commons.db.v6 import RecurringShipment
         from commons.db.v6.warehouse.deliveries.delivery_enums import (
-            RecurringShipmentStatus,
             DeliveryItemStatus,
+            RecurringShipmentStatus,
         )
         from commons.db.v6.warehouse.deliveries.delivery_item_model import DeliveryItem
         from commons.db.v6.warehouse.deliveries.delivery_status_history_model import (
@@ -190,14 +200,20 @@ class DeliveryService:
 
         # Fetch recurring shipment
         result = await self.repository.session.execute(
-            select(RecurringShipment).where(RecurringShipment.id == recurring_shipment_id)
+            select(RecurringShipment).where(
+                RecurringShipment.id == recurring_shipment_id
+            )
         )
         recurring_shipment = result.scalar_one_or_none()
 
         if not recurring_shipment:
-            raise NotFoundError(f"Recurring shipment with id {recurring_shipment_id} not found")
+            raise NotFoundError(
+                f"Recurring shipment with id {recurring_shipment_id} not found"
+            )
 
-        completed_delivery = await self.repository.session.get(Delivery, completed_delivery_id)
+        completed_delivery = await self.repository.session.get(
+            Delivery, completed_delivery_id
+        )
         if not completed_delivery:
             raise NotFoundError(f"Delivery with id {completed_delivery_id} not found")
 
@@ -219,11 +235,15 @@ class DeliveryService:
         # For example: if delivery was scheduled for Friday Jan 23 and received Monday Jan 19,
         # the next weekly Friday delivery should be Jan 30, not Jan 23 again.
         scheduled_date = completed_delivery.expected_date or date.today()
-        next_date = calculate_next_date(recurring_shipment.recurrence_pattern, scheduled_date)
+        next_date = calculate_next_date(
+            recurring_shipment.recurrence_pattern, scheduled_date
+        )
 
         # Generate PO number (simple auto-increment based on year)
         year = next_date.year
-        po_number = f"PO-{year}-{str(hash(str(recurring_shipment.id) + str(next_date)))[-6:]}"
+        po_number = (
+            f"PO-{year}-{str(hash(str(recurring_shipment.id) + str(next_date)))[-6:]}"
+        )
 
         # Create new delivery
         new_delivery = Delivery(

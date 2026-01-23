@@ -5,12 +5,14 @@ These tests validate the recurrence calculation logic to ensure it matches
 the frontend implementation and handles all edge cases correctly.
 """
 
-import pytest
 from datetime import date
+
+import pytest
+
 from app.graphql.v2.core.deliveries.utils.recurrence_utils import (
     calculate_next_date,
-    validate_recurrence_pattern,
     get_recurrence_description,
+    validate_recurrence_pattern,
 )
 
 
@@ -252,7 +254,10 @@ class TestValidateRecurrencePattern:
         """Test MONTHLY with invalid dayOfMonth."""
         pattern = {"frequency": "MONTHLY", "interval": 1, "dayOfMonth": 32}
         error = validate_recurrence_pattern(pattern)
-        assert error is not None and "dayOfMonth must be an integer between 1 and 31" in error
+        assert (
+            error is not None
+            and "dayOfMonth must be an integer between 1 and 31" in error
+        )
 
     def test_monthly_week_missing_week_of_month(self):
         """Test MONTHLY_WEEK without weekOfMonth."""

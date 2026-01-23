@@ -1,4 +1,3 @@
-
 from typing import Self
 from uuid import UUID
 
@@ -7,12 +6,12 @@ from commons.db.v6 import DeliveryItem
 from commons.db.v6.warehouse.deliveries.delivery_enums import DeliveryItemStatus
 
 from app.core.db.adapters.dto import DTOMixin
-
-from .delivery_issue_response import DeliveryIssueResponse
-from .delivery_item_receipt_response import DeliveryItemReceiptResponse
 from app.graphql.v2.core.products.strawberry.product_response import (
     ProductLiteResponse,
 )
+
+from .delivery_issue_response import DeliveryIssueResponse
+from .delivery_item_receipt_response import DeliveryItemReceiptResponse
 
 
 @strawberry.type

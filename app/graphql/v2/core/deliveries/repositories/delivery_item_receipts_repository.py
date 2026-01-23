@@ -16,7 +16,9 @@ class DeliveryItemReceiptsRepository(BaseRepository[DeliveryItemReceipt]):
     ) -> None:
         super().__init__(session, context_wrapper, DeliveryItemReceipt)
 
-    async def list_by_delivery_item(self, delivery_item_id: UUID) -> list[DeliveryItemReceipt]:
+    async def list_by_delivery_item(
+        self, delivery_item_id: UUID
+    ) -> list[DeliveryItemReceipt]:
         stmt = select(DeliveryItemReceipt).where(
             DeliveryItemReceipt.delivery_item_id == delivery_item_id
         )

@@ -7,14 +7,14 @@ from app.graphql.v2.core.deliveries.repositories.delivery_assignees_repository i
 from app.graphql.v2.core.deliveries.repositories.delivery_documents_repository import (
     DeliveryDocumentsRepository,
 )
+from app.graphql.v2.core.deliveries.repositories.delivery_issues_repository import (
+    DeliveryIssuesRepository,
+)
 from app.graphql.v2.core.deliveries.repositories.delivery_item_receipts_repository import (
     DeliveryItemReceiptsRepository,
 )
 from app.graphql.v2.core.deliveries.repositories.delivery_items_repository import (
     DeliveryItemsRepository,
-)
-from app.graphql.v2.core.deliveries.repositories.delivery_issues_repository import (
-    DeliveryIssuesRepository,
 )
 from app.graphql.v2.core.deliveries.repositories.delivery_status_history_repository import (
     DeliveryStatusHistoryRepository,

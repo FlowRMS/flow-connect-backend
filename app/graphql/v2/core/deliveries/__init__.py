@@ -1,4 +1,3 @@
-
 from commons.db.v6 import (
     Delivery,
     DeliveryAssignee,
@@ -14,9 +13,9 @@ from app.graphql.v2.core.deliveries.mutations import (
     DeliveriesMutations,
     DeliveryAssigneesMutations,
     DeliveryDocumentsMutations,
+    DeliveryIssuesMutations,
     DeliveryItemReceiptsMutations,
     DeliveryItemsMutations,
-    DeliveryIssuesMutations,
     DeliveryStatusHistoryMutations,
     RecurringShipmentsMutations,
 )
@@ -24,9 +23,9 @@ from app.graphql.v2.core.deliveries.queries import (
     DeliveriesQueries,
     DeliveryAssigneesQueries,
     DeliveryDocumentsQueries,
+    DeliveryIssuesQueries,
     DeliveryItemReceiptsQueries,
     DeliveryItemsQueries,
-    DeliveryIssuesQueries,
     DeliveryStatusHistoryQueries,
     RecurringShipmentsQueries,
 )
@@ -34,9 +33,9 @@ from app.graphql.v2.core.deliveries.repositories import (
     DeliveriesRepository,
     DeliveryAssigneesRepository,
     DeliveryDocumentsRepository,
+    DeliveryIssuesRepository,
     DeliveryItemReceiptsRepository,
     DeliveryItemsRepository,
-    DeliveryIssuesRepository,
     DeliveryStatusHistoryRepository,
     RecurringShipmentsRepository,
 )

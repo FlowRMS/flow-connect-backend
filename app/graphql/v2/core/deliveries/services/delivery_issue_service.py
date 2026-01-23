@@ -1,4 +1,3 @@
-
 from uuid import UUID
 
 from commons.auth import AuthInfo

@@ -1,4 +1,3 @@
-
 from datetime import datetime
 from typing import Self
 from uuid import UUID
@@ -9,7 +8,6 @@ from commons.db.v6.files import FileType
 from commons.db.v6.warehouse.deliveries.delivery_enums import DeliveryDocumentType
 
 from app.core.db.adapters.dto import DTOMixin
-
 
 FILE_TYPE_MIME_MAP: dict[FileType, str] = {
     FileType.IMAGE: "image/*",
@@ -58,7 +56,9 @@ class DeliveryDocumentLiteResponse(DTOMixin[DeliveryDocument]):
             name=file.file_name if file else "",
             doc_type=model.doc_type,
             file_url=file.file_path if file and file.file_path else "",
-            mime_type=file_type_to_mime(file.file_type) if file else "application/octet-stream",
+            mime_type=file_type_to_mime(file.file_type)
+            if file
+            else "application/octet-stream",
             file_size=file.file_size if file else None,
             uploaded_by_id=model.uploaded_by_id,
             uploaded_at=model.uploaded_at,

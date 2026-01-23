@@ -1,4 +1,3 @@
-
 from commons.db.v6 import RecurringShipment
 
 from app.core.processors import (

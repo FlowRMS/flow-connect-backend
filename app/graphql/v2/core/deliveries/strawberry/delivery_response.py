@@ -1,4 +1,3 @@
-
 from datetime import date, datetime
 from typing import Self
 from uuid import UUID
@@ -8,18 +7,18 @@ from commons.db.v6 import Delivery
 from commons.db.v6.warehouse.deliveries.delivery_enums import DeliveryStatus
 
 from app.core.db.adapters.dto import DTOMixin
-
-from .delivery_assignee_response import DeliveryAssigneeResponse
-from .delivery_document_response import DeliveryDocumentResponse
-from .delivery_issue_response import DeliveryIssueResponse
-from .delivery_item_response import DeliveryItemResponse
-from .delivery_status_history_response import DeliveryStatusHistoryResponse
 from app.graphql.v2.core.factories.strawberry.factory_response import (
     FactoryLiteResponse,
 )
 from app.graphql.v2.core.shipping_carriers.strawberry.shipping_carrier_response import (
     ShippingCarrierResponse,
 )
+
+from .delivery_assignee_response import DeliveryAssigneeResponse
+from .delivery_document_response import DeliveryDocumentResponse
+from .delivery_issue_response import DeliveryIssueResponse
+from .delivery_item_response import DeliveryItemResponse
+from .delivery_status_history_response import DeliveryStatusHistoryResponse
 
 
 @strawberry.type

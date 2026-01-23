@@ -82,7 +82,9 @@ def upgrade() -> None:
         sa.Column(
             "destination_address_id", postgresql.UUID(as_uuid=True), nullable=True
         ),
-        sa.Column("recurring_shipment_id", postgresql.UUID(as_uuid=True), nullable=True),
+        sa.Column(
+            "recurring_shipment_id", postgresql.UUID(as_uuid=True), nullable=True
+        ),
         sa.Column("vendor_contact_name", sa.String(255), nullable=True),
         sa.Column("vendor_contact_email", sa.String(255), nullable=True),
         sa.Column("notes", sa.Text(), nullable=True),
@@ -219,7 +221,9 @@ def upgrade() -> None:
         sa.Column("status", sa.SmallInteger(), nullable=False, default=1),
         sa.Column("description", sa.Text(), nullable=True),
         sa.Column("notes", sa.Text(), nullable=True),
-        sa.Column("communicated_at", postgresql.TIMESTAMP(timezone=True), nullable=True),
+        sa.Column(
+            "communicated_at", postgresql.TIMESTAMP(timezone=True), nullable=True
+        ),
         sa.Column(
             "created_at",
             postgresql.TIMESTAMP(timezone=True),

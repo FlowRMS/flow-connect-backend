@@ -1,4 +1,3 @@
-
 from uuid import UUID
 
 import strawberry
@@ -27,7 +26,9 @@ class DeliveriesQueries:
     ) -> list[DeliveryLiteResponse]:
         """List deliveries - returns lite response to avoid N+1 queries."""
         if warehouse_id:
-            deliveries = await service.list_by_warehouse(warehouse_id, limit=limit, offset=offset)
+            deliveries = await service.list_by_warehouse(
+                warehouse_id, limit=limit, offset=offset
+            )
         else:
             deliveries = await service.list_all(limit=limit, offset=offset)
         return DeliveryLiteResponse.from_orm_model_list(deliveries)

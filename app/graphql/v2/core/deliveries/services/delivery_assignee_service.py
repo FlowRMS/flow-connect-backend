@@ -1,4 +1,3 @@
-
 from uuid import UUID
 
 from commons.auth import AuthInfo
@@ -26,9 +25,7 @@ class DeliveryAssigneeService:
     async def get_by_id(self, assignee_id: UUID) -> DeliveryAssignee:
         assignee = await self.repository.get_by_id(assignee_id)
         if not assignee:
-            raise NotFoundError(
-                f"Delivery assignee with id {assignee_id} not found"
-            )
+            raise NotFoundError(f"Delivery assignee with id {assignee_id} not found")
         return assignee
 
     async def list_by_delivery(self, delivery_id: UUID) -> list[DeliveryAssignee]:
@@ -41,16 +38,12 @@ class DeliveryAssigneeService:
         self, assignee_id: UUID, input: DeliveryAssigneeInput
     ) -> DeliveryAssignee:
         if not await self.repository.exists(assignee_id):
-            raise NotFoundError(
-                f"Delivery assignee with id {assignee_id} not found"
-            )
+            raise NotFoundError(f"Delivery assignee with id {assignee_id} not found")
         assignee = input.to_orm_model()
         assignee.id = assignee_id
         return await self.repository.update(assignee)
 
     async def delete(self, assignee_id: UUID) -> bool:
         if not await self.repository.exists(assignee_id):
-            raise NotFoundError(
-                f"Delivery assignee with id {assignee_id} not found"
-            )
+            raise NotFoundError(f"Delivery assignee with id {assignee_id} not found")
         return await self.repository.delete(assignee_id)

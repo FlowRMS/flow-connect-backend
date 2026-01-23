@@ -8,7 +8,6 @@ to calculate next occurrence dates for recurring deliveries.
 from datetime import date, timedelta
 from typing import Any, Dict, Optional
 
-
 # Day of week mapping (Monday = 0, Sunday = 6)
 DAY_OF_WEEK_MAP = {
     "MONDAY": 0,

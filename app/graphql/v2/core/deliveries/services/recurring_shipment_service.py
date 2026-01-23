@@ -1,4 +1,3 @@
-
 from datetime import date
 from uuid import UUID
 
@@ -28,9 +27,7 @@ class RecurringShipmentService:
     async def get_by_id(self, shipment_id: UUID) -> RecurringShipment:
         shipment = await self.repository.get_by_id(shipment_id)
         if not shipment:
-            raise NotFoundError(
-                f"Recurring shipment with id {shipment_id} not found"
-            )
+            raise NotFoundError(f"Recurring shipment with id {shipment_id} not found")
         return shipment
 
     async def list_all(self) -> list[RecurringShipment]:
@@ -93,9 +90,7 @@ class RecurringShipmentService:
             NotFoundError: If shipment not found
         """
         if not await self.repository.exists(shipment_id):
-            raise NotFoundError(
-                f"Recurring shipment with id {shipment_id} not found"
-            )
+            raise NotFoundError(f"Recurring shipment with id {shipment_id} not found")
 
         # Get existing shipment to check if pattern/dates changed
         existing = await self.repository.get_by_id(shipment_id)
@@ -126,7 +121,5 @@ class RecurringShipmentService:
 
     async def delete(self, shipment_id: UUID) -> bool:
         if not await self.repository.exists(shipment_id):
-            raise NotFoundError(
-                f"Recurring shipment with id {shipment_id} not found"
-            )
+            raise NotFoundError(f"Recurring shipment with id {shipment_id} not found")
         return await self.repository.delete(shipment_id)

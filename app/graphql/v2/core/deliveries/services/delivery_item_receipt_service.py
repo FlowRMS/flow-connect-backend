@@ -1,4 +1,3 @@
-
 from uuid import UUID
 
 from commons.auth import AuthInfo
@@ -29,7 +28,9 @@ class DeliveryItemReceiptService:
             raise NotFoundError(f"Delivery item receipt with id {receipt_id} not found")
         return receipt
 
-    async def list_by_delivery_item(self, delivery_item_id: UUID) -> list[DeliveryItemReceipt]:
+    async def list_by_delivery_item(
+        self, delivery_item_id: UUID
+    ) -> list[DeliveryItemReceipt]:
         return await self.repository.list_by_delivery_item(delivery_item_id)
 
     async def create(self, input: DeliveryItemReceiptInput) -> DeliveryItemReceipt:
@@ -39,9 +40,7 @@ class DeliveryItemReceiptService:
         self, receipt_id: UUID, input: DeliveryItemReceiptInput
     ) -> DeliveryItemReceipt:
         if not await self.repository.exists(receipt_id):
-            raise NotFoundError(
-                f"Delivery item receipt with id {receipt_id} not found"
-            )
+            raise NotFoundError(f"Delivery item receipt with id {receipt_id} not found")
         receipt = input.to_orm_model()
         receipt.id = receipt_id
         return await self.repository.update(receipt)

@@ -3,8 +3,8 @@ from datetime import datetime, timezone
 from typing import override
 from uuid import UUID
 
-from commons.db.v6.ai.documents.enums.entity_type import DocumentEntityType
 from commons.db.v6 import Delivery
+from commons.db.v6.ai.documents.enums.entity_type import DocumentEntityType
 from commons.dtos.common.dto_loader_service import DTOLoaderService
 from commons.dtos.delivery.delivery_detail_dto import DeliveryDetailDTO
 from commons.dtos.delivery.delivery_dto import DeliveryDTO

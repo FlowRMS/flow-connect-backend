@@ -1,4 +1,3 @@
-
 from uuid import UUID
 
 import strawberry
@@ -8,10 +7,10 @@ from app.graphql.inject import inject
 from app.graphql.v2.core.deliveries.services.delivery_status_history_service import (
     DeliveryStatusHistoryService,
 )
-from app.graphql.v2.core.deliveries.strawberry.inputs import DeliveryStatusHistoryInput
 from app.graphql.v2.core.deliveries.strawberry.delivery_status_history_response import (
     DeliveryStatusHistoryResponse,
 )
+from app.graphql.v2.core.deliveries.strawberry.inputs import DeliveryStatusHistoryInput
 
 
 @strawberry.type

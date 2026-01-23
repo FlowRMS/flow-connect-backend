@@ -1,4 +1,3 @@
-
 from uuid import UUID
 
 from commons.auth import AuthInfo
@@ -33,9 +32,7 @@ class DeliveryDocumentService:
     async def get_by_id(self, document_id: UUID) -> DeliveryDocument:
         document = await self._get_with_file(document_id)
         if not document:
-            raise NotFoundError(
-                f"Delivery document with id {document_id} not found"
-            )
+            raise NotFoundError(f"Delivery document with id {document_id} not found")
         return document
 
     async def list_by_delivery(self, delivery_id: UUID) -> list[DeliveryDocument]:
@@ -49,9 +46,7 @@ class DeliveryDocumentService:
         self, document_id: UUID, input: DeliveryDocumentInput
     ) -> DeliveryDocument:
         if not await self.repository.exists(document_id):
-            raise NotFoundError(
-                f"Delivery document with id {document_id} not found"
-            )
+            raise NotFoundError(f"Delivery document with id {document_id} not found")
         document = input.to_orm_model()
         document.id = document_id
         updated = await self.repository.update(document)
@@ -59,7 +54,5 @@ class DeliveryDocumentService:
 
     async def delete(self, document_id: UUID) -> bool:
         if not await self.repository.exists(document_id):
-            raise NotFoundError(
-                f"Delivery document with id {document_id} not found"
-            )
+            raise NotFoundError(f"Delivery document with id {document_id} not found")
         return await self.repository.delete(document_id)
