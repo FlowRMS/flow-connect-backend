@@ -107,6 +107,13 @@ class OrderDetailResponse(OrderDetailLiteResponse):
     def uom(self) -> ProductUomResponse | None:
         return ProductUomResponse.from_orm_model_optional(self._instance.uom)
 
-    @strawberry.field
+    @strawberry.field(deprecation_reason="Use 'invoices' field instead")
     def invoice(self) -> InvoiceLiteResponse | None:
-        return InvoiceLiteResponse.from_orm_model_optional(self._instance.invoice)
+        invoices = self._instance.invoices
+        if not invoices:
+            return None
+        return InvoiceLiteResponse.from_orm_model(invoices[0])
+
+    @strawberry.field
+    def invoices(self) -> list[InvoiceLiteResponse] | None:
+        return InvoiceLiteResponse.from_orm_model_list(self._instance.invoices)

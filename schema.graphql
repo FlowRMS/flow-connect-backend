@@ -2880,7 +2880,8 @@ type OrderDetailResponse {
   insideSplitRates: [OrderInsideRepResponse!]!
   product: ProductLiteResponse
   uom: ProductUomResponse
-  invoice: InvoiceLiteResponse
+  invoice: InvoiceLiteResponse @deprecated(reason: "Use 'invoices' field instead")
+  invoices: [InvoiceLiteResponse!]
 }
 
 input OrderDetailToInvoiceDetailInput {

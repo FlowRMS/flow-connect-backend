@@ -125,7 +125,7 @@ class OrdersRepository(BaseRepository[Order]):
             order_id,
             options=[
                 joinedload(Order.details),
-                joinedload(Order.details).joinedload(OrderDetail.invoice),
+                joinedload(Order.details).joinedload(OrderDetail.invoices),
                 joinedload(Order.details).joinedload(OrderDetail.end_user),
                 joinedload(Order.details).joinedload(OrderDetail.product),
                 joinedload(Order.details).joinedload(OrderDetail.outside_split_rates),
