@@ -7,6 +7,9 @@ from commons.db.v6.fulfillment.enums import CarrierType, FulfillmentMethod
 
 from app.core.strawberry.inputs import BaseInputGQL
 from app.graphql.addresses.strawberry.address_input import AddressInput
+from app.graphql.v2.core.fulfillment.strawberry.fulfillment_line_item_input import (
+    CreateFulfillmentLineItemInput,
+)
 
 
 @strawberry.input
@@ -20,6 +23,7 @@ class CreateFulfillmentOrderInput(BaseInputGQL[FulfillmentOrder]):
     ship_to_name: str | None = None
     ship_to_phone: str | None = None
     need_by_date: date | None = None
+    line_items: list[CreateFulfillmentLineItemInput] | None = None
 
     def to_orm_model(self) -> FulfillmentOrder:
         order = FulfillmentOrder(
