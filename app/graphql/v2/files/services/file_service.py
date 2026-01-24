@@ -6,9 +6,9 @@ from commons.db.v6.crm.links.entity_type import EntityType
 from commons.db.v6.enums import DocumentEntityType
 from commons.db.v6.files import File, FileType
 from commons.utils.pdf_extractor.pdf import PDFExtractor
+from loguru import logger
 from sqlalchemy.orm import joinedload, lazyload
 from strawberry.file_uploads import Upload
-from loguru import logger
 
 from app.graphql.v2.files.repositories.file_repository import FileRepository
 from app.graphql.v2.files.repositories.vector_repository import VectorRepository
@@ -146,8 +146,10 @@ class FileService:
             page_contents: list[str] = self.pdf_extractor.extract_text_from_bytes(
                 file_bytes
             )
-            if len(page_contents) > MAX_PDF_PAGES: 
-                logger.info(f"File {file.id} - {file.file_name} has more than 50 pages, skipping vectorization")
+            if len(page_contents) > MAX_PDF_PAGES:
+                logger.info(
+                    f"File {file.id} - {file.file_name} has more than 50 pages, skipping vectorization"
+                )
                 return
 
             async def insert_page(idx: int, page_content: str):
