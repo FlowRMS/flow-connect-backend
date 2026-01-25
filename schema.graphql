@@ -668,6 +668,12 @@ input CreateFolderInput {
   parentId: UUID = null
 }
 
+input CreateFulfillmentLineItemInput {
+  productId: UUID!
+  orderedQty: Decimal!
+  orderDetailId: UUID = null
+}
+
 input CreateFulfillmentOrderInput {
   orderId: UUID!
   warehouseId: UUID!
@@ -678,6 +684,7 @@ input CreateFulfillmentOrderInput {
   shipToName: String = null
   shipToPhone: String = null
   needByDate: Date = null
+  lineItems: [CreateFulfillmentLineItemInput!] = null
 }
 
 input CreateHighlightVersionInput {

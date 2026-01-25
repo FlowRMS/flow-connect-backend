@@ -83,6 +83,13 @@ class FulfillmentOrderService:
             order.ship_to_address_id = address.id
             order = await self.repository.update(order)
 
+        if input.line_items:
+            for line_item_input in input.line_items:
+                line_item = line_item_input.to_orm_model()
+                line_item.fulfillment_order_id = order.id
+                order.line_items.append(line_item)
+            order = await self.repository.update(order)
+
         _ = await self._log_activity(
             order.id, FulfillmentActivityType.CREATED, "Fulfillment order created"
         )
