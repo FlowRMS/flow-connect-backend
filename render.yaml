@@ -1,0 +1,50 @@
+version: "1"
+services:
+  # Development Environment
+  - type: web
+    name: flow-connect-backend-dev
+    runtime: docker
+    repo: https://github.com/FlowRMS/flow-connect-backend
+    branch: dev
+    plan: starter
+    region: ohio
+    dockerContext: .
+    dockerfilePath: ./Dockerfile
+    envVars:
+      - key: ENVIRONMENT
+        value: development
+      - fromGroup: Flow Connect Backend Dev
+    autoDeploy: true
+
+  # Staging Environment
+  - type: web
+    name: flow-connect-backend-staging
+    runtime: docker
+    repo: https://github.com/FlowRMS/flow-connect-backend
+    branch: staging
+    plan: starter
+    region: ohio
+    dockerContext: .
+    dockerfilePath: ./Dockerfile
+    envVars:
+      - key: ENVIRONMENT
+        value: staging
+      - fromGroup: Flow Connect Backend Staging
+    autoDeploy: true
+
+  # Production Environment
+  - type: web
+    name: flow-connect-backend-prod
+    runtime: docker
+    repo: https://github.com/FlowRMS/flow-connect-backend
+    branch: main
+    plan: standard
+    region: ohio
+    dockerContext: .
+    dockerfilePath: ./Dockerfile
+    preDeployCommand: python run_migrations.py
+    envVars:
+      - key: ENVIRONMENT
+        value: production
+      - fromGroup: Flow Connect Backend Prod
+    autoDeploy: false
