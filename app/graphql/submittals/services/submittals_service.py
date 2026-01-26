@@ -307,9 +307,6 @@ class SubmittalsService:
         if input_data.part_number is not None:
             item.part_number = input_data.part_number
 
-        if input_data.manufacturer is not None:
-            item.manufacturer = input_data.manufacturer
-
         if input_data.description is not None:
             item.description = input_data.description
 
@@ -714,7 +711,7 @@ class SubmittalsService:
                 analysis.total_changes_detected = max(
                     0, analysis.total_changes_detected - 1
                 )
-                await self.change_analysis_repository.update(analysis)
+                _ = await self.change_analysis_repository.update(analysis)
 
             logger.info(f"Deleted item change {item_change_id}")
         return result

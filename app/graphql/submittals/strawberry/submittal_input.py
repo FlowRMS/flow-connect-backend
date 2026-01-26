@@ -89,7 +89,6 @@ class SubmittalItemInput(BaseInputGQL[SubmittalItem]):
     spec_sheet_id: UUID | None = None
     highlight_version_id: UUID | None = None
     part_number: str | None = None
-    manufacturer: str | None = None
     description: str | None = None
     quantity: Decimal | None = None
     approval_status: SubmittalItemApprovalStatusGQL = (
@@ -106,7 +105,6 @@ class SubmittalItemInput(BaseInputGQL[SubmittalItem]):
             spec_sheet_id=self.spec_sheet_id,
             highlight_version_id=self.highlight_version_id,
             part_number=self.part_number,
-            manufacturer=self.manufacturer,
             description=self.description,
             quantity=self.quantity,
             approval_status=SubmittalItemApprovalStatus(self.approval_status.value),
@@ -121,7 +119,6 @@ class UpdateSubmittalItemInput:
     spec_sheet_id: UUID | None = UNSET  # type: ignore[assignment]
     highlight_version_id: UUID | None = UNSET  # type: ignore[assignment]
     part_number: str | None = None
-    manufacturer: str | None = None
     description: str | None = None
     quantity: Decimal | None = None
     approval_status: SubmittalItemApprovalStatusGQL | None = None

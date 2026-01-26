@@ -38,7 +38,6 @@ class SubmittalResponse(DTOMixin[Submittal]):
     @classmethod
     def from_orm_model(cls, model: Submittal) -> Self:
         """Convert ORM model to GraphQL response."""
-        from sqlalchemy.orm import object_session
         from sqlalchemy.orm.attributes import instance_state
 
         # Try to extract created_by while session might still be active

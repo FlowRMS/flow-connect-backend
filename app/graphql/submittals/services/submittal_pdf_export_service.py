@@ -157,9 +157,7 @@ class SubmittalPdfExportService:
     async def _download_spec_sheet_pdf(self, spec_sheet: SpecSheet) -> bytes | None:
         try:
             s3_key = None
-            if spec_sheet.file and spec_sheet.file.file_path:
-                s3_key = spec_sheet.file.file_path
-            elif spec_sheet.file_url:
+            if spec_sheet.file_url:
                 url_info = S3Service.extract_url_info(spec_sheet.file_url)
                 s3_key = url_info.key
 
