@@ -4,10 +4,16 @@ from uuid import UUID
 
 import strawberry
 from commons.db.v6.crm.submittals import (
+    ChangeAnalysisSource,
+    ItemChangeStatus,
+    OverallChangeStatus,
     Submittal,
+    SubmittalChangeAnalysis,
     SubmittalItem,
     SubmittalItemApprovalStatus,
+    SubmittalItemChange,
     SubmittalItemMatchStatus,
+    SubmittalReturnedPdf,
     SubmittalStakeholder,
     SubmittalStakeholderRole,
     SubmittalStatus,
@@ -17,6 +23,9 @@ from strawberry import UNSET
 
 from app.core.strawberry.inputs import BaseInputGQL
 from app.graphql.submittals.strawberry.enums import (
+    ChangeAnalysisSourceGQL,
+    ItemChangeStatusGQL,
+    OverallChangeStatusGQL,
     SubmittalItemApprovalStatusGQL,
     SubmittalItemMatchStatusGQL,
     SubmittalStakeholderRoleGQL,
@@ -193,3 +202,87 @@ class GenerateSubmittalPdfInput:
     # Create new revision after generating?
     create_revision: bool = True
     revision_notes: str | None = None
+
+
+@strawberry.input
+class AddReturnedPdfInput(BaseInputGQL[SubmittalReturnedPdf]):
+    """Input for adding a returned PDF to a revision."""
+
+    revision_id: UUID
+    file_name: str
+    file_url: str
+    file_size: int = 0
+    returned_by_stakeholder_id: UUID | None = None
+    received_date: date | None = None
+    notes: str | None = None
+
+    def to_orm_model(self) -> SubmittalReturnedPdf:
+        """Convert input to ORM model."""
+        return SubmittalReturnedPdf(
+            file_name=self.file_name,
+            file_url=self.file_url,
+            file_size=self.file_size,
+            returned_by_stakeholder_id=self.returned_by_stakeholder_id,
+            received_date=self.received_date,
+            notes=self.notes,
+        )
+
+
+@strawberry.input
+class SubmittalItemChangeInput:
+    """Input for an individual item change in a change analysis."""
+
+    item_id: UUID | None = None
+    fixture_type: str
+    catalog_number: str
+    manufacturer: str
+    status: ItemChangeStatusGQL = ItemChangeStatusGQL.APPROVED
+    notes: list[str] | None = None
+    page_references: list[int] | None = None
+
+    def to_orm_model(self) -> SubmittalItemChange:
+        """Convert input to ORM model."""
+        return SubmittalItemChange(
+            item_id=self.item_id,
+            fixture_type=self.fixture_type,
+            catalog_number=self.catalog_number,
+            manufacturer=self.manufacturer,
+            status=ItemChangeStatus(self.status.value),
+            notes=self.notes,
+            page_references=self.page_references,
+        )
+
+
+@strawberry.input
+class AddChangeAnalysisInput(BaseInputGQL[SubmittalChangeAnalysis]):
+    """Input for adding a change analysis to a returned PDF."""
+
+    returned_pdf_id: UUID
+    analyzed_by: ChangeAnalysisSourceGQL = ChangeAnalysisSourceGQL.MANUAL
+    overall_status: OverallChangeStatusGQL = OverallChangeStatusGQL.APPROVED
+    summary: str | None = None
+    item_changes: list[SubmittalItemChangeInput] | None = None
+
+    def to_orm_model(self) -> SubmittalChangeAnalysis:
+        """Convert input to ORM model."""
+        return SubmittalChangeAnalysis(
+            analyzed_by=ChangeAnalysisSource(self.analyzed_by.value),
+            overall_status=OverallChangeStatus(self.overall_status.value),
+            summary=self.summary,
+            item_changes=[
+                change.to_orm_model() for change in (self.item_changes or [])
+            ],
+        )
+
+
+@strawberry.input
+class UpdateItemChangeInput:
+    """Input for updating an item change."""
+
+    status: ItemChangeStatusGQL | None = None
+    notes: list[str] | None = None
+    page_references: list[int] | None = None
+    resolved: bool | None = None
+    fixture_type: str | None = None
+    catalog_number: str | None = None
+    manufacturer: str | None = None
