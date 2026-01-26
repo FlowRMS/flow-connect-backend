@@ -1,6 +1,7 @@
 from typing import Any, override
 
 from commons.db.v6.commission.orders import Order
+from commons.db.v6.core import Customer
 from sqlalchemy import func
 from sqlalchemy.orm import InstrumentedAttribute
 
@@ -27,6 +28,14 @@ class OrderSearchQueryBuilder(SearchQueryBuilder[Order]):
     @override
     def get_alias_field(self) -> Any | None:
         return func.coalesce(Order.fact_so_number, Order.mark_number)
+
+    @override
+    def get_extra_info_field(self) -> Any | None:
+        return Customer.company_name
+
+    @override
+    def get_joins(self) -> list[tuple[Any, Any]]:
+        return [(Customer, Order.sold_to_customer_id == Customer.id)]
 
 
 class OrderSearchStrategy(SearchQueryStrategy):

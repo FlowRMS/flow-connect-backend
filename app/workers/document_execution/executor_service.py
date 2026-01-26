@@ -23,6 +23,9 @@ from app.workers.document_execution.converters.check_converter import CheckConve
 from app.workers.document_execution.converters.customer_converter import (
     CustomerConverter,
 )
+from app.workers.document_execution.converters.delivery_converter import (
+    DeliveryConverter,
+)
 from app.workers.document_execution.converters.entity_mapping_builder import (
     build_entity_mappings,
 )
@@ -52,6 +55,7 @@ DOCUMENT_TO_LINK_ENTITY_TYPE: dict[DocumentEntityType, EntityType] = {
     DocumentEntityType.CUSTOMERS: EntityType.CUSTOMER,
     DocumentEntityType.FACTORIES: EntityType.FACTORY,
     DocumentEntityType.PRODUCTS: EntityType.PRODUCT,
+    DocumentEntityType.DELIVERIES: EntityType.DELIVERY,
     DocumentEntityType.ORDER_ACKNOWLEDGEMENTS: EntityType.ORDER_ACKNOWLEDGEMENT,
     DocumentEntityType.COMMISSION_STATEMENTS: EntityType.COMMISSION_STATEMENTS,
 }
@@ -67,6 +71,7 @@ class DocumentExecutorService:
         quote_converter: QuoteConverter,
         order_converter: OrderConverter,
         customer_converter: CustomerConverter,
+        delivery_converter: DeliveryConverter,
         factory_converter: FactoryConverter,
         product_converter: ProductConverter,
         invoice_converter: InvoiceConverter,
@@ -83,6 +88,7 @@ class DocumentExecutorService:
         self.quote_converter = quote_converter
         self.order_converter = order_converter
         self.customer_converter = customer_converter
+        self.delivery_converter = delivery_converter
         self.factory_converter = factory_converter
         self.product_converter = product_converter
         self.invoice_converter = invoice_converter
@@ -103,6 +109,8 @@ class DocumentExecutorService:
                 return self.order_converter
             case DocumentEntityType.CUSTOMERS:
                 return self.customer_converter
+            case DocumentEntityType.DELIVERIES:
+                return self.delivery_converter
             case DocumentEntityType.FACTORIES:
                 return self.factory_converter
             case DocumentEntityType.PRODUCTS:

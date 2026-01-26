@@ -115,11 +115,12 @@ class OrderFactory:
             header_status=OrderHeaderStatus.OPEN,
             order_type=OrderType.NORMAL,
             creation_type=CreationType.API,
-            published=False,
+            published=True,
             quote_id=quote.id,
             details=OrderFactory._map_quote_details(
                 quote.details, quote_details_inputs
             ),
+            job_id=quote.job_id,
         )
 
     @staticmethod

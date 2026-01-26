@@ -23,6 +23,9 @@ from app.graphql.base_repository import BaseRepository
 from app.graphql.orders.processors.default_rep_split_processor import (
     OrderDefaultRepSplitProcessor,
 )
+from app.graphql.orders.processors.recalculate_order_status_processor import (
+    RecalculateOrderStatusProcessor,
+)
 from app.graphql.orders.processors.set_shipping_balance_processor import (
     SetShippingBalanceProcessor,
 )
@@ -56,6 +59,7 @@ class OrdersRepository(BaseRepository[Order]):
         set_shipping_balance_processor: SetShippingBalanceProcessor,
         order_default_rep_split_processor: OrderDefaultRepSplitProcessor,
         validate_commission_rate_processor: ValidateCommissionRateProcessor,
+        recalculate_order_status_processor: RecalculateOrderStatusProcessor,
     ) -> None:
         super().__init__(
             session,
@@ -68,6 +72,7 @@ class OrdersRepository(BaseRepository[Order]):
                 validate_rep_split_processor,
                 set_shipping_balance_processor,
                 validate_commission_rate_processor,
+                recalculate_order_status_processor,
             ],
         )
         self.balance_repository = balance_repository
@@ -120,7 +125,7 @@ class OrdersRepository(BaseRepository[Order]):
             order_id,
             options=[
                 joinedload(Order.details),
-                joinedload(Order.details).joinedload(OrderDetail.invoice),
+                joinedload(Order.details).joinedload(OrderDetail.invoices),
                 joinedload(Order.details).joinedload(OrderDetail.end_user),
                 joinedload(Order.details).joinedload(OrderDetail.product),
                 joinedload(Order.details).joinedload(OrderDetail.outside_split_rates),
