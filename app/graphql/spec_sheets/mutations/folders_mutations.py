@@ -1,5 +1,3 @@
-"""GraphQL mutations for Folder entity."""
-
 import strawberry
 from aioinject import Injected
 
@@ -28,7 +26,7 @@ class FoldersMutations:
         input: CreateFolderInput,
     ) -> SpecSheetFolderResponse:
         """
-        Create a new folder.
+        Create a new folder in pyfiles.folders.
 
         Args:
             input: Folder creation data with factory_id, parent_path, folder_name
@@ -41,7 +39,7 @@ class FoldersMutations:
             input.parent_path,
             input.folder_name,
         )
-        return SpecSheetFolderResponse.from_orm_model(folder)
+        return SpecSheetFolderResponse.from_pyfiles_folder(folder, input.factory_id)
 
     @strawberry.mutation
     @inject
@@ -51,7 +49,7 @@ class FoldersMutations:
         input: RenameFolderInput,
     ) -> RenameSpecSheetFolderResult:
         """
-        Rename a folder and update all spec sheets in it.
+        Rename a folder in pyfiles.folders.
 
         Args:
             input: Rename data with factory_id, folder_path, new_name
@@ -65,7 +63,9 @@ class FoldersMutations:
             input.new_name,
         )
         return RenameSpecSheetFolderResult(
-            folder=SpecSheetFolderResponse.from_orm_model(folder, spec_count),
+            folder=SpecSheetFolderResponse.from_pyfiles_folder(
+                folder, input.factory_id, spec_count
+            ),
             spec_sheets_updated=spec_count,
         )
 

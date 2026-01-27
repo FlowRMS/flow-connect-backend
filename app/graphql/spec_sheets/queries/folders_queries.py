@@ -1,5 +1,3 @@
-"""GraphQL queries for Folder entity."""
-
 from uuid import UUID
 
 import strawberry
@@ -25,10 +23,9 @@ class FoldersQueries:
         factory_id: UUID,
     ) -> list[SpecSheetFolderResponse]:
         """
-        Get all folders for a factory with spec sheet counts.
+        Get all pyfiles.folders for a factory with spec sheet counts.
 
-        Returns folders derived from spec sheets (including virtual folders
-        that don't exist in the folders table). Counts are recursive.
+        Returns folders from pyfiles.folders table with recursive counts.
 
         Args:
             factory_id: UUID of the factory
@@ -36,10 +33,12 @@ class FoldersQueries:
         Returns:
             List of SpecSheetFolderResponse with spec_sheet_count
         """
-        paths_with_counts = await service.get_folder_paths_with_counts(factory_id)
+        folders_with_counts = await service.get_folders_by_factory_with_counts(
+            factory_id
+        )
         return [
-            SpecSheetFolderResponse.from_path(factory_id, path, count)
-            for path, count in paths_with_counts
+            SpecSheetFolderResponse.from_pyfiles_folder(folder, factory_id, count)
+            for folder, count in folders_with_counts
         ]
 
     @strawberry.field
