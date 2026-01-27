@@ -212,7 +212,11 @@ class DocumentBatchProcessor:
                 fallback.sold_to_customer_id = mapping.sold_to_customer_id
             if mapping.bill_to_customer_id and not fallback.bill_to_customer_id:
                 fallback.bill_to_customer_id = mapping.bill_to_customer_id
-            if fallback.factory_id and fallback.sold_to_customer_id:
+            if (
+                fallback.factory_id
+                and fallback.sold_to_customer_id
+                and fallback.bill_to_customer_id
+            ):
                 break
         return fallback
 
