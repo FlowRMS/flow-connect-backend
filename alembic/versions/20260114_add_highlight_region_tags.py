@@ -9,6 +9,7 @@ Create Date: 2026-01-14 19:00:00.000000
 from collections.abc import Sequence
 
 import sqlalchemy as sa
+from sqlalchemy import inspect
 from sqlalchemy.dialects.postgresql import ARRAY
 
 from alembic import op
@@ -21,12 +22,20 @@ depends_on: str | Sequence[str] | None = None
 
 
 def upgrade() -> None:
+    conn = op.get_bind()
+    inspector = inspect(conn)
+    columns = [
+        col["name"]
+        for col in inspector.get_columns("spec_sheet_highlight_regions", schema="pycrm")
+    ]
+
     # Add tags array column to spec_sheet_highlight_regions table
-    op.add_column(
-        "spec_sheet_highlight_regions",
-        sa.Column("tags", ARRAY(sa.String()), nullable=True),
-        schema="pycrm",
-    )
+    if "tags" not in columns:
+        op.add_column(
+            "spec_sheet_highlight_regions",
+            sa.Column("tags", ARRAY(sa.String()), nullable=True),
+            schema="pycrm",
+        )
 
 
 def downgrade() -> None:

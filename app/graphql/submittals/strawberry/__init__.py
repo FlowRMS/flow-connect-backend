@@ -8,6 +8,7 @@ from .enums import (
     TransmittalPurposeGQL,
 )
 from .send_email_response import SendSubmittalEmailResponse, SubmittalEmailResponse
+from .submittal_config import SubmittalConfigInput, SubmittalConfigResponse
 from .submittal_input import (
     CreateSubmittalInput,
     SendSubmittalEmailInput,
@@ -35,6 +36,7 @@ __all__ = [
     "SubmittalRevisionResponse",
     "SubmittalEmailResponse",
     "SendSubmittalEmailResponse",
+    "SubmittalConfigResponse",
     # Inputs
     "CreateSubmittalInput",
     "UpdateSubmittalInput",
@@ -42,4 +44,5 @@ __all__ = [
     "UpdateSubmittalItemInput",
     "SubmittalStakeholderInput",
     "SendSubmittalEmailInput",
+    "SubmittalConfigInput",
 ]

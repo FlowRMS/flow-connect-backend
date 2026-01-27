@@ -1,3 +1,5 @@
+"""GraphQL queries for spec sheet folders using pyfiles.folders."""
+
 from uuid import UUID
 
 import strawberry
@@ -6,14 +8,13 @@ from aioinject import Injected
 from app.graphql.inject import inject
 from app.graphql.spec_sheets.services.folders_service import FoldersService
 from app.graphql.spec_sheets.strawberry.folder_response import (
-    FolderPathWithCount,
     SpecSheetFolderResponse,
 )
 
 
 @strawberry.type
 class FoldersQueries:
-    """GraphQL queries for Folder entity."""
+    """GraphQL queries for spec sheet folders using pyfiles.folders."""
 
     @strawberry.field
     @inject
@@ -23,9 +24,10 @@ class FoldersQueries:
         factory_id: UUID,
     ) -> list[SpecSheetFolderResponse]:
         """
-        Get all pyfiles.folders for a factory with spec sheet counts.
+        Get all folders for a factory with recursive spec sheet counts.
 
-        Returns folders from pyfiles.folders table with recursive counts.
+        Returns folders from pyfiles.folders that are mapped to this factory.
+        Counts include spec sheets in subfolders.
 
         Args:
             factory_id: UUID of the factory
@@ -37,32 +39,76 @@ class FoldersQueries:
             factory_id
         )
         return [
-            SpecSheetFolderResponse.from_pyfiles_folder(folder, factory_id, count)
+            SpecSheetFolderResponse.from_folder(folder, factory_id, count)
             for folder, count in folders_with_counts
         ]
 
     @strawberry.field
     @inject
-    async def folder_paths_by_factory(
+    async def root_folders_by_factory(
         self,
         service: Injected[FoldersService],
         factory_id: UUID,
-    ) -> list[FolderPathWithCount]:
+    ) -> list[SpecSheetFolderResponse]:
         """
-        Get all folder paths with spec sheet counts for a factory.
-
-        This returns folder paths derived from spec sheets, including virtual
-        folders that don't exist in the folders table. Counts are recursive
-        (parent folders include counts from subfolders).
+        Get root folders (no parent) for a factory.
 
         Args:
             factory_id: UUID of the factory
 
         Returns:
-            List of FolderPathWithCount
+            List of root SpecSheetFolderResponse
         """
-        paths_with_counts = await service.get_folder_paths_with_counts(factory_id)
+        folders = await service.get_root_folders(factory_id)
         return [
-            FolderPathWithCount(folder_path=path, spec_sheet_count=count)
-            for path, count in paths_with_counts
+            SpecSheetFolderResponse.from_folder(folder, factory_id, 0)
+            for folder in folders
         ]
+
+    @strawberry.field
+    @inject
+    async def folder_children(
+        self,
+        service: Injected[FoldersService],
+        factory_id: UUID,
+        folder_id: UUID,
+    ) -> list[SpecSheetFolderResponse]:
+        """
+        Get child folders of a parent folder.
+
+        Args:
+            factory_id: UUID of the factory
+            folder_id: UUID of the parent folder
+
+        Returns:
+            List of child SpecSheetFolderResponse
+        """
+        children = await service.get_children(factory_id, folder_id)
+        return [
+            SpecSheetFolderResponse.from_folder(child, factory_id, 0)
+            for child in children
+        ]
+
+    @strawberry.field
+    @inject
+    async def folder_by_id(
+        self,
+        service: Injected[FoldersService],
+        factory_id: UUID,
+        folder_id: UUID,
+    ) -> SpecSheetFolderResponse | None:
+        """
+        Get a specific folder by ID.
+
+        Args:
+            factory_id: UUID of the factory
+            folder_id: UUID of the folder
+
+        Returns:
+            SpecSheetFolderResponse or None if not found
+        """
+        folder = await service.get_folder(folder_id)
+        if folder:
+            count = await service.get_spec_sheet_count(factory_id, folder_id)
+            return SpecSheetFolderResponse.from_folder(folder, factory_id, count)
+        return None

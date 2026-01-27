@@ -5,10 +5,13 @@ import os
 from uuid import UUID, uuid4
 
 import httpx
+from commons.db.v6.crm.links.entity_type import EntityType
 from commons.db.v6.crm.spec_sheets.spec_sheet_model import SpecSheet
+from commons.db.v6.files import File, FileType
 from commons.s3.service import S3Service
 from loguru import logger
 
+from app.graphql.links.services.links_service import LinksService
 from app.graphql.spec_sheets.repositories.spec_sheets_repository import (
     SpecSheetsRepository,
 )
@@ -16,6 +19,7 @@ from app.graphql.spec_sheets.strawberry.spec_sheet_input import (
     CreateSpecSheetInput,
     UpdateSpecSheetInput,
 )
+from app.graphql.v2.files.repositories.file_repository import FileRepository
 
 # S3 key prefix for spec sheet uploads
 SPEC_SHEETS_S3_PREFIX = "spec-sheets"
@@ -28,6 +32,8 @@ class SpecSheetsService:
         self,
         repository: SpecSheetsRepository,
         s3_service: S3Service,
+        file_repository: FileRepository,
+        links_service: LinksService,
     ) -> None:
         """
         Initialize the SpecSheets service.
@@ -35,13 +41,20 @@ class SpecSheetsService:
         Args:
             repository: SpecSheets repository instance
             s3_service: S3 service for file uploads
+            file_repository: File repository for /files integration
+            links_service: Links service for entity relationships
         """
         self.repository = repository
         self.s3_service = s3_service
+        self.file_repository = file_repository
+        self.links_service = links_service
 
     async def create_spec_sheet(self, input_data: CreateSpecSheetInput) -> SpecSheet:
         """
         Create a new spec sheet.
+
+        Also creates a File record in /files and links it to the Factory,
+        so the spec sheet appears when browsing files by Factory entity.
 
         Args:
             input_data: Spec sheet creation data
@@ -52,6 +65,7 @@ class SpecSheetsService:
         # Handle file upload if provided
         file_url: str | None = None
         file_size: int = 0
+        s3_key: str | None = None
 
         if input_data.file and input_data.upload_source == "file":
             # Generate unique filename
@@ -107,6 +121,33 @@ class SpecSheetsService:
         # Use display_name if provided, otherwise use file_name
         display_name = input_data.display_name or input_data.file_name
 
+        # Create File record for /files integration
+        file_record: File | None = None
+        if s3_key and file_size > 0:
+            file_record = File(
+                file_name=input_data.file_name,
+                file_path=s3_key,
+                file_size=file_size,
+                file_type=FileType.PDF,
+                folder_id=input_data.folder_id,  # Set folder using pyfiles.folders
+            )
+            file_record = await self.file_repository.create(file_record)
+            logger.info(f"Created File record {file_record.id} for spec sheet")
+
+            # Link File to Factory so it appears in /files when browsing by Factory
+            try:
+                await self.links_service.create_link(
+                    source_type=EntityType.FILE,
+                    source_id=file_record.id,
+                    target_type=EntityType.FACTORY,
+                    target_id=input_data.factory_id,
+                )
+                logger.info(
+                    f"Linked File {file_record.id} to Factory {input_data.factory_id}"
+                )
+            except Exception as e:
+                logger.warning(f"Failed to create link relation: {e}")
+
         spec_sheet = SpecSheet(
             factory_id=input_data.factory_id,
             file_name=input_data.file_name,
@@ -118,11 +159,11 @@ class SpecSheetsService:
             page_count=input_data.page_count,
             categories=input_data.categories,
             tags=input_data.tags,
-            folder_path=input_data.folder_path,
             needs_review=input_data.needs_review,
             published=input_data.published,
             usage_count=0,
             highlight_count=0,
+            file_id=file_record.id if file_record else None,
         )
 
         return await self.repository.create(spec_sheet)
@@ -160,10 +201,6 @@ class SpecSheetsService:
         if tags is not None:
             spec_sheet.tags = tags
 
-        folder_path = input_data.optional_field(input_data.folder_path)
-        if folder_path is not None:
-            spec_sheet.folder_path = folder_path
-
         needs_review = input_data.optional_field(input_data.needs_review)
         if needs_review is not None:
             spec_sheet.needs_review = needs_review
@@ -178,12 +215,38 @@ class SpecSheetsService:
         """
         Delete a spec sheet.
 
+        Also removes the linked File record and LinkRelation.
+
         Args:
             spec_sheet_id: UUID of the spec sheet to delete
 
         Returns:
             True if deleted successfully
         """
+        # Get spec sheet to find linked file
+        spec_sheet = await self.repository.get_by_id(spec_sheet_id)
+        if not spec_sheet:
+            return False
+
+        # Delete linked File and LinkRelation if exists
+        if spec_sheet.file_id:
+            try:
+                # Delete link relation first
+                await self.links_service.delete_link_by_entities(
+                    source_type=EntityType.FILE,
+                    source_id=spec_sheet.file_id,
+                    target_type=EntityType.FACTORY,
+                    target_id=spec_sheet.factory_id,
+                )
+            except Exception as e:
+                logger.warning(f"Failed to delete link relation: {e}")
+
+            try:
+                # Delete file record
+                await self.file_repository.delete(spec_sheet.file_id)
+            except Exception as e:
+                logger.warning(f"Failed to delete file record: {e}")
+
         return await self.repository.delete(spec_sheet_id)
 
     async def get_spec_sheet(self, spec_sheet_id: UUID) -> SpecSheet | None:
@@ -247,25 +310,42 @@ class SpecSheetsService:
         """
         await self.repository.increment_usage_count(spec_sheet_id)
 
-    async def move_folder(
+    async def move_spec_sheet_to_folder(
+        self,
+        spec_sheet_id: UUID,
+        folder_id: UUID | None,
+    ) -> SpecSheet | None:
+        """
+        Move a spec sheet to a different folder.
+
+        Updates the File.folder_id to move the spec sheet.
+
+        Args:
+            spec_sheet_id: UUID of the spec sheet
+            folder_id: UUID of the target folder (None for root/no folder)
+
+        Returns:
+            Updated SpecSheet or None if not found
+        """
+        return await self.repository.move_to_folder(spec_sheet_id, folder_id)
+
+    async def get_spec_sheets_by_folder(
         self,
         factory_id: UUID,
-        old_folder_path: str,
-        new_folder_path: str,
-    ) -> int:
+        folder_id: UUID | None,
+        published_only: bool = True,
+    ) -> list[SpecSheet]:
         """
-        Move a folder to a new location within the same factory.
-
-        This updates the folder_path of all spec sheets in the folder.
+        Get all spec sheets in a specific folder.
 
         Args:
             factory_id: UUID of the factory
-            old_folder_path: Current path of the folder (e.g., "Folder1/Folder2")
-            new_folder_path: New path for the folder (e.g., "Folder3" or "" for root)
+            folder_id: UUID of the folder (None for root/unassigned)
+            published_only: Filter only published spec sheets
 
         Returns:
-            Number of spec sheets updated
+            List of SpecSheet models in the folder
         """
-        return await self.repository.update_folder_paths(
-            factory_id, old_folder_path, new_folder_path
+        return await self.repository.find_by_folder(
+            factory_id, folder_id, published_only
         )

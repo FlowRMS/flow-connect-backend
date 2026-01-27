@@ -9,6 +9,7 @@ Create Date: 2026-01-12
 from collections.abc import Sequence
 
 import sqlalchemy as sa
+from sqlalchemy import inspect
 from sqlalchemy.dialects import postgresql
 
 from alembic import op
@@ -21,6 +22,14 @@ depends_on: str | Sequence[str] | None = None
 
 
 def upgrade() -> None:
+    conn = op.get_bind()
+    inspector = inspect(conn)
+    tables = inspector.get_table_names(schema="pycrm")
+
+    # Skip if tables already exist (idempotent migration)
+    if "submittals" in tables:
+        return
+
     # Create submittals table
     _ = op.create_table(
         "submittals",

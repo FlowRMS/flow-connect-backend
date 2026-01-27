@@ -27,7 +27,7 @@ class SpecSheetResponse(DTOMixin[SpecSheet]):
     page_count: int
     categories: list[str]
     tags: list[str] | None
-    folder_path: str | None
+    folder_id: UUID | None  # pyfiles.folders ID (from File.folder_id)
     needs_review: bool
     published: bool
     usage_count: int
@@ -37,6 +37,9 @@ class SpecSheetResponse(DTOMixin[SpecSheet]):
     @classmethod
     def from_orm_model(cls, model: SpecSheet) -> Self:
         """Convert ORM model to GraphQL response."""
+        # Get folder_id from linked File if exists
+        folder_id = model.file.folder_id if model.file else None
+
         return cls(
             _instance=model,
             id=model.id,
@@ -50,7 +53,7 @@ class SpecSheetResponse(DTOMixin[SpecSheet]):
             page_count=model.page_count,
             categories=model.categories,
             tags=model.tags,
-            folder_path=model.folder_path,
+            folder_id=folder_id,
             needs_review=model.needs_review,
             published=model.published,
             usage_count=model.usage_count,

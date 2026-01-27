@@ -1,3 +1,5 @@
+"""GraphQL mutations for Folder entity using pyfiles.folders."""
+
 import strawberry
 from aioinject import Injected
 
@@ -6,17 +8,17 @@ from app.graphql.spec_sheets.services.folders_service import FoldersService
 from app.graphql.spec_sheets.strawberry.folder_input import (
     CreateFolderInput,
     DeleteFolderInput,
+    MoveFolderInput,
     RenameFolderInput,
 )
 from app.graphql.spec_sheets.strawberry.folder_response import (
-    RenameSpecSheetFolderResult,
     SpecSheetFolderResponse,
 )
 
 
 @strawberry.type
 class FoldersMutations:
-    """GraphQL mutations for Folder entity."""
+    """GraphQL mutations for spec sheet folders using pyfiles.folders."""
 
     @strawberry.mutation
     @inject
@@ -26,20 +28,20 @@ class FoldersMutations:
         input: CreateFolderInput,
     ) -> SpecSheetFolderResponse:
         """
-        Create a new folder in pyfiles.folders.
+        Create a new folder for organizing spec sheets.
 
         Args:
-            input: Folder creation data with factory_id, parent_path, folder_name
+            input: Folder creation data with factory_id, parent_folder_id, folder_name
 
         Returns:
             Created SpecSheetFolderResponse
         """
-        folder = await service.create_subfolder(
-            input.factory_id,
-            input.parent_path,
-            input.folder_name,
+        folder = await service.create_folder(
+            factory_id=input.factory_id,
+            name=input.folder_name,
+            parent_folder_id=input.parent_folder_id,
         )
-        return SpecSheetFolderResponse.from_pyfiles_folder(folder, input.factory_id)
+        return SpecSheetFolderResponse.from_folder(folder, input.factory_id, 0)
 
     @strawberry.mutation
     @inject
@@ -47,27 +49,23 @@ class FoldersMutations:
         self,
         service: Injected[FoldersService],
         input: RenameFolderInput,
-    ) -> RenameSpecSheetFolderResult:
+    ) -> SpecSheetFolderResponse:
         """
-        Rename a folder in pyfiles.folders.
+        Rename a folder.
 
         Args:
-            input: Rename data with factory_id, folder_path, new_name
+            input: Rename data with factory_id, folder_id, new_name
 
         Returns:
-            RenameSpecSheetFolderResult with updated folder and count of updated spec sheets
+            Updated SpecSheetFolderResponse
         """
-        folder, spec_count = await service.rename_folder(
-            input.factory_id,
-            input.folder_path,
-            input.new_name,
+        folder = await service.rename_folder(
+            factory_id=input.factory_id,
+            folder_id=input.folder_id,
+            new_name=input.new_name,
         )
-        return RenameSpecSheetFolderResult(
-            folder=SpecSheetFolderResponse.from_pyfiles_folder(
-                folder, input.factory_id, spec_count
-            ),
-            spec_sheets_updated=spec_count,
-        )
+        count = await service.get_spec_sheet_count(input.factory_id, folder.id)
+        return SpecSheetFolderResponse.from_folder(folder, input.factory_id, count)
 
     @strawberry.mutation
     @inject
@@ -77,18 +75,42 @@ class FoldersMutations:
         input: DeleteFolderInput,
     ) -> bool:
         """
-        Delete a folder only if it has no spec sheets.
+        Delete a folder only if it has no spec sheets and no subfolders.
 
         Args:
-            input: Delete data with factory_id, folder_path
+            input: Delete data with factory_id, folder_id
 
         Returns:
             True if deleted successfully
 
         Raises:
-            ValueError: If folder has spec sheets and cannot be deleted
+            ValueError: If folder has spec sheets or subfolders and cannot be deleted
         """
         return await service.delete_folder(
-            input.factory_id,
-            input.folder_path,
+            factory_id=input.factory_id,
+            folder_id=input.folder_id,
         )
+
+    @strawberry.mutation
+    @inject
+    async def move_spec_sheet_folder(
+        self,
+        service: Injected[FoldersService],
+        input: MoveFolderInput,
+    ) -> SpecSheetFolderResponse:
+        """
+        Move a folder to a new parent (drag and drop).
+
+        Args:
+            input: Move data with factory_id, folder_id, new_parent_id
+
+        Returns:
+            Updated SpecSheetFolderResponse
+        """
+        folder = await service.move_folder(
+            factory_id=input.factory_id,
+            folder_id=input.folder_id,
+            new_parent_id=input.new_parent_id,
+        )
+        count = await service.get_spec_sheet_count(input.factory_id, folder.id)
+        return SpecSheetFolderResponse.from_folder(folder, input.factory_id, count)

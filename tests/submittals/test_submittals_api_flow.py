@@ -455,7 +455,8 @@ async def test_update_item(headers: dict, results: TestResults) -> bool:
             results.fail_test(test_name, "No item returned")
             return False
 
-        if item.get("quantity") != 20:
+        # Compare as float since Decimal may be serialized as string "20.0000"
+        if float(item.get("quantity") or 0) != 20.0:
             results.fail_test(test_name, f"quantity not updated, got {item.get('quantity')}")
             return False
 
@@ -601,10 +602,12 @@ async def test_generate_pdf(headers: dict, results: TestResults) -> bool:
             results.fail_test(test_name, "No PDF URL returned")
             return False
 
-        # Verify it's a base64 data URL (current implementation)
+        # Verify it's a valid URL (S3 presigned URL or base64 data URL)
         pdf_url = pdf_response.get("pdfUrl", "")
-        if not pdf_url.startswith("data:application/pdf;base64,"):
-            results.fail_test(test_name, "PDF URL is not in expected format")
+        is_s3_url = pdf_url.startswith("http://") or pdf_url.startswith("https://")
+        is_data_url = pdf_url.startswith("data:application/pdf;base64,")
+        if not (is_s3_url or is_data_url):
+            results.fail_test(test_name, f"PDF URL is not in expected format: {pdf_url[:50]}...")
             return False
 
         results.pass_test(test_name)

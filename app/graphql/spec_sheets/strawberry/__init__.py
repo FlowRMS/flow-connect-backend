@@ -3,11 +3,12 @@
 from app.graphql.spec_sheets.strawberry.folder_input import (
     CreateFolderInput,
     DeleteFolderInput,
+    MoveFolderInput,
+    MoveSpecSheetToFolderInput,
     RenameFolderInput,
 )
 from app.graphql.spec_sheets.strawberry.folder_response import (
-    FolderPathWithCount,
-    RenameSpecSheetFolderResult,
+    FolderWithChildrenResponse,
     SpecSheetFolderResponse,
 )
 from app.graphql.spec_sheets.strawberry.spec_sheet_highlight_input import (
@@ -22,7 +23,6 @@ from app.graphql.spec_sheets.strawberry.spec_sheet_highlight_response import (
 )
 from app.graphql.spec_sheets.strawberry.spec_sheet_input import (
     CreateSpecSheetInput,
-    MoveFolderInput,
     UpdateSpecSheetInput,
 )
 from app.graphql.spec_sheets.strawberry.spec_sheet_response import SpecSheetResponse
@@ -32,13 +32,13 @@ __all__ = [
     "CreateFolderInput",
     "RenameFolderInput",
     "DeleteFolderInput",
+    "MoveFolderInput",
+    "MoveSpecSheetToFolderInput",
     "SpecSheetFolderResponse",
-    "RenameSpecSheetFolderResult",
-    "FolderPathWithCount",
+    "FolderWithChildrenResponse",
     # SpecSheet types
     "CreateSpecSheetInput",
     "UpdateSpecSheetInput",
-    "MoveFolderInput",
     "SpecSheetResponse",
     # Highlight types
     "HighlightRegionInput",

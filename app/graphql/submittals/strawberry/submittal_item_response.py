@@ -7,6 +7,7 @@ from uuid import UUID
 
 import strawberry
 from commons.db.v6.crm.submittals import SubmittalItem
+from sqlalchemy import inspect
 
 from app.core.db.adapters.dto import DTOMixin
 from app.graphql.spec_sheets.strawberry.spec_sheet_highlight_response import (
@@ -31,6 +32,7 @@ class SubmittalItemResponse(DTOMixin[SubmittalItem]):
     spec_sheet_id: Optional[UUID]
     highlight_version_id: Optional[UUID]
     part_number: Optional[str]
+    manufacturer: Optional[str]
     description: Optional[str]
     quantity: Optional[Decimal]
     approval_status: SubmittalItemApprovalStatusGQL
@@ -50,6 +52,7 @@ class SubmittalItemResponse(DTOMixin[SubmittalItem]):
             spec_sheet_id=model.spec_sheet_id,
             highlight_version_id=model.highlight_version_id,
             part_number=model.part_number,
+            manufacturer=model.manufacturer,
             description=model.description,
             quantity=model.quantity,
             approval_status=SubmittalItemApprovalStatusGQL(model.approval_status.value),
@@ -58,9 +61,16 @@ class SubmittalItemResponse(DTOMixin[SubmittalItem]):
             created_at=model.created_at,
         )
 
+    def _is_relationship_loaded(self, attr_name: str) -> bool:
+        """Check if a relationship is loaded without triggering lazy load."""
+        state = inspect(self._instance)
+        return attr_name not in state.unloaded
+
     @strawberry.field
     def spec_sheet(self) -> Optional[SpecSheetResponse]:
         """Resolve spec_sheet from the ORM instance."""
+        if not self._is_relationship_loaded("spec_sheet"):
+            return None
         if self._instance.spec_sheet:
             return SpecSheetResponse.from_orm_model(self._instance.spec_sheet)
         return None
@@ -68,6 +78,8 @@ class SubmittalItemResponse(DTOMixin[SubmittalItem]):
     @strawberry.field
     def highlight_version(self) -> Optional[HighlightVersionResponse]:
         """Resolve highlight_version from the ORM instance."""
+        if not self._is_relationship_loaded("highlight_version"):
+            return None
         if self._instance.highlight_version:
             return HighlightVersionResponse.from_orm_model(
                 self._instance.highlight_version

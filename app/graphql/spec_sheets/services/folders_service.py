@@ -1,37 +1,28 @@
+"""Service for spec sheet folder management using pyfiles.folders."""
+
 from uuid import UUID
 
 from commons.auth import AuthInfo
 from commons.db.v6.files import Folder
 
-from app.graphql.spec_sheets.repositories.folder_mutations_repository import (
-    FolderMutationsRepository,
-)
-from app.graphql.spec_sheets.repositories.folder_queries_repository import (
-    FolderQueriesRepository,
-)
 from app.graphql.spec_sheets.repositories.folders_repository import FoldersRepository
 
 
 class FoldersService:
-    """Service for Folder entity business logic."""
+    """Service for spec sheet folder business logic using pyfiles.folders."""
 
     def __init__(
         self,
         repository: FoldersRepository,
-        queries_repository: FolderQueriesRepository,
-        mutations_repository: FolderMutationsRepository,
         auth_info: AuthInfo,
     ) -> None:
         """Initialize the Folders service."""
-        super().__init__()
         self.repository = repository
-        self.queries_repository = queries_repository
-        self.mutations_repository = mutations_repository
         self.auth_info = auth_info
 
     async def get_folders_by_factory(self, factory_id: UUID) -> list[Folder]:
         """
-        Get all pyfiles.folders for a factory.
+        Get all folders for a factory.
 
         Args:
             factory_id: UUID of the factory
@@ -39,7 +30,7 @@ class FoldersService:
         Returns:
             List of pyfiles.Folder models
         """
-        return await self.queries_repository.find_by_factory(factory_id)
+        return await self.repository.find_by_factory(factory_id)
 
     async def get_folders_by_factory_with_counts(
         self, factory_id: UUID
@@ -53,198 +44,110 @@ class FoldersService:
         Returns:
             List of tuples (Folder, spec_sheet_count)
         """
-        return await self.queries_repository.get_folders_with_hierarchy(factory_id)
+        return await self.repository.get_folders_with_hierarchy(factory_id)
 
-    async def get_folder_paths_with_counts(
-        self, factory_id: UUID
-    ) -> list[tuple[str, int]]:
+    async def get_folder(self, folder_id: UUID) -> Folder | None:
         """
-        Get all folder paths that contain spec sheets with their counts.
-
-        This includes virtual folders derived from spec sheet folder_paths,
-        not just folders in the spec_sheet_folders table. Counts are recursive.
+        Get a folder by ID.
 
         Args:
-            factory_id: UUID of the factory
-
-        Returns:
-            List of tuples (folder_path, spec_sheet_count)
-        """
-        return await self.repository.get_folder_paths_with_counts(factory_id)
-
-    async def _find_folder_by_name_in_parent(
-        self, factory_id: UUID, name: str, parent_id: UUID | None
-    ) -> Folder | None:
-        """
-        Find a folder by name within a specific parent.
-
-        Args:
-            factory_id: UUID of the factory
-            name: Folder name to find
-            parent_id: Parent folder ID (None for root level)
+            folder_id: UUID of the folder
 
         Returns:
             Folder if found, None otherwise
         """
-        if parent_id is None:
-            folders = await self.queries_repository.get_root_folders(factory_id)
-        else:
-            folders = await self.queries_repository.get_children(factory_id, parent_id)
+        return await self.repository.find_by_id(folder_id)
 
-        for folder in folders:
-            if folder.name == name:
-                return folder
-        return None
-
-    async def _resolve_parent_id_from_path(
-        self, factory_id: UUID, parent_path: str
-    ) -> UUID | None:
+    async def get_folder_with_relations(self, folder_id: UUID) -> Folder | None:
         """
-        Resolve a parent folder ID from a path string.
+        Get a folder with parent and children loaded.
 
-        If the parent doesn't exist as a pyfiles.Folder, creates it.
+        Args:
+            folder_id: UUID of the folder
+
+        Returns:
+            Folder with relations if found, None otherwise
+        """
+        return await self.repository.find_by_id_with_relations(folder_id)
+
+    async def create_folder(
+        self,
+        factory_id: UUID,
+        name: str,
+        parent_folder_id: UUID | None = None,
+    ) -> Folder:
+        """
+        Create a new folder for a factory.
 
         Args:
             factory_id: UUID of the factory
-            parent_path: Parent folder path (empty string for root)
+            name: Name of the folder
+            parent_folder_id: Optional parent folder ID
 
         Returns:
-            Parent folder UUID or None if root level
+            Created Folder
         """
-        if not parent_path:
-            return None
-
-        parts = parent_path.split("/")
-        current_parent_id: UUID | None = None
-
-        for part in parts:
-            folder = await self._find_folder_by_name_in_parent(
-                factory_id, part, current_parent_id
-            )
-            if folder:
-                current_parent_id = folder.id
-            else:
-                # Create the missing parent folder
-                new_folder = await self.mutations_repository.create_folder(
-                    factory_id=factory_id,
-                    name=part,
-                    created_by_id=self.auth_info.flow_user_id,
-                    parent_id=current_parent_id,
-                )
-                current_parent_id = new_folder.id
-
-        return current_parent_id
-
-    async def _resolve_folder_id_from_path(
-        self, factory_id: UUID, folder_path: str
-    ) -> UUID | None:
-        """
-        Resolve a folder ID from a path string.
-
-        Args:
-            factory_id: UUID of the factory
-            folder_path: Full folder path
-
-        Returns:
-            Folder UUID or None if not found
-        """
-        if not folder_path:
-            return None
-
-        parts = folder_path.split("/")
-        current_parent_id: UUID | None = None
-
-        for part in parts:
-            folder = await self._find_folder_by_name_in_parent(
-                factory_id, part, current_parent_id
-            )
-            if folder:
-                current_parent_id = folder.id
-            else:
-                return None  # Path doesn't exist
-
-        return current_parent_id
-
-    async def create_folder(self, factory_id: UUID, folder_path: str) -> Folder:
-        """
-        Create a new folder in pyfiles.folders (and any parent folders that don't exist).
-
-        Args:
-            factory_id: UUID of the factory
-            folder_path: The folder path (e.g., "Folder1/Folder2")
-
-        Returns:
-            Created pyfiles.Folder
-        """
-        parts = folder_path.split("/")
-        folder_name = parts[-1]
-        parent_path = "/".join(parts[:-1]) if len(parts) > 1 else ""
-
-        parent_id = await self._resolve_parent_id_from_path(factory_id, parent_path)
-
-        return await self.mutations_repository.create_folder(
+        return await self.repository.create_folder(
             factory_id=factory_id,
-            name=folder_name,
+            name=name,
             created_by_id=self.auth_info.flow_user_id,
-            parent_id=parent_id,
+            parent_id=parent_folder_id,
         )
 
     async def create_subfolder(
-        self, factory_id: UUID, parent_path: str, folder_name: str
+        self,
+        factory_id: UUID,
+        parent_folder_id: UUID,
+        folder_name: str,
     ) -> Folder:
         """
-        Create a new subfolder under a parent folder in pyfiles.folders.
+        Create a new subfolder under a parent folder.
 
         Args:
             factory_id: UUID of the factory
-            parent_path: The parent folder path (empty string for root)
+            parent_folder_id: UUID of the parent folder
             folder_name: Name of the new folder
 
         Returns:
-            Created pyfiles.Folder
+            Created Folder
         """
-        parent_id = await self._resolve_parent_id_from_path(factory_id, parent_path)
-
-        return await self.mutations_repository.create_folder(
+        return await self.repository.create_folder(
             factory_id=factory_id,
             name=folder_name,
             created_by_id=self.auth_info.flow_user_id,
-            parent_id=parent_id,
+            parent_id=parent_folder_id,
         )
 
     async def rename_folder(
-        self, factory_id: UUID, folder_path: str, new_name: str
-    ) -> tuple[Folder, int]:
+        self,
+        factory_id: UUID,
+        folder_id: UUID,
+        new_name: str,
+    ) -> Folder:
         """
-        Rename a folder in pyfiles.folders.
+        Rename a folder.
 
         Args:
             factory_id: UUID of the factory
-            folder_path: Current folder path
+            folder_id: UUID of the folder to rename
             new_name: New name for the folder
 
         Returns:
-            Tuple of (updated Folder, number of spec sheets updated - always 0 for pyfiles)
+            Updated Folder
         """
-        folder_id = await self._resolve_folder_id_from_path(factory_id, folder_path)
-        if not folder_id:
-            raise ValueError(f"Folder not found: {folder_path}")
-
-        folder = await self.mutations_repository.rename_folder(
+        return await self.repository.rename_folder(
             factory_id=factory_id,
             folder_id=folder_id,
             new_name=new_name,
         )
-        # pyfiles doesn't need to update spec sheets - they reference by folder_id
-        return folder, 0
 
-    async def delete_folder(self, factory_id: UUID, folder_path: str) -> bool:
+    async def delete_folder(self, factory_id: UUID, folder_id: UUID) -> bool:
         """
-        Delete a folder from pyfiles.folders only if it has no spec sheets.
+        Delete a folder only if it has no spec sheets.
 
         Args:
             factory_id: UUID of the factory
-            folder_path: The folder path to delete
+            folder_id: UUID of the folder to delete
 
         Returns:
             True if deleted
@@ -252,31 +155,65 @@ class FoldersService:
         Raises:
             ValueError: If folder has spec sheets and cannot be deleted
         """
-        folder_id = await self._resolve_folder_id_from_path(factory_id, folder_path)
-        if not folder_id:
-            raise ValueError(f"Folder not found: {folder_path}")
+        return await self.repository.delete_folder(factory_id, folder_id)
 
-        return await self.mutations_repository.delete_folder(
-            factory_id=factory_id,
-            folder_id=folder_id,
-        )
-
-    async def ensure_folder_exists(self, factory_id: UUID, folder_path: str) -> Folder:
+    async def move_folder(
+        self,
+        factory_id: UUID,
+        folder_id: UUID,
+        new_parent_id: UUID | None,
+    ) -> Folder:
         """
-        Ensure a folder exists in pyfiles.folders, creating it if necessary.
+        Move a folder to a new parent.
 
         Args:
             factory_id: UUID of the factory
-            folder_path: The folder path
+            folder_id: UUID of the folder to move
+            new_parent_id: New parent folder ID (None for root)
 
         Returns:
-            The existing or created pyfiles.Folder
+            Updated Folder
         """
-        folder_id = await self._resolve_folder_id_from_path(factory_id, folder_path)
-        if folder_id:
-            folder = await self.queries_repository.find_by_id(folder_id)
-            if folder:
-                return folder
+        return await self.repository.move_folder(
+            factory_id=factory_id,
+            folder_id=folder_id,
+            new_parent_id=new_parent_id,
+        )
 
-        # Create the folder if it doesn't exist
-        return await self.create_folder(factory_id, folder_path)
+    async def get_root_folders(self, factory_id: UUID) -> list[Folder]:
+        """
+        Get root folders (no parent) for a factory.
+
+        Args:
+            factory_id: UUID of the factory
+
+        Returns:
+            List of root Folder models
+        """
+        return await self.repository.get_root_folders(factory_id)
+
+    async def get_children(self, factory_id: UUID, parent_id: UUID) -> list[Folder]:
+        """
+        Get child folders of a parent folder.
+
+        Args:
+            factory_id: UUID of the factory
+            parent_id: UUID of the parent folder
+
+        Returns:
+            List of child Folder models
+        """
+        return await self.repository.get_children(factory_id, parent_id)
+
+    async def get_spec_sheet_count(self, factory_id: UUID, folder_id: UUID) -> int:
+        """
+        Get the count of spec sheets in a folder.
+
+        Args:
+            factory_id: UUID of the factory
+            folder_id: UUID of the folder
+
+        Returns:
+            Number of spec sheets in the folder
+        """
+        return await self.repository.get_spec_sheet_count(factory_id, folder_id)
