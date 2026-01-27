@@ -48,6 +48,7 @@ class DocumentBatchProcessor:
     ) -> list[PendingDocumentProcessing]:
         processing_records: list[PendingDocumentProcessing] = []
 
+        fallback_mapping = self._get_fallback_mapping(entity_mappings)
         for batch_start in range(0, len(dtos), batch_size):
             batch_end = min(batch_start + batch_size, len(dtos))
             batch_dtos = dtos[batch_start:batch_end]
@@ -56,7 +57,7 @@ class DocumentBatchProcessor:
             )
 
             batch_mappings = [
-                entity_mappings.get(dto.internal_uuid, EntityMapping())
+                entity_mappings.get(dto.internal_uuid) or fallback_mapping
                 for dto in batch_dtos
             ]
 
@@ -198,6 +199,22 @@ class DocumentBatchProcessor:
             )
 
         return records
+
+    @staticmethod
+    def _get_fallback_mapping(
+        entity_mappings: dict[UUID, EntityMapping],
+    ) -> EntityMapping:
+        fallback = EntityMapping()
+        for mapping in entity_mappings.values():
+            if mapping.factory_id and not fallback.factory_id:
+                fallback.factory_id = mapping.factory_id
+            if mapping.sold_to_customer_id and not fallback.sold_to_customer_id:
+                fallback.sold_to_customer_id = mapping.sold_to_customer_id
+            if mapping.bill_to_customer_id and not fallback.bill_to_customer_id:
+                fallback.bill_to_customer_id = mapping.bill_to_customer_id
+            if fallback.factory_id and fallback.sold_to_customer_id:
+                break
+        return fallback
 
     @staticmethod
     def _is_dto_skipped(
