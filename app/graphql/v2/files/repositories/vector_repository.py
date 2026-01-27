@@ -7,7 +7,7 @@ from qdrant_client.models import PointStruct
 
 from app.core.context_wrapper import ContextWrapper
 
-COLLECTION_NAME = "uploads-collection"
+COLLECTION_NAME = "documents-collection"
 
 
 class VectorRepository:
