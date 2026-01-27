@@ -60,6 +60,8 @@ class GenerateSubmittalPdfResult:
     pdf_file_name: str | None = None
     pdf_file_size_bytes: int = 0
     revision: SubmittalRevision | None = None
+    email_sent: bool = False
+    email_recipients_count: int = 0
 
 
 class SubmittalsService:
@@ -116,7 +118,11 @@ class SubmittalsService:
         logger.info(
             f"Created submittal {created.id} with number {created.submittal_number}"
         )
-        return created
+        # Re-fetch with all relations loaded to avoid lazy loading issues
+        submittal_with_relations = await self.repository.get_by_id_with_relations(
+            created.id
+        )
+        return submittal_with_relations or created
 
     async def update_submittal(
         self, submittal_id: UUID, input_data: UpdateSubmittalInput
@@ -275,7 +281,11 @@ class SubmittalsService:
 
         created = await self.repository.add_item(submittal_id, item)
         logger.info(f"Added item {created.id} to submittal {submittal_id}")
-        return created
+        # Re-fetch with relations loaded
+        item_with_relations = await self.items_repository.get_by_id_with_relations(
+            created.id
+        )
+        return item_with_relations or created
 
     async def update_item(
         self, item_id: UUID, input_data: UpdateSubmittalItemInput
@@ -307,6 +317,9 @@ class SubmittalsService:
         if input_data.part_number is not None:
             item.part_number = input_data.part_number
 
+        if input_data.manufacturer is not None:
+            item.manufacturer = input_data.manufacturer
+
         if input_data.description is not None:
             item.description = input_data.description
 
@@ -334,7 +347,11 @@ class SubmittalsService:
 
         updated = await self.items_repository.update(item)
         logger.info(f"Updated submittal item {item_id}")
-        return updated
+        # Re-fetch with relations loaded
+        item_with_relations = await self.items_repository.get_by_id_with_relations(
+            updated.id
+        )
+        return item_with_relations or updated
 
     async def remove_item(self, item_id: UUID) -> bool:
         """
@@ -567,9 +584,9 @@ class SubmittalsService:
                 error=export_result.error,
             )
 
-        # Create revision if requested
+        # Create revision if requested (or if save_as_attachment is enabled)
         revision = None
-        if input_data.create_revision:
+        if input_data.create_revision or input_data.save_as_attachment:
             revision = await self.create_revision(
                 submittal_id=input_data.submittal_id,
                 notes=input_data.revision_notes or "PDF generated",
@@ -587,12 +604,122 @@ class SubmittalsService:
             f"{export_result.pdf_file_size_bytes} bytes"
         )
 
+        # Handle email/email_link output types
+        email_sent = False
+        email_recipients_count = 0
+        if (
+            input_data.output_type in ("email", "email_link")
+            and input_data.addressed_to_ids
+        ):
+            try:
+                # Get recipient emails from addressed-to stakeholders
+                stakeholders = submittal.stakeholders or []
+                addressed_to_ids_str = {str(sid) for sid in input_data.addressed_to_ids}
+                recipient_emails = [
+                    s.contact_email
+                    for s in stakeholders
+                    if str(s.id) in addressed_to_ids_str and s.contact_email
+                ]
+
+                if recipient_emails:
+                    submittal_number = submittal.submittal_number or "Submittal"
+                    job_name = submittal.job.job_name if submittal.job else ""
+                    subject = f"Submittal {submittal_number} - {job_name}".strip(" -")
+
+                    if input_data.output_type == "email":
+                        # Email with PDF attachment
+                        attachments: list[EmailAttachment] = []
+                        if export_result.pdf_url:
+                            async with httpx.AsyncClient() as client:
+                                response = await client.get(
+                                    export_result.pdf_url, timeout=60.0
+                                )
+                                _ = response.raise_for_status()
+                                attachments.append(
+                                    EmailAttachment(
+                                        filename=export_result.pdf_file_name
+                                        or "submittal.pdf",
+                                        content=response.content,
+                                        content_type="application/pdf",
+                                    )
+                                )
+
+                        body = (
+                            f"<p>Please find attached the submittal document "
+                            f"<strong>{submittal_number}</strong>.</p>"
+                        )
+                        send_result = await self.email_provider.send_email(
+                            to=recipient_emails,
+                            subject=subject,
+                            body=body,
+                            body_type="HTML",
+                            attachments=attachments if attachments else None,
+                        )
+                    else:
+                        # Email with link to PDF
+                        body = (
+                            f"<p>Please review the submittal document "
+                            f"<strong>{submittal_number}</strong>.</p>"
+                            f'<p><a href="{export_result.pdf_url}">Download PDF</a></p>'
+                        )
+                        send_result = await self.email_provider.send_email(
+                            to=recipient_emails,
+                            subject=subject,
+                            body=body,
+                            body_type="HTML",
+                        )
+
+                    if send_result.success:
+                        email_sent = True
+                        email_recipients_count = len(recipient_emails)
+
+                        # Record the email if a revision was created
+                        if revision:
+                            email_record = SubmittalEmail(
+                                revision_id=revision.id,
+                                subject=subject,
+                                body=body,
+                                recipient_emails=recipient_emails,
+                                recipients=[
+                                    {"email": e, "type": "to"} for e in recipient_emails
+                                ],
+                            )
+                            email_record.created_by_id = (
+                                self.email_provider.auth_info.flow_user_id
+                            )
+                            _ = await self.repository.add_email(
+                                input_data.submittal_id, email_record
+                            )
+
+                        logger.info(
+                            f"Sent submittal {input_data.submittal_id} via "
+                            f"{input_data.output_type} to "
+                            f"{len(recipient_emails)} recipients"
+                        )
+                    else:
+                        logger.error(
+                            f"Failed to send email for submittal "
+                            f"{input_data.submittal_id}: {send_result.error}"
+                        )
+                else:
+                    logger.warning(
+                        f"No valid recipient emails found for submittal "
+                        f"{input_data.submittal_id} addressed-to stakeholders"
+                    )
+            except Exception as e:
+                logger.error(
+                    f"Error sending email for submittal {input_data.submittal_id}: {e}"
+                )
+                # Don't fail the whole operation - PDF was generated successfully
+
         return GenerateSubmittalPdfResult(
             success=True,
             pdf_url=export_result.pdf_url,
             pdf_file_name=export_result.pdf_file_name,
             pdf_file_size_bytes=export_result.pdf_file_size_bytes,
             revision=revision,
+            email_sent=email_sent,
+            email_recipients_count=email_recipients_count,
         )
 
     # Returned PDF operations

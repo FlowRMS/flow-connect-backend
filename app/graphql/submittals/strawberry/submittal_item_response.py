@@ -1,8 +1,6 @@
-"""GraphQL response type for SubmittalItem."""
-
 from datetime import datetime
 from decimal import Decimal
-from typing import Optional, Self
+from typing import Self
 from uuid import UUID
 
 import strawberry
@@ -28,16 +26,17 @@ class SubmittalItemResponse(DTOMixin[SubmittalItem]):
     id: UUID
     submittal_id: UUID
     item_number: int
-    quote_detail_id: Optional[UUID]
-    spec_sheet_id: Optional[UUID]
-    highlight_version_id: Optional[UUID]
-    part_number: Optional[str]
-    manufacturer: Optional[str]
-    description: Optional[str]
-    quantity: Optional[Decimal]
+    quote_detail_id: UUID | None
+    spec_sheet_id: UUID | None
+    highlight_version_id: UUID | None
+    part_number: str | None
+    manufacturer: str | None
+    description: str | None
+    quantity: Decimal | None
     approval_status: SubmittalItemApprovalStatusGQL
     match_status: SubmittalItemMatchStatusGQL
-    notes: Optional[str]
+    notes: str | None
+    lead_time: str | None
     created_at: datetime
 
     @classmethod
@@ -58,6 +57,7 @@ class SubmittalItemResponse(DTOMixin[SubmittalItem]):
             approval_status=SubmittalItemApprovalStatusGQL(model.approval_status.value),
             match_status=SubmittalItemMatchStatusGQL(model.match_status.value),
             notes=model.notes,
+            lead_time=model.lead_time,
             created_at=model.created_at,
         )
 
@@ -67,7 +67,7 @@ class SubmittalItemResponse(DTOMixin[SubmittalItem]):
         return attr_name not in state.unloaded
 
     @strawberry.field
-    def spec_sheet(self) -> Optional[SpecSheetResponse]:
+    def spec_sheet(self) -> SpecSheetResponse | None:
         """Resolve spec_sheet from the ORM instance."""
         if not self._is_relationship_loaded("spec_sheet"):
             return None
@@ -76,7 +76,7 @@ class SubmittalItemResponse(DTOMixin[SubmittalItem]):
         return None
 
     @strawberry.field
-    def highlight_version(self) -> Optional[HighlightVersionResponse]:
+    def highlight_version(self) -> HighlightVersionResponse | None:
         """Resolve highlight_version from the ORM instance."""
         if not self._is_relationship_loaded("highlight_version"):
             return None

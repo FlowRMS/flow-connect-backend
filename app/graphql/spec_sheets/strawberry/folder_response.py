@@ -1,5 +1,3 @@
-"""GraphQL response type for Folder using pyfiles.folders."""
-
 from datetime import datetime
 from typing import Self
 from uuid import UUID

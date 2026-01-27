@@ -296,6 +296,8 @@ class SubmittalsMutations:
             pdf_file_name=result.pdf_file_name or "submittal.pdf",
             pdf_file_size_bytes=result.pdf_file_size_bytes,
             revision=revision_response,
+            email_sent=result.email_sent,
+            email_recipients_count=result.email_recipients_count,
         )
 
     # Returned PDF mutations

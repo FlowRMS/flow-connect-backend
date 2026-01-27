@@ -1,5 +1,3 @@
-"""GraphQL mutations for Folder entity using pyfiles.folders."""
-
 import strawberry
 from aioinject import Injected
 
@@ -11,14 +9,12 @@ from app.graphql.spec_sheets.strawberry.folder_input import (
     MoveFolderInput,
     RenameFolderInput,
 )
-from app.graphql.spec_sheets.strawberry.folder_response import (
-    SpecSheetFolderResponse,
-)
+from app.graphql.spec_sheets.strawberry.folder_response import SpecSheetFolderResponse
 
 
 @strawberry.type
 class FoldersMutations:
-    """GraphQL mutations for spec sheet folders using pyfiles.folders."""
+    """GraphQL mutations for Folder entity using pyfiles.folders."""
 
     @strawberry.mutation
     @inject
@@ -28,7 +24,7 @@ class FoldersMutations:
         input: CreateFolderInput,
     ) -> SpecSheetFolderResponse:
         """
-        Create a new folder for organizing spec sheets.
+        Create a new folder in pyfiles.folders.
 
         Args:
             input: Folder creation data with factory_id, parent_folder_id, folder_name
@@ -41,7 +37,7 @@ class FoldersMutations:
             name=input.folder_name,
             parent_folder_id=input.parent_folder_id,
         )
-        return SpecSheetFolderResponse.from_folder(folder, input.factory_id, 0)
+        return SpecSheetFolderResponse.from_folder(folder, input.factory_id)
 
     @strawberry.mutation
     @inject
@@ -51,7 +47,7 @@ class FoldersMutations:
         input: RenameFolderInput,
     ) -> SpecSheetFolderResponse:
         """
-        Rename a folder.
+        Rename a folder in pyfiles.folders.
 
         Args:
             input: Rename data with factory_id, folder_id, new_name
@@ -64,8 +60,7 @@ class FoldersMutations:
             folder_id=input.folder_id,
             new_name=input.new_name,
         )
-        count = await service.get_spec_sheet_count(input.factory_id, folder.id)
-        return SpecSheetFolderResponse.from_folder(folder, input.factory_id, count)
+        return SpecSheetFolderResponse.from_folder(folder, input.factory_id)
 
     @strawberry.mutation
     @inject
@@ -75,7 +70,7 @@ class FoldersMutations:
         input: DeleteFolderInput,
     ) -> bool:
         """
-        Delete a folder only if it has no spec sheets and no subfolders.
+        Delete a folder only if it has no spec sheets.
 
         Args:
             input: Delete data with factory_id, folder_id
@@ -84,7 +79,7 @@ class FoldersMutations:
             True if deleted successfully
 
         Raises:
-            ValueError: If folder has spec sheets or subfolders and cannot be deleted
+            ValueError: If folder has spec sheets and cannot be deleted
         """
         return await service.delete_folder(
             factory_id=input.factory_id,
@@ -99,7 +94,7 @@ class FoldersMutations:
         input: MoveFolderInput,
     ) -> SpecSheetFolderResponse:
         """
-        Move a folder to a new parent (drag and drop).
+        Move a folder to a new parent.
 
         Args:
             input: Move data with factory_id, folder_id, new_parent_id
@@ -112,5 +107,4 @@ class FoldersMutations:
             folder_id=input.folder_id,
             new_parent_id=input.new_parent_id,
         )
-        count = await service.get_spec_sheet_count(input.factory_id, folder.id)
-        return SpecSheetFolderResponse.from_folder(folder, input.factory_id, count)
+        return SpecSheetFolderResponse.from_folder(folder, input.factory_id)

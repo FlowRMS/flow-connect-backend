@@ -1,6 +1,4 @@
-"""GraphQL response type for generating submittal PDFs."""
-
-from typing import Optional, Self
+from typing import Self
 
 import strawberry
 
@@ -14,11 +12,13 @@ class GenerateSubmittalPdfResponse:
     """Response type for generate submittal PDF mutation."""
 
     success: bool
-    error: Optional[str] = None
-    pdf_url: Optional[str] = None
-    pdf_file_name: Optional[str] = None
-    pdf_file_size_bytes: Optional[int] = None
-    revision: Optional[SubmittalRevisionResponse] = None
+    error: str | None = None
+    pdf_url: str | None = None
+    pdf_file_name: str | None = None
+    pdf_file_size_bytes: int | None = None
+    revision: SubmittalRevisionResponse | None = None
+    email_sent: bool = False
+    email_recipients_count: int = 0
 
     @classmethod
     def success_response(
@@ -26,7 +26,9 @@ class GenerateSubmittalPdfResponse:
         pdf_url: str,
         pdf_file_name: str,
         pdf_file_size_bytes: int,
-        revision: Optional[SubmittalRevisionResponse] = None,
+        revision: SubmittalRevisionResponse | None = None,
+        email_sent: bool = False,
+        email_recipients_count: int = 0,
     ) -> Self:
         """Create a success response."""
         return cls(
@@ -35,6 +37,8 @@ class GenerateSubmittalPdfResponse:
             pdf_file_name=pdf_file_name,
             pdf_file_size_bytes=pdf_file_size_bytes,
             revision=revision,
+            email_sent=email_sent,
+            email_recipients_count=email_recipients_count,
         )
 
     @classmethod

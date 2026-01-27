@@ -52,11 +52,15 @@ class SubmittalsRepository(BaseRepository[Submittal]):
         stmt = (
             select(Submittal)
             .options(
+                selectinload(Submittal.items).selectinload(SubmittalItem.spec_sheet),
+                selectinload(Submittal.items).selectinload(SubmittalItem.quote_detail),
                 selectinload(Submittal.items)
                 .selectinload(SubmittalItem.highlight_version)
                 .selectinload(SpecSheetHighlightVersion.regions),
                 selectinload(Submittal.stakeholders),
-                selectinload(Submittal.revisions).selectinload(SubmittalRevision.emails),
+                selectinload(Submittal.revisions).selectinload(
+                    SubmittalRevision.emails
+                ),
                 selectinload(Submittal.created_by),
             )
             .where(Submittal.id == submittal_id)
@@ -246,6 +250,22 @@ class SubmittalItemsRepository(BaseRepository[SubmittalItem]):
 
     def __init__(self, context_wrapper: ContextWrapper, session: AsyncSession) -> None:
         super().__init__(session, context_wrapper, SubmittalItem)
+
+    async def get_by_id_with_relations(self, item_id: UUID) -> SubmittalItem | None:
+        """Get a submittal item by ID with all relations loaded."""
+        stmt = (
+            select(SubmittalItem)
+            .options(
+                selectinload(SubmittalItem.spec_sheet),
+                selectinload(SubmittalItem.quote_detail),
+                selectinload(SubmittalItem.highlight_version).selectinload(
+                    SpecSheetHighlightVersion.regions
+                ),
+            )
+            .where(SubmittalItem.id == item_id)
+        )
+        result = await self.session.execute(stmt)
+        return result.scalar_one_or_none()
 
 
 class SubmittalStakeholdersRepository(BaseRepository[SubmittalStakeholder]):

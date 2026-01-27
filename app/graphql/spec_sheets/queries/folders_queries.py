@@ -1,5 +1,3 @@
-"""GraphQL queries for spec sheet folders using pyfiles.folders."""
-
 from uuid import UUID
 
 import strawberry
@@ -7,14 +5,12 @@ from aioinject import Injected
 
 from app.graphql.inject import inject
 from app.graphql.spec_sheets.services.folders_service import FoldersService
-from app.graphql.spec_sheets.strawberry.folder_response import (
-    SpecSheetFolderResponse,
-)
+from app.graphql.spec_sheets.strawberry.folder_response import SpecSheetFolderResponse
 
 
 @strawberry.type
 class FoldersQueries:
-    """GraphQL queries for spec sheet folders using pyfiles.folders."""
+    """GraphQL queries for Folder entity using pyfiles.folders."""
 
     @strawberry.field
     @inject
@@ -24,10 +20,9 @@ class FoldersQueries:
         factory_id: UUID,
     ) -> list[SpecSheetFolderResponse]:
         """
-        Get all folders for a factory with recursive spec sheet counts.
+        Get all pyfiles.folders for a factory with spec sheet counts.
 
-        Returns folders from pyfiles.folders that are mapped to this factory.
-        Counts include spec sheets in subfolders.
+        Returns folders from pyfiles.folders table with recursive counts.
 
         Args:
             factory_id: UUID of the factory
@@ -42,6 +37,30 @@ class FoldersQueries:
             SpecSheetFolderResponse.from_folder(folder, factory_id, count)
             for folder, count in folders_with_counts
         ]
+
+    @strawberry.field
+    @inject
+    async def folder_by_id(
+        self,
+        service: Injected[FoldersService],
+        factory_id: UUID,
+        folder_id: UUID,
+    ) -> SpecSheetFolderResponse | None:
+        """
+        Get a single folder by ID.
+
+        Args:
+            factory_id: UUID of the factory
+            folder_id: UUID of the folder
+
+        Returns:
+            SpecSheetFolderResponse if found, None otherwise
+        """
+        folder = await service.get_folder(folder_id)
+        if not folder:
+            return None
+        count = await service.get_spec_sheet_count(factory_id, folder_id)
+        return SpecSheetFolderResponse.from_folder(folder, factory_id, count)
 
     @strawberry.field
     @inject
@@ -60,55 +79,37 @@ class FoldersQueries:
             List of root SpecSheetFolderResponse
         """
         folders = await service.get_root_folders(factory_id)
-        return [
-            SpecSheetFolderResponse.from_folder(folder, factory_id, 0)
-            for folder in folders
-        ]
+        result = []
+        for folder in folders:
+            count = await service.get_spec_sheet_count(factory_id, folder.id)
+            result.append(
+                SpecSheetFolderResponse.from_folder(folder, factory_id, count)
+            )
+        return result
 
     @strawberry.field
     @inject
-    async def folder_children(
+    async def child_folders(
         self,
         service: Injected[FoldersService],
         factory_id: UUID,
-        folder_id: UUID,
+        parent_id: UUID,
     ) -> list[SpecSheetFolderResponse]:
         """
         Get child folders of a parent folder.
 
         Args:
             factory_id: UUID of the factory
-            folder_id: UUID of the parent folder
+            parent_id: UUID of the parent folder
 
         Returns:
             List of child SpecSheetFolderResponse
         """
-        children = await service.get_children(factory_id, folder_id)
-        return [
-            SpecSheetFolderResponse.from_folder(child, factory_id, 0)
-            for child in children
-        ]
-
-    @strawberry.field
-    @inject
-    async def folder_by_id(
-        self,
-        service: Injected[FoldersService],
-        factory_id: UUID,
-        folder_id: UUID,
-    ) -> SpecSheetFolderResponse | None:
-        """
-        Get a specific folder by ID.
-
-        Args:
-            factory_id: UUID of the factory
-            folder_id: UUID of the folder
-
-        Returns:
-            SpecSheetFolderResponse or None if not found
-        """
-        folder = await service.get_folder(folder_id)
-        if folder:
-            count = await service.get_spec_sheet_count(factory_id, folder_id)
-            return SpecSheetFolderResponse.from_folder(folder, factory_id, count)
-        return None
+        folders = await service.get_children(factory_id, parent_id)
+        result = []
+        for folder in folders:
+            count = await service.get_spec_sheet_count(factory_id, folder.id)
+            result.append(
+                SpecSheetFolderResponse.from_folder(folder, factory_id, count)
+            )
+        return result

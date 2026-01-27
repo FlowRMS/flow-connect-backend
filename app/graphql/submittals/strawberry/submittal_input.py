@@ -89,6 +89,7 @@ class SubmittalItemInput(BaseInputGQL[SubmittalItem]):
     spec_sheet_id: UUID | None = None
     highlight_version_id: UUID | None = None
     part_number: str | None = None
+    manufacturer: str | None = None
     description: str | None = None
     quantity: Decimal | None = None
     approval_status: SubmittalItemApprovalStatusGQL = (
@@ -96,6 +97,7 @@ class SubmittalItemInput(BaseInputGQL[SubmittalItem]):
     )
     match_status: SubmittalItemMatchStatusGQL = SubmittalItemMatchStatusGQL.NO_MATCH
     notes: str | None = None
+    lead_time: str | None = None
 
     def to_orm_model(self) -> SubmittalItem:
         """Convert input to ORM model."""
@@ -105,11 +107,13 @@ class SubmittalItemInput(BaseInputGQL[SubmittalItem]):
             spec_sheet_id=self.spec_sheet_id,
             highlight_version_id=self.highlight_version_id,
             part_number=self.part_number,
+            manufacturer=self.manufacturer,
             description=self.description,
             quantity=self.quantity,
             approval_status=SubmittalItemApprovalStatus(self.approval_status.value),
             match_status=SubmittalItemMatchStatus(self.match_status.value),
             notes=self.notes,
+            lead_time=self.lead_time,
         )
 
 
@@ -119,11 +123,13 @@ class UpdateSubmittalItemInput:
     spec_sheet_id: UUID | None = UNSET  # type: ignore[assignment]
     highlight_version_id: UUID | None = UNSET  # type: ignore[assignment]
     part_number: str | None = None
+    manufacturer: str | None = None
     description: str | None = None
     quantity: Decimal | None = None
     approval_status: SubmittalItemApprovalStatusGQL | None = None
     match_status: SubmittalItemMatchStatusGQL | None = None
     notes: str | None = None
+    lead_time: str | None = None
 
 
 @strawberry.input
@@ -181,6 +187,7 @@ class GenerateSubmittalPdfInput:
 
     # Finishing options
     print_duplex: bool = False
+    save_as_attachment: bool = False
     cap_file_size_mb: int | None = None
 
     # Transmittal options
@@ -262,13 +269,13 @@ class AddChangeAnalysisInput(BaseInputGQL[SubmittalChangeAnalysis]):
 
     def to_orm_model(self) -> SubmittalChangeAnalysis:
         """Convert input to ORM model."""
+        item_changes = [change.to_orm_model() for change in (self.item_changes or [])]
         return SubmittalChangeAnalysis(
             analyzed_by=ChangeAnalysisSource(self.analyzed_by.value),
             overall_status=OverallChangeStatus(self.overall_status.value),
             summary=self.summary,
-            item_changes=[
-                change.to_orm_model() for change in (self.item_changes or [])
-            ],
+            total_changes_detected=len(item_changes),
+            item_changes=item_changes,
         )
 
 

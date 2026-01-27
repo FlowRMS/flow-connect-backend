@@ -4,6 +4,7 @@ from typing import Any
 
 from commons.auth import AuthInfo, AuthService, ConnectionParams
 from fastapi import Request, WebSocket
+from graphql import GraphQLError
 from pydantic import ValidationError
 from starlette.datastructures import Headers
 from strawberry.fastapi import BaseContext
@@ -35,7 +36,10 @@ class Context(BaseContext):
     ) -> AsyncGenerator[ContextModel, None]:
         auth_result = await auth_service.generate_auth_info_from_request(request)
         if auth_result.is_err():
-            raise PermissionError(f"Unauthorized. {auth_result.unwrap_err()}")
+            raise GraphQLError(
+                message=f"Unauthorized. {auth_result.unwrap_err()}",
+                extensions={"statusCode": 401, "type": "AuthenticationError"},
+            )
 
         auth_info = auth_result.unwrap()
         yield ContextModel(auth_info=auth_info)

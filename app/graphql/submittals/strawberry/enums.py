@@ -15,6 +15,8 @@ from commons.db.v6.crm.submittals import (
 
 @strawberry.enum
 class SubmittalStatusGQL(Enum):
+    """GraphQL enum for submittal status."""
+
     DRAFT = SubmittalStatus.DRAFT.value
     SUBMITTED = SubmittalStatus.SUBMITTED.value
     APPROVED = SubmittalStatus.APPROVED.value
@@ -25,6 +27,8 @@ class SubmittalStatusGQL(Enum):
 
 @strawberry.enum
 class SubmittalItemApprovalStatusGQL(Enum):
+    """GraphQL enum for submittal item approval status."""
+
     PENDING = SubmittalItemApprovalStatus.PENDING.value
     APPROVED = SubmittalItemApprovalStatus.APPROVED.value
     APPROVED_AS_NOTED = SubmittalItemApprovalStatus.APPROVED_AS_NOTED.value
@@ -34,6 +38,8 @@ class SubmittalItemApprovalStatusGQL(Enum):
 
 @strawberry.enum
 class SubmittalItemMatchStatusGQL(Enum):
+    """GraphQL enum for submittal item match status."""
+
     NO_MATCH = SubmittalItemMatchStatus.NO_MATCH.value
     PARTIAL_MATCH = SubmittalItemMatchStatus.PARTIAL_MATCH.value
     EXACT_MATCH = SubmittalItemMatchStatus.EXACT_MATCH.value
@@ -41,6 +47,8 @@ class SubmittalItemMatchStatusGQL(Enum):
 
 @strawberry.enum
 class SubmittalStakeholderRoleGQL(Enum):
+    """GraphQL enum for stakeholder roles."""
+
     CUSTOMER = SubmittalStakeholderRole.CUSTOMER.value
     ENGINEER = SubmittalStakeholderRole.ENGINEER.value
     ARCHITECT = SubmittalStakeholderRole.ARCHITECT.value
@@ -50,6 +58,8 @@ class SubmittalStakeholderRoleGQL(Enum):
 
 @strawberry.enum
 class TransmittalPurposeGQL(Enum):
+    """GraphQL enum for transmittal purpose."""
+
     FOR_APPROVAL = TransmittalPurpose.FOR_APPROVAL.value
     FOR_REVIEW = TransmittalPurpose.FOR_REVIEW.value
     FOR_INFORMATION = TransmittalPurpose.FOR_INFORMATION.value
@@ -58,13 +68,19 @@ class TransmittalPurposeGQL(Enum):
 
 
 @strawberry.enum
-class ChangeAnalysisSourceGQL(Enum):
-    MANUAL = ChangeAnalysisSource.MANUAL.value
-    AI = ChangeAnalysisSource.AI.value
+class ItemChangeStatusGQL(Enum):
+    """GraphQL enum for item change status in returned PDF analysis."""
+
+    APPROVED = ItemChangeStatus.APPROVED.value
+    APPROVED_AS_NOTED = ItemChangeStatus.APPROVED_AS_NOTED.value
+    REVISE = ItemChangeStatus.REVISE.value
+    REJECTED = ItemChangeStatus.REJECTED.value
 
 
 @strawberry.enum
 class OverallChangeStatusGQL(Enum):
+    """GraphQL enum for overall change analysis status."""
+
     APPROVED = OverallChangeStatus.APPROVED.value
     APPROVED_AS_NOTED = OverallChangeStatus.APPROVED_AS_NOTED.value
     REVISE_AND_RESUBMIT = OverallChangeStatus.REVISE_AND_RESUBMIT.value
@@ -72,8 +88,8 @@ class OverallChangeStatusGQL(Enum):
 
 
 @strawberry.enum
-class ItemChangeStatusGQL(Enum):
-    APPROVED = ItemChangeStatus.APPROVED.value
-    APPROVED_AS_NOTED = ItemChangeStatus.APPROVED_AS_NOTED.value
-    REVISE = ItemChangeStatus.REVISE.value
-    REJECTED = ItemChangeStatus.REJECTED.value
+class ChangeAnalysisSourceGQL(Enum):
+    """GraphQL enum for change analysis source."""
+
+    AI = ChangeAnalysisSource.AI.value
+    MANUAL = ChangeAnalysisSource.MANUAL.value

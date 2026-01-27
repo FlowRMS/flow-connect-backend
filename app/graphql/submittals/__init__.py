@@ -1,4 +1,4 @@
-from .mutations import SubmittalsMutations
+from .mutations import ReturnedPdfMutations, SubmittalsMutations
 from .queries import SubmittalsQueries
 from .repositories import (
     SubmittalChangeAnalysisRepository,
@@ -9,11 +9,12 @@ from .repositories import (
     SubmittalsRepository,
     SubmittalStakeholdersRepository,
 )
-from .services import SubmittalsService
+from .services import ReturnedPdfService, SubmittalsService
 
 __all__ = [
     "SubmittalsQueries",
     "SubmittalsMutations",
+    "ReturnedPdfMutations",
     "SubmittalsRepository",
     "SubmittalItemsRepository",
     "SubmittalStakeholdersRepository",
@@ -22,4 +23,5 @@ __all__ = [
     "SubmittalChangeAnalysisRepository",
     "SubmittalItemChangesRepository",
     "SubmittalsService",
+    "ReturnedPdfService",
 ]
