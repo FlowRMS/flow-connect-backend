@@ -20,6 +20,7 @@ class QuoteLiteResponse(DTOMixin[Quote]):
     created_at: datetime
     created_by_id: UUID
     quote_number: str
+    name: str | None
     entity_date: date
     status: QuoteStatus
     pipeline_stage: PipelineStage
@@ -52,6 +53,7 @@ class QuoteLiteResponse(DTOMixin[Quote]):
             created_at=model.created_at,
             created_by_id=model.created_by_id,
             quote_number=model.quote_number,
+            name=model.name,
             entity_date=model.entity_date,
             factory_per_line_item=model.factory_per_line_item,
             status=model.status,
