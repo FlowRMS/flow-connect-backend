@@ -13,11 +13,13 @@ from app.core.config.base_settings import get_settings
 from app.core.config.resend_settings import ResendSettings
 from app.core.config.s3_settings import S3Settings
 from app.core.config.settings import Settings
+from app.core.config.vector_settings import VectorSettings
 from app.core.config.workos_settings import WorkOSSettings
 from app.core.context_wrapper import create_context_wrapper
 from app.core.db import db_provider
 from app.core.dto_providers import providers as dto_providers
 from app.core.processors.executor import ProcessorExecutor
+from app.core.vector_providers import vector_providers
 from app.graphql.common.services.bulk_delete_registry_factory import (
     create_bulk_delete_registry,
 )
@@ -40,6 +42,7 @@ from app.workers.document_execution.executor_service import DocumentExecutorServ
 
 modules: Iterable[Iterable[aioinject.Provider[Any]]] = [
     auth_provider.providers,
+    vector_providers,
     db_provider.providers,
     s3_provider.providers,
     converter_providers,
@@ -53,6 +56,7 @@ settings_classes: Iterable[type[BaseSettings]] = [
     WorkOSSettings,
     AdminSettings,
     ResendSettings,
+    VectorSettings,
 ]
 
 

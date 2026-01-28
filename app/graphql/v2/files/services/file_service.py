@@ -1,14 +1,20 @@
+from asyncio import gather
 from uuid import UUID
 
 from commons.auth import AuthInfo
 from commons.db.v6.crm.links.entity_type import EntityType
 from commons.db.v6.enums import DocumentEntityType
 from commons.db.v6.files import File, FileType
+from commons.utils.pdf_extractor.pdf import PDFExtractor
+from loguru import logger
 from sqlalchemy.orm import joinedload, lazyload
 from strawberry.file_uploads import Upload
 
 from app.graphql.v2.files.repositories.file_repository import FileRepository
+from app.graphql.v2.files.repositories.vector_repository import VectorRepository
 from app.graphql.v2.files.services.file_upload_service import FileUploadService
+
+MAX_PDF_PAGES = 50
 
 FILE_TYPE_EXTENSIONS: dict[str, FileType] = {
     ".pdf": FileType.PDF,
@@ -59,11 +65,15 @@ class FileService:
         repository: FileRepository,
         upload_service: FileUploadService,
         auth_info: AuthInfo,
+        vector_repository: VectorRepository,
+        pdf_extractor: PDFExtractor,
     ) -> None:
         super().__init__()
         self.repository = repository
         self.upload_service = upload_service
         self.auth_info = auth_info
+        self.vector_repository = vector_repository
+        self.pdf_extractor = pdf_extractor
 
     async def get_by_id(self, file_id: UUID) -> File:
         file = await self.repository.get_by_id(
@@ -92,7 +102,7 @@ class FileService:
         folder_id: UUID | None = None,
         folder_path: str | None = None,
     ) -> File:
-        content = await file_upload.read()
+        content: bytes = await file_upload.read()
         upload_result = await self.upload_service.upload_file(
             file_content=content,
             file_name=file_name,
@@ -109,6 +119,7 @@ class FileService:
             file_entity_type=file_entity_type,
         )
         file = await self.repository.create(new_file)
+        await self.vectorize_file(content, file)
         return await self.get_by_id(file.id)
 
     async def upload_files(
@@ -129,6 +140,33 @@ class FileService:
             )
             results.append(result)
         return results
+
+    async def vectorize_file(self, file_bytes: bytes, file: File) -> None:
+        if file.file_type == FileType.PDF:
+            page_contents: list[str] = self.pdf_extractor.extract_text_from_bytes(
+                file_bytes
+            )
+            if len(page_contents) > MAX_PDF_PAGES:
+                logger.info(
+                    f"File {file.id} - {file.file_name} has more than 50 pages, skipping vectorization"
+                )
+                return
+
+            async def insert_page(idx: int, page_content: str):
+                await self.vector_repository.insert_document(
+                    file.id,
+                    file.file_name,
+                    page_content,
+                    page_number=idx + 1,
+                )
+
+            batch_size = 5
+            for start in range(0, len(page_contents), batch_size):
+                batch = page_contents[start : start + batch_size]
+                batch_tasks = [
+                    insert_page(i + start, content) for i, content in enumerate(batch)
+                ]
+                _ = await gather(*batch_tasks)
 
     async def archive_file(self, file_id: UUID) -> bool:
         return await self.repository.archive(file_id)
