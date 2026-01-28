@@ -20,6 +20,7 @@ class ContactInput(BaseInputGQL[Contact]):
     tags: list[str] | None = strawberry.UNSET
     notes: str | None = strawberry.UNSET
     company_id: UUID | None = strawberry.UNSET
+    customer_id: UUID | None = strawberry.UNSET
     external_id: str | None = strawberry.UNSET
 
     def to_orm_model(self) -> Contact:
