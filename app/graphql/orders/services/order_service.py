@@ -12,6 +12,7 @@ from app.graphql.orders.strawberry.order_input import OrderInput
 from app.graphql.orders.strawberry.quote_detail_to_order_input import (
     QuoteDetailToOrderDetailInput,
 )
+from app.graphql.orders.validators import validate_quote_details_same_factory
 from app.graphql.quotes.repositories.quotes_repository import QuotesRepository
 
 
@@ -132,6 +133,8 @@ class OrderService:
         quote_details_inputs: list[QuoteDetailToOrderDetailInput] | None = None,
     ) -> Order:
         quote = await self.quotes_repository.find_quote_by_id(quote_id)
+
+        validate_quote_details_same_factory(quote, quote_details_inputs)
 
         if await self.repository.order_number_exists(
             order_number, quote.sold_to_customer_id
