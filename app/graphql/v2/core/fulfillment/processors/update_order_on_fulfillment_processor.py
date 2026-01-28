@@ -2,33 +2,51 @@ from decimal import Decimal
 from uuid import UUID
 
 from commons.db.v6.commission.orders import Order, OrderHeaderStatus, OrderStatus
-from commons.db.v6.fulfillment import FulfillmentOrder
+from commons.db.v6.fulfillment import FulfillmentOrder, FulfillmentOrderStatus
 from loguru import logger
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import joinedload
 
+from app.core.processors import BaseProcessor, EntityContext, RepositoryEvent
 
-class UpdateOrderOnFulfillmentProcessor:
+
+class UpdateOrderOnFulfillmentProcessor(BaseProcessor[FulfillmentOrder]):
     """Updates Order/OrderDetail status when fulfillment shipping completes."""
 
     def __init__(self, session: AsyncSession) -> None:
         super().__init__()
         self.session = session
 
-    async def process_fulfillment_shipped(
-        self, fulfillment_order: FulfillmentOrder
-    ) -> Order | None:
-        """Process status updates when a FulfillmentOrder is shipped."""
+    @property
+    def events(self) -> list[RepositoryEvent]:
+        return [RepositoryEvent.POST_UPDATE]
+
+    async def process(self, context: EntityContext[FulfillmentOrder]) -> None:
+        fulfillment_order = context.entity
+
+        if fulfillment_order.status != FulfillmentOrderStatus.SHIPPED:
+            return
+
+        if (
+            context.original_entity is not None
+            and context.original_entity.status == FulfillmentOrderStatus.SHIPPED
+        ):
+            return
+
+        logger.info(
+            f"Processing UpdateOrderOnFulfillmentProcessor for "
+            f"FulfillmentOrder {context.entity_id} on event {context.event.name}"
+        )
+
         order = await self._get_order_with_details(fulfillment_order.order_id)
         if not order:
             logger.warning(f"Order {fulfillment_order.order_id} not found")
-            return None
+            return
 
         self._update_order_detail_statuses(order, fulfillment_order)
         self._update_order_status(order)
         await self.session.flush()
-        return order
 
     async def _get_order_with_details(self, order_id: UUID) -> Order | None:
         result = await self.session.execute(
@@ -40,7 +58,6 @@ class UpdateOrderOnFulfillmentProcessor:
         self, order: Order, fulfillment_order: FulfillmentOrder
     ) -> None:
         """Update OrderDetail statuses based on shipped quantities."""
-        # Build mapping: order_detail_id -> shipped_qty
         shipped_by_detail: dict[UUID, Decimal] = {}
         for line_item in fulfillment_order.line_items:
             if line_item.order_detail_id:

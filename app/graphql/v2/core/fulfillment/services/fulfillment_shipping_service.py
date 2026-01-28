@@ -10,9 +10,6 @@ from commons.db.v6.fulfillment import (
 )
 
 from app.errors.common_errors import NotFoundError
-from app.graphql.v2.core.fulfillment.processors import (
-    UpdateOrderOnFulfillmentProcessor,
-)
 from app.graphql.v2.core.fulfillment.repositories import (
     FulfillmentActivityRepository,
     FulfillmentOrderRepository,
@@ -27,13 +24,11 @@ class FulfillmentShippingService:
         self,
         order_repository: FulfillmentOrderRepository,
         activity_repository: FulfillmentActivityRepository,
-        update_order_processor: UpdateOrderOnFulfillmentProcessor,
         auth_info: AuthInfo,
     ) -> None:
         super().__init__()
         self.order_repository = order_repository
         self.activity_repository = activity_repository
-        self.update_order_processor = update_order_processor
         self.auth_info = auth_info
 
     async def complete_shipping(
@@ -71,9 +66,6 @@ class FulfillmentShippingService:
             line_item.shipped_qty = line_item.picked_qty
 
         order = await self.order_repository.update(order)
-
-        # Update parent Order/OrderDetail statuses
-        _ = await self.update_order_processor.process_fulfillment_shipped(order)
 
         _ = await self._log_activity(
             order.id, FulfillmentActivityType.SHIPPED, "Shipment completed"

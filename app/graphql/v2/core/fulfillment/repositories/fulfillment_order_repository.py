@@ -13,7 +13,11 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import joinedload, selectinload
 
 from app.core.context_wrapper import ContextWrapper
+from app.core.processors import ProcessorExecutor
 from app.graphql.base_repository import BaseRepository
+from app.graphql.v2.core.fulfillment.processors import (
+    UpdateOrderOnFulfillmentProcessor,
+)
 
 
 class FulfillmentOrderRepository(BaseRepository[FulfillmentOrder]):
@@ -21,8 +25,18 @@ class FulfillmentOrderRepository(BaseRepository[FulfillmentOrder]):
         self,
         context_wrapper: ContextWrapper,
         session: AsyncSession,
+        processor_executor: ProcessorExecutor,
+        update_order_processor: UpdateOrderOnFulfillmentProcessor,
     ) -> None:
-        super().__init__(session, context_wrapper, FulfillmentOrder)
+        super().__init__(
+            session,
+            context_wrapper,
+            FulfillmentOrder,
+            processor_executor=processor_executor,
+            processor_executor_classes=[
+                update_order_processor,
+            ],
+        )
 
     @property
     def base_query(self) -> Select[tuple[FulfillmentOrder]]:
