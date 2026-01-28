@@ -1,6 +1,6 @@
 from decimal import Decimal
 from unittest.mock import MagicMock
-from uuid import uuid4
+from uuid import UUID, uuid4
 
 import pytest
 
@@ -13,7 +13,7 @@ from app.graphql.orders.validators.quote_factory_validator import (
 )
 
 
-def _make_quote_detail(factory_id: str | None = None) -> MagicMock:
+def _make_quote_detail(factory_id: UUID | None = None) -> MagicMock:
     detail = MagicMock()
     detail.id = uuid4()
     detail.factory_id = factory_id
@@ -26,7 +26,7 @@ def _make_quote(details: list[MagicMock]) -> MagicMock:
     return quote
 
 
-def _make_input(quote_detail_id: str) -> QuoteDetailToOrderDetailInput:
+def _make_input(quote_detail_id: UUID) -> QuoteDetailToOrderDetailInput:
     return QuoteDetailToOrderDetailInput(
         quantity=Decimal("1"),
         unit_price=Decimal("100"),
