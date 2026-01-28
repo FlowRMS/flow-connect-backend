@@ -1,10 +1,9 @@
-"""Tests for warehouse repository and service soft-delete behavior."""
-
 from unittest.mock import AsyncMock, MagicMock
 from uuid import uuid4
 
 import pytest
 
+from app.errors.common_errors import NotFoundError
 from app.graphql.v2.core.warehouses.repositories.warehouse_repository import (
     WarehouseRepository,
 )
@@ -122,3 +121,16 @@ class TestWarehouseService:
 
         assert result is True
         mock_repository.soft_delete.assert_awaited_once_with(warehouse_id)
+
+    async def test_update_soft_deleted_warehouse_raises_not_found(
+        self,
+        service: WarehouseService,
+        mock_repository: AsyncMock,
+    ) -> None:
+        warehouse_id = uuid4()
+        mock_repository.get_with_relations.return_value = None
+
+        with pytest.raises(NotFoundError):
+            await service.update(warehouse_id, MagicMock())
+
+        mock_repository.get_with_relations.assert_awaited_once_with(warehouse_id)
