@@ -19,6 +19,7 @@ class WatcherNotificationProcessor(BaseProcessor[T], Generic[T]):
         self,
         session: AsyncSession,
         notification_service: ResendNotificationService,
+        watcher_repository: EntityWatcherRepository,
         entity_type: EntityType,
         entity_name_attr: str,
     ) -> None:
@@ -27,7 +28,7 @@ class WatcherNotificationProcessor(BaseProcessor[T], Generic[T]):
         self.notification_service = notification_service
         self.entity_type = entity_type
         self.entity_name_attr = entity_name_attr
-        self._watcher_repository = EntityWatcherRepository(session)
+        self._watcher_repository = watcher_repository
 
     @property
     def events(self) -> list[RepositoryEvent]:

@@ -9,6 +9,9 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.graphql.watchers.processors.watcher_notification_processor import (
     WatcherNotificationProcessor,
 )
+from app.graphql.watchers.repositories.entity_watcher_repository import (
+    EntityWatcherRepository,
+)
 from app.workers.services.resend_notification_service import ResendNotificationService
 
 
@@ -17,8 +20,15 @@ class JobWatcherNotificationProcessor(WatcherNotificationProcessor[Job]):
         self,
         session: AsyncSession,
         notification_service: ResendNotificationService,
+        watcher_repository: EntityWatcherRepository,
     ) -> None:
-        super().__init__(session, notification_service, EntityType.JOB, "job_name")
+        super().__init__(
+            session,
+            notification_service,
+            watcher_repository,
+            EntityType.JOB,
+            "job_name",
+        )
 
 
 class TaskWatcherNotificationProcessor(WatcherNotificationProcessor[Task]):
@@ -26,8 +36,11 @@ class TaskWatcherNotificationProcessor(WatcherNotificationProcessor[Task]):
         self,
         session: AsyncSession,
         notification_service: ResendNotificationService,
+        watcher_repository: EntityWatcherRepository,
     ) -> None:
-        super().__init__(session, notification_service, EntityType.TASK, "title")
+        super().__init__(
+            session, notification_service, watcher_repository, EntityType.TASK, "title"
+        )
 
 
 class QuoteWatcherNotificationProcessor(WatcherNotificationProcessor[Quote]):
@@ -35,9 +48,14 @@ class QuoteWatcherNotificationProcessor(WatcherNotificationProcessor[Quote]):
         self,
         session: AsyncSession,
         notification_service: ResendNotificationService,
+        watcher_repository: EntityWatcherRepository,
     ) -> None:
         super().__init__(
-            session, notification_service, EntityType.QUOTE, "quote_number"
+            session,
+            notification_service,
+            watcher_repository,
+            EntityType.QUOTE,
+            "quote_number",
         )
 
 
@@ -46,9 +64,14 @@ class OrderWatcherNotificationProcessor(WatcherNotificationProcessor[Order]):
         self,
         session: AsyncSession,
         notification_service: ResendNotificationService,
+        watcher_repository: EntityWatcherRepository,
     ) -> None:
         super().__init__(
-            session, notification_service, EntityType.ORDER, "order_number"
+            session,
+            notification_service,
+            watcher_repository,
+            EntityType.ORDER,
+            "order_number",
         )
 
 
@@ -59,9 +82,14 @@ class PreOpportunityWatcherNotificationProcessor(
         self,
         session: AsyncSession,
         notification_service: ResendNotificationService,
+        watcher_repository: EntityWatcherRepository,
     ) -> None:
         super().__init__(
-            session, notification_service, EntityType.PRE_OPPORTUNITY, "entity_number"
+            session,
+            notification_service,
+            watcher_repository,
+            EntityType.PRE_OPPORTUNITY,
+            "entity_number",
         )
 
 

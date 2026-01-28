@@ -1,5 +1,6 @@
 from uuid import UUID
 
+from commons.auth import AuthInfo
 from commons.db.v6.crm.links.entity_type import EntityType
 from commons.db.v6.crm.links.entity_watcher_model import EntityWatcher
 from commons.db.v6.user import User
@@ -9,9 +10,14 @@ from sqlalchemy.orm import joinedload
 
 
 class EntityWatcherRepository:
-    def __init__(self, session: AsyncSession) -> None:
+    def __init__(
+        self,
+        session: AsyncSession,
+        auth_info: AuthInfo,
+    ) -> None:
         super().__init__()
         self.session = session
+        self.auth_info = auth_info
 
     async def add_watcher(
         self,
