@@ -14,7 +14,7 @@ from alembic import op
 
 # revision identifiers, used by Alembic.
 revision: str = "preopp_sold_to_nullable"
-down_revision: str | None = "factory_plitem_orders"
+down_revision: str | None = "tags_core_entities"
 branch_labels: str | Sequence[str] | None = None
 depends_on: str | Sequence[str] | None = None
 

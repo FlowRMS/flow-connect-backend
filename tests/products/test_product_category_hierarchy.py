@@ -11,6 +11,7 @@ Usage:
     cd /home/jorge/flowrms/FLO-727/flow-py-backend
     uv run python tests/products/test_product_category_hierarchy.py --email your@email.com --password yourpassword
 """
+
 import argparse
 import asyncio
 import sys
@@ -156,8 +157,14 @@ async def test_get_all_categories(headers: dict) -> None:
     print(f"Found {len(categories)} total categories:")
     for cat in categories:
         parent_info = f" (parent: {cat['parent']['title']})" if cat["parent"] else ""
-        grandparent_info = f" (grandparent: {cat['grandparent']['title']})" if cat["grandparent"] else ""
-        children_info = f" [children: {len(cat['children'])}]" if cat["children"] else ""
+        grandparent_info = (
+            f" (grandparent: {cat['grandparent']['title']})"
+            if cat["grandparent"]
+            else ""
+        )
+        children_info = (
+            f" [children: {len(cat['children'])}]" if cat["children"] else ""
+        )
         print(f"  - {cat['title']}{parent_info}{grandparent_info}{children_info}")
 
 
@@ -237,7 +244,9 @@ async def test_create_hierarchy(headers: dict) -> list[str]:
     created_ids.append(child_id)
     print(f"  Created: {child['title']} (id: {child_id[:8]}...)")
     print(f"    Parent: {child['parent']['title'] if child['parent'] else 'None'}")
-    print(f"    Grandparent: {child['grandparent']['title'] if child['grandparent'] else 'None'}")
+    print(
+        f"    Grandparent: {child['grandparent']['title'] if child['grandparent'] else 'None'}"
+    )
 
     return created_ids
 
@@ -329,7 +338,9 @@ async def run_tests(email: str, password: str, org_id: str | None = None):
     # Generate authentication token
     print(f"\nGenerating authentication token for {email}...")
     try:
-        headers = await generate_token(email=email, password=password, organization_id=org_id)
+        headers = await generate_token(
+            email=email, password=password, organization_id=org_id
+        )
         print("Token generated successfully!")
     except Exception as e:
         print(f"Failed to generate token: {e}")
@@ -379,7 +390,9 @@ def main():
     )
     parser.add_argument("--email", "-e", required=True, help="User email")
     parser.add_argument("--password", "-p", required=True, help="User password")
-    parser.add_argument("--org-id", "-o", help="Organization ID (required for multi-org users)")
+    parser.add_argument(
+        "--org-id", "-o", help="Organization ID (required for multi-org users)"
+    )
 
     args = parser.parse_args()
 

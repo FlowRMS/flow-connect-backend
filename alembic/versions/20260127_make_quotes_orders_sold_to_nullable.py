@@ -40,6 +40,12 @@ def upgrade() -> None:
 
 
 def downgrade() -> None:
+    # Handle NULL values before making columns NOT NULL
+    op.execute("""
+        UPDATE pycommission.orders
+        SET sold_to_customer_id = (SELECT id FROM pycore.customers LIMIT 1)
+        WHERE sold_to_customer_id IS NULL
+    """)
     op.alter_column(
         "orders",
         "sold_to_customer_id",
@@ -48,6 +54,11 @@ def downgrade() -> None:
         schema="pycommission",
     )
 
+    op.execute("""
+        UPDATE pycrm.quotes
+        SET sold_to_customer_id = (SELECT id FROM pycore.customers LIMIT 1)
+        WHERE sold_to_customer_id IS NULL
+    """)
     op.alter_column(
         "quotes",
         "sold_to_customer_id",
