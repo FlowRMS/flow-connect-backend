@@ -31,7 +31,10 @@ class WarehouseRepository(BaseRepository[Warehouse]):
         )
 
     async def get_with_relations(self, warehouse_id: UUID) -> Warehouse | None:
-        stmt = self.base_query.where(Warehouse.id == warehouse_id)
+        stmt = self.base_query.where(
+            Warehouse.id == warehouse_id,
+            Warehouse.is_active != False,  # noqa: E712
+        )
         result = await self.session.execute(stmt)
         return result.scalar_one_or_none()
 
