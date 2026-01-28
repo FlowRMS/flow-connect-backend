@@ -19,7 +19,9 @@ indexes = [
 
 
 async def create_vector_service(settings: VectorSettings) -> VectorService:
-    service = VectorService(settings.vector_url, settings.vector_api_key)
+    service = VectorService(
+        settings.vector_url, settings.vector_api_key, prefer_grpc=False
+    )
     await service.create_collection_if_not_exists(
         collection_name=COLLECTION_NAME,
     )
