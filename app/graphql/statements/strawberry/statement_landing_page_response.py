@@ -11,5 +11,5 @@ class StatementLandingPageResponse(LandingPageInterfaceBase):
     statement_number: str
     entity_date: date
     total: Decimal
-    commission: Decimal
+    commission: Decimal | None
     factory_name: str
