@@ -3,13 +3,18 @@
 from decimal import Decimal
 from uuid import UUID
 
+from commons.db.v6.core.customers.customer import Customer
 from commons.db.v6.core.products.product import Product
+from commons.db.v6.core.products.product_cpn import ProductCpn
 from commons.db.v6.core.products.product_quantity_pricing import ProductQuantityPricing
 from loguru import logger
 from sqlalchemy import delete, select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.graphql.v2.core.products.repositories.product_cpn_repository import (
+    ProductCpnRepository,
+)
 from app.graphql.v2.core.products.repositories.product_quantity_pricing_repository import (
     ProductQuantityPricingRepository,
 )
@@ -17,6 +22,7 @@ from app.graphql.v2.core.products.repositories.products_repository import (
     ProductsRepository,
 )
 from app.graphql.v2.core.products.strawberry.product_import_types import (
+    CustomerPricingImportInput,
     ProductImportError,
     ProductImportInput,
     ProductImportItemInput,
@@ -36,11 +42,13 @@ class ProductImportService:
         session: AsyncSession,
         products_repository: ProductsRepository,
         quantity_pricing_repository: ProductQuantityPricingRepository,
+        cpn_repository: ProductCpnRepository | None = None,
     ) -> None:
         super().__init__()
         self.session = session
         self.products_repository = products_repository
         self.quantity_pricing_repository = quantity_pricing_repository
+        self.cpn_repository = cpn_repository
 
     async def import_products(
         self,
@@ -60,6 +68,9 @@ class ProductImportService:
         products_created = 0
         products_updated = 0
         quantity_pricing_created = 0
+        customer_pricing_created = 0
+        customer_pricing_updated = 0
+        customers_not_found: list[str] = []
 
         factory_id = import_input.factory_id
         products_data = import_input.products
@@ -70,8 +81,11 @@ class ProductImportService:
                 products_created=0,
                 products_updated=0,
                 quantity_pricing_created=0,
+                customer_pricing_created=0,
+                customer_pricing_updated=0,
                 errors=[],
                 message="No products to import",
+                customers_not_found=[],
             )
 
         # Deduplicate products by factory_part_number (keep last occurrence)
@@ -89,8 +103,11 @@ class ProductImportService:
                 products_created=0,
                 products_updated=0,
                 quantity_pricing_created=0,
+                customer_pricing_created=0,
+                customer_pricing_updated=0,
                 errors=[],
                 message="No products to import",
+                customers_not_found=[],
             )
 
         # Get existing products by factory_part_number
@@ -115,9 +132,11 @@ class ProductImportService:
 
         # Create new products (may also update if duplicate found)
         if to_create:
-            created_count, fallback_updated, create_errors = await self._create_products(
-                to_create, factory_id, default_uom_id
-            )
+            (
+                created_count,
+                fallback_updated,
+                create_errors,
+            ) = await self._create_products(to_create, factory_id, default_uom_id)
             products_created = created_count
             products_updated += fallback_updated  # Add fallback updates
             errors.extend(create_errors)
@@ -144,11 +163,52 @@ class ProductImportService:
                 )
                 quantity_pricing_created += pricing_count
 
+        # Handle customer pricing (CPNs) for all products
+        # First, collect all unique customer names across all products
+        all_customer_names: set[str] = set()
+        for product_data in products_data:
+            if product_data.customer_pricing:
+                for cp in product_data.customer_pricing:
+                    if cp.customer_name:
+                        all_customer_names.add(cp.customer_name.strip())
+
+        # Lookup customers by name
+        customers_by_name: dict[str, Customer] = {}
+        if all_customer_names:
+            customers_by_name = await self._get_customers_by_name(
+                list(all_customer_names)
+            )
+            customers_not_found = [
+                name for name in all_customer_names if name not in customers_by_name
+            ]
+            if customers_not_found:
+                logger.warning(f"Customers not found: {customers_not_found[:10]}...")
+
+        # Process customer pricing for each product
+        if self.cpn_repository and all_customer_names:
+            for product_data in products_data:
+                product = products_by_fpn.get(product_data.factory_part_number)
+                if product and product_data.customer_pricing:
+                    created, updated, cpn_errors = await self._process_customer_pricing(
+                        product.id,
+                        product_data.factory_part_number,
+                        product_data.customer_pricing,
+                        customers_by_name,
+                    )
+                    customer_pricing_created += created
+                    customer_pricing_updated += updated
+                    errors.extend(cpn_errors)
+
         await self.session.flush()
 
         success = len(errors) == 0
         message = self._build_result_message(
-            products_created, products_updated, quantity_pricing_created, len(errors)
+            products_created,
+            products_updated,
+            quantity_pricing_created,
+            customer_pricing_created,
+            customer_pricing_updated,
+            len(errors),
         )
 
         return ProductImportResult(
@@ -156,8 +216,11 @@ class ProductImportService:
             products_created=products_created,
             products_updated=products_updated,
             quantity_pricing_created=quantity_pricing_created,
+            customer_pricing_created=customer_pricing_created,
+            customer_pricing_updated=customer_pricing_updated,
             errors=errors,
             message=message,
+            customers_not_found=customers_not_found,
         )
 
     async def _create_products(
@@ -325,11 +388,116 @@ class ProductImportService:
 
         return created_count
 
+    async def _get_customers_by_name(
+        self, company_names: list[str]
+    ) -> dict[str, Customer]:
+        """Look up customers by company name (exact match)."""
+        if not company_names:
+            return {}
+
+        stmt = select(Customer).where(Customer.company_name.in_(company_names))
+        result = await self.session.execute(stmt)
+        customers = result.scalars().all()
+        return {c.company_name: c for c in customers}
+
+    async def _process_customer_pricing(
+        self,
+        product_id: UUID,
+        factory_part_number: str,
+        customer_pricing_data: list[CustomerPricingImportInput],
+        customers_by_name: dict[str, Customer],
+    ) -> tuple[int, int, list[ProductImportError]]:
+        """Process customer pricing (CPNs) for a product."""
+        errors: list[ProductImportError] = []
+        created_count = 0
+        updated_count = 0
+
+        # Build list of (customer_id, cpn_data) pairs
+        resolved_cpns: list[tuple[UUID, CustomerPricingImportInput]] = []
+        for cp_data in customer_pricing_data:
+            customer_name = (
+                cp_data.customer_name.strip() if cp_data.customer_name else ""
+            )
+            customer = customers_by_name.get(customer_name)
+            if not customer:
+                # Customer not found - skip (already logged in main method)
+                continue
+            resolved_cpns.append((customer.id, cp_data))
+
+        if not resolved_cpns or not self.cpn_repository:
+            return 0, 0, []
+
+        # Get existing CPNs for this product
+        product_customer_pairs = [(product_id, cid) for cid, _ in resolved_cpns]
+        existing_cpns = await self.cpn_repository.find_existing_cpns(
+            product_customer_pairs
+        )
+
+        # Process each CPN
+        for customer_id, cp_data in resolved_cpns:
+            existing_cpn = existing_cpns.get((product_id, customer_id))
+            customer_name = cp_data.customer_name.strip()
+
+            try:
+                if existing_cpn:
+                    # Update existing CPN
+                    if cp_data.customer_part_number is not None:
+                        existing_cpn.customer_part_number = cp_data.customer_part_number
+                    existing_cpn.unit_price = cp_data.unit_price
+                    existing_cpn.commission_rate = cp_data.commission_rate
+                    updated_count += 1
+                else:
+                    # Create new CPN with savepoint for race conditions
+                    try:
+                        async with self.session.begin_nested():
+                            new_cpn = ProductCpn(
+                                customer_id=customer_id,
+                                customer_part_number=cp_data.customer_part_number or "",
+                                unit_price=cp_data.unit_price,
+                                commission_rate=cp_data.commission_rate,
+                            )
+                            new_cpn.product_id = product_id
+                            self.session.add(new_cpn)
+                            created_count += 1
+                    except IntegrityError:
+                        # Race condition - try to update instead
+                        logger.info(
+                            f"CPN for {factory_part_number}/{customer_name} exists, updating"
+                        )
+                        stmt = select(ProductCpn).where(
+                            ProductCpn.product_id == product_id,
+                            ProductCpn.customer_id == customer_id,
+                        )
+                        result = await self.session.execute(stmt)
+                        existing = result.scalar_one_or_none()
+                        if existing:
+                            if cp_data.customer_part_number is not None:
+                                existing.customer_part_number = (
+                                    cp_data.customer_part_number
+                                )
+                            existing.unit_price = cp_data.unit_price
+                            existing.commission_rate = cp_data.commission_rate
+                            updated_count += 1
+            except Exception as e:
+                logger.error(
+                    f"Failed to process CPN {factory_part_number}/{customer_name}: {e}"
+                )
+                errors.append(
+                    ProductImportError(
+                        factory_part_number=factory_part_number,
+                        error=f"CPN error for {customer_name}: {e}",
+                    )
+                )
+
+        return created_count, updated_count, errors
+
     def _build_result_message(
         self,
         created: int,
         updated: int,
-        pricing: int,
+        qty_pricing: int,
+        cpn_created: int,
+        cpn_updated: int,
         error_count: int,
     ) -> str:
         """Build a human-readable result message."""
@@ -338,8 +506,12 @@ class ProductImportService:
             parts.append(f"{created} products created")
         if updated > 0:
             parts.append(f"{updated} products updated")
-        if pricing > 0:
-            parts.append(f"{pricing} quantity pricing bands created")
+        if qty_pricing > 0:
+            parts.append(f"{qty_pricing} quantity pricing bands created")
+        if cpn_created > 0:
+            parts.append(f"{cpn_created} customer prices created")
+        if cpn_updated > 0:
+            parts.append(f"{cpn_updated} customer prices updated")
         if error_count > 0:
             parts.append(f"{error_count} errors")
 

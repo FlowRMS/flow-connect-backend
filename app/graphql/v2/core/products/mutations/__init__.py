@@ -1,6 +1,9 @@
 from app.graphql.v2.core.products.mutations.product_category_mutations import (
     ProductCategoryMutations,
 )
+from app.graphql.v2.core.products.mutations.product_cpn_import_mutations import (
+    ProductCpnImportMutations,
+)
 from app.graphql.v2.core.products.mutations.product_cpn_mutations import (
     ProductCpnMutations,
 )
@@ -20,6 +23,7 @@ __all__ = [
     "ProductUomMutations",
     "ProductCategoryMutations",
     "ProductCpnMutations",
+    "ProductCpnImportMutations",
     "ProductQuantityPricingMutations",
     "ProductImportMutations",
 ]
