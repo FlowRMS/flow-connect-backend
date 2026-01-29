@@ -7,6 +7,9 @@ from aioinject import Injected
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.graphql.inject import inject
+from app.graphql.v2.core.products.repositories.product_cpn_repository import (
+    ProductCpnRepository,
+)
 from app.graphql.v2.core.products.repositories.product_quantity_pricing_repository import (
     ProductQuantityPricingRepository,
 )
@@ -35,6 +38,7 @@ class ProductImportMutations:
         session: Injected[AsyncSession],
         products_repository: Injected[ProductsRepository],
         quantity_pricing_repository: Injected[ProductQuantityPricingRepository],
+        cpn_repository: Injected[ProductCpnRepository],
     ) -> ProductImportResult:
         """
         Import products from normalized data.
@@ -42,6 +46,7 @@ class ProductImportMutations:
         This mutation handles bulk import of products with:
         - Automatic create/update based on factory_part_number
         - Quantity pricing bands
+        - Customer-specific pricing (CPNs) by customer name lookup
         - Non-destructive updates (won't overwrite with null)
 
         Args:
@@ -55,5 +60,6 @@ class ProductImportMutations:
             session=session,
             products_repository=products_repository,
             quantity_pricing_repository=quantity_pricing_repository,
+            cpn_repository=cpn_repository,
         )
         return await service.import_products(input, default_uom_id)

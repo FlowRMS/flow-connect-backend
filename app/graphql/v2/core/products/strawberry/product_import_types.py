@@ -16,6 +16,19 @@ class QuantityPricingImportInput:
 
 
 @strawberry.input
+class CustomerPricingImportInput:
+    """Input for customer-specific pricing (CPN).
+
+    Uses customer_name for lookup - the backend will resolve to customer_id.
+    """
+
+    customer_name: str
+    customer_part_number: str | None = None  # Optional CPN code
+    unit_price: Decimal
+    commission_rate: Decimal
+
+
+@strawberry.input
 class ProductImportItemInput:
     """Input for a single product to import."""
 
@@ -26,6 +39,7 @@ class ProductImportItemInput:
     category: str | None = None
     default_commission_rate: Decimal | None = None
     quantity_pricing: list[QuantityPricingImportInput] | None = None
+    customer_pricing: list[CustomerPricingImportInput] | None = None
 
 
 @strawberry.input
@@ -52,5 +66,9 @@ class ProductImportResult:
     products_created: int
     products_updated: int
     quantity_pricing_created: int
+    customer_pricing_created: int
+    customer_pricing_updated: int
     errors: list[ProductImportError]
     message: str
+    # Customers that couldn't be found for CPN import
+    customers_not_found: list[str]
