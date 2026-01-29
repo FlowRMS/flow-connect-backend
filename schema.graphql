@@ -4396,7 +4396,7 @@ type StatementBalanceResponse {
   quantity: Decimal!
   subtotal: Decimal!
   total: Decimal!
-  commission: Decimal!
+  commission: Decimal
   discount: Decimal!
   discountRate: Decimal!
   commissionRate: Decimal!
