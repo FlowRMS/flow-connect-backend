@@ -4481,7 +4481,7 @@ type StatementLandingPage implements LandingPageInterfaceBase {
   statementNumber: String!
   entityDate: Date!
   total: Decimal!
-  commission: Decimal!
+  commission: Decimal
   factoryName: String!
 }
 
