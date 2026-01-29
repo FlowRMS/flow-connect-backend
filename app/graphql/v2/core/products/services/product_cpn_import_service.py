@@ -1,8 +1,5 @@
-"""Service for bulk product CPN (Customer Part Number) import."""
-
 from uuid import UUID
 
-from commons.db.v6.core.customers.customer import Customer
 from commons.db.v6.core.products.product import Product
 from commons.db.v6.core.products.product_cpn import ProductCpn
 from loguru import logger
@@ -10,6 +7,9 @@ from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.graphql.v2.core.customers.repositories.customers_repository import (
+    CustomersRepository,
+)
 from app.graphql.v2.core.products.repositories.product_cpn_repository import (
     ProductCpnRepository,
 )
@@ -25,32 +25,23 @@ from app.graphql.v2.core.products.strawberry.product_cpn_import_types import (
 
 
 class ProductCpnImportService:
-    """Service for bulk importing customer-specific pricing (CPNs)."""
-
     def __init__(
         self,
         session: AsyncSession,
         products_repository: ProductsRepository,
         cpn_repository: ProductCpnRepository,
+        customers_repository: CustomersRepository,
     ) -> None:
         super().__init__()
         self.session = session
         self.products_repository = products_repository
         self.cpn_repository = cpn_repository
+        self.customers_repository = customers_repository
 
     async def import_cpns(
         self,
         import_input: ProductCpnImportInput,
     ) -> ProductCpnImportResult:
-        """
-        Import CPNs from normalized input data.
-
-        This method handles:
-        - Looking up products by factory_part_number + factory_id
-        - Looking up customers by company_name
-        - Creating new CPNs that don't exist
-        - Updating existing CPNs (by product_id + customer_id)
-        """
         errors: list[ProductCpnImportError] = []
         cpns_created = 0
         cpns_updated = 0
@@ -105,7 +96,9 @@ class ProductCpnImportService:
 
         # Step 2: Lookup customers by company_name
         unique_customer_names = list(set(c.customer_name.strip() for c in cpns_data))
-        customers_by_name = await self._get_customers_by_name(unique_customer_names)
+        customers_by_name = await self.customers_repository.get_by_company_names(
+            unique_customer_names
+        )
         customers_not_found = [
             name for name in unique_customer_names if name not in customers_by_name
         ]
@@ -232,18 +225,6 @@ class ProductCpnImportService:
             customers_not_found=customers_not_found,
         )
 
-    async def _get_customers_by_name(
-        self, company_names: list[str]
-    ) -> dict[str, Customer]:
-        """Look up customers by company name (exact match)."""
-        if not company_names:
-            return {}
-
-        stmt = select(Customer).where(Customer.company_name.in_(company_names))
-        result = await self.session.execute(stmt)
-        customers = result.scalars().all()
-        return {c.company_name: c for c in customers}
-
     def _build_result_message(
         self,
         created: int,
@@ -252,7 +233,6 @@ class ProductCpnImportService:
         products_not_found: int,
         customers_not_found: int,
     ) -> str:
-        """Build a human-readable result message."""
         parts = []
         if created > 0:
             parts.append(f"{created} CPNs created")

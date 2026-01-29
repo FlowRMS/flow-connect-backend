@@ -1,5 +1,3 @@
-"""Types for product import from CSV."""
-
 from decimal import Decimal
 from uuid import UUID
 
@@ -8,8 +6,6 @@ import strawberry
 
 @strawberry.input
 class QuantityPricingImportInput:
-    """Input for a single quantity pricing band."""
-
     quantity_low: Decimal
     quantity_high: Decimal | None  # None means "and above"
     unit_price: Decimal
@@ -17,11 +13,6 @@ class QuantityPricingImportInput:
 
 @strawberry.input
 class CustomerPricingImportInput:
-    """Input for customer-specific pricing (CPN).
-
-    Uses customer_name for lookup - the backend will resolve to customer_id.
-    """
-
     customer_name: str
     customer_part_number: str | None = None  # Optional CPN code
     unit_price: Decimal
@@ -30,8 +21,6 @@ class CustomerPricingImportInput:
 
 @strawberry.input
 class ProductImportItemInput:
-    """Input for a single product to import."""
-
     factory_part_number: str
     unit_price: Decimal
     description: str | None = None
@@ -44,24 +33,18 @@ class ProductImportItemInput:
 
 @strawberry.input
 class ProductImportInput:
-    """Input for bulk product import."""
-
     factory_id: UUID
     products: list[ProductImportItemInput]
 
 
 @strawberry.type
 class ProductImportError:
-    """Error details for a single product that failed to import."""
-
     factory_part_number: str
     error: str
 
 
 @strawberry.type
 class ProductImportResult:
-    """Result of a bulk product import operation."""
-
     success: bool
     products_created: int
     products_updated: int

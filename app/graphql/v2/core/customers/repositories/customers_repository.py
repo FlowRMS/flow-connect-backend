@@ -179,3 +179,13 @@ class CustomersRepository(BaseRepository[Customer]):
             _ = await self.session.execute(set_stmt)
 
         await self.session.flush()
+
+    async def get_by_company_names(
+        self, company_names: list[str]
+    ) -> dict[str, Customer]:
+        if not company_names:
+            return {}
+        stmt = select(Customer).where(Customer.company_name.in_(company_names))
+        result = await self.session.execute(stmt)
+        customers = result.scalars().all()
+        return {c.company_name: c for c in customers}
