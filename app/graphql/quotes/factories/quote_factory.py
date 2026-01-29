@@ -19,6 +19,28 @@ from commons.db.v6.crm.quotes import (
 
 class QuoteFactory:
     @staticmethod
+    def _convert_to_quote_split_rates(
+        split_rates: list,
+    ) -> list[QuoteSplitRate]:
+        result = []
+        for sr in split_rates:
+            obj = QuoteSplitRate(user_id=sr.user_id, position=sr.position)
+            obj.split_rate = sr.split_rate
+            result.append(obj)
+        return result
+
+    @staticmethod
+    def _convert_to_quote_inside_reps(
+        inside_reps: list,
+    ) -> list[QuoteInsideRep]:
+        result = []
+        for ir in inside_reps:
+            obj = QuoteInsideRep(user_id=ir.user_id, position=ir.position)
+            obj.split_rate = ir.split_rate
+            result.append(obj)
+        return result
+
+    @staticmethod
     def from_pre_opportunity(
         pre_opportunity: PreOpportunity,
         quote_number: str,
@@ -99,17 +121,12 @@ class QuoteFactory:
     def _deep_copy_details(details: list[QuoteDetail]) -> list[QuoteDetail]:
         result = []
         for d in details:
-            outside_reps = []
-            for sr in d.outside_split_rates:
-                split_rate = QuoteSplitRate(user_id=sr.user_id, position=sr.position)
-                split_rate.split_rate = sr.split_rate
-                outside_reps.append(split_rate)
-
-            inside_reps = []
-            for ir in d.inside_split_rates:
-                inside_rep = QuoteInsideRep(user_id=ir.user_id, position=ir.position)
-                inside_rep.split_rate = ir.split_rate
-                inside_reps.append(inside_rep)
+            outside_reps = QuoteFactory._convert_to_quote_split_rates(
+                d.outside_split_rates
+            )
+            inside_reps = QuoteFactory._convert_to_quote_inside_reps(
+                d.inside_split_rates
+            )
 
             quote_detail = QuoteDetail(
                 item_number=d.item_number,

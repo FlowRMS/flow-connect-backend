@@ -21,6 +21,28 @@ from app.graphql.orders.strawberry.quote_detail_to_order_input import (
 
 class OrderFactory:
     @staticmethod
+    def _convert_to_order_split_rates(
+        split_rates: list,
+    ) -> list[OrderSplitRate]:
+        result = []
+        for sr in split_rates:
+            obj = OrderSplitRate(user_id=sr.user_id, position=sr.position)
+            obj.split_rate = sr.split_rate
+            result.append(obj)
+        return result
+
+    @staticmethod
+    def _convert_to_order_inside_reps(
+        inside_reps: list,
+    ) -> list[OrderInsideRep]:
+        result = []
+        for ir in inside_reps:
+            obj = OrderInsideRep(user_id=ir.user_id, position=ir.position)
+            obj.split_rate = ir.split_rate
+            result.append(obj)
+        return result
+
+    @staticmethod
     def from_order(
         order: Order,
         new_order_number: str,
@@ -51,17 +73,12 @@ class OrderFactory:
     def _map_order_details(order_details: list[OrderDetail]) -> list[OrderDetail]:
         result = []
         for detail in order_details:
-            outside_reps = []
-            for sr in detail.outside_split_rates:
-                split_rate = OrderSplitRate(user_id=sr.user_id, position=sr.position)
-                split_rate.split_rate = sr.split_rate
-                outside_reps.append(split_rate)
-
-            inside_reps = []
-            for ir in detail.inside_split_rates:
-                inside_rep = OrderInsideRep(user_id=ir.user_id, position=ir.position)
-                inside_rep.split_rate = ir.split_rate
-                inside_reps.append(inside_rep)
+            outside_reps = OrderFactory._convert_to_order_split_rates(
+                detail.outside_split_rates
+            )
+            inside_reps = OrderFactory._convert_to_order_inside_reps(
+                detail.inside_split_rates
+            )
 
             new_detail = OrderDetail(
                 item_number=detail.item_number,
@@ -141,17 +158,12 @@ class OrderFactory:
             if not detail:
                 continue
 
-            outside_reps = []
-            for sr in detail.outside_split_rates:
-                split_rate = OrderSplitRate(user_id=sr.user_id, position=sr.position)
-                split_rate.split_rate = sr.split_rate
-                outside_reps.append(split_rate)
-
-            inside_reps = []
-            for ir in detail.inside_split_rates:
-                inside_rep = OrderInsideRep(user_id=ir.user_id, position=ir.position)
-                inside_rep.split_rate = ir.split_rate
-                inside_reps.append(inside_rep)
+            outside_reps = OrderFactory._convert_to_order_split_rates(
+                detail.outside_split_rates
+            )
+            inside_reps = OrderFactory._convert_to_order_inside_reps(
+                detail.inside_split_rates
+            )
 
             order_detail = OrderDetail(
                 item_number=detail.item_number,

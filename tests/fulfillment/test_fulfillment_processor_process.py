@@ -3,7 +3,6 @@ from unittest.mock import AsyncMock, MagicMock
 from uuid import uuid4
 
 import pytest
-
 from commons.db.v6.commission.orders import OrderHeaderStatus, OrderStatus
 from commons.db.v6.fulfillment import FulfillmentOrderStatus
 
@@ -14,7 +13,9 @@ from app.graphql.v2.core.fulfillment.processors.update_order_on_fulfillment_proc
 )
 
 
-def _make_processor(session: AsyncMock | None = None) -> UpdateOrderOnFulfillmentProcessor:
+def _make_processor(
+    session: AsyncMock | None = None,
+) -> UpdateOrderOnFulfillmentProcessor:
     return UpdateOrderOnFulfillmentProcessor(session=session or AsyncMock())
 
 
