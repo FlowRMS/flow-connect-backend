@@ -15,11 +15,11 @@ class AdjustmentSplitRateInput(BaseInputGQL[AdjustmentSplitRate]):
     id: UUID | None = None
 
     def to_orm_model(self) -> AdjustmentSplitRate:
-        split_rate = AdjustmentSplitRate(
+        obj = AdjustmentSplitRate(
             user_id=self.user_id,
-            split_rate=self.split_rate,
             position=self.position,
         )
+        obj.split_rate = self.split_rate
         if self.id:
-            split_rate.id = self.id
-        return split_rate
+            obj.id = self.id
+        return obj

@@ -51,11 +51,6 @@ class StatementDetailInput(BaseInputGQL[CommissionStatementDetail]):
             discount_rate=self.discount_rate,
             discount=discount,
             total=total,
-            commission_rate=self.commission_rate,
-            commission=commission,
-            commission_discount_rate=self.commission_discount_rate,
-            commission_discount=commission_discount,
-            total_line_commission=total_line_commission,
             sold_to_customer_id=self.sold_to_customer_id,
             order_id=self.order_id,
             order_detail_id=self.order_detail_id,
@@ -74,6 +69,11 @@ class StatementDetailInput(BaseInputGQL[CommissionStatementDetail]):
                 else []
             ),
         )
+        detail.commission_rate = self.commission_rate
+        detail.commission = commission
+        detail.commission_discount_rate = self.commission_discount_rate
+        detail.commission_discount = commission_discount
+        detail.total_line_commission = total_line_commission
         if self.id:
             detail.id = self.id
         return detail

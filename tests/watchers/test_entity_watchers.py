@@ -1,5 +1,6 @@
 """Tests for entity watchers module."""
 
+from typing import TYPE_CHECKING
 from unittest.mock import AsyncMock, MagicMock
 from uuid import uuid4
 
@@ -8,6 +9,11 @@ from commons.db.v6.crm.links.entity_type import EntityType
 
 from app.core.processors import RepositoryEvent
 from app.errors.common_errors import ConflictError, NotFoundError
+
+if TYPE_CHECKING:
+    from app.graphql.watchers.services.entity_watcher_service import (
+        EntityWatcherService,
+    )
 
 
 class TestWatcherModuleImports:

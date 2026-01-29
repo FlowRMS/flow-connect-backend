@@ -4,6 +4,7 @@ import strawberry
 from aioinject import Injected
 from commons.db.v6.warehouse.inventory.inventory_item import InventoryItemStatus
 
+from app.core.constants import DEFAULT_QUERY_LIMIT, DEFAULT_QUERY_OFFSET
 from app.graphql.inject import inject
 from app.graphql.v2.core.inventory.services.inventory_service import InventoryService
 from app.graphql.v2.core.inventory.strawberry.inventory_response import (
@@ -18,9 +19,6 @@ from app.graphql.v2.core.inventory.strawberry.inventory_stats_response import (
 class InventoryStatusOption:
     label: str
     value: str
-
-
-from app.core.constants import DEFAULT_QUERY_LIMIT, DEFAULT_QUERY_OFFSET
 
 
 @strawberry.type

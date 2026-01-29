@@ -72,11 +72,12 @@ class CreditDefaultRepSplitProcessor(BaseProcessor[Credit]):
     def _convert_split_rates(
         self, order_split_rates: list[OrderSplitRate]
     ) -> list[CreditSplitRate]:
-        return [
-            CreditSplitRate(
+        result = []
+        for sr in order_split_rates:
+            obj = CreditSplitRate(
                 user_id=sr.user_id,
-                split_rate=sr.split_rate,
                 position=sr.position,
             )
-            for sr in order_split_rates
-        ]
+            obj.split_rate = sr.split_rate
+            result.append(obj)
+        return result

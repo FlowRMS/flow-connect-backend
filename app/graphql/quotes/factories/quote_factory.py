@@ -71,8 +71,9 @@ class QuoteFactory:
     def _map_pre_opp_details(
         pre_opp_details: list[PreOpportunityDetail],
     ) -> list[QuoteDetail]:
-        return [
-            QuoteDetail(
+        result = []
+        for detail in pre_opp_details:
+            quote_detail = QuoteDetail(
                 item_number=detail.item_number,
                 quantity=detail.quantity,
                 unit_price=detail.unit_price,
@@ -85,19 +86,32 @@ class QuoteFactory:
                 end_user_id=detail.end_user_id,
                 lead_time=detail.lead_time,
                 status=QuoteDetailStatus.OPEN,
-                commission_rate=Decimal("0"),
-                commission=Decimal("0"),
-                commission_discount_rate=Decimal("0"),
-                commission_discount=Decimal("0"),
-                total_line_commission=Decimal("0"),
             )
-            for detail in pre_opp_details
-        ]
+            quote_detail.commission_rate = Decimal("0")
+            quote_detail.commission = Decimal("0")
+            quote_detail.commission_discount_rate = Decimal("0")
+            quote_detail.commission_discount = Decimal("0")
+            quote_detail.total_line_commission = Decimal("0")
+            result.append(quote_detail)
+        return result
 
     @staticmethod
     def _deep_copy_details(details: list[QuoteDetail]) -> list[QuoteDetail]:
-        return [
-            QuoteDetail(
+        result = []
+        for d in details:
+            outside_reps = []
+            for sr in d.outside_split_rates:
+                split_rate = QuoteSplitRate(user_id=sr.user_id, position=sr.position)
+                split_rate.split_rate = sr.split_rate
+                outside_reps.append(split_rate)
+
+            inside_reps = []
+            for ir in d.inside_split_rates:
+                inside_rep = QuoteInsideRep(user_id=ir.user_id, position=ir.position)
+                inside_rep.split_rate = ir.split_rate
+                inside_reps.append(inside_rep)
+
+            quote_detail = QuoteDetail(
                 item_number=d.item_number,
                 quantity=d.quantity,
                 unit_price=d.unit_price,
@@ -105,11 +119,6 @@ class QuoteFactory:
                 discount_rate=d.discount_rate,
                 discount=d.discount,
                 total=d.total,
-                total_line_commission=d.total_line_commission,
-                commission_rate=d.commission_rate,
-                commission=d.commission,
-                commission_discount_rate=d.commission_discount_rate,
-                commission_discount=d.commission_discount,
                 product_id=d.product_id,
                 product_name_adhoc=d.product_name_adhoc,
                 product_description_adhoc=d.product_description_adhoc,
@@ -118,22 +127,13 @@ class QuoteFactory:
                 lead_time=d.lead_time,
                 note=d.note,
                 status=QuoteDetailStatus.OPEN,
-                outside_split_rates=[
-                    QuoteSplitRate(
-                        user_id=sr.user_id,
-                        split_rate=sr.split_rate,
-                        position=sr.position,
-                    )
-                    for sr in d.outside_split_rates
-                ],
-                inside_split_rates=[
-                    QuoteInsideRep(
-                        user_id=ir.user_id,
-                        split_rate=ir.split_rate,
-                        position=ir.position,
-                    )
-                    for ir in d.inside_split_rates
-                ],
+                outside_split_rates=outside_reps,
+                inside_split_rates=inside_reps,
             )
-            for d in details
-        ]
+            quote_detail.commission_rate = d.commission_rate
+            quote_detail.commission = d.commission
+            quote_detail.commission_discount_rate = d.commission_discount_rate
+            quote_detail.commission_discount = d.commission_discount
+            quote_detail.total_line_commission = d.total_line_commission
+            result.append(quote_detail)
+        return result

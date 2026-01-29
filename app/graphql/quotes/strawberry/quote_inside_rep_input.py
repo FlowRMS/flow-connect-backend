@@ -15,11 +15,11 @@ class QuoteInsideRepInput(BaseInputGQL[QuoteInsideRep]):
     id: UUID | None = None
 
     def to_orm_model(self) -> QuoteInsideRep:
-        inside_rep = QuoteInsideRep(
+        obj = QuoteInsideRep(
             user_id=self.user_id,
-            split_rate=self.split_rate,
             position=self.position,
         )
+        obj.split_rate = self.split_rate
         if self.id:
-            inside_rep.id = self.id
-        return inside_rep
+            obj.id = self.id
+        return obj

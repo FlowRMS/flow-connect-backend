@@ -48,11 +48,6 @@ class OrderDetailInput(BaseInputGQL[OrderDetail]):
             discount_rate=self.discount_rate,
             discount=discount,
             total=total,
-            commission_rate=self.commission_rate,
-            commission=commission,
-            commission_discount_rate=self.commission_discount_rate,
-            commission_discount=commission_discount,
-            total_line_commission=total_line_commission,
             product_id=self.product_id,
             product_name_adhoc=self.product_name_adhoc,
             product_description_adhoc=self.product_description_adhoc,
@@ -73,6 +68,11 @@ class OrderDetailInput(BaseInputGQL[OrderDetail]):
                 else []
             ),
         )
+        detail.commission_rate = self.commission_rate
+        detail.commission = commission
+        detail.commission_discount_rate = self.commission_discount_rate
+        detail.commission_discount = commission_discount
+        detail.total_line_commission = total_line_commission
         if self.id:
             detail.id = self.id
         return detail

@@ -43,7 +43,6 @@ class QuoteLiteResponse(DTOMixin[Quote]):
     inside_per_line_item: bool | None
     outside_per_line_item: bool | None
     end_user_per_line_item: bool | None
-    name: str | None
 
     @classmethod
     def from_orm_model(cls, model: Quote) -> Self:
@@ -76,7 +75,6 @@ class QuoteLiteResponse(DTOMixin[Quote]):
             inside_per_line_item=model.inside_per_line_item,
             outside_per_line_item=model.outside_per_line_item,
             end_user_per_line_item=model.end_user_per_line_item,
-            name=getattr(model, "name", None),
         )
 
     @strawberry.field
