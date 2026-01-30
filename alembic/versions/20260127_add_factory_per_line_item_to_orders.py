@@ -92,6 +92,19 @@ def downgrade() -> None:
         schema="pycommission",
     )
     op.drop_column("order_details", "factory_id", schema="pycommission")
+
+    # Check for NULL values before making column NOT NULL
+    conn = op.get_bind()
+    result = conn.execute(
+        sa.text("SELECT COUNT(*) FROM pycommission.orders WHERE factory_id IS NULL")
+    )
+    null_count = result.scalar()
+    if null_count and null_count > 0:
+        raise RuntimeError(
+            f"Cannot downgrade: {null_count} orders have NULL factory_id. "
+            "Please update these records before downgrading."
+        )
+
     op.alter_column(
         "orders",
         "factory_id",
