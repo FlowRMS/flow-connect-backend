@@ -2,6 +2,8 @@ from datetime import date
 from decimal import Decimal
 from uuid import UUID
 
+from typing import Sequence
+
 from commons.db.v6.commission.orders import (
     Order,
     OrderDetail,
@@ -12,7 +14,7 @@ from commons.db.v6.commission.orders import (
     OrderType,
 )
 from commons.db.v6.common.creation_type import CreationType
-from commons.db.v6.crm.quotes import Quote, QuoteDetail
+from commons.db.v6.crm.quotes import Quote, QuoteDetail, QuoteInsideRep, QuoteSplitRate
 
 from app.graphql.orders.strawberry.quote_detail_to_order_input import (
     QuoteDetailToOrderDetailInput,
@@ -22,7 +24,7 @@ from app.graphql.orders.strawberry.quote_detail_to_order_input import (
 class OrderFactory:
     @staticmethod
     def _convert_to_order_split_rates(
-        split_rates: list,
+        split_rates: Sequence[QuoteSplitRate | OrderSplitRate],
     ) -> list[OrderSplitRate]:
         result = []
         for sr in split_rates:
@@ -33,7 +35,7 @@ class OrderFactory:
 
     @staticmethod
     def _convert_to_order_inside_reps(
-        inside_reps: list,
+        inside_reps: Sequence[QuoteInsideRep | OrderInsideRep],
     ) -> list[OrderInsideRep]:
         result = []
         for ir in inside_reps:

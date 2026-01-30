@@ -1,4 +1,3 @@
-from datetime import date
 from unittest.mock import MagicMock
 from uuid import uuid4
 
@@ -18,7 +17,7 @@ class TestOrderFactoryFromQuote:
         mock_quote.end_user_per_line_item = False
 
         with pytest.raises(ValueError) as exc_info:
-            OrderFactory.from_quote(
+            _ = OrderFactory.from_quote(
                 quote=mock_quote,
                 order_number="ORD-001",
                 factory_id=uuid4(),

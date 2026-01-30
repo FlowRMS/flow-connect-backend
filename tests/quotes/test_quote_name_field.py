@@ -2,8 +2,6 @@ from datetime import date
 from unittest.mock import MagicMock
 from uuid import uuid4
 
-import pytest
-import strawberry
 from commons.db.v6.crm.quotes import PipelineStage, Quote, QuoteStatus
 
 from app.graphql.quotes.strawberry.quote_input import QuoteInput
@@ -135,4 +133,4 @@ class TestQuoteNullableSoldToCustomer:
         response = QuoteResponse.from_orm_model(mock_quote)
 
         assert response.sold_to_customer_id is None
-        assert response.sold_to_customer() is None
+        assert response._instance.sold_to_customer is None

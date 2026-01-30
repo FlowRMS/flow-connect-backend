@@ -1,5 +1,6 @@
 from datetime import date
 from decimal import Decimal
+from typing import Sequence
 
 from commons.db.v6.common.creation_type import CreationType
 from commons.db.v6.crm.pre_opportunities.pre_opportunity_detail_model import (
@@ -20,7 +21,7 @@ from commons.db.v6.crm.quotes import (
 class QuoteFactory:
     @staticmethod
     def _convert_to_quote_split_rates(
-        split_rates: list,
+        split_rates: Sequence[QuoteSplitRate],
     ) -> list[QuoteSplitRate]:
         result = []
         for sr in split_rates:
@@ -31,7 +32,7 @@ class QuoteFactory:
 
     @staticmethod
     def _convert_to_quote_inside_reps(
-        inside_reps: list,
+        inside_reps: Sequence[QuoteInsideRep],
     ) -> list[QuoteInsideRep]:
         result = []
         for ir in inside_reps:
