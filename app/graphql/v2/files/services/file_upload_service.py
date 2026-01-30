@@ -1,7 +1,6 @@
 import io
 import mimetypes
 from dataclasses import dataclass
-from pathlib import Path
 
 from commons.auth import AuthInfo
 from commons.s3.service import S3Service
