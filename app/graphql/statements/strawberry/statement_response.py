@@ -26,7 +26,9 @@ class StatementResponse(StatementLiteResponse):
         return UserResponse.from_orm_model(self._instance.created_by)
 
     @strawberry.field
-    def balance(self) -> StatementBalanceResponse:
+    def balance(self) -> StatementBalanceResponse | None:
+        if self._instance.balance is None:
+            return None
         return StatementBalanceResponse.from_orm_model(self._instance.balance)
 
     @strawberry.field

@@ -20,6 +20,9 @@ from app.graphql.v2.core.products.strawberry.product_uom_response import (
     ProductUomResponse,
 )
 
+# Default value for decimal fields that might be None in legacy data
+_ZERO = Decimal("0")
+
 
 @strawberry.type
 class StatementDetailResponse(DTOMixin[CommissionStatementDetail]):
@@ -62,17 +65,17 @@ class StatementDetailResponse(DTOMixin[CommissionStatementDetail]):
             order_detail_id=model.order_detail_id,
             invoice_id=model.invoice_id,
             item_number=model.item_number,
-            quantity=model.quantity,
-            unit_price=model.unit_price,
-            subtotal=model.subtotal,
-            total=model.total,
-            total_line_commission=model.total_line_commission,
-            commission_rate=model.commission_rate,
-            commission=model.commission,
-            commission_discount_rate=model.commission_discount_rate,
-            commission_discount=model.commission_discount,
-            discount_rate=model.discount_rate,
-            discount=model.discount,
+            quantity=model.quantity or _ZERO,
+            unit_price=model.unit_price or _ZERO,
+            subtotal=model.subtotal or _ZERO,
+            total=model.total or _ZERO,
+            total_line_commission=model.total_line_commission or _ZERO,
+            commission_rate=model.commission_rate or _ZERO,
+            commission=model.commission or _ZERO,
+            commission_discount_rate=model.commission_discount_rate or _ZERO,
+            commission_discount=model.commission_discount or _ZERO,
+            discount_rate=model.discount_rate or _ZERO,
+            discount=model.discount or _ZERO,
             division_factor=model.division_factor,
             product_id=model.product_id,
             product_name_adhoc=model.product_name_adhoc,
