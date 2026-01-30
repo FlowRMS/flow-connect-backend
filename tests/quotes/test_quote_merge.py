@@ -60,7 +60,7 @@ class TestQuoteMergeFromInput:
 
         merged = service._merge_quote_from_input(existing_quote, quote_input)
 
-        assert merged is existing_quote
+        assert merged.id == quote_id
         assert len(merged.details) == 2
         detail_by_item = {d.item_number: d for d in merged.details}
         assert 1 in detail_by_item

@@ -1,5 +1,3 @@
-import pytest
-
 from app.graphql.quotes.repositories.quote_bulk_query_helper import (
     build_find_quotes_by_quote_numbers_stmt,
 )

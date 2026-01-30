@@ -1,7 +1,5 @@
 from uuid import uuid4
 
-import pytest
-
 from app.graphql.orders.repositories.order_bulk_query_helper import (
     build_find_orders_by_number_customer_pairs_stmt,
 )
