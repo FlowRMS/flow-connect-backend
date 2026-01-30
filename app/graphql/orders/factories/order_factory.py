@@ -1,8 +1,7 @@
 from datetime import date
 from decimal import Decimal
-from uuid import UUID
-
 from typing import Sequence
+from uuid import UUID
 
 from commons.db.v6.commission.orders import (
     Order,
