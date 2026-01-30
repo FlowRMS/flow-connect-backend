@@ -110,17 +110,17 @@ class QuoteFactory:
                 discount_rate=detail.discount_rate,
                 discount=detail.discount,
                 total=detail.total,
+                commission_rate=Decimal("0"),
+                commission=Decimal("0"),
+                commission_discount_rate=Decimal("0"),
+                commission_discount=Decimal("0"),
+                total_line_commission=Decimal("0"),
                 product_id=detail.product_id,
                 factory_id=detail.factory_id,
                 end_user_id=detail.end_user_id,
                 lead_time=detail.lead_time,
                 status=QuoteDetailStatus.OPEN,
             )
-            quote_detail.commission_rate = Decimal("0")
-            quote_detail.commission = Decimal("0")
-            quote_detail.commission_discount_rate = Decimal("0")
-            quote_detail.commission_discount = Decimal("0")
-            quote_detail.total_line_commission = Decimal("0")
             result.append(quote_detail)
         return result
 
@@ -143,6 +143,11 @@ class QuoteFactory:
                 discount_rate=d.discount_rate,
                 discount=d.discount,
                 total=d.total,
+                commission_rate=d.commission_rate,
+                commission=d.commission,
+                commission_discount_rate=d.commission_discount_rate,
+                commission_discount=d.commission_discount,
+                total_line_commission=d.total_line_commission,
                 product_id=d.product_id,
                 product_name_adhoc=d.product_name_adhoc,
                 product_description_adhoc=d.product_description_adhoc,
@@ -154,10 +159,5 @@ class QuoteFactory:
                 outside_split_rates=outside_reps,
                 inside_split_rates=inside_reps,
             )
-            quote_detail.commission_rate = d.commission_rate
-            quote_detail.commission = d.commission
-            quote_detail.commission_discount_rate = d.commission_discount_rate
-            quote_detail.commission_discount = d.commission_discount
-            quote_detail.total_line_commission = d.total_line_commission
             result.append(quote_detail)
         return result
