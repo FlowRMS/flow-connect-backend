@@ -13,8 +13,8 @@ from app.graphql.statements.strawberry.statement_split_rate_input import (
 @strawberry.input
 class StatementDetailInput(BaseInputGQL[CommissionStatementDetail]):
     item_number: int
-    quantity: Decimal
-    unit_price: Decimal
+    quantity: Decimal | None = None
+    unit_price: Decimal | None = None
     id: UUID | None = None
     sold_to_customer_id: UUID | None = None
     order_id: UUID | None = None

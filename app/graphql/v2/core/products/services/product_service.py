@@ -74,7 +74,7 @@ class ProductService:
 
         inputs_with_entities = list(zip(valid_inputs, created))
         await self._process_cpns(inputs_with_entities)
-        
+
         return created
 
     async def get_existing_products(
