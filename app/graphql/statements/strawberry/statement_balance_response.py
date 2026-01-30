@@ -7,6 +7,9 @@ from commons.db.v6.commission.statements import CommissionStatementBalance
 
 from app.core.db.adapters.dto import DTOMixin
 
+# Default value for decimal fields that might be None in legacy data
+_ZERO = Decimal("0")
+
 
 @strawberry.type
 class StatementBalanceResponse(DTOMixin[CommissionStatementBalance]):
@@ -25,13 +28,13 @@ class StatementBalanceResponse(DTOMixin[CommissionStatementBalance]):
     def from_orm_model(cls, model: CommissionStatementBalance) -> Self:
         return cls(
             id=model.id,
-            quantity=model.quantity,
-            subtotal=model.subtotal,
-            total=model.total,
+            quantity=model.quantity or _ZERO,
+            subtotal=model.subtotal or _ZERO,
+            total=model.total or _ZERO,
             commission=model.commission,
-            discount=model.discount,
-            discount_rate=model.discount_rate,
-            commission_rate=model.commission_rate,
-            commission_discount=model.commission_discount,
-            commission_discount_rate=model.commission_discount_rate,
+            discount=model.discount or _ZERO,
+            discount_rate=model.discount_rate or _ZERO,
+            commission_rate=model.commission_rate or _ZERO,
+            commission_discount=model.commission_discount or _ZERO,
+            commission_discount_rate=model.commission_discount_rate or _ZERO,
         )
