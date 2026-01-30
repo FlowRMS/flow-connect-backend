@@ -253,5 +253,7 @@ class OrderConverter(BaseEntityConverter[OrderDTO, OrderInput, Order]):
             created = await self.order_service.create_orders_bulk(inputs)
             return BulkCreateResult(created=created, skipped_indices=[])
         except Exception as e:
-            logger.exception(f"Bulk order creation failed: {e}, falling back to sequential")
+            logger.exception(
+                f"Bulk order creation failed: {e}, falling back to sequential"
+            )
             return await super().create_entities_bulk(inputs)

@@ -271,7 +271,9 @@ class QuotesRepository(BaseRepository[Quote]):
         )
         return result.scalar_one() > 0
 
-    async def find_by_quote_number_with_details(self, quote_number: str) -> Quote | None:
+    async def find_by_quote_number_with_details(
+        self, quote_number: str
+    ) -> Quote | None:
         stmt = build_find_quote_by_number_with_details_stmt(quote_number)
         result = await self.session.execute(stmt)
         return result.unique().scalar_one_or_none()

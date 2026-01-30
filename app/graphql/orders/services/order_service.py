@@ -5,6 +5,7 @@ import strawberry
 from commons.auth import AuthInfo
 from commons.db.v6.commission.orders import Order, OrderDetail
 from commons.db.v6.crm.links.entity_type import EntityType
+
 from app.errors.common_errors import NameAlreadyExistsError, NotFoundError
 from app.graphql.orders.factories.order_factory import OrderFactory
 from app.graphql.orders.repositories.orders_repository import OrdersRepository
@@ -78,9 +79,7 @@ class OrderService:
         existing_order.freight_terms = order_input.optional_field(
             order_input.freight_terms
         )
-        existing_order.mark_number = order_input.optional_field(
-            order_input.mark_number
-        )
+        existing_order.mark_number = order_input.optional_field(order_input.mark_number)
         existing_order.ship_date = order_input.optional_field(order_input.ship_date)
         existing_order.projected_ship_date = order_input.optional_field(
             order_input.projected_ship_date

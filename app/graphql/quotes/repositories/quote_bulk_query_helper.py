@@ -1,9 +1,8 @@
 from typing import Any
 
+from commons.db.v6.crm.quotes import Quote, QuoteDetail
 from sqlalchemy import Select, select
 from sqlalchemy.orm import joinedload, lazyload
-
-from commons.db.v6.crm.quotes import Quote, QuoteDetail
 
 QUOTE_WITH_DETAILS_OPTIONS = [
     lazyload("*"),

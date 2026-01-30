@@ -1,10 +1,9 @@
 from typing import Any
 from uuid import UUID
 
+from commons.db.v6.commission.orders import Order, OrderDetail
 from sqlalchemy import Select, or_, select
 from sqlalchemy.orm import joinedload, lazyload
-
-from commons.db.v6.commission.orders import Order, OrderDetail
 
 ORDER_WITH_DETAILS_OPTIONS = [
     lazyload("*"),
@@ -42,8 +41,4 @@ def build_find_orders_by_number_customer_pairs_stmt(
         (Order.order_number == order_num) & (Order.sold_to_customer_id == cust_id)
         for order_num, cust_id in order_customer_pairs
     ]
-    return (
-        select(Order)
-        .options(*ORDER_WITH_DETAILS_OPTIONS)
-        .where(or_(*conditions))
-    )
+    return select(Order).options(*ORDER_WITH_DETAILS_OPTIONS).where(or_(*conditions))
