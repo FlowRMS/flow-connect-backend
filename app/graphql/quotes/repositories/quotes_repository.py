@@ -22,6 +22,7 @@ from sqlalchemy.sql.selectable import Subquery
 from app.core.context_wrapper import ContextWrapper
 from app.core.exceptions import NotFoundError
 from app.core.processors import ProcessorExecutor, ValidateCommissionRateProcessor
+from app.core.processors.events import RepositoryEvent
 from app.graphql.base_repository import BaseRepository
 from app.graphql.quotes.processors import (
     DefaultRepSplitProcessor,
@@ -29,6 +30,10 @@ from app.graphql.quotes.processors import (
 )
 from app.graphql.quotes.repositories.quote_balance_repository import (
     QuoteBalanceRepository,
+)
+from app.graphql.quotes.repositories.quote_bulk_query_helper import (
+    build_find_quote_by_number_with_details_stmt,
+    build_find_quotes_by_quote_numbers_stmt,
 )
 from app.graphql.quotes.strategies.quote_owner_filter import QuoteOwnerFilterStrategy
 from app.graphql.quotes.strategies.sales_team_quote_filter import (
@@ -266,6 +271,22 @@ class QuotesRepository(BaseRepository[Quote]):
         )
         return result.scalar_one() > 0
 
+    async def find_by_quote_number_with_details(self, quote_number: str) -> Quote | None:
+        stmt = build_find_quote_by_number_with_details_stmt(quote_number)
+        result = await self.session.execute(stmt)
+        return result.unique().scalar_one_or_none()
+
+    async def find_quotes_by_quote_numbers(
+        self, quote_numbers: list[str]
+    ) -> list[Quote]:
+        if not quote_numbers:
+            return []
+        stmt = build_find_quotes_by_quote_numbers_stmt(quote_numbers)
+        result = await self.execute(stmt)
+        rows = result.unique().scalars().all()
+        by_number = {q.quote_number: q for q in rows}
+        return [by_number[num] for num in quote_numbers if num in by_number]
+
     async def search_by_quote_number(
         self, search_term: str, limit: int = 20
     ) -> list[Quote]:
@@ -334,3 +355,27 @@ class QuotesRepository(BaseRepository[Quote]):
         )
         result = await self.session.execute(stmt)
         return list(result.scalars().all())
+
+    async def create_balances_bulk(
+        self,
+        details_list: list[list[QuoteDetail]],
+    ) -> list[QuoteBalance]:
+        balances = [
+            self.balance_repository.calculate_balance_from_details(details)
+            for details in details_list
+        ]
+        self.session.add_all(balances)
+        await self.session.flush(balances)
+        return balances
+
+    async def create_bulk(self, quotes: list[Quote]) -> list[Quote]:
+        for quote in quotes:
+            quote = await self.prepare_create(quote)
+
+        self.session.add_all(quotes)
+        await self.session.flush(quotes)
+
+        for quote in quotes:
+            await self._run_processors(RepositoryEvent.POST_CREATE, quote)
+
+        return quotes

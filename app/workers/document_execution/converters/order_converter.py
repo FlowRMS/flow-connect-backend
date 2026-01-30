@@ -59,10 +59,7 @@ class OrderConverter(BaseEntityConverter[OrderDTO, OrderInput, Order]):
         self,
         input_data: OrderInput,
     ) -> Order:
-        existing = await self.find_existing(input_data)
-        if existing:
-            return existing
-        return await self.order_service.create_order(input_data)
+        return await self.order_service.create_order_or_merge(input_data)
 
     @override
     async def separate_inputs(
@@ -254,9 +251,7 @@ class OrderConverter(BaseEntityConverter[OrderDTO, OrderInput, Order]):
 
         try:
             created = await self.order_service.create_orders_bulk(inputs)
-            skipped_count = len(inputs) - len(created)
-            skipped_indices = list(range(len(created), len(created) + skipped_count))
-            return BulkCreateResult(created=created, skipped_indices=skipped_indices)
+            return BulkCreateResult(created=created, skipped_indices=[])
         except Exception as e:
-            logger.error(f"Bulk order creation failed: {e}, falling back to sequential")
+            logger.exception(f"Bulk order creation failed: {e}, falling back to sequential")
             return await super().create_entities_bulk(inputs)
