@@ -111,7 +111,7 @@ class FileService:
         file_type = detect_file_type(file_name)
         new_file = File(
             file_name=file_name,
-            file_path=upload_result.file_path, # folder_path without filename
+            file_path=upload_result.file_path,  # folder_path without filename
             file_size=upload_result.file_size,
             file_type=file_type,
             file_sha=upload_result.file_sha,
