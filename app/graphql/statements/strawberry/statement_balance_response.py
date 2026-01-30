@@ -14,7 +14,7 @@ class StatementBalanceResponse(DTOMixin[CommissionStatementBalance]):
     quantity: Decimal
     subtotal: Decimal
     total: Decimal
-    commission: Decimal
+    commission: Decimal | None
     discount: Decimal
     discount_rate: Decimal
     commission_rate: Decimal
