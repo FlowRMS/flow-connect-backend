@@ -27,6 +27,8 @@ class FactoryInput(BaseInputGQL[Factory]):
     additional_information: str | None = None
     freight_terms: str | None = None
     external_payment_terms: str | None = None
+    is_parent: bool = False
+    parent_id: UUID | None = None
 
     def to_orm_model(self) -> Factory:
         return Factory(
@@ -44,5 +46,7 @@ class FactoryInput(BaseInputGQL[Factory]):
             additional_information=self.additional_information,
             freight_terms=self.freight_terms,
             external_payment_terms=self.external_payment_terms,
+            is_parent=self.is_parent,
+            parent_id=self.parent_id,
             split_rates=[rate.to_orm_model() for rate in self.split_rates],
         )

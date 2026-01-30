@@ -6,7 +6,7 @@ from commons.db.v6.core.factories.factory import Factory
 from commons.db.v6.core.factories.factory_split_rate import FactorySplitRate
 from commons.db.v6.crm.links.entity_type import EntityType
 from commons.db.v6.crm.manufacturer_order_model import ManufacturerOrder
-from sqlalchemy import Select, String, delete, func, literal, select
+from sqlalchemy import Select, String, delete, func, literal, select, update
 from sqlalchemy.dialects.postgresql import ARRAY, array
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import aliased, joinedload, lazyload
@@ -50,6 +50,7 @@ class FactoriesRepository(BaseRepository[Factory]):
 
     def paginated_stmt(self) -> Select[Any]:
         split_rate_user = aliased(User)
+        parent_factory = aliased(Factory)
         empty_array = literal([]).cast(ARRAY(String))
 
         split_rates_subq = (
@@ -83,12 +84,15 @@ class FactoriesRepository(BaseRepository[Factory]):
                 func.coalesce(split_rates_subq.c.split_rates, empty_array).label(
                     "split_rates"
                 ),
+                Factory.is_parent,
+                parent_factory.title.label("parent"),
                 array([Factory.created_by_id]).label("user_ids"),
             )
             .select_from(Factory)
             .options(lazyload("*"))
             .join(User, User.id == Factory.created_by_id)
             .outerjoin(split_rates_subq, split_rates_subq.c.factory_id == Factory.id)
+            .outerjoin(parent_factory, parent_factory.id == Factory.parent_id)
         )
 
     async def search_by_title(
@@ -183,3 +187,42 @@ class FactoriesRepository(BaseRepository[Factory]):
             return (1, 0, factory.title)
 
         return sorted(factories, key=sort_key)
+
+    async def get_children(self, parent_id: UUID) -> list[Factory]:
+        """
+        Get all child factories for a given parent factory.
+
+        Args:
+            parent_id: The ID of the parent factory
+
+        Returns:
+            List of child Factory objects
+        """
+        stmt = (
+            select(Factory)
+            .where(Factory.parent_id == parent_id)
+            .options(lazyload("*"))
+        )
+        result = await self.session.execute(stmt)
+        return list(result.scalars().all())
+
+    async def set_children_parent_id(
+        self,
+        parent_id: UUID,
+        child_ids: list[UUID],
+    ) -> None:
+        """
+        Set the parent_id for a list of child factories.
+
+        Args:
+            parent_id: The ID of the parent factory
+            child_ids: List of child factory IDs to update
+        """
+        if child_ids:
+            stmt = (
+                update(Factory)
+                .where(Factory.id.in_(child_ids))
+                .values(parent_id=parent_id)
+            )
+            await self.session.execute(stmt)
+        await self.session.flush()

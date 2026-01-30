@@ -5,7 +5,10 @@ from aioinject import Injected
 
 from app.graphql.inject import inject
 from app.graphql.v2.core.factories.services.factory_service import FactoryService
-from app.graphql.v2.core.factories.strawberry.factory_response import FactoryResponse
+from app.graphql.v2.core.factories.strawberry.factory_response import (
+    FactoryLiteResponse,
+    FactoryResponse,
+)
 
 
 @strawberry.type
@@ -51,3 +54,22 @@ class FactoriesQueries:
         else:
             factories = await service.search_factories(search_term, published, limit)
         return FactoryResponse.from_orm_model_list(factories)
+
+    @strawberry.field
+    @inject
+    async def factory_children(
+        self,
+        service: Injected[FactoryService],
+        parent_id: UUID,
+    ) -> list[FactoryLiteResponse]:
+        """
+        Get all child factories for a given parent factory.
+
+        Args:
+            parent_id: The ID of the parent factory
+
+        Returns:
+            List of FactoryLiteResponse objects for children of the parent
+        """
+        children = await service.get_children(parent_id)
+        return FactoryLiteResponse.from_orm_model_list(children)

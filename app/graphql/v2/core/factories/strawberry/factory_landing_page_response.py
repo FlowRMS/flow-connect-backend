@@ -19,3 +19,5 @@ class FactoryLandingPageResponse(LandingPageInterfaceBase):
     commission_discount_rate: Decimal | None
     overall_discount_rate: Decimal
     split_rates: list[str]
+    is_parent: bool
+    parent: str | None

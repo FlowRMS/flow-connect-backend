@@ -1431,6 +1431,8 @@ type FactoryLiteResponse {
   additionalInformation: String
   freightTerms: String
   externalPaymentTerms: String
+  isParent: Boolean!
+  parentId: UUID
 }
 
 type FactoryResponse {
@@ -1450,8 +1452,11 @@ type FactoryResponse {
   additionalInformation: String
   freightTerms: String
   externalPaymentTerms: String
+  isParent: Boolean!
+  parentId: UUID
   createdBy: UserResponse!
   splitRates: [FactorySplitRateResponse!]!
+  parent: FactoryLiteResponse
 }
 
 input FactorySplitRateInput {
