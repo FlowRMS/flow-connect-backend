@@ -6,9 +6,6 @@ import strawberry
 from commons.db.v6.commission.statements import CommissionStatementDetail
 
 from app.core.db.adapters.dto import DTOMixin
-
-# Default value for decimal fields that might be None in legacy data
-_ZERO = Decimal("0")
 from app.graphql.invoices.strawberry.invoice_lite_response import InvoiceLiteResponse
 from app.graphql.orders.strawberry.order_detail_response import OrderDetailLiteResponse
 from app.graphql.orders.strawberry.order_lite_response import OrderLiteResponse
@@ -22,6 +19,9 @@ from app.graphql.v2.core.products.strawberry.product_response import ProductLite
 from app.graphql.v2.core.products.strawberry.product_uom_response import (
     ProductUomResponse,
 )
+
+# Default value for decimal fields that might be None in legacy data
+_ZERO = Decimal("0")
 
 
 @strawberry.type
