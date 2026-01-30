@@ -39,7 +39,10 @@ class QuoteDetailInput(BaseInputGQL[QuoteDetail]):
     fixture_schedule: str | None = None
 
     def to_orm_model(self) -> QuoteDetail:
-        subtotal = self.quantity * self.unit_price
+        quantity = self.quantity if self.quantity is not None else Decimal("0")
+        unit_price = self.unit_price if self.unit_price is not None else Decimal("0")
+
+        subtotal = quantity * unit_price
         discount = subtotal * (self.discount_rate / Decimal("100"))
         total = subtotal - discount
         commission = total * (self.commission_rate / Decimal("100"))
@@ -50,8 +53,8 @@ class QuoteDetailInput(BaseInputGQL[QuoteDetail]):
 
         detail = QuoteDetail(
             item_number=self.item_number,
-            quantity=self.quantity,
-            unit_price=self.unit_price,
+            quantity=quantity,
+            unit_price=unit_price,
             subtotal=subtotal,
             discount_rate=self.discount_rate,
             discount=discount,
