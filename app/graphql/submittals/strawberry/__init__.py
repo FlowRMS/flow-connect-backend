@@ -1,5 +1,3 @@
-"""Strawberry types for Submittals GraphQL module."""
-
 from .enums import (
     SubmittalItemApprovalStatusGQL,
     SubmittalItemMatchStatusGQL,
@@ -19,6 +17,8 @@ from .submittal_input import (
 )
 from .submittal_item_response import SubmittalItemResponse
 from .submittal_response import SubmittalResponse
+from .submittal_change_analysis_response import SubmittalChangeAnalysisResponse
+from .submittal_returned_pdf_response import SubmittalReturnedPdfResponse
 from .submittal_revision_response import SubmittalRevisionResponse
 from .submittal_stakeholder_response import SubmittalStakeholderResponse
 
@@ -34,6 +34,8 @@ __all__ = [
     "SubmittalItemResponse",
     "SubmittalStakeholderResponse",
     "SubmittalRevisionResponse",
+    "SubmittalReturnedPdfResponse",
+    "SubmittalChangeAnalysisResponse",
     "SubmittalEmailResponse",
     "SendSubmittalEmailResponse",
     "SubmittalConfigResponse",
