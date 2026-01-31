@@ -23,6 +23,7 @@ def upgrade() -> None:
         'sold_to_customer_id',
         existing_type=postgresql.UUID(),
         nullable=False,
+        schema="pycrm",
     )
 
     
@@ -32,4 +33,5 @@ def downgrade() -> None:
         'sold_to_customer_id',
         existing_type=postgresql.UUID(),
         nullable=True,
+        schema="pycrm",
     )
