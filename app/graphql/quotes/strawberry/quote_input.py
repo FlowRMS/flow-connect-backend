@@ -17,12 +17,13 @@ from app.graphql.quotes.strawberry.quote_detail_input import QuoteDetailInput
 class QuoteInput(BaseInputGQL[Quote]):
     quote_number: str
     entity_date: date
-    sold_to_customer_id: UUID
     status: QuoteStatus
     pipeline_stage: PipelineStage
     details: list[QuoteDetailInput]
 
     id: UUID | None = strawberry.UNSET
+    name: str | None = strawberry.UNSET
+    sold_to_customer_id: UUID | None = strawberry.UNSET
     factory_per_line_item: bool = False
     job_id: UUID | None = strawberry.UNSET
     published: bool = strawberry.UNSET
@@ -55,7 +56,8 @@ class QuoteInput(BaseInputGQL[Quote]):
             end_user_per_line_item=self.end_user_per_line_item,
             quote_number=self.quote_number,
             entity_date=self.entity_date,
-            sold_to_customer_id=self.sold_to_customer_id,
+            name=self.optional_field(self.name),
+            sold_to_customer_id=self.optional_field(self.sold_to_customer_id),
             job_id=self.optional_field(self.job_id),
             status=self.status,
             pipeline_stage=self.pipeline_stage,

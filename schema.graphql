@@ -3814,11 +3814,12 @@ input QuoteDetailToOrderDetailInput {
 input QuoteInput {
   quoteNumber: String!
   entityDate: Date!
-  soldToCustomerId: UUID!
   status: QuoteStatus!
   pipelineStage: PipelineStage!
   details: [QuoteDetailInput!]!
   id: UUID
+  name: String
+  soldToCustomerId: UUID
   factoryPerLineItem: Boolean! = false
   jobId: UUID
   published: Boolean!
@@ -3863,7 +3864,7 @@ type QuoteLandingPage implements LandingPageInterfaceBase {
   total: Decimal!
   commission: Decimal
   published: Boolean!
-  soldToCustomerName: String!
+  soldToCustomerName: String
   endUsers: [String!]!
   factories: [String!]!
   categories: [String!]
@@ -3881,8 +3882,9 @@ type QuoteLiteResponse {
   pipelineStage: PipelineStage!
   published: Boolean!
   creationType: CreationType!
-  soldToCustomerId: UUID!
+  soldToCustomerId: UUID
   factoryPerLineItem: Boolean!
+  name: String
   billToCustomerId: UUID
   paymentTerms: String
   customerRef: String
@@ -3910,8 +3912,9 @@ type QuoteResponse {
   pipelineStage: PipelineStage!
   published: Boolean!
   creationType: CreationType!
-  soldToCustomerId: UUID!
+  soldToCustomerId: UUID
   factoryPerLineItem: Boolean!
+  name: String
   billToCustomerId: UUID
   paymentTerms: String
   customerRef: String
@@ -3928,7 +3931,7 @@ type QuoteResponse {
   endUserPerLineItem: Boolean
   url: String!
   createdBy: UserResponse!
-  soldToCustomer: CustomerLiteResponse!
+  soldToCustomer: CustomerLiteResponse
   billToCustomer: CustomerLiteResponse
   balance: QuoteBalanceResponse!
   details: [QuoteDetailResponse!]!
@@ -4161,6 +4164,8 @@ enum SettingKey {
   CHECKS_SETTINGS
   CHAT_SETTINGS
   SIDEBAR_SETTINGS
+  PICKLIST_SETTINGS
+  NOTIFICATION_SETTINGS
 }
 
 type ShipToAddressResponse {
@@ -4509,7 +4514,7 @@ type StatementResponse {
   url: String!
   factory: FactoryLiteResponse!
   createdBy: UserResponse!
-  balance: StatementBalanceResponse!
+  balance: StatementBalanceResponse
   details: [StatementDetailResponse!]!
 }
 

@@ -30,7 +30,8 @@ class DefaultRepSplitProcessor(BaseProcessor[Quote]):
 
         for detail in quote.details:
             await self._apply_default_inside_reps(detail)
-            await self._apply_default_outside_reps(detail, sold_to_customer_id)
+            if sold_to_customer_id:
+                await self._apply_default_outside_reps(detail, sold_to_customer_id)
 
         for detail in quote.details:
             if not detail.inside_split_rates:

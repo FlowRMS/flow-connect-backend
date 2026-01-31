@@ -5,6 +5,7 @@ from uuid import UUID
 @dataclass
 class EntityMapping:
     factory_id: UUID | None = None
+    warehouse_id: UUID | None = None
     sold_to_customer_id: UUID | None = None
     bill_to_customer_id: UUID | None = None
     orders: dict[int, UUID] = field(default_factory=dict)

@@ -175,7 +175,7 @@ class QuotesRepository(BaseRepository[Quote]):
             .options(lazyload("*"))
             .join(User, User.id == Quote.created_by_id)
             .join(QuoteBalance, QuoteBalance.id == Quote.balance_id)
-            .join(sold_to, sold_to.id == Quote.sold_to_customer_id)
+            .outerjoin(sold_to, sold_to.id == Quote.sold_to_customer_id)
             .outerjoin(QuoteDetail, QuoteDetail.quote_id == Quote.id)
             .outerjoin(end_user, end_user.id == QuoteDetail.end_user_id)
             .outerjoin(Factory, Factory.id == QuoteDetail.factory_id)

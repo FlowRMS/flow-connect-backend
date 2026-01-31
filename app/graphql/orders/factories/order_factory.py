@@ -100,6 +100,9 @@ class OrderFactory:
         quote_details_inputs: list[QuoteDetailToOrderDetailInput] | None = None,
     ) -> Order:
         today = date.today()
+        if not quote.sold_to_customer_id:
+            msg = "Cannot create order from quote without a sold-to customer."
+            raise ValueError(msg)
         return Order(
             inside_per_line_item=quote.inside_per_line_item,
             outside_per_line_item=quote.outside_per_line_item,

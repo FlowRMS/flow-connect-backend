@@ -43,7 +43,7 @@ class QuoteLandingPageResponse(LandingPageInterfaceBase):
     total: Decimal
     commission: Decimal | None
     published: bool
-    sold_to_customer_name: str
+    sold_to_customer_name: str | None
     end_users: list[str]
     factories: list[str]
     categories: list[str] | None

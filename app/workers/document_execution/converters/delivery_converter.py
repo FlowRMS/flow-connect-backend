@@ -84,7 +84,7 @@ class DeliveryConverter(
         entity_mapping: EntityMapping,
     ) -> ConversionResult[DeliveryCreatePayload]:
         vendor_id = entity_mapping.factory_id
-        warehouse_id = dto.warehouse_id
+        warehouse_id = entity_mapping.warehouse_id
 
         if not vendor_id:
             return ConversionResult.fail(DeliveryVendorRequiredError())
@@ -98,8 +98,6 @@ class DeliveryConverter(
             carrier_id=None,
             tracking_number=dto.tracking_number,
             expected_date=dto.expected_date,
-            vendor_contact_name=dto.vendor_contact_name,
-            vendor_contact_email=dto.vendor_contact_email,
             notes=dto.notes,
         )
 
