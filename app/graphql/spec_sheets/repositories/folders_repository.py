@@ -1,5 +1,3 @@
-"""Repository for spec sheet folders - facade for queries and mutations."""
-
 from uuid import UUID
 
 from commons.db.v6.crm.spec_sheets import SpecSheetFolder
@@ -19,7 +17,9 @@ class FoldersRepository:
     Facade that delegates to FolderQueriesRepository and FolderMutationsRepository.
     """
 
-    def __init__(self, context_wrapper: ContextWrapper, session: AsyncSession) -> None:
+    def __init__(  # pyright: ignore[reportMissingSuperCall]
+        self, context_wrapper: ContextWrapper, session: AsyncSession
+    ) -> None:
         """Initialize the repository."""
         self.session = session
         self.context_wrapper = context_wrapper

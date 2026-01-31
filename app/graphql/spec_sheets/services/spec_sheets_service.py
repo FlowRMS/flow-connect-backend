@@ -1,5 +1,3 @@
-"""Service layer for SpecSheets business logic."""
-
 import io
 import os
 from uuid import UUID, uuid4
@@ -136,7 +134,7 @@ class SpecSheetsService:
 
             # Link File to Factory so it appears in /files when browsing by Factory
             try:
-                await self.links_service.create_link(
+                _ = await self.links_service.create_link(
                     source_type=EntityType.FILE,
                     source_id=file_record.id,
                     target_type=EntityType.FACTORY,
@@ -232,7 +230,7 @@ class SpecSheetsService:
         if spec_sheet.file_id:
             try:
                 # Delete link relation first
-                await self.links_service.delete_link_by_entities(
+                _ = await self.links_service.delete_link_by_entities(
                     source_type=EntityType.FILE,
                     source_id=spec_sheet.file_id,
                     target_type=EntityType.FACTORY,
@@ -243,7 +241,7 @@ class SpecSheetsService:
 
             try:
                 # Delete file record
-                await self.file_repository.delete(spec_sheet.file_id)
+                _ = await self.file_repository.delete(spec_sheet.file_id)
             except Exception as e:
                 logger.warning(f"Failed to delete file record: {e}")
 

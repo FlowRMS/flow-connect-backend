@@ -1,5 +1,3 @@
-"""Repository for spec sheet folder query operations."""
-
 from uuid import UUID
 
 from commons.db.v6.crm.spec_sheets import SpecSheet, SpecSheetFolder
@@ -116,7 +114,7 @@ class FolderQueriesRepository(BaseRepository[SpecSheetFolder]):
             row.folder_id: row.spec_count for row in count_result.all()
         }
 
-        folder_map: dict[UUID, Folder] = {f.id: f for f in folders}
+        _folder_map: dict[UUID, Folder] = {f.id: f for f in folders}
         children_map: dict[UUID | None, list[UUID]] = {}
         for folder in folders:
             parent_id = folder.parent_id

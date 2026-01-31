@@ -1,13 +1,3 @@
-"""create spec_sheet_folders table
-
-Revision ID: create_spec_sheet_folders
-Revises: d538c52154d8
-Create Date: 2026-01-19
-
-Creates spec_sheet_folders table that maps pyfiles.folders to factories.
-This allows each factory to have its own folder hierarchy for organizing spec sheets.
-"""
-
 from collections.abc import Sequence
 
 import sqlalchemy as sa
@@ -28,7 +18,7 @@ def upgrade() -> None:
     tables = inspector.get_table_names(schema="pycrm")
 
     if "spec_sheet_folders" not in tables:
-        op.create_table(
+        _ = op.create_table(
             "spec_sheet_folders",
             sa.Column(
                 "id",

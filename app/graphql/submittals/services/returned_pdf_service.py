@@ -71,7 +71,7 @@ class UpdateItemChangeInput:
 class ReturnedPdfService:
     """Service for managing returned PDFs and change analysis."""
 
-    def __init__(
+    def __init__(  # pyright: ignore[reportMissingSuperCall]
         self,
         revisions_repository: SubmittalRevisionsRepository,
         returned_pdfs_repository: SubmittalReturnedPdfsRepository,
@@ -271,7 +271,7 @@ class ReturnedPdfService:
                 analysis.total_changes_detected = max(
                     0, analysis.total_changes_detected - 1
                 )
-                await self.change_analysis_repository.update(analysis)
+                _ = await self.change_analysis_repository.update(analysis)
             logger.info(f"Deleted item change {item_change_id}")
         return result
 

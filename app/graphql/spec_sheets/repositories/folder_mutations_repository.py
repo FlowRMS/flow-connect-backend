@@ -1,5 +1,3 @@
-"""Repository for spec sheet folder mutation operations."""
-
 from uuid import UUID
 
 from commons.db.v6.crm.spec_sheets import SpecSheet, SpecSheetFolder
@@ -13,7 +11,9 @@ from .folder_queries_repository import FolderQueriesRepository
 class FolderMutationsRepository:
     """Repository for spec sheet folder mutation operations."""
 
-    def __init__(self, session: AsyncSession, queries: FolderQueriesRepository) -> None:
+    def __init__(  # pyright: ignore[reportMissingSuperCall]
+        self, session: AsyncSession, queries: FolderQueriesRepository
+    ) -> None:
         """Initialize the repository."""
         self.session = session
         self.queries = queries

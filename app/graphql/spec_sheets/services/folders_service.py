@@ -1,5 +1,3 @@
-"""Service for spec sheet folder management using pyfiles.folders."""
-
 from uuid import UUID
 
 from commons.auth import AuthInfo
@@ -11,7 +9,7 @@ from app.graphql.spec_sheets.repositories.folders_repository import FoldersRepos
 class FoldersService:
     """Service for spec sheet folder business logic using pyfiles.folders."""
 
-    def __init__(
+    def __init__(  # pyright: ignore[reportMissingSuperCall]
         self,
         repository: FoldersRepository,
         auth_info: AuthInfo,

@@ -1,10 +1,8 @@
-"""Repository for SpecSheets entity with specific database operations."""
-
 from uuid import UUID
 
 from commons.db.v6.crm.spec_sheets.spec_sheet_model import SpecSheet
 from commons.db.v6.files import File
-from sqlalchemy import and_, or_, select
+from sqlalchemy import or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import joinedload
 

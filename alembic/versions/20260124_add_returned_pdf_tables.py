@@ -6,8 +6,6 @@
 
 from collections.abc import Sequence
 
-from alembic import op
-
 revision: str = "add_returned_pdf_tables"
 down_revision: str | None = "tags_core_entities"
 branch_labels: str | Sequence[str] | None = None

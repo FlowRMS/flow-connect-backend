@@ -32,7 +32,7 @@ def upgrade() -> None:
         return
 
     # Create submittal_returned_pdfs table
-    op.create_table(
+    _ = op.create_table(
         "submittal_returned_pdfs",
         sa.Column("id", sa.UUID(), nullable=False),
         sa.Column("revision_id", sa.UUID(), nullable=False),
@@ -71,7 +71,7 @@ def upgrade() -> None:
     )
 
     # Create submittal_change_analyses table
-    op.create_table(
+    _ = op.create_table(
         "submittal_change_analyses",
         sa.Column("id", sa.UUID(), nullable=False),
         sa.Column("returned_pdf_id", sa.UUID(), nullable=False),
@@ -109,7 +109,7 @@ def upgrade() -> None:
     )
 
     # Create submittal_item_changes table
-    op.create_table(
+    _ = op.create_table(
         "submittal_item_changes",
         sa.Column("id", sa.UUID(), nullable=False),
         sa.Column("change_analysis_id", sa.UUID(), nullable=False),
