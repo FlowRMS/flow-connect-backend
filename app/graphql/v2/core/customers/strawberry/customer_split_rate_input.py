@@ -17,10 +17,10 @@ class InsideSplitRateInput(BaseInputGQL[CustomerSplitRate]):
     def to_orm_model(self) -> CustomerSplitRate:
         obj = CustomerSplitRate(
             user_id=self.user_id,
+            split_rate=self.split_rate,
             rep_type=RepTypeEnum.INSIDE,
             position=self.position,
         )
-        obj.split_rate = self.split_rate
         if self.id:
             obj.id = self.id
         return obj
@@ -36,10 +36,10 @@ class OutsideSplitRateInput(BaseInputGQL[CustomerSplitRate]):
     def to_orm_model(self) -> CustomerSplitRate:
         obj = CustomerSplitRate(
             user_id=self.user_id,
+            split_rate=self.split_rate,
             rep_type=RepTypeEnum.OUTSIDE,
             position=self.position,
         )
-        obj.split_rate = self.split_rate
         if self.id:
             obj.id = self.id
         return obj

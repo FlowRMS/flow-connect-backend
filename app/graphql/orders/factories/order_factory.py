@@ -27,8 +27,9 @@ class OrderFactory:
     ) -> list[OrderSplitRate]:
         result = []
         for sr in split_rates:
-            obj = OrderSplitRate(user_id=sr.user_id, position=sr.position)
-            obj.split_rate = sr.split_rate
+            obj = OrderSplitRate(
+                user_id=sr.user_id, split_rate=sr.split_rate, position=sr.position
+            )
             result.append(obj)
         return result
 
@@ -38,8 +39,9 @@ class OrderFactory:
     ) -> list[OrderInsideRep]:
         result = []
         for ir in inside_reps:
-            obj = OrderInsideRep(user_id=ir.user_id, position=ir.position)
-            obj.split_rate = ir.split_rate
+            obj = OrderInsideRep(
+                user_id=ir.user_id, split_rate=ir.split_rate, position=ir.position
+            )
             result.append(obj)
         return result
 

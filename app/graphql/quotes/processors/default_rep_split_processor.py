@@ -60,9 +60,9 @@ class DefaultRepSplitProcessor(BaseProcessor[Quote]):
         for sr in factory_split_rates:
             obj = QuoteInsideRep(
                 user_id=sr.user_id,
+                split_rate=sr.split_rate,
                 position=sr.position,
             )
-            obj.split_rate = sr.split_rate
             inside_reps.append(obj)
         detail.inside_split_rates = inside_reps
 
@@ -84,9 +84,9 @@ class DefaultRepSplitProcessor(BaseProcessor[Quote]):
                 for rep in customer_factory_reps:
                     obj = QuoteSplitRate(
                         user_id=rep.user_id,
+                        split_rate=rep.rate,
                         position=rep.position,
                     )
-                    obj.split_rate = rep.rate
                     outside_reps.append(obj)
                 detail.outside_split_rates = outside_reps
                 return
@@ -97,9 +97,9 @@ class DefaultRepSplitProcessor(BaseProcessor[Quote]):
         for rep in customer_outside_reps:
             obj = QuoteSplitRate(
                 user_id=rep.user_id,
+                split_rate=rep.split_rate,
                 position=rep.position,
             )
-            obj.split_rate = rep.split_rate
             outside_reps.append(obj)
         detail.outside_split_rates = outside_reps
 

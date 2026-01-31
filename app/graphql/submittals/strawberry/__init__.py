@@ -6,6 +6,7 @@ from .enums import (
     TransmittalPurposeGQL,
 )
 from .send_email_response import SendSubmittalEmailResponse, SubmittalEmailResponse
+from .submittal_change_analysis_response import SubmittalChangeAnalysisResponse
 from .submittal_config import SubmittalConfigInput, SubmittalConfigResponse
 from .submittal_input import (
     CreateSubmittalInput,
@@ -17,7 +18,6 @@ from .submittal_input import (
 )
 from .submittal_item_response import SubmittalItemResponse
 from .submittal_response import SubmittalResponse
-from .submittal_change_analysis_response import SubmittalChangeAnalysisResponse
 from .submittal_returned_pdf_response import SubmittalReturnedPdfResponse
 from .submittal_revision_response import SubmittalRevisionResponse
 from .submittal_stakeholder_response import SubmittalStakeholderResponse

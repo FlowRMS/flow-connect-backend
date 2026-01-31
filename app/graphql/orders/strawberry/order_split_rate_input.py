@@ -17,9 +17,9 @@ class OrderSplitRateInput(BaseInputGQL[OrderSplitRate]):
     def to_orm_model(self) -> OrderSplitRate:
         obj = OrderSplitRate(
             user_id=self.user_id,
+            split_rate=self.split_rate,
             position=self.position,
         )
-        obj.split_rate = self.split_rate
         if self.id:
             obj.id = self.id
         return obj

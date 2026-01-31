@@ -25,8 +25,11 @@ class QuoteFactory:
     ) -> list[QuoteSplitRate]:
         result = []
         for sr in split_rates:
-            obj = QuoteSplitRate(user_id=sr.user_id, position=sr.position)
-            obj.split_rate = sr.split_rate
+            obj = QuoteSplitRate(
+                user_id=sr.user_id,
+                split_rate=sr.split_rate,
+                position=sr.position,
+            )
             result.append(obj)
         return result
 
@@ -36,8 +39,11 @@ class QuoteFactory:
     ) -> list[QuoteInsideRep]:
         result = []
         for ir in inside_reps:
-            obj = QuoteInsideRep(user_id=ir.user_id, position=ir.position)
-            obj.split_rate = ir.split_rate
+            obj = QuoteInsideRep(
+                user_id=ir.user_id,
+                split_rate=ir.split_rate,
+                position=ir.position,
+            )
             result.append(obj)
         return result
 

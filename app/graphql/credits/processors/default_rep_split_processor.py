@@ -76,8 +76,8 @@ class CreditDefaultRepSplitProcessor(BaseProcessor[Credit]):
         for sr in order_split_rates:
             obj = CreditSplitRate(
                 user_id=sr.user_id,
+                split_rate=sr.split_rate,
                 position=sr.position,
             )
-            obj.split_rate = sr.split_rate
             result.append(obj)
         return result

@@ -17,9 +17,9 @@ class CreditSplitRateInput(BaseInputGQL[CreditSplitRate]):
     def to_orm_model(self) -> CreditSplitRate:
         obj = CreditSplitRate(
             user_id=self.user_id,
+            split_rate=self.split_rate,
             position=self.position,
         )
-        obj.split_rate = self.split_rate
         if self.id:
             obj.id = self.id
         return obj

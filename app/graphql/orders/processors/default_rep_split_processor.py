@@ -76,8 +76,11 @@ class OrderDefaultRepSplitProcessor(BaseProcessor[Order]):
         )
         inside_reps = []
         for sr in factory_split_rates:
-            obj = OrderInsideRep(user_id=sr.user_id, position=sr.position)
-            obj.split_rate = sr.split_rate
+            obj = OrderInsideRep(
+                user_id=sr.user_id,
+                split_rate=sr.split_rate,
+                position=sr.position,
+            )
             inside_reps.append(obj)
         detail.inside_split_rates = inside_reps
 
@@ -99,8 +102,11 @@ class OrderDefaultRepSplitProcessor(BaseProcessor[Order]):
         if customer_factory_reps:
             outside_reps = []
             for rep in customer_factory_reps:
-                obj = OrderSplitRate(user_id=rep.user_id, position=rep.position)
-                obj.split_rate = rep.rate
+                obj = OrderSplitRate(
+                    user_id=rep.user_id,
+                    split_rate=rep.rate,
+                    position=rep.position,
+                )
                 outside_reps.append(obj)
             detail.outside_split_rates = outside_reps
             return
@@ -108,8 +114,11 @@ class OrderDefaultRepSplitProcessor(BaseProcessor[Order]):
         customer_outside_reps = await self._get_customer_outside_reps(customer_id)
         outside_reps = []
         for rep in customer_outside_reps:
-            obj = OrderSplitRate(user_id=rep.user_id, position=rep.position)
-            obj.split_rate = rep.split_rate
+            obj = OrderSplitRate(
+                user_id=rep.user_id,
+                split_rate=rep.split_rate,
+                position=rep.position,
+            )
             outside_reps.append(obj)
         detail.outside_split_rates = outside_reps
 
