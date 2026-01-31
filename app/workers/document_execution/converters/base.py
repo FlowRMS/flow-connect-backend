@@ -187,6 +187,12 @@ class BaseEntityConverter(ABC, Generic[TDto, TInput, TOutput]):
             return factory.overall_discount_rate
         return Decimal("0")
 
+    async def get_factory_freight_terms(self, factory_id: UUID) -> str | None:
+        factory = await self.get_factory(factory_id)
+        if factory:
+            return factory.freight_terms
+        return None
+
     async def get_user_by_full_name(
         self, full_name: str, rep_type: RepTypeEnum | None = None
     ) -> User | None:

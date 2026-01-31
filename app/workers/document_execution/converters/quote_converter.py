@@ -64,6 +64,7 @@ class QuoteConverter(BaseEntityConverter[QuoteDTO, QuoteInput, Quote]):
             factory_id
         )
         default_discount_rate = await self.get_factory_discount_rate(factory_id)
+        default_freight_terms = await self.get_factory_freight_terms(factory_id)
 
         quote_number = dto.quote_number
         if self.auto_number_settings_service.needs_generation(quote_number):
@@ -94,7 +95,7 @@ class QuoteConverter(BaseEntityConverter[QuoteDTO, QuoteInput, Quote]):
                 pipeline_stage=PipelineStage.PROPOSAL,
                 bill_to_customer_id=entity_mapping.bill_to_customer_id,
                 payment_terms=dto.payment_terms,
-                freight_terms=dto.freight_terms,
+                freight_terms=dto.freight_terms or default_freight_terms,
                 exp_date=dto.expiration_date,
                 details=details,
                 published=True,
