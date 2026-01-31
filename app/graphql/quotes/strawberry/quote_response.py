@@ -21,9 +21,7 @@ class QuoteResponse(QuoteLiteResponse):
         return UserResponse.from_orm_model(self._instance.created_by)
 
     @strawberry.field
-    def sold_to_customer(self) -> CustomerLiteResponse | None:
-        if self._instance.sold_to_customer is None:
-            return None
+    def sold_to_customer(self) -> CustomerLiteResponse:
         return CustomerLiteResponse.from_orm_model(self._instance.sold_to_customer)
 
     @strawberry.field

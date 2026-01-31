@@ -60,7 +60,8 @@
       "Bash(alembic history:*)",
       "Bash(uv lock:*)",
       "Bash(task check:*)",
-      "Bash(task typecheck)"
+      "Bash(task typecheck)",
+      "Bash(task --list:*)"
     ]
   },
   "enableAllProjectMcpServers": true,

@@ -306,6 +306,21 @@ class QuotesRepository(BaseRepository[Quote]):
         )
         _ = await self.session.execute(stmt)
 
+    async def get_existing_quotes(self, quote_numbers: list[str]) -> list[Quote]:
+        if not quote_numbers:
+            return []
+        stmt = (
+            select(Quote)
+            .options(
+                joinedload(Quote.details),
+                joinedload(Quote.balance),
+                lazyload("*"),
+            )
+            .where(Quote.quote_number.in_(quote_numbers))
+        )
+        result = await self.session.execute(stmt)
+        return list(result.unique().scalars().all())
+
     async def find_by_sold_to_customer_id(self, customer_id: UUID) -> list[Quote]:
         stmt = (
             select(Quote)

@@ -3813,13 +3813,13 @@ input QuoteDetailToOrderDetailInput {
 
 input QuoteInput {
   quoteNumber: String!
+  soldToCustomerId: UUID!
   entityDate: Date!
   status: QuoteStatus!
   pipelineStage: PipelineStage!
   details: [QuoteDetailInput!]!
   id: UUID
   name: String
-  soldToCustomerId: UUID
   factoryPerLineItem: Boolean! = false
   jobId: UUID
   published: Boolean!
@@ -3931,7 +3931,7 @@ type QuoteResponse {
   endUserPerLineItem: Boolean
   url: String!
   createdBy: UserResponse!
-  soldToCustomer: CustomerLiteResponse
+  soldToCustomer: CustomerLiteResponse!
   billToCustomer: CustomerLiteResponse
   balance: QuoteBalanceResponse!
   details: [QuoteDetailResponse!]!

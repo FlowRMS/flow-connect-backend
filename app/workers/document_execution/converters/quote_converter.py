@@ -18,7 +18,12 @@ from app.graphql.quotes.services.quote_service import QuoteService
 from app.graphql.quotes.strawberry.quote_detail_input import QuoteDetailInput
 from app.graphql.quotes.strawberry.quote_input import QuoteInput
 
-from .base import BaseEntityConverter, ConversionResult
+from .base import (
+    BaseEntityConverter,
+    BulkCreateResult,
+    ConversionResult,
+    SeparatedInputs,
+)
 from .entity_mapping import EntityMapping
 from .exceptions import FactoryRequiredError, SoldToCustomerRequiredError
 
@@ -44,6 +49,64 @@ class QuoteConverter(BaseEntityConverter[QuoteDTO, QuoteInput, Quote]):
         input_data: QuoteInput,
     ) -> Quote:
         return await self.quote_service.create_quote(input_data)
+
+    @override
+    async def separate_inputs(
+        self,
+        inputs: list[QuoteInput],
+    ) -> SeparatedInputs[QuoteInput]:
+        if not inputs:
+            return SeparatedInputs(
+                for_creation=[],
+                for_creation_indices=[],
+                for_update=[],
+                for_update_indices=[],
+            )
+
+        quote_numbers = [inp.quote_number for inp in inputs]
+        existing_quotes = await self.quote_service.get_existing_quotes(quote_numbers)
+        existing_map = {q.quote_number: q for q in existing_quotes}
+
+        for_creation: list[QuoteInput] = []
+        for_creation_indices: list[int] = []
+        for_update: list[tuple[QuoteInput, Quote]] = []
+        for_update_indices: list[int] = []
+
+        for i, inp in enumerate(inputs):
+            existing = existing_map.get(inp.quote_number)
+            if existing:
+                inp.id = existing.id
+                for_update.append((inp, existing))
+                for_update_indices.append(i)
+            else:
+                for_creation.append(inp)
+                for_creation_indices.append(i)
+
+        return SeparatedInputs(
+            for_creation=for_creation,
+            for_creation_indices=for_creation_indices,
+            for_update=for_update,
+            for_update_indices=for_update_indices,
+        )
+
+    @override
+    async def update_entities_bulk(
+        self,
+        inputs_with_entities: list[tuple[QuoteInput, Quote]],
+    ) -> BulkCreateResult[Quote]:
+        if not inputs_with_entities:
+            return BulkCreateResult(created=[], skipped_indices=[])
+
+        updated: list[Quote] = []
+        skipped: list[int] = []
+        for i, (inp, _existing) in enumerate(inputs_with_entities):
+            try:
+                quote = await self.quote_service.update_quote(inp)
+                updated.append(quote)
+            except Exception:
+                skipped.append(i)
+
+        return BulkCreateResult(created=updated, skipped_indices=skipped)
 
     @override
     async def to_input(
