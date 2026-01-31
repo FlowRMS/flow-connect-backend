@@ -312,8 +312,6 @@ class QuotesRepository(BaseRepository[Quote]):
         stmt = (
             select(Quote)
             .options(
-                joinedload(Quote.details),
-                joinedload(Quote.balance),
                 lazyload("*"),
             )
             .where(Quote.quote_number.in_(quote_numbers))

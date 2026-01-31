@@ -152,5 +152,10 @@ class OrderService:
 
         return created_order
 
+    async def get_existing_orders(
+        self, order_customer_pairs: list[tuple[str, UUID]]
+    ) -> list[Order]:
+        return await self.repository.get_existing_orders(order_customer_pairs)
+
     async def find_by_sold_to_customer_id(self, customer_id: UUID) -> list[Order]:
         return await self.repository.find_by_sold_to_customer_id(customer_id)

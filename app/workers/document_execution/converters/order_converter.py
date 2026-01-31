@@ -18,7 +18,12 @@ from app.graphql.orders.services.order_service import OrderService
 from app.graphql.orders.strawberry.order_detail_input import OrderDetailInput
 from app.graphql.orders.strawberry.order_input import OrderInput
 
-from .base import BaseEntityConverter, BulkCreateResult, ConversionResult
+from .base import (
+    BaseEntityConverter,
+    BulkCreateResult,
+    ConversionResult,
+    SeparatedInputs,
+)
 from .entity_mapping import EntityMapping
 from .exceptions import (
     EndUserRequiredError,
@@ -58,6 +63,67 @@ class OrderConverter(BaseEntityConverter[OrderDTO, OrderInput, Order]):
         if existing:
             return existing
         return await self.order_service.create_order(input_data)
+
+    @override
+    async def separate_inputs(
+        self,
+        inputs: list[OrderInput],
+    ) -> SeparatedInputs[OrderInput]:
+        if not inputs:
+            return SeparatedInputs(
+                for_creation=[],
+                for_creation_indices=[],
+                for_update=[],
+                for_update_indices=[],
+            )
+
+        pairs = [(inp.order_number, inp.sold_to_customer_id) for inp in inputs]
+        existing_orders = await self.order_service.get_existing_orders(pairs)
+        existing_map = {
+            (o.order_number, o.sold_to_customer_id): o for o in existing_orders
+        }
+
+        for_creation: list[OrderInput] = []
+        for_creation_indices: list[int] = []
+        for_update: list[tuple[OrderInput, Order]] = []
+        for_update_indices: list[int] = []
+
+        for i, inp in enumerate(inputs):
+            key = (inp.order_number, inp.sold_to_customer_id)
+            existing = existing_map.get(key)
+            if existing:
+                inp.id = existing.id
+                for_update.append((inp, existing))
+                for_update_indices.append(i)
+            else:
+                for_creation.append(inp)
+                for_creation_indices.append(i)
+
+        return SeparatedInputs(
+            for_creation=for_creation,
+            for_creation_indices=for_creation_indices,
+            for_update=for_update,
+            for_update_indices=for_update_indices,
+        )
+
+    @override
+    async def update_entities_bulk(
+        self,
+        inputs_with_entities: list[tuple[OrderInput, Order]],
+    ) -> BulkCreateResult[Order]:
+        if not inputs_with_entities:
+            return BulkCreateResult(created=[], skipped_indices=[])
+
+        updated: list[Order] = []
+        skipped: list[int] = []
+        for i, (inp, _existing) in enumerate(inputs_with_entities):
+            try:
+                order = await self.order_service.update_order(inp)
+                updated.append(order)
+            except Exception:
+                skipped.append(i)
+
+        return BulkCreateResult(created=updated, skipped_indices=skipped)
 
     @override
     async def to_input(

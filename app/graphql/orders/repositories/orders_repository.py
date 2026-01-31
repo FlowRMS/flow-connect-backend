@@ -236,6 +236,28 @@ class OrdersRepository(BaseRepository[Order]):
         result = await self.session.execute(stmt)
         return list(result.scalars().all())
 
+    async def get_existing_orders(
+        self,
+        order_customer_pairs: list[tuple[str, UUID]],
+    ) -> list[Order]:
+        if not order_customer_pairs:
+            return []
+
+        conditions = [
+            (Order.order_number == order_num) & (Order.sold_to_customer_id == cust_id)
+            for order_num, cust_id in order_customer_pairs
+        ]
+
+        stmt = (
+            select(Order)
+            .options(
+                lazyload("*"),
+            )
+            .where(or_(*conditions))
+        )
+        result = await self.session.execute(stmt)
+        return list(result.unique().scalars().all())
+
     async def order_numbers_exist_bulk(
         self,
         order_customer_pairs: list[tuple[str, UUID]],
