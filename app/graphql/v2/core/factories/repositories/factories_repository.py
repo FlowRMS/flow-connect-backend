@@ -193,5 +193,5 @@ class FactoriesRepository(BaseRepository[Factory]):
             )
         )
         result = await self.session.execute(stmt)
-        await self.session.commit()
+        await self.session.flush()
         return result.rowcount > 0  # pyright: ignore[reportAttributeAccessIssue]
