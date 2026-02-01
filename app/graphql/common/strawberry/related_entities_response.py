@@ -14,6 +14,9 @@ from app.graphql.pre_opportunities.strawberry.pre_opportunity_lite_response impo
     PreOpportunityLiteResponse,
 )
 from app.graphql.quotes.strawberry.quote_lite_response import QuoteLiteResponse
+from app.graphql.statements.strawberry.statement_lite_response import (
+    StatementLiteResponse,
+)
 from app.graphql.tasks.strawberry.task_response import TaskType
 from app.graphql.v2.core.customers.strawberry.customer_response import (
     CustomerLiteResponse,
@@ -41,3 +44,4 @@ class RelatedEntitiesResponse:
     factories: list[FactoryLiteResponse] | None = None
     products: list[ProductLiteResponse] | None = None
     customers: list[CustomerLiteResponse] | None = None
+    statements: list[StatementLiteResponse] | None = None

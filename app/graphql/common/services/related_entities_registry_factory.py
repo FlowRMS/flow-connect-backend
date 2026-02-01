@@ -38,6 +38,7 @@ from app.graphql.pre_opportunities.services.pre_opportunities_service import (
 )
 from app.graphql.quotes.repositories.quotes_repository import QuotesRepository
 from app.graphql.quotes.services.quote_service import QuoteService
+from app.graphql.statements.services.statement_service import StatementService
 from app.graphql.tasks.repositories.tasks_repository import TasksRepository
 from app.graphql.tasks.services.tasks_service import TasksService
 from app.graphql.v2.core.customers.repositories.customers_repository import (
@@ -79,6 +80,7 @@ def create_related_entities_registry(
     factory_service: FactoryService,
     product_service: ProductService,
     customer_service: CustomerService,
+    statement_service: StatementService,
 ) -> RelatedEntitiesStrategyRegistry:
     registry = RelatedEntitiesStrategyRegistry()
 
@@ -253,6 +255,7 @@ def create_related_entities_registry(
             factory_service=factory_service,
             product_service=product_service,
             customer_service=customer_service,
+            statement_service=statement_service,
         ),
         CustomerRelatedEntitiesStrategy(
             repository=customers_repository,

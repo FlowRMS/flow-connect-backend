@@ -7,25 +7,23 @@ class ConversionError(Exception):
 
 class FactoryRequiredError(ConversionError):
     def __init__(self) -> None:
-        super().__init__("Factory ID is required but not found in entity_mapping")
+        super().__init__("Factory is required but not found")
 
 
 class SoldToCustomerRequiredError(ConversionError):
     def __init__(self) -> None:
-        super().__init__(
-            "Sold-to customer ID is required but not found in entity_mapping"
-        )
+        super().__init__("Sold-to customer is required but not found")
 
 
 class OrderRequiredError(ConversionError):
     def __init__(self) -> None:
-        super().__init__("Order ID is required but not found in entity_mapping")
+        super().__init__("Order is required but not found")
 
 
 class EndUserRequiredError(ConversionError):
     def __init__(self, flow_index: int | None) -> None:
         self.flow_index = flow_index
-        super().__init__(f"End user ID is required for detail at index {flow_index}")
+        super().__init__(f"End user is required for detail at index {flow_index}")
 
 
 class FactoryPartNumberRequiredError(ConversionError):

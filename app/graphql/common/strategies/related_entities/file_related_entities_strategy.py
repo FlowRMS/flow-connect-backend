@@ -27,6 +27,10 @@ from app.graphql.orders.services.order_service import OrderService
 from app.graphql.orders.strawberry.order_lite_response import OrderLiteResponse
 from app.graphql.quotes.services.quote_service import QuoteService
 from app.graphql.quotes.strawberry.quote_lite_response import QuoteLiteResponse
+from app.graphql.statements.services.statement_service import StatementService
+from app.graphql.statements.strawberry.statement_lite_response import (
+    StatementLiteResponse,
+)
 from app.graphql.tasks.services.tasks_service import TasksService
 from app.graphql.tasks.strawberry.task_response import TaskType
 from app.graphql.v2.core.customers.services.customer_service import CustomerService
@@ -58,6 +62,7 @@ class FileRelatedEntitiesStrategy(RelatedEntitiesStrategy):
         factory_service: FactoryService,
         product_service: ProductService,
         customer_service: CustomerService,
+        statement_service: StatementService,
     ) -> None:
         super().__init__()
         self.repository = repository
@@ -73,6 +78,7 @@ class FileRelatedEntitiesStrategy(RelatedEntitiesStrategy):
         self.factory_service = factory_service
         self.product_service = product_service
         self.customer_service = customer_service
+        self.statement_service = statement_service
 
     @override
     def get_supported_source_type(self) -> LandingSourceType:
@@ -107,6 +113,9 @@ class FileRelatedEntitiesStrategy(RelatedEntitiesStrategy):
         customers = await self.customer_service.find_by_entity(
             EntityType.FILE, entity_id
         )
+        statements = await self.statement_service.find_by_entity(
+            EntityType.FILE, entity_id
+        )
 
         return RelatedEntitiesResponse(
             source_type=LandingSourceType.FILES,
@@ -123,4 +132,5 @@ class FileRelatedEntitiesStrategy(RelatedEntitiesStrategy):
             factories=FactoryLiteResponse.from_orm_model_list(factories),
             products=ProductLiteResponse.from_orm_model_list(products),
             customers=CustomerLiteResponse.from_orm_model_list(customers),
+            statements=StatementLiteResponse.from_orm_model_list(statements),
         )

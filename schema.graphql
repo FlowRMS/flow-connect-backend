@@ -4099,6 +4099,7 @@ type RelatedEntitiesResponse {
   factories: [FactoryLiteResponse!]
   products: [ProductLiteResponse!]
   customers: [CustomerLiteResponse!]
+  statements: [StatementLiteResponse!]
 }
 
 input RemoveCompanyFromJobInput {

@@ -2,6 +2,7 @@ from uuid import UUID
 
 from commons.auth import AuthInfo
 from commons.db.v6.commission.statements import CommissionStatement
+from commons.db.v6.crm.links.entity_type import EntityType
 
 from app.errors.common_errors import NameAlreadyExistsError, NotFoundError
 from app.graphql.statements.repositories.statements_repository import (
@@ -62,6 +63,11 @@ class StatementService:
         limit: int = 20,
     ) -> list[CommissionStatement]:
         return await self.repository.search_by_statement_number(search_term, limit)
+
+    async def find_by_entity(
+        self, entity_type: EntityType, entity_id: UUID
+    ) -> list[CommissionStatement]:
+        return await self.repository.find_by_entity(entity_type, entity_id)
 
     async def find_by_factory_id(
         self, factory_id: UUID, limit: int = 25
