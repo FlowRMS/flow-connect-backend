@@ -1,5 +1,3 @@
-"""Container types module for GraphQL API."""
-
 from commons.db.v6 import ContainerType
 
 from app.graphql.v2.core.container_types.mutations import ContainerTypesMutations

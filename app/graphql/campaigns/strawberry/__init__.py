@@ -1,5 +1,3 @@
-"""Campaign GraphQL types package."""
-
 from app.graphql.campaigns.strawberry.campaign_input import CampaignInput
 from app.graphql.campaigns.strawberry.campaign_landing_page_response import (
     CampaignLandingPageResponse,

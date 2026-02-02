@@ -1,5 +1,3 @@
-"""GraphQL queries for LinkRelation entity."""
-
 from uuid import UUID
 
 import strawberry

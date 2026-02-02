@@ -1,5 +1,3 @@
-"""GraphQL input types for Folder operations using pyfiles.folders."""
-
 from uuid import UUID
 
 import strawberry

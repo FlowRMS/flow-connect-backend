@@ -1,10 +1,4 @@
-"""
-Overage Record Response Type
-Contains overage pricing and commission information for a product
-"""
-
 from enum import Enum
-from typing import Optional
 
 import strawberry
 
@@ -33,17 +27,17 @@ class OverageRecord:
     """
 
     # Calculation results
-    effective_commission_rate: Optional[float] = None
-    overage_unit_price: Optional[float] = None
-    base_unit_price: Optional[float] = None
-    rep_share: Optional[float] = None
-    level_rate: Optional[float] = None
-    level_unit_price: Optional[float] = None
+    effective_commission_rate: float | None = None
+    overage_unit_price: float | None = None
+    base_unit_price: float | None = None
+    rep_share: float | None = None
+    level_rate: float | None = None
+    level_unit_price: float | None = None
 
     # Overage configuration
-    overage_type: Optional[OverageTypeEnum] = None
+    overage_type: OverageTypeEnum | None = None
 
     # Error feedback - populated when calculation cannot be performed
-    error_message: Optional[str] = None
+    error_message: str | None = None
     # Indicates if calculation was successful
     success: bool = True

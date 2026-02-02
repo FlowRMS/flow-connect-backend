@@ -1,10 +1,3 @@
-"""
-Delivery enums for GraphQL.
-
-Re-exports commons enums directly. Strawberry auto-registers Python enums.
-No need to wrap with strawberry.enum() - use the commons enums directly in inputs/responses.
-"""
-
 from commons.db.v6.warehouse.deliveries.delivery_enums import (
     DeliveryDocumentType,
     DeliveryIssueStatus,

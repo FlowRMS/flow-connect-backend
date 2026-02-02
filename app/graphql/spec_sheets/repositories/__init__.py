@@ -1,5 +1,3 @@
-"""SpecSheets repositories module."""
-
 from app.graphql.spec_sheets.repositories.folder_mutations_repository import (
     FolderMutationsRepository,
 )

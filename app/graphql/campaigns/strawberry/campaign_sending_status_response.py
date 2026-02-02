@@ -1,5 +1,3 @@
-"""GraphQL response type for campaign sending status."""
-
 from typing import TYPE_CHECKING
 from uuid import UUID
 

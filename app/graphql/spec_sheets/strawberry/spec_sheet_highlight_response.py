@@ -1,5 +1,3 @@
-"""GraphQL response types for SpecSheet Highlights."""
-
 from datetime import datetime
 from typing import Self
 from uuid import UUID

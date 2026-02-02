@@ -1,6 +1,4 @@
-"""GraphQL response type for SubmittalStakeholder."""
-
-from typing import Optional, Self
+from typing import Self
 from uuid import UUID
 
 import strawberry
@@ -17,13 +15,13 @@ class SubmittalStakeholderResponse(DTOMixin[SubmittalStakeholder]):
     _instance: strawberry.Private[SubmittalStakeholder]
     id: UUID
     submittal_id: UUID
-    customer_id: Optional[UUID]
+    customer_id: UUID | None
     role: SubmittalStakeholderRoleGQL
     is_primary: bool
-    contact_name: Optional[str]
-    contact_email: Optional[str]
-    contact_phone: Optional[str]
-    company_name: Optional[str]
+    contact_name: str | None
+    contact_email: str | None
+    contact_phone: str | None
+    company_name: str | None
 
     @classmethod
     def from_orm_model(cls, model: SubmittalStakeholder) -> Self:

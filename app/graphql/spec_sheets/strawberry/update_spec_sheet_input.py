@@ -1,5 +1,3 @@
-"""GraphQL input type for updating a SpecSheet."""
-
 import strawberry
 from commons.db.v6.crm.spec_sheets.spec_sheet_model import SpecSheet
 

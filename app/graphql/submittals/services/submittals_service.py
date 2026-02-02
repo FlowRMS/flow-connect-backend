@@ -1,12 +1,8 @@
-from dataclasses import dataclass
 from uuid import UUID
 
-import httpx
 from commons.db.v6.crm.submittals import (
-    ItemChangeStatus,
     Submittal,
     SubmittalChangeAnalysis,
-    SubmittalEmail,
     SubmittalItem,
     SubmittalItemApprovalStatus,
     SubmittalItemChange,
@@ -19,10 +15,7 @@ from commons.db.v6.crm.submittals import (
 from loguru import logger
 from strawberry import UNSET
 
-from app.graphql.campaigns.services.email_provider_service import (
-    EmailAttachment,
-    EmailProviderService,
-)
+from app.graphql.campaigns.services.email_provider_service import EmailProviderService
 from app.graphql.submittals.repositories.submittals_repository import (
     SubmittalChangeAnalysisRepository,
     SubmittalItemChangesRepository,
@@ -34,6 +27,16 @@ from app.graphql.submittals.repositories.submittals_repository import (
 )
 from app.graphql.submittals.services.submittal_pdf_export_service import (
     SubmittalPdfExportService,
+)
+from app.graphql.submittals.services.submittals_change_service import (
+    SubmittalsChangeService,
+)
+from app.graphql.submittals.services.submittals_email_service import (
+    SubmittalsEmailService,
+)
+from app.graphql.submittals.services.submittals_revision_service import (
+    GenerateSubmittalPdfResult,
+    SubmittalsRevisionService,
 )
 from app.graphql.submittals.services.types import SendSubmittalEmailResult
 from app.graphql.submittals.strawberry.submittal_input import (
@@ -49,24 +52,15 @@ from app.graphql.submittals.strawberry.submittal_input import (
     UpdateSubmittalItemInput,
 )
 
-
-@dataclass
-class GenerateSubmittalPdfResult:
-    """Result of generating a submittal PDF."""
-
-    success: bool = False
-    error: str | None = None
-    pdf_url: str | None = None
-    pdf_file_name: str | None = None
-    pdf_file_size_bytes: int = 0
-    revision: SubmittalRevision | None = None
-    email_sent: bool = False
-    email_recipients_count: int = 0
+# Re-export for backward compatibility
+__all__ = [
+    "GenerateSubmittalPdfResult",
+    "SendSubmittalEmailResult",
+    "SubmittalsService",
+]
 
 
 class SubmittalsService:
-    """Service for Submittals business logic."""
-
     def __init__(  # pyright: ignore[reportMissingSuperCall]
         self,
         repository: SubmittalsRepository,
@@ -79,46 +73,27 @@ class SubmittalsService:
         email_provider: EmailProviderService,
         pdf_export_service: SubmittalPdfExportService,
     ) -> None:
-        """
-        Initialize the Submittals service.
-
-        Args:
-            repository: Submittals repository instance
-            items_repository: SubmittalItems repository instance
-            stakeholders_repository: SubmittalStakeholders repository instance
-            revisions_repository: SubmittalRevisions repository instance
-            returned_pdfs_repository: SubmittalReturnedPdfs repository instance
-            change_analysis_repository: SubmittalChangeAnalysis repository instance
-            item_changes_repository: SubmittalItemChanges repository instance
-            email_provider: Email provider service for sending emails
-            pdf_export_service: PDF export service for generating and uploading PDFs
-        """
         self.repository = repository
         self.items_repository = items_repository
         self.stakeholders_repository = stakeholders_repository
-        self.revisions_repository = revisions_repository
-        self.returned_pdfs_repository = returned_pdfs_repository
-        self.change_analysis_repository = change_analysis_repository
-        self.item_changes_repository = item_changes_repository
-        self.email_provider = email_provider
-        self.pdf_export_service = pdf_export_service
+
+        self._email_service = SubmittalsEmailService(repository, email_provider)
+        self._revision_service = SubmittalsRevisionService(
+            repository, pdf_export_service, self._email_service
+        )
+        self._change_service = SubmittalsChangeService(
+            revisions_repository,
+            returned_pdfs_repository,
+            change_analysis_repository,
+            item_changes_repository,
+        )
 
     async def create_submittal(self, input_data: CreateSubmittalInput) -> Submittal:
-        """
-        Create a new submittal.
-
-        Args:
-            input_data: Submittal creation data
-
-        Returns:
-            Created Submittal model
-        """
         submittal = input_data.to_orm_model()
         created = await self.repository.create(submittal)
         logger.info(
             f"Created submittal {created.id} with number {created.submittal_number}"
         )
-        # Re-fetch with all relations loaded to avoid lazy loading issues
         submittal_with_relations = await self.repository.get_by_id_with_relations(
             created.id
         )
@@ -127,19 +102,6 @@ class SubmittalsService:
     async def update_submittal(
         self, submittal_id: UUID, input_data: UpdateSubmittalInput
     ) -> Submittal:
-        """
-        Update an existing submittal.
-
-        Args:
-            submittal_id: UUID of the submittal to update
-            input_data: Update data
-
-        Returns:
-            Updated Submittal model
-
-        Raises:
-            ValueError: If submittal not found
-        """
         submittal = await self.repository.get_by_id(submittal_id)
         if not submittal:
             raise ValueError(f"Submittal with id {submittal_id} not found")
@@ -156,17 +118,13 @@ class SubmittalsService:
 
         if input_data.description is not None:
             submittal.description = input_data.description
-
         if input_data.job_location is not None:
             submittal.job_location = input_data.job_location
-
         if input_data.bid_date is not None:
             submittal.bid_date = input_data.bid_date
-
         if input_data.tags is not None:
             submittal.tags = input_data.tags
 
-        # Update config if provided
         if input_data.config is not None:
             config = input_data.config
             submittal.config_include_lamps = config.include_lamps
@@ -186,54 +144,18 @@ class SubmittalsService:
         return updated
 
     async def delete_submittal(self, submittal_id: UUID) -> bool:
-        """
-        Delete a submittal.
-
-        Args:
-            submittal_id: UUID of the submittal to delete
-
-        Returns:
-            True if deleted successfully
-        """
         result = await self.repository.delete(submittal_id)
         if result:
             logger.info(f"Deleted submittal {submittal_id}")
         return result
 
     async def get_submittal(self, submittal_id: UUID) -> Submittal | None:
-        """
-        Get a submittal by ID.
-
-        Args:
-            submittal_id: UUID of the submittal
-
-        Returns:
-            Submittal model or None if not found
-        """
         return await self.repository.get_by_id_with_relations(submittal_id)
 
     async def get_submittals_by_quote(self, quote_id: UUID) -> list[Submittal]:
-        """
-        Get all submittals for a quote.
-
-        Args:
-            quote_id: UUID of the quote
-
-        Returns:
-            List of Submittal models
-        """
         return await self.repository.find_by_quote(quote_id)
 
     async def get_submittals_by_job(self, job_id: UUID) -> list[Submittal]:
-        """
-        Get all submittals for a job.
-
-        Args:
-            job_id: UUID of the job
-
-        Returns:
-            List of Submittal models
-        """
         return await self.repository.find_by_job(job_id)
 
     async def search_submittals(
@@ -242,36 +164,13 @@ class SubmittalsService:
         status: SubmittalStatus | None = None,
         limit: int = 50,
     ) -> list[Submittal]:
-        """
-        Search submittals.
-
-        Args:
-            search_term: Search term for submittal_number
-            status: Optional status filter
-            limit: Maximum number of results
-
-        Returns:
-            List of matching Submittal models
-        """
         return await self.repository.search_submittals(search_term, status, limit)
 
-    # Item operations
     async def add_item(
         self, submittal_id: UUID, input_data: SubmittalItemInput
     ) -> SubmittalItem:
-        """
-        Add an item to a submittal.
-
-        Args:
-            submittal_id: UUID of the submittal
-            input_data: Item data
-
-        Returns:
-            Created SubmittalItem
-        """
         item = input_data.to_orm_model()
 
-        # Auto-calculate match_status based on spec_sheet and highlight_version
         if item.spec_sheet_id and item.highlight_version_id:
             item.match_status = SubmittalItemMatchStatus.EXACT_MATCH
         elif item.spec_sheet_id:
@@ -281,7 +180,6 @@ class SubmittalsService:
 
         created = await self.repository.add_item(submittal_id, item)
         logger.info(f"Added item {created.id} to submittal {submittal_id}")
-        # Re-fetch with relations loaded
         item_with_relations = await self.items_repository.get_by_id_with_relations(
             created.id
         )
@@ -290,119 +188,66 @@ class SubmittalsService:
     async def update_item(
         self, item_id: UUID, input_data: UpdateSubmittalItemInput
     ) -> SubmittalItem:
-        """
-        Update a submittal item.
-
-        Args:
-            item_id: UUID of the item to update
-            input_data: Update data
-
-        Returns:
-            Updated SubmittalItem
-
-        Raises:
-            ValueError: If item not found
-        """
         item = await self.items_repository.get_by_id(item_id)
         if not item:
             raise ValueError(f"SubmittalItem with id {item_id} not found")
 
-        # Use UNSET check for nullable fields to allow setting to None
         if input_data.spec_sheet_id is not UNSET:
             item.spec_sheet_id = input_data.spec_sheet_id
-
         if input_data.highlight_version_id is not UNSET:
             item.highlight_version_id = input_data.highlight_version_id
-
         if input_data.part_number is not None:
             item.part_number = input_data.part_number
-
         if input_data.manufacturer is not None:
             item.manufacturer = input_data.manufacturer
-
         if input_data.description is not None:
             item.description = input_data.description
-
         if input_data.quantity is not None:
             item.quantity = input_data.quantity
-
         if input_data.approval_status is not None:
             item.approval_status = SubmittalItemApprovalStatus(
                 input_data.approval_status.value
             )
-
         if input_data.match_status is not None:
             item.match_status = SubmittalItemMatchStatus(input_data.match_status.value)
         else:
-            # Auto-calculate match_status based on spec_sheet and highlight_version
             if item.spec_sheet_id and item.highlight_version_id:
                 item.match_status = SubmittalItemMatchStatus.EXACT_MATCH
             elif item.spec_sheet_id:
                 item.match_status = SubmittalItemMatchStatus.PARTIAL_MATCH
             else:
                 item.match_status = SubmittalItemMatchStatus.NO_MATCH
-
         if input_data.notes is not None:
             item.notes = input_data.notes
 
         updated = await self.items_repository.update(item)
         logger.info(f"Updated submittal item {item_id}")
-        # Re-fetch with relations loaded
         item_with_relations = await self.items_repository.get_by_id_with_relations(
             updated.id
         )
         return item_with_relations or updated
 
     async def remove_item(self, item_id: UUID) -> bool:
-        """
-        Remove an item from a submittal.
-
-        Args:
-            item_id: UUID of the item to remove
-
-        Returns:
-            True if removed successfully
-        """
         result = await self.items_repository.delete(item_id)
         if result:
             logger.info(f"Removed submittal item {item_id}")
         return result
 
-    # Stakeholder operations
     async def add_stakeholder(
         self, submittal_id: UUID, input_data: SubmittalStakeholderInput
     ) -> SubmittalStakeholder:
-        """
-        Add a stakeholder to a submittal.
-
-        Args:
-            submittal_id: UUID of the submittal
-            input_data: Stakeholder data
-
-        Returns:
-            Created SubmittalStakeholder
-        """
         stakeholder = input_data.to_orm_model()
         created = await self.repository.add_stakeholder(submittal_id, stakeholder)
         logger.info(f"Added stakeholder {created.id} to submittal {submittal_id}")
         return created
 
     async def remove_stakeholder(self, stakeholder_id: UUID) -> bool:
-        """
-        Remove a stakeholder from a submittal.
-
-        Args:
-            stakeholder_id: UUID of the stakeholder to remove
-
-        Returns:
-            True if removed successfully
-        """
         result = await self.stakeholders_repository.delete(stakeholder_id)
         if result:
             logger.info(f"Removed stakeholder {stakeholder_id}")
         return result
 
-    # Revision operations
+    # Delegated to revision service
     async def create_revision(
         self,
         submittal_id: UUID,
@@ -412,455 +257,44 @@ class SubmittalsService:
         pdf_file_name: str | None = None,
         pdf_file_size_bytes: int | None = None,
     ) -> SubmittalRevision:
-        """
-        Create a new revision for a submittal.
-
-        Args:
-            submittal_id: UUID of the submittal
-            notes: Optional notes for the revision
-            pdf_file_id: Optional UUID of the uploaded PDF file
-            pdf_file_url: Optional URL to the PDF file
-            pdf_file_name: Optional name of the PDF file
-            pdf_file_size_bytes: Optional size of the PDF file in bytes
-
-        Returns:
-            Created SubmittalRevision
-        """
-        next_revision = await self.repository.get_next_revision_number(submittal_id)
-
-        revision = SubmittalRevision(
-            revision_number=next_revision,
-            notes=notes,
-            pdf_file_id=pdf_file_id,
-            pdf_file_url=pdf_file_url,
-            pdf_file_name=pdf_file_name,
-            pdf_file_size_bytes=pdf_file_size_bytes,
+        return await self._revision_service.create_revision(
+            submittal_id,
+            notes,
+            pdf_file_id,
+            pdf_file_url,
+            pdf_file_name,
+            pdf_file_size_bytes,
         )
 
-        created = await self.repository.add_revision(submittal_id, revision)
-        logger.info(
-            f"Created revision {created.revision_number} for submittal {submittal_id}"
-        )
-        return created
-
-    # Email operations
-    async def send_email(
-        self, input_data: SendSubmittalEmailInput
-    ) -> SendSubmittalEmailResult:
-        """
-        Send an email for a submittal and record it in the database.
-
-        This method:
-        1. Checks if the user has an email provider connected
-        2. Sends the email via O365 or Gmail
-        3. Records the email in the database
-
-        Args:
-            input_data: Email data including recipients, subject, and body
-
-        Returns:
-            SendSubmittalEmailResult with email record and send status
-        """
-        # Check if user has an email provider connected
-        has_provider = await self.email_provider.has_connected_provider()
-        if not has_provider:
-            logger.warning("Cannot send submittal email: no email provider connected")
-            return SendSubmittalEmailResult(
-                success=False,
-                error="No email provider connected. Please connect O365 or Gmail in settings.",
-            )
-
-        # Download attachment if URL is provided
-        attachments: list[EmailAttachment] = []
-        if input_data.attachment_url:
-            try:
-                async with httpx.AsyncClient() as client:
-                    response = await client.get(input_data.attachment_url, timeout=60.0)
-                    _ = response.raise_for_status()
-                    attachment_content = response.content
-                    attachment_name = input_data.attachment_name or "submittal.pdf"
-                    attachments.append(
-                        EmailAttachment(
-                            filename=attachment_name,
-                            content=attachment_content,
-                            content_type="application/pdf",
-                        )
-                    )
-                    logger.info(
-                        f"Downloaded attachment {attachment_name} "
-                        f"({len(attachment_content)} bytes)"
-                    )
-            except Exception as e:
-                logger.error(f"Failed to download attachment: {e}")
-                return SendSubmittalEmailResult(
-                    success=False,
-                    error=f"Failed to download PDF attachment: {e!s}",
-                )
-
-        # Send the email
-        send_result = await self.email_provider.send_email(
-            to=input_data.recipient_emails,
-            subject=input_data.subject,
-            body=input_data.body or "",
-            body_type="HTML",
-            attachments=attachments if attachments else None,
-        )
-
-        if not send_result.success:
-            logger.error(f"Failed to send submittal email: {send_result.error}")
-            return SendSubmittalEmailResult(
-                success=False,
-                error=send_result.error,
-                send_result=send_result,
-            )
-
-        # Record the email in the database
-        email = SubmittalEmail(
-            revision_id=input_data.revision_id,
-            subject=input_data.subject,
-            body=input_data.body,
-            recipient_emails=input_data.recipient_emails,
-            recipients=[
-                {"email": e, "type": "to"} for e in input_data.recipient_emails
-            ],
-        )
-        email.created_by_id = self.email_provider.auth_info.flow_user_id
-
-        created = await self.repository.add_email(input_data.submittal_id, email)
-        logger.info(
-            f"Sent and recorded email for submittal {input_data.submittal_id} "
-            f"to {len(input_data.recipient_emails)} recipients via {send_result.provider}"
-        )
-
-        return SendSubmittalEmailResult(
-            email_record=created,
-            send_result=send_result,
-            success=True,
-        )
-
-    # PDF Generation operations
     async def generate_pdf(
         self, input_data: GenerateSubmittalPdfInput
     ) -> GenerateSubmittalPdfResult:
-        """
-        Generate a PDF for a submittal.
+        return await self._revision_service.generate_pdf(input_data)
 
-        This method:
-        1. Fetches the submittal with all relations
-        2. Generates the PDF with spec sheets using the export service
-        3. Uploads to S3 and returns a presigned URL
-        4. Optionally creates a new revision
+    # Delegated to email service
+    async def send_email(
+        self, input_data: SendSubmittalEmailInput
+    ) -> SendSubmittalEmailResult:
+        return await self._email_service.send_email(input_data)
 
-        Args:
-            input_data: PDF generation options
-
-        Returns:
-            GenerateSubmittalPdfResult with PDF URL and metadata
-        """
-        # Get submittal with all relations
-        submittal = await self.repository.get_by_id_with_relations(
-            input_data.submittal_id
-        )
-        if not submittal:
-            logger.warning(f"Submittal {input_data.submittal_id} not found for PDF gen")
-            return GenerateSubmittalPdfResult(
-                success=False,
-                error=f"Submittal with id {input_data.submittal_id} not found",
-            )
-
-        # Export PDF using the export service (handles spec sheets + S3 upload)
-        export_result = await self.pdf_export_service.export_submittal_pdf(
-            submittal=submittal,
-            input_data=input_data,
-        )
-
-        if not export_result.success:
-            logger.error(
-                f"Failed to export PDF for submittal {input_data.submittal_id}: "
-                f"{export_result.error}"
-            )
-            return GenerateSubmittalPdfResult(
-                success=False,
-                error=export_result.error,
-            )
-
-        # Create revision if requested (or if save_as_attachment is enabled)
-        revision = None
-        if input_data.create_revision or input_data.save_as_attachment:
-            revision = await self.create_revision(
-                submittal_id=input_data.submittal_id,
-                notes=input_data.revision_notes or "PDF generated",
-                pdf_file_url=export_result.pdf_url,
-                pdf_file_name=export_result.pdf_file_name,
-                pdf_file_size_bytes=export_result.pdf_file_size_bytes,
-            )
-            logger.info(
-                f"Created revision {revision.revision_number} for submittal "
-                f"{input_data.submittal_id} after PDF generation"
-            )
-
-        logger.info(
-            f"Generated PDF for submittal {input_data.submittal_id}: "
-            f"{export_result.pdf_file_size_bytes} bytes"
-        )
-
-        # Handle email/email_link output types
-        email_sent = False
-        email_recipients_count = 0
-        if (
-            input_data.output_type in ("email", "email_link")
-            and input_data.addressed_to_ids
-        ):
-            try:
-                # Get recipient emails from addressed-to stakeholders
-                stakeholders = submittal.stakeholders or []
-                addressed_to_ids_str = {str(sid) for sid in input_data.addressed_to_ids}
-                recipient_emails = [
-                    s.contact_email
-                    for s in stakeholders
-                    if str(s.id) in addressed_to_ids_str and s.contact_email
-                ]
-
-                if recipient_emails:
-                    submittal_number = submittal.submittal_number or "Submittal"
-                    job_name = submittal.job.job_name if submittal.job else ""
-                    subject = f"Submittal {submittal_number} - {job_name}".strip(" -")
-
-                    if input_data.output_type == "email":
-                        # Email with PDF attachment
-                        attachments: list[EmailAttachment] = []
-                        if export_result.pdf_url:
-                            async with httpx.AsyncClient() as client:
-                                response = await client.get(
-                                    export_result.pdf_url, timeout=60.0
-                                )
-                                _ = response.raise_for_status()
-                                attachments.append(
-                                    EmailAttachment(
-                                        filename=export_result.pdf_file_name
-                                        or "submittal.pdf",
-                                        content=response.content,
-                                        content_type="application/pdf",
-                                    )
-                                )
-
-                        body = (
-                            f"<p>Please find attached the submittal document "
-                            f"<strong>{submittal_number}</strong>.</p>"
-                        )
-                        send_result = await self.email_provider.send_email(
-                            to=recipient_emails,
-                            subject=subject,
-                            body=body,
-                            body_type="HTML",
-                            attachments=attachments if attachments else None,
-                        )
-                    else:
-                        # Email with link to PDF
-                        body = (
-                            f"<p>Please review the submittal document "
-                            f"<strong>{submittal_number}</strong>.</p>"
-                            f'<p><a href="{export_result.pdf_url}">Download PDF</a></p>'
-                        )
-                        send_result = await self.email_provider.send_email(
-                            to=recipient_emails,
-                            subject=subject,
-                            body=body,
-                            body_type="HTML",
-                        )
-
-                    if send_result.success:
-                        email_sent = True
-                        email_recipients_count = len(recipient_emails)
-
-                        # Record the email if a revision was created
-                        if revision:
-                            email_record = SubmittalEmail(
-                                revision_id=revision.id,
-                                subject=subject,
-                                body=body,
-                                recipient_emails=recipient_emails,
-                                recipients=[
-                                    {"email": e, "type": "to"} for e in recipient_emails
-                                ],
-                            )
-                            email_record.created_by_id = (
-                                self.email_provider.auth_info.flow_user_id
-                            )
-                            _ = await self.repository.add_email(
-                                input_data.submittal_id, email_record
-                            )
-
-                        logger.info(
-                            f"Sent submittal {input_data.submittal_id} via "
-                            f"{input_data.output_type} to "
-                            f"{len(recipient_emails)} recipients"
-                        )
-                    else:
-                        logger.error(
-                            f"Failed to send email for submittal "
-                            f"{input_data.submittal_id}: {send_result.error}"
-                        )
-                else:
-                    logger.warning(
-                        f"No valid recipient emails found for submittal "
-                        f"{input_data.submittal_id} addressed-to stakeholders"
-                    )
-            except Exception as e:
-                logger.error(
-                    f"Error sending email for submittal {input_data.submittal_id}: {e}"
-                )
-                # Don't fail the whole operation - PDF was generated successfully
-
-        return GenerateSubmittalPdfResult(
-            success=True,
-            pdf_url=export_result.pdf_url,
-            pdf_file_name=export_result.pdf_file_name,
-            pdf_file_size_bytes=export_result.pdf_file_size_bytes,
-            revision=revision,
-            email_sent=email_sent,
-            email_recipients_count=email_recipients_count,
-        )
-
-    # Returned PDF operations
+    # Delegated to change service
     async def add_returned_pdf(
         self, input_data: AddReturnedPdfInput
     ) -> SubmittalReturnedPdf:
-        """
-        Add a returned PDF to a revision.
+        return await self._change_service.add_returned_pdf(input_data)
 
-        Args:
-            input_data: Returned PDF data
-
-        Returns:
-            Created SubmittalReturnedPdf
-        """
-        returned_pdf = input_data.to_orm_model()
-        created = await self.revisions_repository.add_returned_pdf(
-            input_data.revision_id, returned_pdf
-        )
-        logger.info(
-            f"Added returned PDF {created.id} to revision {input_data.revision_id}"
-        )
-        return created
-
-    # Change Analysis operations
     async def add_change_analysis(
         self, input_data: AddChangeAnalysisInput
     ) -> SubmittalChangeAnalysis:
-        """
-        Add a change analysis to a returned PDF.
+        return await self._change_service.add_change_analysis(input_data)
 
-        Args:
-            input_data: Change analysis data
-
-        Returns:
-            Created SubmittalChangeAnalysis
-        """
-        change_analysis = input_data.to_orm_model()
-        created = await self.returned_pdfs_repository.add_change_analysis(
-            input_data.returned_pdf_id, change_analysis
-        )
-        logger.info(
-            f"Added change analysis {created.id} to returned PDF "
-            f"{input_data.returned_pdf_id}"
-        )
-        return created
-
-    # Item Change operations
     async def update_item_change(
         self, item_change_id: UUID, input_data: UpdateItemChangeInput
     ) -> SubmittalItemChange:
-        """
-        Update an item change.
-
-        Args:
-            item_change_id: UUID of the item change to update
-            input_data: Update data
-
-        Returns:
-            Updated SubmittalItemChange
-
-        Raises:
-            ValueError: If item change not found
-        """
-        item_change = await self.item_changes_repository.get_by_id(item_change_id)
-        if not item_change:
-            raise ValueError(f"SubmittalItemChange with id {item_change_id} not found")
-
-        if input_data.status is not None:
-            item_change.status = ItemChangeStatus(input_data.status.value)
-
-        if input_data.notes is not None:
-            item_change.notes = input_data.notes
-
-        if input_data.page_references is not None:
-            item_change.page_references = input_data.page_references
-
-        if input_data.resolved is not None:
-            item_change.resolved = input_data.resolved
-
-        if input_data.fixture_type is not None:
-            item_change.fixture_type = input_data.fixture_type
-
-        if input_data.catalog_number is not None:
-            item_change.catalog_number = input_data.catalog_number
-
-        if input_data.manufacturer is not None:
-            item_change.manufacturer = input_data.manufacturer
-
-        updated = await self.item_changes_repository.update(item_change)
-        logger.info(f"Updated item change {item_change_id}")
-        return updated
+        return await self._change_service.update_item_change(item_change_id, input_data)
 
     async def delete_item_change(self, item_change_id: UUID) -> bool:
-        """
-        Delete an item change.
-
-        Args:
-            item_change_id: UUID of the item change to delete
-
-        Returns:
-            True if deleted successfully
-        """
-        # Get the item change to find its analysis and update the count
-        item_change = await self.item_changes_repository.get_by_id(item_change_id)
-        if not item_change:
-            raise ValueError(f"SubmittalItemChange with id {item_change_id} not found")
-
-        analysis_id = item_change.change_analysis_id
-
-        result = await self.item_changes_repository.delete(item_change_id)
-        if result:
-            # Update the total_changes_detected count in the parent analysis
-            analysis = await self.change_analysis_repository.get_by_id(analysis_id)
-            if analysis:
-                analysis.total_changes_detected = max(
-                    0, analysis.total_changes_detected - 1
-                )
-                _ = await self.change_analysis_repository.update(analysis)
-
-            logger.info(f"Deleted item change {item_change_id}")
-        return result
+        return await self._change_service.delete_item_change(item_change_id)
 
     async def resolve_item_change(self, item_change_id: UUID) -> SubmittalItemChange:
-        """
-        Mark an item change as resolved.
-
-        Args:
-            item_change_id: UUID of the item change to resolve
-
-        Returns:
-            Updated SubmittalItemChange with resolved=True
-
-        Raises:
-            ValueError: If item change not found
-        """
-        item_change = await self.item_changes_repository.get_by_id(item_change_id)
-        if not item_change:
-            raise ValueError(f"SubmittalItemChange with id {item_change_id} not found")
-
-        item_change.resolved = True
-        updated = await self.item_changes_repository.update(item_change)
-        logger.info(f"Resolved item change {item_change_id}")
-        return updated
+        return await self._change_service.resolve_item_change(item_change_id)

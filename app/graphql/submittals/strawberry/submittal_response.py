@@ -1,7 +1,5 @@
-"""GraphQL response type for Submittal."""
-
 from datetime import date, datetime
-from typing import Annotated, Optional, Self
+from typing import Annotated, Self
 from uuid import UUID
 
 import strawberry
@@ -21,19 +19,19 @@ class SubmittalResponse(DTOMixin[Submittal]):
     """Response type for Submittal."""
 
     _instance: strawberry.Private[Submittal]
-    _created_by_response: strawberry.Private[Optional[UserResponse]]
+    _created_by_response: strawberry.Private[UserResponse | None]
     id: UUID
     submittal_number: str
-    quote_id: Optional[UUID]
-    job_id: Optional[UUID]
+    quote_id: UUID | None
+    job_id: UUID | None
     status: SubmittalStatusGQL
-    transmittal_purpose: Optional[TransmittalPurposeGQL]
-    description: Optional[str]
-    job_location: Optional[str]
-    bid_date: Optional[date]
-    tags: Optional[list[str]]
+    transmittal_purpose: TransmittalPurposeGQL | None
+    description: str | None
+    job_location: str | None
+    bid_date: date | None
+    tags: list[str] | None
     created_at: datetime
-    created_by_id: Optional[UUID]
+    created_by_id: UUID | None
 
     @classmethod
     def from_orm_model(cls, model: Submittal) -> Self:
@@ -41,7 +39,7 @@ class SubmittalResponse(DTOMixin[Submittal]):
         from sqlalchemy.orm.attributes import instance_state
 
         # Try to extract created_by while session might still be active
-        created_by_response: Optional[UserResponse] = None
+        created_by_response: UserResponse | None = None
         state = instance_state(model)
         if "created_by" in state.dict and model.created_by is not None:
             # Relationship is already loaded
@@ -69,7 +67,7 @@ class SubmittalResponse(DTOMixin[Submittal]):
         )
 
     @strawberry.field
-    def created_by(self) -> Optional[UserResponse]:
+    def created_by(self) -> UserResponse | None:
         """Resolve created_by from cached response."""
         return self._created_by_response
 

@@ -1,5 +1,3 @@
-"""Repository for SpecSheet Highlights with specific database operations."""
-
 from uuid import UUID
 
 from commons.db.v6.crm.spec_sheets.spec_sheet_highlight_model import (

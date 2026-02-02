@@ -1,5 +1,3 @@
-"""Shipping carriers module for GraphQL API."""
-
 from commons.db.v6 import ShippingCarrier
 
 from app.graphql.v2.core.shipping_carriers.mutations import ShippingCarriersMutations

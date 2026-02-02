@@ -1,5 +1,3 @@
-"""Common GraphQL queries."""
-
 from app.graphql.common.queries.entity_lookup_queries import EntityLookupQueries
 from app.graphql.common.queries.landing_page_queries import LandingPageQueries
 from app.graphql.common.queries.overage_queries import OverageQueries

@@ -1,7 +1,5 @@
-"""GraphQL response type for sending submittal emails."""
-
 from datetime import datetime
-from typing import Optional, Self
+from typing import Self
 from uuid import UUID
 
 import strawberry
@@ -16,9 +14,9 @@ class SubmittalEmailResponse:
 
     id: UUID
     submittal_id: UUID
-    revision_id: Optional[UUID]
+    revision_id: UUID | None
     subject: str
-    body: Optional[str]
+    body: str | None
     recipient_emails: list[str]
     created_at: datetime
 
@@ -41,9 +39,9 @@ class SendSubmittalEmailResponse:
     """Response type for send submittal email mutation."""
 
     success: bool
-    error: Optional[str] = None
-    email: Optional[SubmittalEmailResponse] = None
-    provider: Optional[str] = None
+    error: str | None = None
+    email: SubmittalEmailResponse | None = None
+    provider: str | None = None
 
     @classmethod
     def from_result(cls, result: SendSubmittalEmailResult) -> Self:

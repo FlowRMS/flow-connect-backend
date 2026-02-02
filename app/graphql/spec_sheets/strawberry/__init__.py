@@ -1,5 +1,3 @@
-"""GraphQL Strawberry types for SpecSheets."""
-
 from app.graphql.spec_sheets.strawberry.folder_input import (
     CreateFolderInput,
     DeleteFolderInput,

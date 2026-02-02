@@ -1,5 +1,3 @@
-"""GraphQL response types for LinkRelation."""
-
 from datetime import datetime
 from uuid import UUID
 

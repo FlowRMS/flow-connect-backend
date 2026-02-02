@@ -1,5 +1,3 @@
-"""Response type for fulfillment order line items."""
-
 import strawberry
 
 from app.graphql.v2.core.fulfillment.strawberry.fulfillment_line_item_lite_response import (

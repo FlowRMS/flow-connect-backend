@@ -1,5 +1,3 @@
-"""Landing page response type for Campaigns entity."""
-
 from datetime import datetime
 
 import strawberry

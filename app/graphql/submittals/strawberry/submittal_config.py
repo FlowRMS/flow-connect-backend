@@ -1,5 +1,3 @@
-"""GraphQL types for Submittal configuration."""
-
 from typing import Self
 
 import strawberry

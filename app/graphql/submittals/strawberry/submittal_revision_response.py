@@ -1,7 +1,5 @@
-"""GraphQL response type for SubmittalRevision."""
-
 from datetime import datetime
-from typing import Optional, Self
+from typing import Self
 from uuid import UUID
 
 import strawberry
@@ -23,19 +21,19 @@ class SubmittalRevisionResponse(DTOMixin[SubmittalRevision]):
     """Response type for SubmittalRevision."""
 
     _instance: strawberry.Private[SubmittalRevision]
-    _created_by_response: strawberry.Private[Optional[UserResponse]]
+    _created_by_response: strawberry.Private[UserResponse | None]
     _emails_response: strawberry.Private[list[SubmittalEmailResponse]]
     _returned_pdfs_response: strawberry.Private[list[SubmittalReturnedPdfResponse]]
     id: UUID
     submittal_id: UUID
     revision_number: int
-    pdf_file_id: Optional[UUID]
-    pdf_file_url: Optional[str]
-    pdf_file_name: Optional[str]
-    pdf_file_size_bytes: Optional[int]
-    notes: Optional[str]
+    pdf_file_id: UUID | None
+    pdf_file_url: str | None
+    pdf_file_name: str | None
+    pdf_file_size_bytes: int | None
+    notes: str | None
     created_at: datetime
-    created_by_id: Optional[UUID]
+    created_by_id: UUID | None
 
     @classmethod
     def from_orm_model(cls, model: SubmittalRevision) -> Self:
@@ -43,7 +41,7 @@ class SubmittalRevisionResponse(DTOMixin[SubmittalRevision]):
         state = inspect(model)
 
         # Extract created_by
-        created_by_response: Optional[UserResponse] = None
+        created_by_response: UserResponse | None = None
         if "created_by" not in state.unloaded and model.created_by is not None:
             created_by_response = UserResponse.from_orm_model(model.created_by)
 
@@ -80,7 +78,7 @@ class SubmittalRevisionResponse(DTOMixin[SubmittalRevision]):
         )
 
     @strawberry.field
-    def created_by(self) -> Optional[UserResponse]:
+    def created_by(self) -> UserResponse | None:
         """Resolve created_by from cached response."""
         return self._created_by_response
 

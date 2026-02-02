@@ -1,8 +1,3 @@
-"""
-Overage Queries
-GraphQL queries for overage calculations
-"""
-
 from uuid import UUID
 
 import strawberry

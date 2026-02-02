@@ -1,5 +1,3 @@
-"""GraphQL input types for SpecSheet Highlights."""
-
 from uuid import UUID
 
 import strawberry

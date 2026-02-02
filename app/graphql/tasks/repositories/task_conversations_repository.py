@@ -1,5 +1,3 @@
-"""Repository for TaskConversation entity."""
-
 from uuid import UUID
 
 from commons.db.v6.crm.tasks.task_conversation_model import TaskConversation

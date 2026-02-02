@@ -1,5 +1,3 @@
-"""SpecSheets services module."""
-
 from app.graphql.spec_sheets.services.folders_service import FoldersService
 from app.graphql.spec_sheets.services.spec_sheet_highlights_service import (
     SpecSheetHighlightsService,

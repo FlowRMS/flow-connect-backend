@@ -1,5 +1,3 @@
-"""GraphQL input types for SpecSheet - re-exports for backwards compatibility."""
-
 from app.graphql.spec_sheets.strawberry.create_spec_sheet_input import (
     CreateSpecSheetInput,
 )

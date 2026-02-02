@@ -1,5 +1,3 @@
-"""Common GraphQL services."""
-
 from app.graphql.common.services.bulk_delete_service import BulkDeleteService
 from app.graphql.common.services.entity_lookup_service import EntityLookupService
 from app.graphql.common.services.landing_page_service import LandingPageService

@@ -28,6 +28,8 @@ dependencies = [
     "taskiq-fastapi>=0.3.0",
     "taskiq-redis>=1.0.0",
     "resend>=2.19.0",
+    "pypdf>=6.6.2",
+    "reportlab>=4.4.9",
 ]
 
 [dependency-groups]

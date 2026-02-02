@@ -1,5 +1,3 @@
-"""Strawberry GraphQL input types for Jobs entity."""
-
 import uuid
 from datetime import date
 from uuid import UUID
