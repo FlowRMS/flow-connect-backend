@@ -115,7 +115,8 @@ class SubmittalsService:
                 )
                 if submittal_with_items and submittal_with_items.items:
                     missing_spec_sheets = [
-                        item for item in submittal_with_items.items
+                        item
+                        for item in submittal_with_items.items
                         if item.spec_sheet_id is None
                     ]
                     if missing_spec_sheets:

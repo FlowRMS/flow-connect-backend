@@ -1,9 +1,11 @@
 from collections.abc import Sequence
 
-revision: str = "2adbedfe0eff"
+# revision identifiers, used by Alembic.
+revision: str = "3788145070d2"
 down_revision: str | tuple[str, ...] | None = (
-    "submittal_config_001",
-    "add_submittal_settings_fields",
+    "cascade_del_regions",
+    "add_returned_pdf_tables",
+    "5630cc7582d0",
 )
 branch_labels: str | Sequence[str] | None = None
 depends_on: str | Sequence[str] | None = None

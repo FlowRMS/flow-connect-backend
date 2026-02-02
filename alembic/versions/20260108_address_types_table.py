@@ -1,14 +1,7 @@
-"""create address_types table and migrate data
-
-Revision ID: address_types_table_001
-Revises: add_visible_to_users
-Create Date: 2026-01-08
-
-"""
-
 from collections.abc import Sequence
 
 import sqlalchemy as sa
+from sqlalchemy import inspect
 
 from alembic import op
 
@@ -19,6 +12,14 @@ depends_on: str | Sequence[str] | None = None
 
 
 def upgrade() -> None:
+    conn = op.get_bind()
+    inspector = inspect(conn)
+    tables = inspector.get_table_names(schema="pycore")
+
+    # Skip if table already exists (idempotent migration)
+    if "address_types" in tables:
+        return
+
     _ = op.create_table(
         "address_types",
         sa.Column("id", sa.UUID(), nullable=False),
