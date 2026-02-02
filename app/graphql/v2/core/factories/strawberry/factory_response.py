@@ -40,6 +40,7 @@ class FactoryLiteResponse(DTOMixin[Factory]):
 
     @classmethod
     def from_orm_model(cls, model: Factory) -> Self:
+        # DB enum: BY_LINE=0, BY_TOTAL=1
         overage_type_map = {
             0: OverageTypeEnum.BY_LINE,
             1: OverageTypeEnum.BY_TOTAL,
