@@ -593,7 +593,6 @@ input ContactInput {
   tags: [String!]
   notes: String
   companyId: UUID
-  customerId: UUID
   externalId: String
 }
 
@@ -627,7 +626,6 @@ type ContactLiteResponse {
 
 type ContactRelatedEntitiesResponse {
   companies: [CompanyLiteResponse!]!
-  customers: [CustomerLiteResponse!]!
 }
 
 type ContactResponse {
@@ -971,13 +969,6 @@ type CustomerLiteResponse {
   parentId: UUID
   buyingGroupId: UUID
   territoryId: UUID
-}
-
-input CustomerPricingImportInput {
-  customerName: String!
-  customerPartNumber: String = null
-  unitPrice: Decimal!
-  commissionRate: Decimal!
 }
 
 type CustomerResponse {
@@ -1594,22 +1585,6 @@ type FolderWithChildrenResponse {
   children: [FolderLiteResponse!]!
   files: [FileLiteResponse!]!
   parent: FolderLiteResponse
-}
-
-input FreightCategoryInput {
-  freightClass: Decimal!
-  description: String = null
-  isActive: Boolean! = true
-  position: Int = null
-}
-
-type FreightCategoryResponse {
-  id: UUID!
-  freightClass: Decimal!
-  description: String
-  isActive: Boolean!
-  position: Int!
-  createdAt: datetime!
 }
 
 type FulfillmentActivityResponse {
@@ -2410,8 +2385,6 @@ type Mutation {
   createInvoiceFromOrder(orderId: UUID!, invoiceNumber: String!, factoryId: UUID!, orderDetailsInputs: [OrderDetailToInvoiceDetailInput!] = null, dueDate: Date = null): InvoiceResponse!
   addCompanyToJob(input: AddCompanyToJobInput!): JobCompanyLinkResponse!
   removeCompanyFromJob(input: RemoveCompanyFromJobInput!): Boolean!
-  addJobWatcher(jobId: UUID!, userId: UUID!): [UserResponse!]!
-  removeJobWatcher(jobId: UUID!, userId: UUID!): [UserResponse!]!
   createJob(input: JobInput!): JobType!
   updateJob(id: UUID!, input: JobInput!): JobType!
   deleteJob(id: UUID!): Boolean!
@@ -2428,8 +2401,6 @@ type Mutation {
   createOrderAcknowledgement(input: OrderAcknowledgementInput!): OrderAcknowledgementResponse!
   updateOrderAcknowledgement(input: OrderAcknowledgementInput!): OrderAcknowledgementResponse!
   deleteOrderAcknowledgement(id: UUID!): Boolean!
-  addOrderWatcher(orderId: UUID!, userId: UUID!): [UserResponse!]!
-  removeOrderWatcher(orderId: UUID!, userId: UUID!): [UserResponse!]!
   createOrder(input: OrderInput!): OrderResponse!
   updateOrder(input: OrderInput!): OrderResponse!
   deleteOrder(id: UUID!): Boolean!
@@ -2440,10 +2411,6 @@ type Mutation {
   createPreOpportunity(input: PreOpportunityInput!): PreOpportunityResponse!
   updatePreOpportunity(input: PreOpportunityInput!): PreOpportunityResponse!
   deletePreOpportunity(id: UUID!): Boolean!
-  addPreOpportunityWatcher(preOpportunityId: UUID!, userId: UUID!): [UserResponse!]!
-  removePreOpportunityWatcher(preOpportunityId: UUID!, userId: UUID!): [UserResponse!]!
-  addQuoteWatcher(quoteId: UUID!, userId: UUID!): [UserResponse!]!
-  removeQuoteWatcher(quoteId: UUID!, userId: UUID!): [UserResponse!]!
   createQuote(input: QuoteInput!): QuoteResponse!
   updateQuote(input: QuoteInput!): QuoteResponse!
   deleteQuote(id: UUID!): Boolean!
@@ -2464,8 +2431,6 @@ type Mutation {
   createTaskCategory(input: TaskCategoryInput!): TaskCategoryType!
   updateTaskCategory(id: UUID!, input: TaskCategoryInput!): TaskCategoryType!
   deleteTaskCategory(id: UUID!): Boolean!
-  addTaskWatcher(taskId: UUID!, userId: UUID!): [UserResponse!]!
-  removeTaskWatcher(taskId: UUID!, userId: UUID!): [UserResponse!]!
   createTask(input: TaskInput!): TaskType!
   updateTask(id: UUID!, input: TaskInput!): TaskType!
   deleteTask(id: UUID!): Boolean!
@@ -2512,10 +2477,6 @@ type Mutation {
   updateFactory(id: UUID!, input: FactoryInput!): FactoryResponse!
   deleteFactory(id: UUID!): Boolean!
   updateManufacturerOrder(factoryIds: [UUID!]!): Int!
-  createFreightCategory(input: FreightCategoryInput!): FreightCategoryResponse!
-  updateFreightCategory(id: UUID!, input: FreightCategoryInput!): FreightCategoryResponse!
-  deleteFreightCategory(id: UUID!): Boolean!
-  reorderFreightCategories(orderedIds: [UUID!]!): [FreightCategoryResponse!]!
   createFulfillmentOrder(input: CreateFulfillmentOrderInput!): FulfillmentOrderResponse!
   updateFulfillmentOrder(id: UUID!, input: UpdateFulfillmentOrderInput!): FulfillmentOrderResponse!
   releaseToWarehouse(id: UUID!): FulfillmentOrderResponse!
@@ -2556,11 +2517,9 @@ type Mutation {
   createProductCategory(input: ProductCategoryInput!): ProductCategoryResponse!
   updateProductCategory(id: UUID!, input: ProductCategoryInput!): ProductCategoryResponse!
   deleteProductCategory(id: UUID!): Boolean!
-  importProductCpns(input: ProductCpnImportInput!): ProductCpnImportResult!
   createProductCpn(input: ProductCpnInput!): ProductCpnResponse!
   updateProductCpn(id: UUID!, input: ProductCpnInput!): ProductCpnResponse!
   deleteProductCpn(id: UUID!): Boolean!
-  importProducts(input: ProductImportInput!, defaultUomId: UUID!): ProductImportResult!
   createProductQuantityPricing(input: ProductQuantityPricingInput!): ProductQuantityPricingResponse!
   updateProductQuantityPricing(id: UUID!, input: ProductQuantityPricingInput!): ProductQuantityPricingResponse!
   deleteProductQuantityPricing(id: UUID!): Boolean!
@@ -3453,35 +3412,6 @@ type ProductCategoryResponse {
   children: [ProductCategoryLiteResponse!]!
 }
 
-type ProductCpnImportError {
-  factoryPartNumber: String!
-  customerName: String!
-  error: String!
-}
-
-input ProductCpnImportInput {
-  factoryId: UUID!
-  cpns: [ProductCpnImportItemInput!]!
-}
-
-input ProductCpnImportItemInput {
-  factoryPartNumber: String!
-  customerName: String!
-  customerPartNumber: String!
-  unitPrice: Decimal!
-  commissionRate: Decimal!
-}
-
-type ProductCpnImportResult {
-  success: Boolean!
-  cpnsCreated: Int!
-  cpnsUpdated: Int!
-  errors: [ProductCpnImportError!]!
-  message: String!
-  productsNotFound: [String!]!
-  customersNotFound: [String!]!
-}
-
 input ProductCpnInput {
   productId: UUID!
   customerId: UUID!
@@ -3515,39 +3445,6 @@ type ProductCpnResponse {
   commissionRate: Decimal!
   product: ProductLiteResponse!
   customer: CustomerLiteResponse!
-}
-
-type ProductImportError {
-  factoryPartNumber: String!
-  error: String!
-}
-
-input ProductImportInput {
-  factoryId: UUID!
-  products: [ProductImportItemInput!]!
-}
-
-input ProductImportItemInput {
-  factoryPartNumber: String!
-  unitPrice: Decimal!
-  description: String = null
-  upc: String = null
-  category: String = null
-  defaultCommissionRate: Decimal = null
-  quantityPricing: [QuantityPricingImportInput!] = null
-  customerPricing: [CustomerPricingImportInput!] = null
-}
-
-type ProductImportResult {
-  success: Boolean!
-  productsCreated: Int!
-  productsUpdated: Int!
-  quantityPricingCreated: Int!
-  customerPricingCreated: Int!
-  customerPricingUpdated: Int!
-  errors: [ProductImportError!]!
-  message: String!
-  customersNotFound: [String!]!
 }
 
 input ProductInput {
@@ -3656,12 +3553,6 @@ type ProductUomResponse {
   title: String!
   description: String
   divisionFactor: Decimal
-}
-
-input QuantityPricingImportInput {
-  quantityLow: Decimal!
-  quantityHigh: Decimal
-  unitPrice: Decimal!
 }
 
 type Query {
@@ -3782,9 +3673,6 @@ type Query {
   recurringShipment(id: UUID!): RecurringShipmentResponse!
   factory(id: UUID!): FactoryResponse!
   factorySearch(searchTerm: String!, published: Boolean! = true, limit: Int! = 20, useCustomOrder: Boolean! = false): [FactoryResponse!]!
-  freightCategories: [FreightCategoryResponse!]!
-  activeFreightCategories: [FreightCategoryResponse!]!
-  freightCategory(id: UUID!): FreightCategoryResponse!
   fulfillmentOrders(warehouseId: UUID = null, status: [FulfillmentOrderStatus!] = null, search: String = null, limit: Int! = 50, offset: Int! = 0): [FulfillmentOrderLiteResponse!]!
   fulfillmentOrder(id: UUID!): FulfillmentOrderResponse
   fulfillmentStats(warehouseId: UUID = null): FulfillmentStatsResponse!
@@ -3857,7 +3745,6 @@ type Query {
   roleSidebarAssignments: [RoleSidebarAssignmentResponse!]!
   effectiveSidebar: EffectiveSidebarResponse!
   configurableSidebar: ConfigurableSidebarResponse!
-  getWatchersByEntity(entityType: EntityType!, entityId: UUID!): [UserResponse!]!
 }
 
 type QuoteBalanceResponse {
@@ -3942,8 +3829,8 @@ input QuoteDetailToOrderDetailInput {
 
 input QuoteInput {
   quoteNumber: String!
-  entityDate: Date!
   soldToCustomerId: UUID!
+  entityDate: Date!
   status: QuoteStatus!
   pipelineStage: PipelineStage!
   details: [QuoteDetailInput!]!
@@ -3993,7 +3880,7 @@ type QuoteLandingPage implements LandingPageInterfaceBase {
   total: Decimal!
   commission: Decimal
   published: Boolean!
-  soldToCustomerName: String!
+  soldToCustomerName: String
   endUsers: [String!]!
   factories: [String!]!
   categories: [String!]
@@ -4006,7 +3893,6 @@ type QuoteLiteResponse {
   createdAt: datetime!
   createdById: UUID!
   quoteNumber: String!
-  name: String
   entityDate: Date!
   status: QuoteStatus!
   pipelineStage: PipelineStage!
@@ -4014,6 +3900,7 @@ type QuoteLiteResponse {
   creationType: CreationType!
   soldToCustomerId: UUID
   factoryPerLineItem: Boolean!
+  name: String
   billToCustomerId: UUID
   paymentTerms: String
   customerRef: String
@@ -4036,7 +3923,6 @@ type QuoteResponse {
   createdAt: datetime!
   createdById: UUID!
   quoteNumber: String!
-  name: String
   entityDate: Date!
   status: QuoteStatus!
   pipelineStage: PipelineStage!
@@ -4044,6 +3930,7 @@ type QuoteResponse {
   creationType: CreationType!
   soldToCustomerId: UUID
   factoryPerLineItem: Boolean!
+  name: String
   billToCustomerId: UUID
   paymentTerms: String
   customerRef: String
@@ -4060,7 +3947,7 @@ type QuoteResponse {
   endUserPerLineItem: Boolean
   url: String!
   createdBy: UserResponse!
-  soldToCustomer: CustomerLiteResponse
+  soldToCustomer: CustomerLiteResponse!
   billToCustomer: CustomerLiteResponse
   balance: QuoteBalanceResponse!
   details: [QuoteDetailResponse!]!
@@ -4229,6 +4116,7 @@ type RelatedEntitiesResponse {
   factories: [FactoryLiteResponse!]
   products: [ProductLiteResponse!]
   customers: [CustomerLiteResponse!]
+  statements: [StatementLiteResponse!]
 }
 
 input RemoveCompanyFromJobInput {
@@ -4568,8 +4456,8 @@ type StatementBalanceResponse {
 
 input StatementDetailInput {
   itemNumber: Int!
-  quantity: Decimal = null
-  unitPrice: Decimal = null
+  quantity: Decimal!
+  unitPrice: Decimal!
   id: UUID = null
   soldToCustomerId: UUID = null
   orderId: UUID = null
@@ -4808,7 +4696,6 @@ type TaskType {
   createdBy: UserResponse!
   assignees: [UserResponse!]!
   category: TaskCategoryType
-  watchers: [UserResponse!]!
 }
 
 input TerritoryInput {
