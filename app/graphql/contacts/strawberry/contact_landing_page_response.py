@@ -14,5 +14,6 @@ class ContactLandingPageResponse(LandingPageInterfaceBase):
     email: str | None
     phone: str | None
     role: str | None
+    role_detail: str | None
     company_name: str | None
     tags: list[str] | None
