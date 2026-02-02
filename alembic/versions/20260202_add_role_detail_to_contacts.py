@@ -21,7 +21,9 @@ depends_on: str | Sequence[str] | None = None
 
 def upgrade() -> None:
     op.add_column(
-        "contacts", sa.Column("role_detail", sa.String(1000), nullable=True), schema="pycrm"
+        "contacts",
+        sa.Column("role_detail", sa.String(1000), nullable=True),
+        schema="pycrm",
     )
 
 
