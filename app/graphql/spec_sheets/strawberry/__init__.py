@@ -1,9 +1,9 @@
 from app.graphql.spec_sheets.strawberry.folder_input import (
-    CreateFolderInput,
-    DeleteFolderInput,
-    MoveFolderInput,
+    CreateSpecSheetFolderInput,
+    DeleteSpecSheetFolderInput,
+    MoveSpecSheetFolderInput,
     MoveSpecSheetToFolderInput,
-    RenameFolderInput,
+    RenameSpecSheetFolderInput,
 )
 from app.graphql.spec_sheets.strawberry.folder_response import (
     FolderWithChildrenResponse,
@@ -27,10 +27,10 @@ from app.graphql.spec_sheets.strawberry.spec_sheet_response import SpecSheetResp
 
 __all__ = [
     # Folder types
-    "CreateFolderInput",
-    "RenameFolderInput",
-    "DeleteFolderInput",
-    "MoveFolderInput",
+    "CreateSpecSheetFolderInput",
+    "RenameSpecSheetFolderInput",
+    "DeleteSpecSheetFolderInput",
+    "MoveSpecSheetFolderInput",
     "MoveSpecSheetToFolderInput",
     "SpecSheetFolderResponse",
     "FolderWithChildrenResponse",

@@ -4,10 +4,10 @@ from aioinject import Injected
 from app.graphql.inject import inject
 from app.graphql.spec_sheets.services.folders_service import FoldersService
 from app.graphql.spec_sheets.strawberry.folder_input import (
-    CreateFolderInput,
-    DeleteFolderInput,
-    MoveFolderInput,
-    RenameFolderInput,
+    CreateSpecSheetFolderInput,
+    DeleteSpecSheetFolderInput,
+    MoveSpecSheetFolderInput,
+    RenameSpecSheetFolderInput,
 )
 from app.graphql.spec_sheets.strawberry.folder_response import SpecSheetFolderResponse
 
@@ -18,13 +18,13 @@ class FoldersMutations:
 
     @strawberry.mutation
     @inject
-    async def create_folder(
+    async def create_spec_sheet_folder(
         self,
         service: Injected[FoldersService],
-        input: CreateFolderInput,
+        input: CreateSpecSheetFolderInput,
     ) -> SpecSheetFolderResponse:
         """
-        Create a new folder in pyfiles.folders.
+        Create a new folder for spec sheets.
 
         Args:
             input: Folder creation data with factory_id, parent_folder_id, folder_name
@@ -41,13 +41,13 @@ class FoldersMutations:
 
     @strawberry.mutation
     @inject
-    async def rename_folder(
+    async def rename_spec_sheet_folder(
         self,
         service: Injected[FoldersService],
-        input: RenameFolderInput,
+        input: RenameSpecSheetFolderInput,
     ) -> SpecSheetFolderResponse:
         """
-        Rename a folder in pyfiles.folders.
+        Rename a spec sheet folder.
 
         Args:
             input: Rename data with factory_id, folder_id, new_name
@@ -64,13 +64,13 @@ class FoldersMutations:
 
     @strawberry.mutation
     @inject
-    async def delete_folder(
+    async def delete_spec_sheet_folder(
         self,
         service: Injected[FoldersService],
-        input: DeleteFolderInput,
+        input: DeleteSpecSheetFolderInput,
     ) -> bool:
         """
-        Delete a folder only if it has no spec sheets.
+        Delete a spec sheet folder only if it has no spec sheets.
 
         Args:
             input: Delete data with factory_id, folder_id
@@ -91,7 +91,7 @@ class FoldersMutations:
     async def move_spec_sheet_folder(
         self,
         service: Injected[FoldersService],
-        input: MoveFolderInput,
+        input: MoveSpecSheetFolderInput,
     ) -> SpecSheetFolderResponse:
         """
         Move a folder to a new parent.

@@ -4,8 +4,8 @@ import strawberry
 
 
 @strawberry.input
-class CreateFolderInput:
-    """Input for creating a new folder."""
+class CreateSpecSheetFolderInput:
+    """Input for creating a new spec sheet folder."""
 
     factory_id: UUID
     parent_folder_id: UUID | None = None  # Parent folder ID (None for root level)
@@ -13,8 +13,8 @@ class CreateFolderInput:
 
 
 @strawberry.input
-class RenameFolderInput:
-    """Input for renaming a folder."""
+class RenameSpecSheetFolderInput:
+    """Input for renaming a spec sheet folder."""
 
     factory_id: UUID
     folder_id: UUID  # ID of the folder to rename
@@ -22,16 +22,16 @@ class RenameFolderInput:
 
 
 @strawberry.input
-class DeleteFolderInput:
-    """Input for deleting a folder."""
+class DeleteSpecSheetFolderInput:
+    """Input for deleting a spec sheet folder."""
 
     factory_id: UUID
     folder_id: UUID  # ID of the folder to delete
 
 
 @strawberry.input
-class MoveFolderInput:
-    """Input for moving a folder to a new parent."""
+class MoveSpecSheetFolderInput:
+    """Input for moving a spec sheet folder to a new parent."""
 
     factory_id: UUID
     folder_id: UUID  # ID of the folder to move

@@ -2,7 +2,7 @@ from app.graphql.spec_sheets.strawberry.create_spec_sheet_input import (
     CreateSpecSheetInput,
 )
 from app.graphql.spec_sheets.strawberry.folder_input import (
-    MoveFolderInput,
+    MoveSpecSheetFolderInput,
     MoveSpecSheetToFolderInput,
 )
 from app.graphql.spec_sheets.strawberry.update_spec_sheet_input import (
@@ -12,6 +12,6 @@ from app.graphql.spec_sheets.strawberry.update_spec_sheet_input import (
 __all__ = [
     "CreateSpecSheetInput",
     "UpdateSpecSheetInput",
-    "MoveFolderInput",
+    "MoveSpecSheetFolderInput",
     "MoveSpecSheetToFolderInput",
 ]
