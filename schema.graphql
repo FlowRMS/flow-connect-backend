@@ -589,6 +589,7 @@ input ContactInput {
   email: String
   phone: String
   role: String
+  roleDetail: String
   territory: String
   tags: [String!]
   notes: String
@@ -606,6 +607,7 @@ type ContactLandingPage implements LandingPageInterfaceBase {
   email: String
   phone: String
   role: String
+  roleDetail: String
   companyName: String
   tags: [String!]
 }
@@ -618,6 +620,7 @@ type ContactLiteResponse {
   email: String
   phone: String
   role: String
+  roleDetail: String
   territory: String
   tags: [String!]
   notes: String
@@ -636,6 +639,7 @@ type ContactResponse {
   email: String
   phone: String
   role: String
+  roleDetail: String
   territory: String
   tags: [String!]
   notes: String

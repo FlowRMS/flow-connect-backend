@@ -75,6 +75,7 @@ class ContactsRepository(BaseRepository[Contact]):
                 Contact.email,
                 Contact.phone,
                 Contact.role,
+                Contact.role_detail,
                 company_name_subq.label("company_name"),
                 Contact.tags,
                 array([Contact.created_by_id]).label("user_ids"),
