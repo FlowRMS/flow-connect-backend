@@ -22,12 +22,8 @@ from app.graphql.submittals.strawberry.submittal_input import (
     SendSubmittalEmailInput,
     SubmittalItemInput,
     SubmittalStakeholderInput,
-    UpdateItemChangeInput,
     UpdateSubmittalInput,
     UpdateSubmittalItemInput,
-)
-from app.graphql.submittals.strawberry.submittal_item_change_response import (
-    SubmittalItemChangeResponse,
 )
 from app.graphql.submittals.strawberry.submittal_item_response import (
     SubmittalItemResponse,
@@ -200,33 +196,3 @@ class SubmittalsMutations:
     ) -> SubmittalChangeAnalysisResponse:
         change_analysis = await service.add_change_analysis(input)
         return SubmittalChangeAnalysisResponse.from_orm_model(change_analysis)
-
-    @strawberry.mutation
-    @inject
-    async def update_item_change(
-        self,
-        service: Injected[SubmittalsService],
-        id: UUID,
-        input: UpdateItemChangeInput,
-    ) -> SubmittalItemChangeResponse:
-        item_change = await service.update_item_change(id, input)
-        return SubmittalItemChangeResponse.from_orm_model(item_change)
-
-    @strawberry.mutation
-    @inject
-    async def delete_item_change(
-        self,
-        service: Injected[SubmittalsService],
-        id: UUID,
-    ) -> bool:
-        return await service.delete_item_change(id)
-
-    @strawberry.mutation
-    @inject
-    async def resolve_item_change(
-        self,
-        service: Injected[SubmittalsService],
-        id: UUID,
-    ) -> SubmittalItemChangeResponse:
-        item_change = await service.resolve_item_change(id)
-        return SubmittalItemChangeResponse.from_orm_model(item_change)
