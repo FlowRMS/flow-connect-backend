@@ -199,9 +199,7 @@ class FactoriesRepository(BaseRepository[Factory]):
             List of child Factory objects
         """
         stmt = (
-            select(Factory)
-            .where(Factory.parent_id == parent_id)
-            .options(lazyload("*"))
+            select(Factory).where(Factory.parent_id == parent_id).options(lazyload("*"))
         )
         result = await self.session.execute(stmt)
         return list(result.scalars().all())

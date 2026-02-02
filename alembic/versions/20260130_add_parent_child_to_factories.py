@@ -50,6 +50,8 @@ def upgrade() -> None:
 
 
 def downgrade() -> None:
-    op.drop_constraint("fk_factories_parent_id", "factories", schema="pycore", type_="foreignkey")
+    op.drop_constraint(
+        "fk_factories_parent_id", "factories", schema="pycore", type_="foreignkey"
+    )
     op.drop_column("factories", "parent_id", schema="pycore")
     op.drop_column("factories", "is_parent", schema="pycore")

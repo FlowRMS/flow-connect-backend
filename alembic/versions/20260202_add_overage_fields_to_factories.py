@@ -22,17 +22,26 @@ depends_on: str | Sequence[str] | None = None
 def upgrade() -> None:
     op.add_column(
         "factories",
-        sa.Column("overage_allowed", sa.Boolean(), nullable=False, server_default="false"),
+        sa.Column(
+            "overage_allowed", sa.Boolean(), nullable=False, server_default="false"
+        ),
         schema="pycore",
     )
     op.add_column(
         "factories",
-        sa.Column("overage_type", sa.SmallInteger(), nullable=False, server_default="0"),
+        sa.Column(
+            "overage_type", sa.SmallInteger(), nullable=False, server_default="0"
+        ),
         schema="pycore",
     )
     op.add_column(
         "factories",
-        sa.Column("rep_overage_share", sa.Numeric(5, 2), nullable=False, server_default="100.00"),
+        sa.Column(
+            "rep_overage_share",
+            sa.Numeric(5, 2),
+            nullable=False,
+            server_default="100.00",
+        ),
         schema="pycore",
     )
 
