@@ -1,5 +1,3 @@
-"""Landing page response type for Contacts entity."""
-
 import strawberry
 
 from app.core.db.adapters.dto import LandingPageInterfaceBase
