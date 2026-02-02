@@ -222,5 +222,5 @@ class FactoriesRepository(BaseRepository[Factory]):
                 .where(Factory.id.in_(child_ids))
                 .values(parent_id=parent_id)
             )
-            await self.session.execute(stmt)
+            _ = await self.session.execute(stmt)
         await self.session.flush()
