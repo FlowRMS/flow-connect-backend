@@ -71,6 +71,7 @@ class ReturnedPdfMutations:
             file_name=input.file_name,
             file_url=input.file_url,
             file_size=input.file_size,
+            file_id=input.file_id,
             returned_by_stakeholder_id=input.returned_by_stakeholder_id,
             received_date=input.received_date,
             notes=input.notes,

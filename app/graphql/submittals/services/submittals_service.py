@@ -107,7 +107,23 @@ class SubmittalsService:
             raise ValueError(f"Submittal with id {submittal_id} not found")
 
         if input_data.status is not None:
-            submittal.status = SubmittalStatus(input_data.status.value)
+            new_status = SubmittalStatus(input_data.status.value)
+            # Validate: Cannot set APPROVED status if items are missing spec sheets
+            if new_status == SubmittalStatus.APPROVED:
+                submittal_with_items = await self.repository.get_by_id_with_relations(
+                    submittal_id
+                )
+                if submittal_with_items and submittal_with_items.items:
+                    missing_spec_sheets = [
+                        item for item in submittal_with_items.items
+                        if item.spec_sheet_id is None
+                    ]
+                    if missing_spec_sheets:
+                        raise ValueError(
+                            f"Cannot set status to Approved: {len(missing_spec_sheets)} "
+                            f"item(s) are missing spec sheets"
+                        )
+            submittal.status = new_status
 
         if input_data.transmittal_purpose is not None:
             from commons.db.v6.crm.submittals import TransmittalPurpose

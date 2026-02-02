@@ -29,6 +29,7 @@ class SubmittalReturnedPdfResponse(DTOMixin[SubmittalReturnedPdf]):
     revision_id: UUID
     file_name: str
     file_url: str
+    file_id: UUID | None
     file_size: int
     returned_by_stakeholder_id: UUID | None
     received_date: date | None
@@ -73,6 +74,7 @@ class SubmittalReturnedPdfResponse(DTOMixin[SubmittalReturnedPdf]):
             revision_id=model.revision_id,
             file_name=model.file_name,
             file_url=model.file_url,
+            file_id=model.file_id,
             file_size=model.file_size,
             returned_by_stakeholder_id=model.returned_by_stakeholder_id,
             received_date=model.received_date,

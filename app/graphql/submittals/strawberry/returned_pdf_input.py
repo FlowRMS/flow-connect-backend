@@ -18,6 +18,7 @@ class UploadReturnedPdfInput:
     file_name: str
     file_url: str
     file_size: int = 0
+    file_id: UUID | None = None  # Reference to files table for presigned URL generation
     returned_by_stakeholder_id: UUID | None = None
     received_date: date | None = None
     notes: str | None = None
