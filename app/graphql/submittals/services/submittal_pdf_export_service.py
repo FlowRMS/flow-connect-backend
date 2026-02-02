@@ -322,6 +322,11 @@ class SubmittalPdfExportService:
                 )
                 return None
 
+            # Remove tenant prefix if present, since s3_service.download() adds it
+            tenant_prefix = f"{self.s3_service.tenant_name}/"
+            if s3_key.startswith(tenant_prefix):
+                s3_key = s3_key[len(tenant_prefix) :]
+
             logger.info(f"Downloading spec sheet {spec_sheet.id} from S3 key: {s3_key}")
             file_obj = await self.s3_service.download(key=s3_key)
             data = file_obj.read()
