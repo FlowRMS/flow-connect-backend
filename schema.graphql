@@ -2336,6 +2336,12 @@ input MarkManufacturerFulfilledInput {
   lineItemIds: [UUID!]!
 }
 
+type MismatchCheckResponse {
+  hasMismatch: Boolean!
+  onlyInTeam: [UserResponse!]!
+  onlyInTerritory: [UserResponse!]!
+}
+
 input MoveFolderInput {
   factoryId: UUID!
   oldFolderPath: String!
@@ -2549,6 +2555,13 @@ type Mutation {
   createProduct(input: ProductInput!): ProductResponse!
   updateProduct(id: UUID!, input: ProductInput!): ProductResponse!
   deleteProduct(id: UUID!): Boolean!
+  createSalesTeam(input: SalesTeamInput!): SalesTeamResponse!
+  updateSalesTeam(id: UUID!, input: SalesTeamInput!): SalesTeamResponse!
+  deleteSalesTeam(id: UUID!): Boolean!
+  addSalesTeamMember(salesTeamId: UUID!, userId: UUID!, position: Int! = 0): SalesTeamResponse!
+  removeSalesTeamMember(salesTeamId: UUID!, userId: UUID!): SalesTeamResponse!
+  linkSalesTeamToTerritory(salesTeamId: UUID!, territoryId: UUID!, syncDirection: SyncDirection!): SalesTeamResponse!
+  unlinkSalesTeamFromTerritory(salesTeamId: UUID!): SalesTeamResponse!
   createGeneralSetting(input: GeneralSettingsInput!): GeneralSettingsResponse!
   updateGeneralSetting(id: UUID!, value: JSON!): GeneralSettingsResponse!
   createMySetting(key: SettingKey!, value: JSON!): GeneralSettingsResponse!
@@ -3713,6 +3726,9 @@ type Query {
   product(id: UUID!): ProductResponse!
   productSearch(searchTerm: String!, productCategoryIds: [UUID!] = null, factoryId: UUID, limit: Int! = 20): [ProductLiteResponse!]!
   productCategorySearch(searchTerm: String!, factoryId: UUID, limit: Int! = 20): [ProductCategoryLiteResponse!]!
+  salesTeam(id: UUID!): SalesTeamResponse
+  allSalesTeams: [SalesTeamResponse!]!
+  checkTeamTerritoryMismatch(salesTeamId: UUID!, territoryId: UUID!): MismatchCheckResponse!
   generalSetting(key: SettingKey!, userId: UUID): GeneralSettingsResponse
   mySetting(key: SettingKey!): GeneralSettingsResponse
   tenantSetting(key: SettingKey!): GeneralSettingsResponse
@@ -4053,6 +4069,7 @@ enum RbacRoleEnum {
   WAREHOUSE_MANAGER
   WAREHOUSE_EMPLOYEE
   DRIVER
+  SALES_MANAGER
 }
 
 type RbacRolePermissionResponse {
@@ -4161,6 +4178,33 @@ type SalesRepSummary {
   fullName: String!
   total: Decimal!
   avgSplitRate: Decimal!
+}
+
+input SalesTeamInput {
+  name: String!
+  managerId: UUID!
+  territoryId: UUID = null
+  active: Boolean! = true
+}
+
+type SalesTeamMemberResponse {
+  id: UUID!
+  userId: UUID!
+  position: Int!
+  user: UserResponse!
+  createdAt: datetime!
+}
+
+type SalesTeamResponse {
+  id: UUID!
+  name: String!
+  managerId: UUID!
+  territoryId: UUID
+  active: Boolean!
+  createdAt: datetime!
+  manager: UserResponse!
+  territory: TerritoryLiteResponse
+  members: [SalesTeamMemberResponse!]!
 }
 
 input SaveSidebarConfigurationInput {
@@ -4565,6 +4609,11 @@ type StatementSplitRateResponse {
   splitRate: Decimal
   position: Int!
   user: UserResponse!
+}
+
+enum SyncDirection {
+  TEAM_TO_TERRITORY
+  TERRITORY_TO_TEAM
 }
 
 input TaskCategoryInput {

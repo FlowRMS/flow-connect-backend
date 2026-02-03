@@ -30,6 +30,9 @@ class UserService:
             raise NotFoundError(f"User with id {user_id} not found")
         return user
 
+    async def get_by_ids(self, user_ids: list[UUID]) -> list[User]:
+        return await self.repository.get_by_ids(user_ids)
+
     async def get_by_email(self, email: str) -> User | None:
         return await self.repository.get_by_email(email)
 

@@ -12,6 +12,7 @@ from commons.db.v6.crm.quotes import (
     QuoteDetail,
     QuoteSplitRate,
 )
+from commons.db.v6.rbac.rbac_role_enum import RbacRoleEnum
 from sqlalchemy import Select, String, cast, func, or_, select, text, update
 from sqlalchemy.dialects.postgresql import ARRAY, JSONB, array_agg
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -32,6 +33,9 @@ from app.graphql.quotes.repositories.quote_balance_repository import (
     QuoteBalanceRepository,
 )
 from app.graphql.quotes.strategies.quote_owner_filter import QuoteOwnerFilterStrategy
+from app.graphql.quotes.strategies.sales_team_quote_filter import (
+    SalesTeamQuoteFilterStrategy,
+)
 from app.graphql.quotes.strawberry.quote_landing_page_response import (
     QuoteLandingPageResponse,
 )
@@ -71,6 +75,8 @@ class QuotesRepository(BaseRepository[Quote]):
 
     @override
     def get_rbac_filter_strategy(self) -> RbacFilterStrategy | None:
+        if RbacRoleEnum.SALES_MANAGER in self.auth_info.roles:
+            return SalesTeamQuoteFilterStrategy(RbacResourceEnum.QUOTE)
         return QuoteOwnerFilterStrategy(RbacResourceEnum.QUOTE)
 
     def _sales_reps_subquery(self) -> Subquery[Any]:

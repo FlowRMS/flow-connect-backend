@@ -11,6 +11,7 @@ from commons.db.v6.core import Customer, Factory
 from commons.db.v6.crm.jobs.jobs_model import Job
 from commons.db.v6.crm.links.entity_type import EntityType
 from commons.db.v6.crm.links.link_relation_model import LinkRelation
+from commons.db.v6.rbac.rbac_role_enum import RbacRoleEnum
 from sqlalchemy import Select, func, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import joinedload, lazyload
@@ -33,6 +34,9 @@ from app.graphql.orders.repositories.order_balance_repository import (
     OrderBalanceRepository,
 )
 from app.graphql.orders.strategies.order_owner_filter import OrderOwnerFilterStrategy
+from app.graphql.orders.strategies.sales_team_order_filter import (
+    SalesTeamOrderFilterStrategy,
+)
 from app.graphql.orders.strawberry.order_landing_page_response import (
     OrderLandingPageResponse,
 )
@@ -79,6 +83,8 @@ class OrdersRepository(BaseRepository[Order]):
 
     @override
     def get_rbac_filter_strategy(self) -> RbacFilterStrategy | None:
+        if RbacRoleEnum.SALES_MANAGER in self.auth_info.roles:
+            return SalesTeamOrderFilterStrategy(RbacResourceEnum.ORDER)
         return OrderOwnerFilterStrategy(RbacResourceEnum.ORDER)
 
     def paginated_stmt(self) -> Select[Any]:
