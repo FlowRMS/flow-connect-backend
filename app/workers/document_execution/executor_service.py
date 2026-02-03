@@ -1,3 +1,5 @@
+import math
+import re
 from typing import Any
 from uuid import UUID
 
@@ -59,6 +61,25 @@ DOCUMENT_TO_LINK_ENTITY_TYPE: dict[DocumentEntityType, EntityType] = {
     DocumentEntityType.ORDER_ACKNOWLEDGEMENTS: EntityType.ORDER_ACKNOWLEDGEMENT,
     DocumentEntityType.COMMISSION_STATEMENTS: EntityType.COMMISSION_STATEMENTS,
 }
+
+
+def _clean_currency_values(
+    obj: dict | list | float | str | None,
+) -> dict | list | float | str | None:
+    """Recursively clean NaN/inf values and currency-formatted strings."""
+    if isinstance(obj, dict):
+        return {k: _clean_currency_values(v) for k, v in obj.items()}
+    if isinstance(obj, list):
+        return [_clean_currency_values(item) for item in obj]
+    if isinstance(obj, float) and (math.isnan(obj) or math.isinf(obj)):
+        return None
+    if isinstance(obj, str):
+        # Check if it looks like a currency value
+        if re.match(r"^[\$\s]*[\d,]+\.?\d*$", obj.strip()):
+            cleaned = obj.replace("$", "").replace(",", "").strip()
+            if cleaned:
+                return cleaned
+    return obj
 
 
 class DocumentExecutorService:
@@ -214,7 +235,10 @@ class DocumentExecutorService:
             return []
 
         loaded_dtos = await converter.parse_dtos_from_json(pending_document)
-        return [converter.dto_class.model_validate(d) for d in loaded_dtos.dtos]
+        return [
+            converter.dto_class.model_validate(_clean_currency_values(d))
+            for d in loaded_dtos.dtos
+        ]
 
     async def _link_file_to_entities(
         self,
