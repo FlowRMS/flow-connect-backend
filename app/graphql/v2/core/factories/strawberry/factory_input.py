@@ -4,8 +4,6 @@ from uuid import UUID
 import strawberry
 from commons.db.v6.core.factories.factory import (
     Factory,
-)
-from commons.db.v6.core.factories.factory import (
     OverageTypeEnum as ORMOverageTypeEnum,
 )
 
