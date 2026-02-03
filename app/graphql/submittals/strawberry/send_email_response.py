@@ -5,11 +5,12 @@ from uuid import UUID
 import strawberry
 from commons.db.v6.crm.submittals import SubmittalEmail
 
+from app.core.db.adapters.dto import DTOMixin
 from app.graphql.submittals.services.types import SendSubmittalEmailResult
 
 
 @strawberry.type
-class SubmittalEmailResponse:
+class SubmittalEmailResponse(DTOMixin[SubmittalEmail]):
     """Response type for a recorded submittal email."""
 
     id: UUID

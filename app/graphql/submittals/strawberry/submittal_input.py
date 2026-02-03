@@ -9,11 +9,13 @@ from commons.db.v6.crm.submittals import (
     OverallChangeStatus,
     Submittal,
     SubmittalChangeAnalysis,
+    SubmittalEmail,
     SubmittalItem,
     SubmittalItemApprovalStatus,
     SubmittalItemChange,
     SubmittalItemMatchStatus,
     SubmittalReturnedPdf,
+    SubmittalRevision,
     SubmittalStakeholder,
     SubmittalStakeholderRole,
     SubmittalStatus,
@@ -72,7 +74,7 @@ class CreateSubmittalInput(BaseInputGQL[Submittal]):
 
 
 @strawberry.input
-class UpdateSubmittalInput:
+class UpdateSubmittalInput(BaseInputGQL[Submittal]):
     status: SubmittalStatusGQL | None = None
     transmittal_purpose: TransmittalPurposeGQL | None = None
     description: str | None = None
@@ -118,7 +120,7 @@ class SubmittalItemInput(BaseInputGQL[SubmittalItem]):
 
 
 @strawberry.input
-class UpdateSubmittalItemInput:
+class UpdateSubmittalItemInput(BaseInputGQL[SubmittalItem]):
     # Use UNSET to distinguish "not provided" from "null"
     spec_sheet_id: UUID | None = UNSET  # type: ignore[assignment]
     highlight_version_id: UUID | None = UNSET  # type: ignore[assignment]
@@ -156,7 +158,7 @@ class SubmittalStakeholderInput(BaseInputGQL[SubmittalStakeholder]):
 
 
 @strawberry.input
-class SendSubmittalEmailInput:
+class SendSubmittalEmailInput(BaseInputGQL[SubmittalEmail]):
     submittal_id: UUID
     revision_id: UUID | None = None
     subject: str
@@ -167,7 +169,7 @@ class SendSubmittalEmailInput:
 
 
 @strawberry.input
-class GenerateSubmittalPdfInput:
+class GenerateSubmittalPdfInput(BaseInputGQL[SubmittalRevision]):
     submittal_id: UUID
     output_type: str = "pdf"  # 'pdf', 'email', 'email_link'
 
@@ -235,7 +237,7 @@ class AddReturnedPdfInput(BaseInputGQL[SubmittalReturnedPdf]):
 
 
 @strawberry.input
-class SubmittalItemChangeInput:
+class SubmittalItemChangeInput(BaseInputGQL[SubmittalItemChange]):
     """Input for an individual item change in a change analysis."""
 
     item_id: UUID | None = None
@@ -282,7 +284,7 @@ class AddChangeAnalysisInput(BaseInputGQL[SubmittalChangeAnalysis]):
 
 
 @strawberry.input
-class UpdateItemChangeInput:
+class UpdateItemChangeInput(BaseInputGQL[SubmittalItemChange]):
     """Input for updating an item change."""
 
     status: ItemChangeStatusGQL | None = None

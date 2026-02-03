@@ -16,7 +16,7 @@ from commons.db.v6.crm.submittals import (
 )
 from sqlalchemy import func, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.orm import selectinload
+from sqlalchemy.orm import joinedload
 
 from app.core.context_wrapper import ContextWrapper
 from app.graphql.base_repository import BaseRepository
@@ -30,16 +30,14 @@ class SubmittalsRepository(BaseRepository[Submittal]):
         stmt = (
             select(Submittal)
             .options(
-                selectinload(Submittal.items).selectinload(SubmittalItem.spec_sheet),
-                selectinload(Submittal.items).selectinload(SubmittalItem.quote_detail),
-                selectinload(Submittal.items)
-                .selectinload(SubmittalItem.highlight_version)
-                .selectinload(SpecSheetHighlightVersion.regions),
-                selectinload(Submittal.stakeholders),
-                selectinload(Submittal.revisions).selectinload(
-                    SubmittalRevision.emails
-                ),
-                selectinload(Submittal.created_by),
+                joinedload(Submittal.items).joinedload(SubmittalItem.spec_sheet),
+                joinedload(Submittal.items).joinedload(SubmittalItem.quote_detail),
+                joinedload(Submittal.items)
+                .joinedload(SubmittalItem.highlight_version)
+                .joinedload(SpecSheetHighlightVersion.regions),
+                joinedload(Submittal.stakeholders),
+                joinedload(Submittal.revisions).joinedload(SubmittalRevision.emails),
+                joinedload(Submittal.created_by),
             )
             .where(Submittal.id == submittal_id)
         )
@@ -49,7 +47,7 @@ class SubmittalsRepository(BaseRepository[Submittal]):
     async def find_by_quote(self, quote_id: UUID) -> list[Submittal]:
         stmt = (
             select(Submittal)
-            .options(selectinload(Submittal.created_by))
+            .options(joinedload(Submittal.created_by))
             .where(Submittal.quote_id == quote_id)
             .order_by(Submittal.created_at.desc())
         )
@@ -59,7 +57,7 @@ class SubmittalsRepository(BaseRepository[Submittal]):
     async def find_by_job(self, job_id: UUID) -> list[Submittal]:
         stmt = (
             select(Submittal)
-            .options(selectinload(Submittal.created_by))
+            .options(joinedload(Submittal.created_by))
             .where(Submittal.job_id == job_id)
             .order_by(Submittal.created_at.desc())
         )
@@ -72,7 +70,7 @@ class SubmittalsRepository(BaseRepository[Submittal]):
         status: SubmittalStatus | None = None,
         limit: int = 50,
     ) -> list[Submittal]:
-        stmt = select(Submittal).options(selectinload(Submittal.created_by))
+        stmt = select(Submittal).options(joinedload(Submittal.created_by))
 
         if search_term:
             search_pattern = f"%{search_term}%"
@@ -153,9 +151,9 @@ class SubmittalItemsRepository(BaseRepository[SubmittalItem]):
         stmt = (
             select(SubmittalItem)
             .options(
-                selectinload(SubmittalItem.spec_sheet),
-                selectinload(SubmittalItem.quote_detail),
-                selectinload(SubmittalItem.highlight_version).selectinload(
+                joinedload(SubmittalItem.spec_sheet),
+                joinedload(SubmittalItem.quote_detail),
+                joinedload(SubmittalItem.highlight_version).joinedload(
                     SpecSheetHighlightVersion.regions
                 ),
             )
@@ -180,9 +178,9 @@ class SubmittalRevisionsRepository(BaseRepository[SubmittalRevision]):
         stmt = (
             select(SubmittalRevision)
             .options(
-                selectinload(SubmittalRevision.returned_pdfs)
-                .selectinload(SubmittalReturnedPdf.change_analysis)
-                .selectinload(SubmittalChangeAnalysis.item_changes),
+                joinedload(SubmittalRevision.returned_pdfs)
+                .joinedload(SubmittalReturnedPdf.change_analysis)
+                .joinedload(SubmittalChangeAnalysis.item_changes),
             )
             .where(SubmittalRevision.id == revision_id)
         )
@@ -212,7 +210,7 @@ class SubmittalReturnedPdfsRepository(BaseRepository[SubmittalReturnedPdf]):
         stmt = (
             select(SubmittalReturnedPdf)
             .options(
-                selectinload(SubmittalReturnedPdf.change_analysis).selectinload(
+                joinedload(SubmittalReturnedPdf.change_analysis).joinedload(
                     SubmittalChangeAnalysis.item_changes
                 ),
             )
@@ -249,7 +247,7 @@ class SubmittalChangeAnalysisRepository(BaseRepository[SubmittalChangeAnalysis])
     ) -> SubmittalChangeAnalysis | None:
         stmt = (
             select(SubmittalChangeAnalysis)
-            .options(selectinload(SubmittalChangeAnalysis.item_changes))
+            .options(joinedload(SubmittalChangeAnalysis.item_changes))
             .where(SubmittalChangeAnalysis.id == analysis_id)
         )
         result = await self.session.execute(stmt)

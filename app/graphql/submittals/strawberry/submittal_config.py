@@ -3,6 +3,8 @@ from typing import Self
 import strawberry
 from commons.db.v6.crm.submittals import Submittal
 
+from app.core.db.adapters.dto import DTOMixin
+
 
 @strawberry.input
 class SubmittalConfigInput:
@@ -20,7 +22,7 @@ class SubmittalConfigInput:
 
 
 @strawberry.type
-class SubmittalConfigResponse:
+class SubmittalConfigResponse(DTOMixin[Submittal]):
     """Response type for submittal configuration."""
 
     include_lamps: bool

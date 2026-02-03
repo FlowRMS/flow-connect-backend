@@ -1,5 +1,4 @@
 import io
-from datetime import datetime
 from typing import TYPE_CHECKING
 
 from reportlab.lib import colors
@@ -13,6 +12,9 @@ if TYPE_CHECKING:
 
 from commons.db.v6.crm.submittals import Submittal, SubmittalItem, SubmittalStakeholder
 
+from app.graphql.submittals.services.pdf_transmittal_service import (
+    PdfTransmittalService,
+)
 from app.graphql.submittals.services.pdf_types import RolledUpItem
 from app.graphql.submittals.strawberry.submittal_input import GenerateSubmittalPdfInput
 
@@ -21,6 +23,7 @@ class PdfTableService:
     def __init__(self) -> None:  # pyright: ignore[reportMissingSuperCall]
         self.styles = getSampleStyleSheet()
         self._setup_custom_styles()
+        self._transmittal_service = PdfTransmittalService(self.styles)
 
     def _setup_custom_styles(self) -> None:
         self.styles.add(
@@ -62,32 +65,18 @@ class PdfTableService:
         elements.append(Paragraph("TRANSMITTAL", self.styles["TransmittalHeader"]))
         elements.append(Spacer(1, 0.25 * inch))
 
-        info_data = [
-            ["Submittal #:", submittal.submittal_number],
-            ["Date:", datetime.now().strftime("%B %d, %Y")],
-            ["Number of Items:", str(len(items))],
-        ]
-        if input_data.copies > 1:
-            info_data.append(["Copies:", str(input_data.copies)])
-
-        info_table = Table(info_data, colWidths=[1.5 * inch, 4 * inch])
-        info_table.setStyle(
-            TableStyle(
-                [
-                    ("FONTSIZE", (0, 0), (-1, -1), 10),
-                    ("BOTTOMPADDING", (0, 0), (-1, -1), 6),
-                ]
-            )
+        info_table = self._transmittal_service.build_info_table(
+            submittal, len(items), input_data
         )
         elements.append(info_table)
         elements.append(Spacer(1, 0.25 * inch))
 
-        self._add_attached_section(elements, input_data)
-        self._add_transmitted_for_section(elements, input_data)
-        self._add_addressed_to_section(elements, addressed_to)
+        self._transmittal_service.add_attached_section(elements, input_data)
+        self._transmittal_service.add_transmitted_for_section(elements, input_data)
+        self._transmittal_service.add_addressed_to_section(elements, addressed_to)
 
         elements.append(Paragraph("Items:", self.styles["TransmittalHeader"]))
-        items_table = self._build_items_table(items, input_data, is_summary=False)
+        items_table = self._build_transmittal_table(items, input_data)
         elements.append(items_table)
 
         doc.build(elements)
@@ -120,87 +109,11 @@ class PdfTableService:
         )
         elements.append(Spacer(1, 0.25 * inch))
 
-        summary_table = self._build_items_table(items, input_data, is_summary=True)
+        summary_table = self._build_summary_table(items, input_data)
         elements.append(summary_table)
 
         doc.build(elements)
         return buffer.getvalue()
-
-    def _add_attached_section(
-        self, elements: list, input_data: GenerateSubmittalPdfInput
-    ) -> None:
-        attached_labels = {
-            "drawings": "Drawings",
-            "specifications": "Specifications",
-            "prints": "Prints",
-            "information": "Information",
-            "plans": "Plans",
-            "submittals": "Submittals",
-        }
-        if input_data.attached_items or input_data.attached_other:
-            elements.append(Paragraph("Attached:", self.styles["Normal"]))
-            parts = []
-            if input_data.attached_items:
-                parts.extend(
-                    attached_labels.get(item, item.replace("_", " ").title())
-                    for item in input_data.attached_items
-                )
-            if input_data.attached_other:
-                parts.append(input_data.attached_other)
-            elements.append(Paragraph(", ".join(parts), self.styles["ItemDescription"]))
-            elements.append(Spacer(1, 0.15 * inch))
-
-    def _add_transmitted_for_section(
-        self, elements: list, input_data: GenerateSubmittalPdfInput
-    ) -> None:
-        transmitted_for_labels = {
-            "prior_approval": "Prior Approval",
-            "resubmit_for_approval": "Resubmittal for Approval",
-            "record": "Record",
-            "approval": "Approval",
-            "corrections": "Corrections",
-            "bids_due_on": "Bids Due On",
-            "approval_as_submitted": "Approval as Submitted",
-            "for_your_use": "Your Use",
-            "approval_as_noted": "Approval as Noted",
-            "review_and_comment": "Review and Comment",
-        }
-        if input_data.transmitted_for or input_data.transmitted_for_other:
-            elements.append(Paragraph("Transmitted For:", self.styles["Normal"]))
-            parts = []
-            if input_data.transmitted_for:
-                parts.extend(
-                    transmitted_for_labels.get(item, item.replace("_", " ").title())
-                    for item in input_data.transmitted_for
-                )
-            if input_data.transmitted_for_other:
-                parts.append(input_data.transmitted_for_other)
-            elements.append(Paragraph(", ".join(parts), self.styles["ItemDescription"]))
-            elements.append(Spacer(1, 0.15 * inch))
-
-    def _add_addressed_to_section(
-        self, elements: list, addressed_to: list[SubmittalStakeholder]
-    ) -> None:
-        if addressed_to:
-            elements.append(Paragraph("Addressed To:", self.styles["Normal"]))
-            for s in addressed_to:
-                name = s.contact_name or "Unknown"
-                company = s.company_name or ""
-                line = name
-                if company:
-                    line += f" ({company})"
-                elements.append(Paragraph(line, self.styles["ItemDescription"]))
-            elements.append(Spacer(1, 0.25 * inch))
-
-    def _build_items_table(
-        self,
-        items: list[SubmittalItem | RolledUpItem],
-        input_data: GenerateSubmittalPdfInput,
-        is_summary: bool,
-    ) -> Table:
-        if is_summary:
-            return self._build_summary_table(items, input_data)
-        return self._build_transmittal_table(items, input_data)
 
     def _build_transmittal_table(
         self,
