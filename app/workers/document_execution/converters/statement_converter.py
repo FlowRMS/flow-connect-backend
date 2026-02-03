@@ -123,7 +123,7 @@ class StatementConverter(
         order_id = entity_mapping.get_order_id(flow_detail_index)
         invoice_id = entity_mapping.get_invoice_id(flow_detail_index)
 
-        quantity = Decimal(str(detail.quantity_determined))
+        quantity = Decimal(str(detail.quantity_determined or 1))
         unit_price = detail.unit_price_determined or Decimal("0")
 
         order_detail_id = await self._match_order_detail(
@@ -146,6 +146,9 @@ class StatementConverter(
             else default_discount_rate
         )
 
+        # Use actual commission value if available (from total_line_commission or paid_commission_amount)
+        commission = detail.total_line_commission or detail.paid_commission_amount
+
         sold_to_customer_id = entity_mapping.sold_to_customer_id
 
         return StatementDetailInput(
@@ -164,6 +167,7 @@ class StatementConverter(
             discount_rate=discount_rate,
             commission_rate=commission_rate,
             commission_discount_rate=commission_discount_rate,
+            commission=commission,
         )
 
     async def _match_order_detail(
