@@ -55,7 +55,8 @@ class FileUploadService:
 
         return UploadResult(
             s3_key=s3_key,
-            file_path=s3_key,
+            file_path=folder_path
+            or "",  # Only folder path, file_name is stored separately
             file_size=file_size,
             file_sha=file_sha,
             presigned_url=presigned_url,
