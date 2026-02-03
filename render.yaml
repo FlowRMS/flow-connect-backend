@@ -29,9 +29,7 @@ services:
     envVars:
       - key: ENVIRONMENT
         value: staging
-      - fromGroup: Staging-flow-connect-backend
-    domains:
-      - staging.flowconnectbackend.flowrms.com
+      - fromGroup: Flow Connect Backend Staging
     autoDeploy: true
 
   # Production Environment
