@@ -47,8 +47,8 @@ dev = [
     "testcontainers>=4.13.1",
     "marimo>=0.17.2",
     "taskiq[reload]>=0.11.20",
+    "typer>=0.20.0",
 ]
 
 [tool.uv.sources]
-flow-py-commons = { git = "ssh://git@github.com/FlowRMS/flowbot-commons.git", tag = "3.01.06" }
-
+flow-py-commons = { git = "ssh://git@github.com/FlowRMS/flowbot-commons.git", tag = "3.01.07" }

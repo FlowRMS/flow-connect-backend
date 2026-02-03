@@ -974,7 +974,7 @@ wheels = [
 [[package]]
 name = "flow-py-commons"
 version = "3.1.6"
-source = { git = "ssh://git@github.com/FlowRMS/flowbot-commons.git?tag=3.01.06#5225d0ea9d6b798bbf46af6910e7f767a28aaaed" }
+source = { git = "ssh://git@github.com/FlowRMS/flowbot-commons.git?tag=3.01.07#eb4303af0f5a4cb99acb13c414a82e17b9807af2" }
 dependencies = [
     { name = "aiobotocore" },
     { name = "aiohttp" },
@@ -1060,6 +1060,7 @@ dev = [
     { name = "ruff" },
     { name = "taskiq", extra = ["reload"] },
     { name = "testcontainers" },
+    { name = "typer" },
 ]
 
 [package.metadata]
@@ -1069,7 +1070,7 @@ requires-dist = [
     { name = "asyncpg", specifier = ">=0.30.0" },
     { name = "cryptography", specifier = ">=46.0.2" },
     { name = "fastapi", extras = ["standard"], specifier = ">=0.110.0" },
-    { name = "flow-py-commons", git = "ssh://git@github.com/FlowRMS/flowbot-commons.git?tag=3.01.06" },
+    { name = "flow-py-commons", git = "ssh://git@github.com/FlowRMS/flowbot-commons.git?tag=3.01.07" },
     { name = "greenlet", specifier = ">=3.2.4" },
     { name = "httpx", specifier = ">=0.27.0" },
     { name = "loguru", specifier = ">=0.7.2,<0.8" },
@@ -1106,6 +1107,7 @@ dev = [
     { name = "ruff", specifier = ">=0.6.3" },
     { name = "taskiq", extras = ["reload"], specifier = ">=0.11.20" },
     { name = "testcontainers", specifier = ">=4.13.1" },
+    { name = "typer", specifier = ">=0.20.0" },
 ]
 
 [[package]]
