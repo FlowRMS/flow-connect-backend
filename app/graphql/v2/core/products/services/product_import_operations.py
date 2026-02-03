@@ -35,7 +35,6 @@ class ProductImportOperations:
         factory_id: UUID,
         default_uom_id: UUID,
     ) -> tuple[int, int, list[ProductImportError]]:
-        """Create new products. Returns (created_count, updated_count, errors)."""
         errors: list[ProductImportError] = []
         created_count = 0
         updated_count = 0
