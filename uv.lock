@@ -1060,6 +1060,7 @@ dev = [
     { name = "ruff" },
     { name = "taskiq", extra = ["reload"] },
     { name = "testcontainers" },
+    { name = "typer" },
 ]
 
 [package.metadata]
@@ -1106,6 +1107,7 @@ dev = [
     { name = "ruff", specifier = ">=0.6.3" },
     { name = "taskiq", extras = ["reload"], specifier = ">=0.11.20" },
     { name = "testcontainers", specifier = ">=4.13.1" },
+    { name = "typer", specifier = ">=0.20.0" },
 ]
 
 [[package]]
