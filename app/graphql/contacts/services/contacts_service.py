@@ -14,6 +14,10 @@ from app.graphql.contacts.strawberry.contact_related_entities_response import (
     ContactRelatedEntitiesResponse,
 )
 from app.graphql.links.services.links_service import LinksService
+from app.graphql.v2.core.customers.services.customer_service import CustomerService
+from app.graphql.v2.core.customers.strawberry.customer_response import (
+    CustomerLiteResponse,
+)
 
 
 class ContactsService:
@@ -25,12 +29,14 @@ class ContactsService:
         auth_info: AuthInfo,
         link_service: LinksService,
         companies_service: CompaniesService,
+        customer_service: CustomerService,
     ) -> None:
         super().__init__()
         self.repository = repository
         self.auth_info = auth_info
         self.link_service = link_service
         self.companies_service = companies_service
+        self.customer_service = customer_service
 
     async def create_contact(self, contact_input: ContactInput) -> Contact:
         """Create a new contact."""
@@ -45,6 +51,17 @@ class ContactsService:
                 source_id=contact.id,
                 target_type=EntityType.COMPANY,
                 target_id=contact_input.company_id,
+            )
+
+        if (
+            contact_input.customer_id != strawberry.UNSET
+            and contact_input.customer_id is not None
+        ):
+            _ = await self.link_service.create_link(
+                source_type=EntityType.CONTACT,
+                source_id=contact.id,
+                target_type=EntityType.CUSTOMER,
+                target_id=contact_input.customer_id,
             )
 
         return contact
@@ -122,6 +139,10 @@ class ContactsService:
         """Find all contacts linked to the given note ID."""
         return await self.repository.find_by_note_id(note_id)
 
+    async def find_contacts_by_quote_id(self, quote_id: UUID) -> list[Contact]:
+        """Find all contacts linked to the given quote ID."""
+        return await self.repository.find_by_quote_id(quote_id)
+
     async def get_contact_related_entities(
         self, contact_id: UUID
     ) -> ContactRelatedEntitiesResponse:
@@ -143,9 +164,13 @@ class ContactsService:
         companies = await self.companies_service.find_companies_by_contact_id(
             contact_id
         )
+        customers = await self.customer_service.find_by_entity(
+            EntityType.CONTACT, contact_id
+        )
 
         return ContactRelatedEntitiesResponse(
             companies=CompanyLiteResponse.from_orm_model_list(companies),
+            customers=CustomerLiteResponse.from_orm_model_list(customers),
         )
 
     async def find_by_entity(

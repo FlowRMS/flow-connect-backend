@@ -1,5 +1,3 @@
-"""GraphQL mutations for container types."""
-
 from uuid import UUID
 
 import strawberry

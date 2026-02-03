@@ -2,7 +2,7 @@ from uuid import UUID
 
 import strawberry
 from aioinject import Injected
-from commons.db.v6.core.settings.setting_key import SettingKey
+from commons.db.v6.core.settings.setting_key import SettingKey as CommonsSettingKey
 
 from app.graphql.inject import inject
 from app.graphql.v2.core.settings.services.general_settings_service import (
@@ -11,6 +11,7 @@ from app.graphql.v2.core.settings.services.general_settings_service import (
 from app.graphql.v2.core.settings.strawberry.general_settings_response import (
     GeneralSettingsResponse,
 )
+from app.graphql.v2.core.settings.strawberry.setting_key import SettingKey
 
 
 @strawberry.type
@@ -23,7 +24,9 @@ class GeneralSettingsQueries:
         user_id: UUID | None,
         service: Injected[GeneralSettingsService],
     ) -> GeneralSettingsResponse | None:
-        setting = await service.get_by_key_optional(SettingKey(key.value), user_id)
+        setting = await service.get_by_key_optional(
+            CommonsSettingKey[key.name], user_id
+        )
         return GeneralSettingsResponse.from_orm_model_optional(setting)
 
     @strawberry.field
@@ -33,7 +36,7 @@ class GeneralSettingsQueries:
         key: SettingKey,
         service: Injected[GeneralSettingsService],
     ) -> GeneralSettingsResponse | None:
-        setting = await service.get_current_user_setting(SettingKey(key.value))
+        setting = await service.get_current_user_setting(CommonsSettingKey[key.name])
         return GeneralSettingsResponse.from_orm_model_optional(setting)
 
     @strawberry.field
@@ -43,7 +46,7 @@ class GeneralSettingsQueries:
         key: SettingKey,
         service: Injected[GeneralSettingsService],
     ) -> GeneralSettingsResponse | None:
-        setting = await service.get_tenant_wide(SettingKey(key.value))
+        setting = await service.get_tenant_wide(CommonsSettingKey[key.name])
         return GeneralSettingsResponse.from_orm_model_optional(setting)
 
     @strawberry.field

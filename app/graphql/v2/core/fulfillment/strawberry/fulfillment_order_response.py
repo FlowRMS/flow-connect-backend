@@ -1,5 +1,3 @@
-"""Full response type for fulfillment orders - used for detail views."""
-
 from datetime import datetime
 from typing import Self
 

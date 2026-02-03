@@ -1,5 +1,3 @@
-"""Strawberry input types for warehouses."""
-
 from decimal import Decimal
 from uuid import UUID
 

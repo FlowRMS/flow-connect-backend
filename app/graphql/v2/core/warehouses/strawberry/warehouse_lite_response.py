@@ -1,5 +1,3 @@
-"""Lite response type for warehouses."""
-
 from datetime import datetime
 from decimal import Decimal
 from typing import Self

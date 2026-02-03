@@ -1,5 +1,3 @@
-"""GraphQL mutations for SpecSheets entity."""
-
 from uuid import UUID
 
 import strawberry
@@ -7,9 +5,9 @@ from aioinject import Injected
 
 from app.graphql.inject import inject
 from app.graphql.spec_sheets.services.spec_sheets_service import SpecSheetsService
+from app.graphql.spec_sheets.strawberry.folder_input import MoveSpecSheetToFolderInput
 from app.graphql.spec_sheets.strawberry.spec_sheet_input import (
     CreateSpecSheetInput,
-    MoveFolderInput,
     UpdateSpecSheetInput,
 )
 from app.graphql.spec_sheets.strawberry.spec_sheet_response import SpecSheetResponse
@@ -30,7 +28,7 @@ class SpecSheetsMutations:
         Create a new spec sheet.
 
         Args:
-            input: Spec sheet creation data
+            input: Spec sheet creation data including optional folder_id
 
         Returns:
             Created SpecSheetResponse
@@ -48,6 +46,8 @@ class SpecSheetsMutations:
     ) -> SpecSheetResponse:
         """
         Update an existing spec sheet.
+
+        Note: To move a spec sheet to a different folder, use moveSpecSheetToFolder.
 
         Args:
             id: UUID of the spec sheet to update
@@ -98,24 +98,26 @@ class SpecSheetsMutations:
 
     @strawberry.mutation
     @inject
-    async def move_folder(
+    async def move_spec_sheet_to_folder(
         self,
         service: Injected[SpecSheetsService],
-        input: MoveFolderInput,
-    ) -> int:
+        input: MoveSpecSheetToFolderInput,
+    ) -> SpecSheetResponse | None:
         """
-        Move a folder to a new location within the same factory.
+        Move a spec sheet to a different folder (drag and drop).
 
-        Updates the folder_path of all spec sheets in the folder.
+        Updates the File.folder_id to move the spec sheet.
 
         Args:
-            input: Move folder data with factory_id, old_folder_path, new_folder_path
+            input: Move data with spec_sheet_id, folder_id
 
         Returns:
-            Number of spec sheets updated
+            Updated SpecSheetResponse or None if not found
         """
-        return await service.move_folder(
-            input.factory_id,
-            input.old_folder_path,
-            input.new_folder_path,
+        spec_sheet = await service.move_spec_sheet_to_folder(
+            spec_sheet_id=input.spec_sheet_id,
+            folder_id=input.folder_id,
         )
+        if spec_sheet:
+            return SpecSheetResponse.from_orm_model(spec_sheet)
+        return None

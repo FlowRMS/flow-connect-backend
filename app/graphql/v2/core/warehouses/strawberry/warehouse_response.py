@@ -1,5 +1,3 @@
-"""Strawberry response types for warehouses."""
-
 from datetime import datetime
 from typing import Self
 from uuid import UUID

@@ -1,5 +1,3 @@
-"""Campaign repositories package."""
-
 from app.graphql.campaigns.repositories.campaign_recipients_repository import (
     CampaignRecipientsRepository,
 )

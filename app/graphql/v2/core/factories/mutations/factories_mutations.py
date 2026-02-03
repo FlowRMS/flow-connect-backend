@@ -6,6 +6,9 @@ from aioinject import Injected
 from app.graphql.inject import inject
 from app.graphql.v2.core.factories.services.factory_service import FactoryService
 from app.graphql.v2.core.factories.strawberry.factory_input import FactoryInput
+from app.graphql.v2.core.factories.strawberry.factory_overage_settings_input import (
+    FactoryOverageSettingsInput,
+)
 from app.graphql.v2.core.factories.strawberry.factory_response import (
     FactoryLiteResponse,
     FactoryResponse,
@@ -63,3 +66,14 @@ class FactoriesMutations:
     ) -> list[FactoryLiteResponse]:
         children = await service.assign_children(parent_id, child_ids)
         return [FactoryLiteResponse.from_orm_model(child) for child in children]
+
+    @strawberry.mutation
+    @inject
+    async def update_factory_overage_settings(
+        self,
+        id: UUID,
+        input: FactoryOverageSettingsInput,
+        service: Injected[FactoryService],
+    ) -> FactoryResponse:
+        factory = await service.update_overage_settings(id, input)
+        return FactoryResponse.from_orm_model(factory)

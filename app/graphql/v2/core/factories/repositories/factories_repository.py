@@ -1,8 +1,9 @@
+from decimal import Decimal
 from typing import Any
 from uuid import UUID
 
 from commons.db.v6 import RbacResourceEnum, User
-from commons.db.v6.core.factories.factory import Factory
+from commons.db.v6.core.factories.factory import Factory, OverageTypeEnum
 from commons.db.v6.core.factories.factory_split_rate import FactorySplitRate
 from commons.db.v6.crm.links.entity_type import EntityType
 from commons.db.v6.crm.manufacturer_order_model import ManufacturerOrder
@@ -174,3 +175,23 @@ class FactoriesRepository(BaseRepository[Factory]):
             )
             _ = await self.session.execute(stmt)
         await self.session.flush()
+
+    async def update_overage_settings(
+        self,
+        factory_id: UUID,
+        overage_allowed: bool,
+        overage_type: OverageTypeEnum,
+        rep_overage_share: Decimal,
+    ) -> bool:
+        stmt = (
+            update(Factory)
+            .where(Factory.id == factory_id)
+            .values(
+                overage_allowed=overage_allowed,
+                overage_type=overage_type,
+                rep_overage_share=rep_overage_share,
+            )
+        )
+        result = await self.session.execute(stmt)
+        await self.session.flush()
+        return result.rowcount > 0  # pyright: ignore[reportAttributeAccessIssue]

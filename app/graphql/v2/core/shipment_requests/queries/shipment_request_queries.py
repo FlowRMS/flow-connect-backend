@@ -4,6 +4,7 @@ import strawberry
 from aioinject import Injected
 from commons.db.v6.warehouse.shipment_requests import ShipmentRequestStatus
 
+from app.core.constants import DEFAULT_QUERY_LIMIT, DEFAULT_QUERY_OFFSET
 from app.graphql.inject import inject
 from app.graphql.v2.core.shipment_requests.services.shipment_request_service import (
     ShipmentRequestService,
@@ -17,9 +18,6 @@ from app.graphql.v2.core.shipment_requests.strawberry.shipment_request_response 
 class ShipmentRequestStatusOption:
     label: str
     value: str
-
-
-from app.core.constants import DEFAULT_QUERY_LIMIT, DEFAULT_QUERY_OFFSET
 
 
 @strawberry.type

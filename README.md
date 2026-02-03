@@ -15,7 +15,7 @@ A modern, multi-tenant CRM backend built with Python 3.13, FastAPI, and Strawber
 - [Project Structure](#project-structure)
 - [API Documentation](#api-documentation)
 
----
+--- 
 
 ## Features
 

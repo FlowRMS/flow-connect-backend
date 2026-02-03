@@ -1,7 +1,6 @@
 import io
 import mimetypes
 from dataclasses import dataclass
-from pathlib import Path
 
 from commons.auth import AuthInfo
 from commons.s3.service import S3Service
@@ -12,7 +11,7 @@ from loguru import logger
 @dataclass
 class UploadResult:
     s3_key: str
-    file_path: str | None
+    file_path: str
     file_size: int
     file_sha: str
     presigned_url: str
@@ -35,7 +34,7 @@ class FileUploadService:
         file_name: str,
         folder_path: str | None = None,
     ) -> UploadResult:
-        s3_key = str(Path(folder_path) / file_name) if folder_path else file_name
+        s3_key = f"{folder_path}/{file_name}" if folder_path else file_name
         file_size = len(file_content)
         file_sha = calculate_sha(file_content)
         content_type = self._get_content_type(file_name)
@@ -56,7 +55,8 @@ class FileUploadService:
 
         return UploadResult(
             s3_key=s3_key,
-            file_path=s3_key.replace(file_name, "") if folder_path else None,
+            file_path=folder_path
+            or "",  # Only folder path, file_name is stored separately
             file_size=file_size,
             file_sha=file_sha,
             presigned_url=presigned_url,

@@ -1,5 +1,3 @@
-"""GraphQL input type for creating a SpecSheet."""
-
 from uuid import UUID
 
 import strawberry
@@ -18,7 +16,7 @@ class CreateSpecSheetInput:
     page_count: int = 1
     categories: list[str]
     tags: list[str] | None = None
-    folder_path: str | None = None
+    folder_id: UUID | None = None  # pyfiles.folders ID for folder organization
     needs_review: bool = False
     published: bool = True
     file: Upload | None = None  # File upload field for 'file' upload_source

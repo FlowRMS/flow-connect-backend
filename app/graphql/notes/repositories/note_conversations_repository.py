@@ -1,5 +1,3 @@
-"""Repository for NoteConversation entity."""
-
 from uuid import UUID
 
 from commons.db.v6.crm.notes.note_conversation_model import NoteConversation

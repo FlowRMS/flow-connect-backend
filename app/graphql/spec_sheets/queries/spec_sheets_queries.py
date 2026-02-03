@@ -1,5 +1,3 @@
-"""GraphQL queries for SpecSheets entity."""
-
 from uuid import UUID
 
 import strawberry
@@ -84,5 +82,30 @@ class SpecSheetsQueries:
         """
         spec_sheets = await service.search_spec_sheets(
             search_term, factory_id, categories, published_only, limit
+        )
+        return SpecSheetResponse.from_orm_model_list(spec_sheets)
+
+    @strawberry.field
+    @inject
+    async def spec_sheets_by_folder(
+        self,
+        service: Injected[SpecSheetsService],
+        factory_id: UUID,
+        folder_id: UUID | None = None,
+        published_only: bool = True,
+    ) -> list[SpecSheetResponse]:
+        """
+        Get all spec sheets in a specific folder.
+
+        Args:
+            factory_id: UUID of the factory
+            folder_id: UUID of the folder (None for root/unassigned)
+            published_only: Filter only published spec sheets
+
+        Returns:
+            List of SpecSheetResponse in the folder
+        """
+        spec_sheets = await service.get_spec_sheets_by_folder(
+            factory_id, folder_id, published_only
         )
         return SpecSheetResponse.from_orm_model_list(spec_sheets)

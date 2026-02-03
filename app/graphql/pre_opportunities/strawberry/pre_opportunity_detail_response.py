@@ -1,5 +1,3 @@
-"""GraphQL response type for PreOpportunityDetail."""
-
 from decimal import Decimal
 from typing import Self
 from uuid import UUID

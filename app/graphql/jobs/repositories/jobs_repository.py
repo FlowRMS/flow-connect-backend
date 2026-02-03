@@ -11,10 +11,12 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import aliased, lazyload
 
 from app.core.context_wrapper import ContextWrapper
+from app.core.processors import ProcessorExecutor
 from app.graphql.base_repository import BaseRepository
 from app.graphql.jobs.strawberry.job_landing_page_response import (
     JobLandingPageResponse,
 )
+from app.graphql.watchers.processors import JobWatcherNotificationProcessor
 
 
 class JobsRepository(BaseRepository[Job]):
@@ -22,14 +24,20 @@ class JobsRepository(BaseRepository[Job]):
     rbac_resource: RbacResourceEnum | None = RbacResourceEnum.JOB
     entity_type = EntityType.JOB
 
-    def __init__(self, context_wrapper: ContextWrapper, session: AsyncSession) -> None:
-        """
-        Initialize the Jobs repository.
-
-        Args:
-            session: SQLAlchemy async session
-        """
-        super().__init__(session, context_wrapper, Job)
+    def __init__(
+        self,
+        context_wrapper: ContextWrapper,
+        session: AsyncSession,
+        processor_executor: ProcessorExecutor,
+        job_watcher_notification_processor: JobWatcherNotificationProcessor,
+    ) -> None:
+        super().__init__(
+            session,
+            context_wrapper,
+            Job,
+            processor_executor=processor_executor,
+            processor_executor_classes=[job_watcher_notification_processor],
+        )
 
     def paginated_stmt(self) -> Select[Any]:
         user_owner_alias = aliased(User)

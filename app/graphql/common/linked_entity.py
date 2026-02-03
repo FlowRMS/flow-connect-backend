@@ -1,5 +1,3 @@
-"""Common type for linked entities."""
-
 from uuid import UUID
 
 import strawberry

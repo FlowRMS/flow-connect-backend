@@ -1,5 +1,3 @@
-"""Repository for PreOpportunityBalance entity with calculation logic."""
-
 from collections.abc import Sequence
 from decimal import Decimal
 from uuid import UUID

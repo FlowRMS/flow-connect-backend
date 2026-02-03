@@ -71,6 +71,10 @@ class ProductService:
 
         entities = [inp.to_orm_model() for inp in valid_inputs]
         created = await self.repository.bulk_create(entities)
+
+        inputs_with_entities = list(zip(valid_inputs, created))
+        await self._process_cpns(inputs_with_entities)
+
         return created
 
     async def get_existing_products(
