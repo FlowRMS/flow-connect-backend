@@ -3,7 +3,6 @@ from uuid import UUID
 import strawberry
 from aioinject import Injected
 
-from app.errors.common_errors import NotFoundError
 from app.graphql.inject import inject
 from app.graphql.v2.core.sales_teams.services.sales_team_service import SalesTeamService
 from app.graphql.v2.core.sales_teams.services.sales_team_sync_service import (
@@ -53,21 +52,11 @@ class SalesTeamQueries:
             only_in_territory_ids,
         ) = await sync_service.check_list_mismatch(sales_team_id, territory_id)
 
-        only_in_team: list[UserResponse] = []
-        for user_id in only_in_team_ids:
-            try:
-                user = await user_service.get_by_id(user_id)
-                only_in_team.append(UserResponse.from_orm_model(user))
-            except NotFoundError:
-                pass
+        team_users = await user_service.get_by_ids(only_in_team_ids)
+        only_in_team = [UserResponse.from_orm_model(u) for u in team_users]
 
-        only_in_territory: list[UserResponse] = []
-        for user_id in only_in_territory_ids:
-            try:
-                user = await user_service.get_by_id(user_id)
-                only_in_territory.append(UserResponse.from_orm_model(user))
-            except NotFoundError:
-                pass
+        territory_users = await user_service.get_by_ids(only_in_territory_ids)
+        only_in_territory = [UserResponse.from_orm_model(u) for u in territory_users]
 
         return MismatchCheckResponse(
             has_mismatch=has_mismatch,

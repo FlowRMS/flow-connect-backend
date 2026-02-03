@@ -20,9 +20,3 @@ class SalesTeamInput(BaseInputGQL[SalesTeam]):
             territory_id=self.territory_id,
             active=self.active,
         )
-
-
-@strawberry.input
-class SalesTeamMemberInput:
-    user_id: UUID
-    position: int = 0

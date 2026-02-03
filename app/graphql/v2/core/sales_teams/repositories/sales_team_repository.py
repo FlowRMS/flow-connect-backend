@@ -2,8 +2,10 @@ from uuid import UUID
 
 from commons.db.v6 import RbacResourceEnum
 from commons.db.v6.core.sales_teams.sales_team import SalesTeam
+from commons.db.v6.core.sales_teams.sales_team_member import SalesTeamMember
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import joinedload
 
 from app.core.context_wrapper import ContextWrapper
 from app.core.processors.executor import ProcessorExecutor
@@ -61,3 +63,17 @@ class SalesTeamRepository(BaseRepository[SalesTeam]):
         )
         result = await self.session.execute(stmt)
         return list(result.scalars().all())
+
+    async def get_all_active_with_relations(self) -> list[SalesTeam]:
+        stmt = (
+            select(SalesTeam)
+            .where(SalesTeam.active.is_(True))
+            .options(
+                joinedload(SalesTeam.manager),
+                joinedload(SalesTeam.territory),
+                joinedload(SalesTeam.members).joinedload(SalesTeamMember.user),
+            )
+            .order_by(SalesTeam.name)
+        )
+        result = await self.session.execute(stmt)
+        return list(result.unique().scalars().all())

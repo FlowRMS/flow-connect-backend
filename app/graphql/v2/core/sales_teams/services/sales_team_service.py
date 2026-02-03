@@ -69,12 +69,7 @@ class SalesTeamService:
         return await self.repository.delete(sales_team_id)
 
     async def get_all_active(self) -> list[SalesTeam]:
-        teams = await self.repository.get_all_active()
-        result: list[SalesTeam] = []
-        for team in teams:
-            loaded_team = await self.get_by_id(team.id)
-            result.append(loaded_team)
-        return result
+        return await self.repository.get_all_active_with_relations()
 
     async def add_member(
         self, sales_team_id: UUID, user_id: UUID, position: int = 0

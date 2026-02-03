@@ -65,6 +65,7 @@ Thumbs.db
 
 # Claude
 CLAUDE_PR_FIX_INSTRUCTIONS.md
+guidelines.txt
 
 #Ignore vscode AI rules
 .github\instructions\codacy.instructions.md
