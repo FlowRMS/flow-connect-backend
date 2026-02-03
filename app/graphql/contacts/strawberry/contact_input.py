@@ -15,6 +15,7 @@ class ContactInput(BaseInputGQL[Contact]):
     email: str | None = strawberry.UNSET
     phone: str | None = strawberry.UNSET
     role: str | None = strawberry.UNSET
+    role_detail: str | None = strawberry.UNSET
     territory: str | None = strawberry.UNSET
     tags: list[str] | None = strawberry.UNSET
     notes: str | None = strawberry.UNSET
@@ -23,12 +24,17 @@ class ContactInput(BaseInputGQL[Contact]):
 
     def to_orm_model(self) -> Contact:
         """Convert input to ORM model."""
+        role_detail = self.optional_field(self.role_detail)
+        if role_detail and len(role_detail) > 1000:
+            raise ValueError("roleDetail must not exceed 1000 characters")
+
         return Contact(
             first_name=self.first_name,
             last_name=self.last_name,
             email=self.optional_field(self.email),
             phone=self.optional_field(self.phone),
             role=self.optional_field(self.role),
+            role_detail=role_detail,
             territory=self.optional_field(self.territory),
             tags=self.optional_field(self.tags),
             notes=self.optional_field(self.notes),
