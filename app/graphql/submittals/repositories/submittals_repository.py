@@ -42,7 +42,7 @@ class SubmittalsRepository(BaseRepository[Submittal]):
             .where(Submittal.id == submittal_id)
         )
         result = await self.session.execute(stmt)
-        return result.scalar_one_or_none()
+        return result.unique().scalar_one_or_none()
 
     async def find_by_quote(self, quote_id: UUID) -> list[Submittal]:
         stmt = (
@@ -52,7 +52,7 @@ class SubmittalsRepository(BaseRepository[Submittal]):
             .order_by(Submittal.created_at.desc())
         )
         result = await self.session.execute(stmt)
-        return list(result.scalars().all())
+        return list(result.unique().scalars().all())
 
     async def find_by_job(self, job_id: UUID) -> list[Submittal]:
         stmt = (
@@ -62,7 +62,7 @@ class SubmittalsRepository(BaseRepository[Submittal]):
             .order_by(Submittal.created_at.desc())
         )
         result = await self.session.execute(stmt)
-        return list(result.scalars().all())
+        return list(result.unique().scalars().all())
 
     async def search_submittals(
         self,
@@ -87,7 +87,7 @@ class SubmittalsRepository(BaseRepository[Submittal]):
         stmt = stmt.limit(limit).order_by(Submittal.created_at.desc())
 
         result = await self.session.execute(stmt)
-        return list(result.scalars().all())
+        return list(result.unique().scalars().all())
 
     async def get_next_revision_number(self, submittal_id: UUID) -> int:
         stmt = select(func.max(SubmittalRevision.revision_number)).where(
@@ -160,7 +160,7 @@ class SubmittalItemsRepository(BaseRepository[SubmittalItem]):
             .where(SubmittalItem.id == item_id)
         )
         result = await self.session.execute(stmt)
-        return result.scalar_one_or_none()
+        return result.unique().scalar_one_or_none()
 
 
 class SubmittalStakeholdersRepository(BaseRepository[SubmittalStakeholder]):
@@ -185,7 +185,7 @@ class SubmittalRevisionsRepository(BaseRepository[SubmittalRevision]):
             .where(SubmittalRevision.id == revision_id)
         )
         result = await self.session.execute(stmt)
-        return result.scalar_one_or_none()
+        return result.unique().scalar_one_or_none()
 
     async def add_returned_pdf(
         self, revision_id: UUID, returned_pdf: SubmittalReturnedPdf
@@ -217,7 +217,7 @@ class SubmittalReturnedPdfsRepository(BaseRepository[SubmittalReturnedPdf]):
             .where(SubmittalReturnedPdf.id == returned_pdf_id)
         )
         result = await self.session.execute(stmt)
-        return result.scalar_one_or_none()
+        return result.unique().scalar_one_or_none()
 
     async def add_change_analysis(
         self, returned_pdf_id: UUID, change_analysis: SubmittalChangeAnalysis
@@ -251,7 +251,7 @@ class SubmittalChangeAnalysisRepository(BaseRepository[SubmittalChangeAnalysis])
             .where(SubmittalChangeAnalysis.id == analysis_id)
         )
         result = await self.session.execute(stmt)
-        return result.scalar_one_or_none()
+        return result.unique().scalar_one_or_none()
 
     async def add_item_change(
         self, analysis_id: UUID, item_change: SubmittalItemChange
