@@ -1,14 +1,16 @@
 from typing import Self
 
 import strawberry
+from commons.db.v6.crm.submittals import SubmittalRevision
 
+from app.core.db.adapters.dto import DTOMixin
 from app.graphql.submittals.strawberry.submittal_revision_response import (
     SubmittalRevisionResponse,
 )
 
 
 @strawberry.type
-class GenerateSubmittalPdfResponse:
+class GenerateSubmittalPdfResponse(DTOMixin[SubmittalRevision]):
     """Response type for generate submittal PDF mutation."""
 
     success: bool
@@ -47,4 +49,12 @@ class GenerateSubmittalPdfResponse:
         return cls(
             success=False,
             error=error,
+        )
+
+    @classmethod
+    def from_orm_model(cls, model: SubmittalRevision) -> Self:
+        """Create response from ORM model (partial - use factory methods for full response)."""
+        return cls(
+            success=True,
+            revision=SubmittalRevisionResponse.from_orm_model(model),
         )

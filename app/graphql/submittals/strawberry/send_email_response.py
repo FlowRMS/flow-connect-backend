@@ -36,13 +36,21 @@ class SubmittalEmailResponse(DTOMixin[SubmittalEmail]):
 
 
 @strawberry.type
-class SendSubmittalEmailResponse:
+class SendSubmittalEmailResponse(DTOMixin[SubmittalEmail]):
     """Response type for send submittal email mutation."""
 
     success: bool
     error: str | None = None
     email: SubmittalEmailResponse | None = None
     provider: str | None = None
+
+    @classmethod
+    def from_orm_model(cls, model: SubmittalEmail) -> Self:
+        """Create response from ORM model."""
+        return cls(
+            success=True,
+            email=SubmittalEmailResponse.from_orm_model(model),
+        )
 
     @classmethod
     def from_result(cls, result: SendSubmittalEmailResult) -> Self:

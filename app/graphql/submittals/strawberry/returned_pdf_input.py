@@ -2,7 +2,13 @@ from datetime import date
 from uuid import UUID
 
 import strawberry
+from commons.db.v6.crm.submittals import (
+    SubmittalChangeAnalysis,
+    SubmittalItemChange,
+    SubmittalReturnedPdf,
+)
 
+from app.core.strawberry.inputs import BaseInputGQL
 from app.graphql.submittals.strawberry.enums import (
     ChangeAnalysisSourceGQL,
     ItemChangeStatusGQL,
@@ -11,7 +17,7 @@ from app.graphql.submittals.strawberry.enums import (
 
 
 @strawberry.input
-class UploadReturnedPdfInput:
+class UploadReturnedPdfInput(BaseInputGQL[SubmittalReturnedPdf]):
     """Input for uploading a returned PDF."""
 
     revision_id: UUID
@@ -25,7 +31,7 @@ class UploadReturnedPdfInput:
 
 
 @strawberry.input
-class CreateChangeAnalysisInput:
+class CreateChangeAnalysisInput(BaseInputGQL[SubmittalChangeAnalysis]):
     """Input for creating a change analysis."""
 
     returned_pdf_id: UUID
@@ -35,7 +41,7 @@ class CreateChangeAnalysisInput:
 
 
 @strawberry.input
-class UpdateChangeAnalysisInput:
+class UpdateChangeAnalysisInput(BaseInputGQL[SubmittalChangeAnalysis]):
     """Input for updating a change analysis."""
 
     overall_status: OverallChangeStatusGQL | None = None
@@ -43,7 +49,7 @@ class UpdateChangeAnalysisInput:
 
 
 @strawberry.input
-class AddItemChangeInput:
+class AddItemChangeInput(BaseInputGQL[SubmittalItemChange]):
     """Input for adding an item change to a change analysis."""
 
     change_analysis_id: UUID
@@ -57,7 +63,7 @@ class AddItemChangeInput:
 
 
 @strawberry.input
-class UpdateItemChangeInput:
+class UpdateItemChangeInput(BaseInputGQL[SubmittalItemChange]):
     """Input for updating an item change."""
 
     status: ItemChangeStatusGQL | None = None

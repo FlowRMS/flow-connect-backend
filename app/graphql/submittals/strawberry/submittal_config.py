@@ -4,10 +4,11 @@ import strawberry
 from commons.db.v6.crm.submittals import Submittal
 
 from app.core.db.adapters.dto import DTOMixin
+from app.core.strawberry.inputs import BaseInputGQL
 
 
 @strawberry.input
-class SubmittalConfigInput:
+class SubmittalConfigInput(BaseInputGQL[Submittal]):
     """Input for submittal configuration options."""
 
     include_lamps: bool = False
