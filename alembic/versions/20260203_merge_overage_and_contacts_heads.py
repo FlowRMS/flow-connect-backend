@@ -6,7 +6,10 @@ from collections.abc import Sequence
 
 # revision identifiers, used by Alembic.
 revision: str = "51ec244363cf"
-down_revision: tuple[str, ...] | None = ("factory_overage_001", "add_role_detail_contacts")
+down_revision: tuple[str, ...] | None = (
+    "factory_overage_001",
+    "add_role_detail_contacts",
+)
 branch_labels: str | Sequence[str] | None = None
 depends_on: str | Sequence[str] | None = None
 
