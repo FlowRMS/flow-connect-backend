@@ -18,6 +18,7 @@ from app.graphql.v2.core.products.repositories.product_cpn_repository import (
 from app.graphql.v2.core.products.strawberry.product_import_types import (
     CustomerPricingImportInput,
     ProductImportError,
+    QuantityPricingImportInput,
 )
 
 
@@ -28,7 +29,7 @@ class ProductPricingOperations:
         self,
         session: AsyncSession,
         customers_repository: CustomersRepository,
-        cpn_repository: ProductCpnRepository | None = None,
+        cpn_repository: ProductCpnRepository,
     ) -> None:
         super().__init__()
         self.session = session
@@ -38,7 +39,7 @@ class ProductPricingOperations:
     async def replace_quantity_pricing(
         self,
         product_id: UUID,
-        quantity_pricing_data: list,
+        quantity_pricing_data: list[QuantityPricingImportInput],
     ) -> int:
         delete_stmt = delete(ProductQuantityPricing).where(
             ProductQuantityPricing.product_id == product_id
@@ -90,7 +91,7 @@ class ProductPricingOperations:
                 continue
             resolved_cpns.append((customer.id, cp_data))
 
-        if not resolved_cpns or not self.cpn_repository:
+        if not resolved_cpns:
             return 0, 0, []
 
         product_customer_pairs = [(product_id, cid) for cid, _ in resolved_cpns]
