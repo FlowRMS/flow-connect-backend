@@ -4,10 +4,12 @@ from uuid import UUID
 from commons.db.v6 import RbacResourceEnum, User
 from commons.db.v6.commission import (
     Adjustment,
+    AdjustmentSplitRate,
     Check,
     CheckDetail,
     Credit,
     CreditDetail,
+    CreditSplitRate,
     Invoice,
     InvoiceDetail,
     InvoiceSplitRate,
@@ -128,6 +130,13 @@ class ChecksRepository(BaseRepository[Check]):
                 joinedload(Check.details)
                 .joinedload(CheckDetail.adjustment)
                 .joinedload(Adjustment.factory),
+                joinedload(Check.details)
+                .joinedload(CheckDetail.adjustment)
+                .joinedload(Adjustment.split_rates),
+                joinedload(Check.details)
+                .joinedload(CheckDetail.adjustment)
+                .joinedload(Adjustment.split_rates)
+                .joinedload(AdjustmentSplitRate.user),
                 joinedload(Check.factory),
                 joinedload(Check.details)
                 .joinedload(CheckDetail.credit)
@@ -136,6 +145,11 @@ class ChecksRepository(BaseRepository[Check]):
                 .joinedload(CheckDetail.credit)
                 .joinedload(Credit.details)
                 .joinedload(CreditDetail.outside_split_rates),
+                joinedload(Check.details)
+                .joinedload(CheckDetail.credit)
+                .joinedload(Credit.details)
+                .joinedload(CreditDetail.outside_split_rates)
+                .joinedload(CreditSplitRate.user),
                 joinedload(Check.details)
                 .joinedload(CheckDetail.credit)
                 .joinedload(Credit.balance),

@@ -1,5 +1,3 @@
-"""Service layer for Jobs entity with business logic."""
-
 from uuid import UUID
 
 from commons.auth import AuthInfo

@@ -1,5 +1,3 @@
-"""Generic GraphQL landing page queries for all entity types."""
-
 import strawberry
 from aioinject import Injected
 from commons.graphql.filter_types import Filter

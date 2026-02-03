@@ -1,12 +1,5 @@
-"""
-Recurrence calculation utilities for recurring shipments.
-
-This module implements the same logic as the frontend (deliveries/utils/recurrence.ts)
-to calculate next occurrence dates for recurring deliveries.
-"""
-
 from datetime import date, timedelta
-from typing import Any, Dict, Optional
+from typing import Any
 
 # Day of week mapping (Monday = 0, Sunday = 6)
 DAY_OF_WEEK_MAP = {
@@ -20,7 +13,7 @@ DAY_OF_WEEK_MAP = {
 }
 
 
-def calculate_next_date(pattern: Dict[str, Any], from_date: date) -> date:
+def calculate_next_date(pattern: dict[str, Any], from_date: date) -> date:
     """
     Calculate the next occurrence date based on recurrence pattern.
 
@@ -68,7 +61,7 @@ def _calculate_daily(from_date: date, interval: int) -> date:
     return from_date + timedelta(days=interval)
 
 
-def _calculate_weekly(from_date: date, pattern: Dict[str, Any]) -> date:
+def _calculate_weekly(from_date: date, pattern: dict[str, Any]) -> date:
     """
     Calculate next occurrence for WEEKLY/BIWEEKLY frequency.
     """
@@ -95,7 +88,7 @@ def _calculate_weekly(from_date: date, pattern: Dict[str, Any]) -> date:
     return result
 
 
-def _calculate_monthly(from_date: date, pattern: Dict[str, Any]) -> date:
+def _calculate_monthly(from_date: date, pattern: dict[str, Any]) -> date:
     """
     Calculate next occurrence for MONTHLY frequency.
     """
@@ -127,7 +120,7 @@ def _calculate_monthly(from_date: date, pattern: Dict[str, Any]) -> date:
     return date(year, month, actual_day)
 
 
-def _calculate_monthly_week(from_date: date, pattern: Dict[str, Any]) -> date:
+def _calculate_monthly_week(from_date: date, pattern: dict[str, Any]) -> date:
     """
     Calculate next occurrence for MONTHLY_WEEK frequency.
     (e.g., "First Monday of the month", "Last Friday of the month")
@@ -189,7 +182,7 @@ def _calculate_monthly_week(from_date: date, pattern: Dict[str, Any]) -> date:
     return result
 
 
-def validate_recurrence_pattern(pattern: Dict[str, Any]) -> Optional[str]:
+def validate_recurrence_pattern(pattern: dict[str, Any]) -> str | None:
     """
     Validate a recurrence pattern.
 
@@ -239,7 +232,7 @@ def validate_recurrence_pattern(pattern: Dict[str, Any]) -> Optional[str]:
     return None
 
 
-def get_recurrence_description(pattern: Dict[str, Any]) -> str:
+def get_recurrence_description(pattern: dict[str, Any]) -> str:
     """
     Generate a human-readable description of the recurrence pattern.
 

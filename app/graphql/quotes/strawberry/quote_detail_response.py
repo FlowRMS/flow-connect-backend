@@ -48,6 +48,12 @@ class QuoteDetailResponse(DTOMixin[QuoteDetail]):
     lead_time: str | None
     note: str | None
     status: QuoteDetailStatus
+    # Overage fields
+    overage_commission_rate: Decimal | None
+    overage_commission: Decimal | None
+    overage_unit_price: Decimal | None
+    # Fixture schedule
+    fixture_schedule: str | None
 
     @classmethod
     def from_orm_model(cls, model: QuoteDetail) -> Self:
@@ -75,6 +81,10 @@ class QuoteDetailResponse(DTOMixin[QuoteDetail]):
             lead_time=model.lead_time,
             note=model.note,
             status=model.status,
+            overage_commission_rate=model.overage_commission_rate,
+            overage_commission=model.overage_commission,
+            overage_unit_price=model.overage_unit_price,
+            fixture_schedule=model.fixture_schedule,
         )
 
     @strawberry.field

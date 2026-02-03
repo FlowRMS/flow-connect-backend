@@ -1,5 +1,3 @@
-"""Campaign services package."""
-
 from app.graphql.campaigns.services.campaign_email_sender_service import (
     CampaignEmailSenderService,
 )

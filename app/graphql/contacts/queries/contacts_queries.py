@@ -58,6 +58,17 @@ class ContactsQueries:
             await service.search_contacts(search_term, limit)
         )
 
+    @strawberry.field
+    @inject
+    async def contacts_by_quote(
+        self,
+        quote_id: UUID,
+        service: Injected[ContactsService],
+    ) -> list[ContactResponse]:
+        """Get all contacts linked to a specific quote."""
+        contacts = await service.find_contacts_by_quote_id(quote_id)
+        return ContactResponse.from_orm_model_list(contacts)
+
     @strawberry.field(
         deprecation_reason="Use related_entities(source_type: CONTACTS, entity_id: UUID)"
     )

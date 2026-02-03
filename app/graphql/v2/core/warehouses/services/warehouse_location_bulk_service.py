@@ -1,5 +1,3 @@
-"""Bulk operations for warehouse locations."""
-
 import logging
 from decimal import Decimal
 from uuid import UUID

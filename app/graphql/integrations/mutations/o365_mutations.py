@@ -1,5 +1,3 @@
-"""GraphQL mutations for O365 integration."""
-
 import strawberry
 from aioinject import Injected
 

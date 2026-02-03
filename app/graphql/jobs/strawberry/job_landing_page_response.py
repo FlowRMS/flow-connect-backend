@@ -1,5 +1,3 @@
-"""Landing page response type for Jobs entity."""
-
 from datetime import date
 
 import strawberry

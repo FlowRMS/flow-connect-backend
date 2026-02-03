@@ -20,39 +20,39 @@ class MigrationConfig:
 def map_creation_type(value: str | None) -> int:
     """Map v4 string creation_type to v6 IntEnum value.
 
-    v6 CreationType values:
-        MANUAL = 0
-        IMPORT = 1
-        API = 2
-        DUPLICATION = 3
+    v6 CreationTypeEnum values:
+        AUTO_PDF = 0
+        MANUAL = 1
+        SPREADSHEET = 2
+        FLOW_BOT = 3
     """
     if value is None:
-        return 0  # MANUAL
+        return 1  # MANUAL
     value_lower = value.lower()
     if value_lower == "manual":
-        return 0
-    if value_lower in ("spreadsheet", "import"):
         return 1
-    if value_lower == "api":
+    if value_lower in ("spreadsheet", "import"):
         return 2
-    if value_lower == "duplication":
+    if value_lower in ("api", "flow_bot", "flowbot"):
         return 3
-    return 0  # Default to MANUAL
+    if value_lower == "auto_pdf":
+        return 0
+    return 1  # Default to MANUAL
 
 
 def map_freight_discount_type(value: str | None) -> int:
     """Map v4 string freight_discount_type to v6 IntEnum value.
 
-    v6 FreightDiscountTypeEnum values:
-        ADD = 0
-        ALLOWED = 1
+    v6 FreightDiscountTypeEnum values (uses auto() which starts at 1):
+        ADD = 1
+        ALLOWED = 2
     """
     if value is None or value == "":
-        return 0  # ADD (default)
+        return 1  # ADD (default)
     value_lower = value.lower()
     if value_lower == "allowed":
-        return 1
-    return 0  # Default to ADD
+        return 2
+    return 1  # Default to ADD
 
 
 def map_order_status(v4_status: int | None) -> int:

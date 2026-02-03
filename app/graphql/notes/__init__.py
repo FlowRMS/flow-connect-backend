@@ -1,5 +1,3 @@
-"""Notes module for CRM system."""
-
 from app.graphql.notes.mutations import NotesMutations
 from app.graphql.notes.queries import NotesQueries
 from app.graphql.notes.repositories import (

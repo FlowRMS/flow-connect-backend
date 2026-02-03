@@ -4,6 +4,7 @@ from uuid import UUID
 from commons.db.v6 import Customer, RbacResourceEnum, User
 from commons.db.v6.core.customers.customer_split_rate import CustomerSplitRate
 from commons.db.v6.crm.links.entity_type import EntityType
+from commons.db.v6.rbac.rbac_role_enum import RbacRoleEnum
 from commons.db.v6.user.rep_type import RepTypeEnum
 from sqlalchemy import Select, String, func, literal, select, update
 from sqlalchemy.dialects.postgresql import ARRAY, array
@@ -22,6 +23,7 @@ from app.graphql.v2.core.customers.strawberry.customer_landing_page_response imp
 from app.graphql.v2.rbac.services.rbac_filter_service import RbacFilterService
 from app.graphql.v2.rbac.strategies.base import RbacFilterStrategy
 from app.graphql.v2.rbac.strategies.created_by_filter import CreatedByFilterStrategy
+from app.graphql.v2.rbac.strategies.sales_team_filter import SalesTeamFilterStrategy
 
 
 class CustomersRepository(BaseRepository[Customer]):
@@ -48,6 +50,11 @@ class CustomersRepository(BaseRepository[Customer]):
 
     @override
     def get_rbac_filter_strategy(self) -> RbacFilterStrategy | None:
+        if RbacRoleEnum.SALES_MANAGER in self.auth_info.roles:
+            return SalesTeamFilterStrategy(
+                RbacResourceEnum.CUSTOMER,
+                Customer.created_by_id,
+            )
         return CreatedByFilterStrategy(
             RbacResourceEnum.CUSTOMER,
             Customer,

@@ -1,5 +1,3 @@
-"""Strawberry input types for container types."""
-
 from decimal import Decimal
 
 import strawberry

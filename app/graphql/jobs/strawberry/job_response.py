@@ -1,5 +1,3 @@
-"""Strawberry GraphQL response types for Jobs entity."""
-
 from datetime import date, datetime
 from typing import Self
 from uuid import UUID

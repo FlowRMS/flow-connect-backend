@@ -1,5 +1,3 @@
-"""Service layer for SpecSheet Highlights business logic."""
-
 from uuid import UUID
 
 from commons.db.v6.crm.spec_sheets.spec_sheet_highlight_model import (
@@ -60,6 +58,7 @@ class SpecSheetHighlightsService:
                 "shape_type": r.shape_type,
                 "color": r.color,
                 "annotation": r.annotation,
+                "tags": r.tags,
             }
             for r in input_data.regions
         ]
@@ -165,6 +164,7 @@ class SpecSheetHighlightsService:
                 "shape_type": r.shape_type,
                 "color": r.color,
                 "annotation": r.annotation,
+                "tags": r.tags,
             }
             for r in input_data.regions
         ]

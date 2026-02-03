@@ -1,5 +1,3 @@
-"""GraphQL response type for CampaignRecipient entity."""
-
 from datetime import datetime
 from typing import Self
 from uuid import UUID

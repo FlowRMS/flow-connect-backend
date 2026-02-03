@@ -1,5 +1,3 @@
-"""Service for sending campaign emails with pacing and daily limits."""
-
 from dataclasses import dataclass
 from uuid import UUID
 

@@ -1,5 +1,3 @@
-"""Strawberry response types for container types."""
-
 from datetime import datetime
 from decimal import Decimal
 from typing import Self

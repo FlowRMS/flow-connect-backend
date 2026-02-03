@@ -1,5 +1,6 @@
 from datetime import date
 from decimal import Decimal
+from typing import Sequence
 
 from commons.db.v6.common.creation_type import CreationType
 from commons.db.v6.crm.pre_opportunities.pre_opportunity_detail_model import (
@@ -18,6 +19,34 @@ from commons.db.v6.crm.quotes import (
 
 
 class QuoteFactory:
+    @staticmethod
+    def _convert_to_quote_split_rates(
+        split_rates: Sequence[QuoteSplitRate],
+    ) -> list[QuoteSplitRate]:
+        result = []
+        for sr in split_rates:
+            obj = QuoteSplitRate(
+                user_id=sr.user_id,
+                split_rate=sr.split_rate,
+                position=sr.position,
+            )
+            result.append(obj)
+        return result
+
+    @staticmethod
+    def _convert_to_quote_inside_reps(
+        inside_reps: Sequence[QuoteInsideRep],
+    ) -> list[QuoteInsideRep]:
+        result = []
+        for ir in inside_reps:
+            obj = QuoteInsideRep(
+                user_id=ir.user_id,
+                split_rate=ir.split_rate,
+                position=ir.position,
+            )
+            result.append(obj)
+        return result
+
     @staticmethod
     def from_pre_opportunity(
         pre_opportunity: PreOpportunity,
@@ -71,8 +100,9 @@ class QuoteFactory:
     def _map_pre_opp_details(
         pre_opp_details: list[PreOpportunityDetail],
     ) -> list[QuoteDetail]:
-        return [
-            QuoteDetail(
+        result = []
+        for detail in pre_opp_details:
+            quote_detail = QuoteDetail(
                 item_number=detail.item_number,
                 quantity=detail.quantity,
                 unit_price=detail.unit_price,
@@ -80,24 +110,32 @@ class QuoteFactory:
                 discount_rate=detail.discount_rate,
                 discount=detail.discount,
                 total=detail.total,
-                product_id=detail.product_id,
-                factory_id=detail.factory_id,
-                end_user_id=detail.end_user_id,
-                lead_time=detail.lead_time,
-                status=QuoteDetailStatus.OPEN,
                 commission_rate=Decimal("0"),
                 commission=Decimal("0"),
                 commission_discount_rate=Decimal("0"),
                 commission_discount=Decimal("0"),
                 total_line_commission=Decimal("0"),
+                product_id=detail.product_id,
+                factory_id=detail.factory_id,
+                end_user_id=detail.end_user_id,
+                lead_time=detail.lead_time,
+                status=QuoteDetailStatus.OPEN,
             )
-            for detail in pre_opp_details
-        ]
+            result.append(quote_detail)
+        return result
 
     @staticmethod
     def _deep_copy_details(details: list[QuoteDetail]) -> list[QuoteDetail]:
-        return [
-            QuoteDetail(
+        result = []
+        for d in details:
+            outside_reps = QuoteFactory._convert_to_quote_split_rates(
+                d.outside_split_rates
+            )
+            inside_reps = QuoteFactory._convert_to_quote_inside_reps(
+                d.inside_split_rates
+            )
+
+            quote_detail = QuoteDetail(
                 item_number=d.item_number,
                 quantity=d.quantity,
                 unit_price=d.unit_price,
@@ -105,11 +143,11 @@ class QuoteFactory:
                 discount_rate=d.discount_rate,
                 discount=d.discount,
                 total=d.total,
-                total_line_commission=d.total_line_commission,
                 commission_rate=d.commission_rate,
                 commission=d.commission,
                 commission_discount_rate=d.commission_discount_rate,
                 commission_discount=d.commission_discount,
+                total_line_commission=d.total_line_commission,
                 product_id=d.product_id,
                 product_name_adhoc=d.product_name_adhoc,
                 product_description_adhoc=d.product_description_adhoc,
@@ -118,22 +156,8 @@ class QuoteFactory:
                 lead_time=d.lead_time,
                 note=d.note,
                 status=QuoteDetailStatus.OPEN,
-                outside_split_rates=[
-                    QuoteSplitRate(
-                        user_id=sr.user_id,
-                        split_rate=sr.split_rate,
-                        position=sr.position,
-                    )
-                    for sr in d.outside_split_rates
-                ],
-                inside_split_rates=[
-                    QuoteInsideRep(
-                        user_id=ir.user_id,
-                        split_rate=ir.split_rate,
-                        position=ir.position,
-                    )
-                    for ir in d.inside_split_rates
-                ],
+                outside_split_rates=outside_reps,
+                inside_split_rates=inside_reps,
             )
-            for d in details
-        ]
+            result.append(quote_detail)
+        return result

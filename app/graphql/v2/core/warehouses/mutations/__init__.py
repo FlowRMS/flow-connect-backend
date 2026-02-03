@@ -1,5 +1,3 @@
-"""Warehouse mutations."""
-
 from app.graphql.v2.core.warehouses.mutations.warehouse_location_mutations import (
     WarehouseLocationMutations,
 )

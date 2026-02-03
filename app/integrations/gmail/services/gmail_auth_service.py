@@ -1,17 +1,21 @@
-"""Service for Gmail OAuth authentication and email operations."""
-
 import base64
 import secrets
 import uuid
 from dataclasses import dataclass
 from datetime import datetime, timedelta, timezone
+from email.encoders import encode_base64
+from email.mime.base import MIMEBase
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
+from typing import TYPE_CHECKING
 from urllib.parse import urlencode
 
 import httpx
 from commons.auth import AuthInfo
 from commons.db.v6.crm import GmailUserToken
+
+if TYPE_CHECKING:
+    from app.graphql.campaigns.services.email_provider_service import EmailAttachment
 
 from app.errors.common_errors import NotFoundError
 from app.integrations.gmail.config import GmailSettings
@@ -278,6 +282,7 @@ class GmailAuthService:
         body_type: str = "HTML",
         cc: list[str] | None = None,
         bcc: list[str] | None = None,
+        attachments: list["EmailAttachment"] | None = None,
     ) -> str:
         """
         Create a base64 encoded email message.
@@ -290,11 +295,24 @@ class GmailAuthService:
             body_type: Body content type ("HTML" or "Text")
             cc: Optional list of CC recipients
             bcc: Optional list of BCC recipients
+            attachments: Optional list of file attachments
 
         Returns:
             Base64 encoded email message
         """
-        message = MIMEMultipart("alternative")
+        # Use mixed multipart if we have attachments, otherwise alternative
+        if attachments:
+            message = MIMEMultipart("mixed")
+            # Create a sub-part for the body
+            body_part = MIMEMultipart("alternative")
+            subtype = "html" if body_type.upper() == "HTML" else "plain"
+            body_part.attach(MIMEText(body, subtype))
+            message.attach(body_part)
+        else:
+            message = MIMEMultipart("alternative")
+            subtype = "html" if body_type.upper() == "HTML" else "plain"
+            message.attach(MIMEText(body, subtype))
+
         message["From"] = sender
         message["To"] = ", ".join(to)
         message["Subject"] = subject
@@ -304,9 +322,19 @@ class GmailAuthService:
         if bcc:
             message["Bcc"] = ", ".join(bcc)
 
-        # Attach body
-        subtype = "html" if body_type.upper() == "HTML" else "plain"
-        message.attach(MIMEText(body, subtype))
+        # Add attachments
+        if attachments:
+            for att in attachments:
+                maintype, subtype = att.content_type.split("/", 1)
+                part = MIMEBase(maintype, subtype)
+                part.set_payload(att.content)
+                encode_base64(part)
+                part.add_header(
+                    "Content-Disposition",
+                    "attachment",
+                    filename=att.filename,
+                )
+                message.attach(part)
 
         # Encode to base64
         raw = base64.urlsafe_b64encode(message.as_bytes()).decode("utf-8")
@@ -320,6 +348,7 @@ class GmailAuthService:
         body_type: str = "HTML",
         cc: list[str] | None = None,
         bcc: list[str] | None = None,
+        attachments: list["EmailAttachment"] | None = None,
     ) -> SendEmailResult:
         """
         Send email on behalf of user via Gmail API.
@@ -331,6 +360,7 @@ class GmailAuthService:
             body_type: Body content type ("HTML" or "Text")
             cc: Optional list of CC recipients
             bcc: Optional list of BCC recipients
+            attachments: Optional list of file attachments
 
         Returns:
             SendEmailResult with success status and optional message_id or error
@@ -356,6 +386,7 @@ class GmailAuthService:
             body_type=body_type,
             cc=cc,
             bcc=bcc,
+            attachments=attachments,
         )
 
         async with httpx.AsyncClient() as client:

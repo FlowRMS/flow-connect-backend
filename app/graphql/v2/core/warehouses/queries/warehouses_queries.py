@@ -1,5 +1,3 @@
-"""GraphQL queries for warehouses."""
-
 from uuid import UUID
 
 import strawberry

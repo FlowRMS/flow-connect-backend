@@ -20,6 +20,7 @@ class QuoteLiteResponse(DTOMixin[Quote]):
     created_at: datetime
     created_by_id: UUID
     quote_number: str
+    name: str | None
     entity_date: date
     status: QuoteStatus
     pipeline_stage: PipelineStage
@@ -27,7 +28,6 @@ class QuoteLiteResponse(DTOMixin[Quote]):
     creation_type: CreationType
     sold_to_customer_id: UUID | None
     factory_per_line_item: bool
-    name: str | None
     bill_to_customer_id: UUID | None
     payment_terms: str | None
     customer_ref: str | None
@@ -51,6 +51,7 @@ class QuoteLiteResponse(DTOMixin[Quote]):
             created_at=model.created_at,
             created_by_id=model.created_by_id,
             quote_number=model.quote_number,
+            name=model.name,
             entity_date=model.entity_date,
             factory_per_line_item=model.factory_per_line_item,
             status=model.status,
@@ -58,7 +59,6 @@ class QuoteLiteResponse(DTOMixin[Quote]):
             published=model.published,
             creation_type=model.creation_type,
             sold_to_customer_id=model.sold_to_customer_id,
-            name=model.name,
             bill_to_customer_id=model.bill_to_customer_id,
             payment_terms=model.payment_terms,
             customer_ref=model.customer_ref,

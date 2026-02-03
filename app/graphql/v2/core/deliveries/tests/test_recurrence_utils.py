@@ -1,10 +1,3 @@
-"""
-Unit tests for recurrence_utils module.
-
-These tests validate the recurrence calculation logic to ensure it matches
-the frontend implementation and handles all edge cases correctly.
-"""
-
 from datetime import date
 
 import pytest

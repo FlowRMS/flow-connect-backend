@@ -1,5 +1,3 @@
-"""GraphQL input types for campaign criteria."""
-
 from enum import Enum
 
 import strawberry

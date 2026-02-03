@@ -63,8 +63,13 @@ dmypy.json
 .DS_Store
 Thumbs.db
 
+# Claude
+CLAUDE_PR_FIX_INSTRUCTIONS.md
+guidelines.txt
 
 #Ignore vscode AI rules
 .github\instructions\codacy.instructions.md
 .mcp.json
 logins-workos.csv
+
+PR-docs

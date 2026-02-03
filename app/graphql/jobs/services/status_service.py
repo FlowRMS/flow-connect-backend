@@ -1,5 +1,3 @@
-"""Service layer for JobStatus entity with business logic."""
-
 from commons.auth import AuthInfo
 from commons.db.v6.crm.jobs.job_status_model import JobStatus
 

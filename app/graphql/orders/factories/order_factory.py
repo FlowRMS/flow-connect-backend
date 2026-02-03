@@ -1,5 +1,6 @@
 from datetime import date
 from decimal import Decimal
+from typing import Sequence
 from uuid import UUID
 
 from commons.db.v6.commission.orders import (
@@ -12,7 +13,7 @@ from commons.db.v6.commission.orders import (
     OrderType,
 )
 from commons.db.v6.common.creation_type import CreationType
-from commons.db.v6.crm.quotes import Quote, QuoteDetail
+from commons.db.v6.crm.quotes import Quote, QuoteDetail, QuoteInsideRep, QuoteSplitRate
 
 from app.graphql.orders.strawberry.quote_detail_to_order_input import (
     QuoteDetailToOrderDetailInput,
@@ -20,6 +21,30 @@ from app.graphql.orders.strawberry.quote_detail_to_order_input import (
 
 
 class OrderFactory:
+    @staticmethod
+    def _convert_to_order_split_rates(
+        split_rates: Sequence[QuoteSplitRate | OrderSplitRate],
+    ) -> list[OrderSplitRate]:
+        result = []
+        for sr in split_rates:
+            obj = OrderSplitRate(
+                user_id=sr.user_id, split_rate=sr.split_rate, position=sr.position
+            )
+            result.append(obj)
+        return result
+
+    @staticmethod
+    def _convert_to_order_inside_reps(
+        inside_reps: Sequence[QuoteInsideRep | OrderInsideRep],
+    ) -> list[OrderInsideRep]:
+        result = []
+        for ir in inside_reps:
+            obj = OrderInsideRep(
+                user_id=ir.user_id, split_rate=ir.split_rate, position=ir.position
+            )
+            result.append(obj)
+        return result
+
     @staticmethod
     def from_order(
         order: Order,
@@ -49,8 +74,16 @@ class OrderFactory:
 
     @staticmethod
     def _map_order_details(order_details: list[OrderDetail]) -> list[OrderDetail]:
-        return [
-            OrderDetail(
+        result = []
+        for detail in order_details:
+            outside_reps = OrderFactory._convert_to_order_split_rates(
+                detail.outside_split_rates
+            )
+            inside_reps = OrderFactory._convert_to_order_inside_reps(
+                detail.inside_split_rates
+            )
+
+            new_detail = OrderDetail(
                 item_number=detail.item_number,
                 quantity=detail.quantity,
                 unit_price=detail.unit_price,
@@ -65,31 +98,17 @@ class OrderFactory:
                 end_user_id=detail.end_user_id,
                 lead_time=detail.lead_time,
                 note=detail.note,
-                commission_rate=detail.commission_rate,
-                commission=detail.commission,
-                commission_discount_rate=detail.commission_discount_rate,
-                commission_discount=detail.commission_discount,
-                total_line_commission=detail.total_line_commission,
                 freight_charge=detail.freight_charge,
-                outside_split_rates=[
-                    OrderSplitRate(
-                        user_id=sr.user_id,
-                        split_rate=sr.split_rate,
-                        position=sr.position,
-                    )
-                    for sr in detail.outside_split_rates
-                ],
-                inside_split_rates=[
-                    OrderInsideRep(
-                        user_id=ir.user_id,
-                        split_rate=ir.split_rate,
-                        position=ir.position,
-                    )
-                    for ir in detail.inside_split_rates
-                ],
+                outside_split_rates=outside_reps,
+                inside_split_rates=inside_reps,
             )
-            for detail in order_details
-        ]
+            new_detail.commission_rate = detail.commission_rate
+            new_detail.commission = detail.commission
+            new_detail.commission_discount_rate = detail.commission_discount_rate
+            new_detail.commission_discount = detail.commission_discount
+            new_detail.total_line_commission = detail.total_line_commission
+            result.append(new_detail)
+        return result
 
     @staticmethod
     def from_quote(
@@ -99,6 +118,9 @@ class OrderFactory:
         due_date: date | None = None,
         quote_details_inputs: list[QuoteDetailToOrderDetailInput] | None = None,
     ) -> Order:
+        if not quote.sold_to_customer_id:
+            msg = "Cannot create order from quote without sold_to_customer_id"
+            raise ValueError(msg)
         today = date.today()
         if not quote.sold_to_customer_id:
             msg = "Cannot create order from quote without a sold-to customer."
@@ -138,6 +160,14 @@ class OrderFactory:
             detail = quote_detail_map.get(detail_input.quote_detail_id)
             if not detail:
                 continue
+
+            outside_reps = OrderFactory._convert_to_order_split_rates(
+                detail.outside_split_rates
+            )
+            inside_reps = OrderFactory._convert_to_order_inside_reps(
+                detail.inside_split_rates
+            )
+
             order_detail = OrderDetail(
                 item_number=detail.item_number,
                 quantity=detail_input.quantity or detail.quantity,
@@ -153,28 +183,14 @@ class OrderFactory:
                 end_user_id=detail.end_user_id,
                 lead_time=detail.lead_time,
                 note=detail.note,
-                commission_rate=detail.commission_rate,
-                commission=detail.commission,
-                commission_discount_rate=detail.commission_discount_rate,
-                commission_discount=detail.commission_discount,
-                total_line_commission=detail.total_line_commission,
                 freight_charge=Decimal("0"),
-                outside_split_rates=[
-                    OrderSplitRate(
-                        user_id=sr.user_id,
-                        split_rate=sr.split_rate,
-                        position=sr.position,
-                    )
-                    for sr in detail.outside_split_rates
-                ],
-                inside_split_rates=[
-                    OrderInsideRep(
-                        user_id=ir.user_id,
-                        split_rate=ir.split_rate,
-                        position=ir.position,
-                    )
-                    for ir in detail.inside_split_rates
-                ],
+                outside_split_rates=outside_reps,
+                inside_split_rates=inside_reps,
             )
+            order_detail.commission_rate = detail.commission_rate
+            order_detail.commission = detail.commission
+            order_detail.commission_discount_rate = detail.commission_discount_rate
+            order_detail.commission_discount = detail.commission_discount
+            order_detail.total_line_commission = detail.total_line_commission
             order_details.append(order_detail)
         return order_details

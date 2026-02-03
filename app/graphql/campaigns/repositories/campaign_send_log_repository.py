@@ -1,5 +1,3 @@
-"""Repository for CampaignSendLog entity with database operations."""
-
 from datetime import date, datetime, timezone
 from uuid import UUID
 

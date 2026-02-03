@@ -2,7 +2,7 @@ from uuid import UUID
 
 import strawberry
 from aioinject import Injected
-from commons.db.v6.core.settings.setting_key import SettingKey
+from commons.db.v6.core.settings.setting_key import SettingKey as CommonsSettingKey
 
 from app.graphql.inject import inject
 from app.graphql.v2.core.settings.services.general_settings_service import (
@@ -14,6 +14,7 @@ from app.graphql.v2.core.settings.strawberry.general_settings_input import (
 from app.graphql.v2.core.settings.strawberry.general_settings_response import (
     GeneralSettingsResponse,
 )
+from app.graphql.v2.core.settings.strawberry.setting_key import SettingKey
 
 
 @strawberry.type
@@ -26,7 +27,7 @@ class GeneralSettingsMutations:
         service: Injected[GeneralSettingsService],
     ) -> GeneralSettingsResponse:
         setting = await service.create(
-            key=SettingKey(input.key.value),
+            key=CommonsSettingKey[input.key.name],
             value=input.value,
             user_id=input.user_id,
         )
@@ -52,7 +53,7 @@ class GeneralSettingsMutations:
         service: Injected[GeneralSettingsService],
     ) -> GeneralSettingsResponse:
         setting = await service.create_for_current_user(
-            key=SettingKey(key.value),
+            key=CommonsSettingKey[key.name],
             value=value,
         )
         return GeneralSettingsResponse.from_orm_model(setting)
@@ -66,7 +67,7 @@ class GeneralSettingsMutations:
         service: Injected[GeneralSettingsService],
     ) -> GeneralSettingsResponse:
         setting = await service.create_tenant_wide(
-            key=SettingKey(key.value),
+            key=CommonsSettingKey[key.name],
             value=value,
         )
         return GeneralSettingsResponse.from_orm_model(setting)
@@ -79,7 +80,7 @@ class GeneralSettingsMutations:
         user_id: UUID | None,
         service: Injected[GeneralSettingsService],
     ) -> bool:
-        return await service.delete(SettingKey(key.value), user_id)
+        return await service.delete(CommonsSettingKey[key.name], user_id)
 
     @strawberry.mutation
     @inject
@@ -88,7 +89,7 @@ class GeneralSettingsMutations:
         key: SettingKey,
         service: Injected[GeneralSettingsService],
     ) -> bool:
-        return await service.delete_for_current_user(SettingKey(key.value))
+        return await service.delete_for_current_user(CommonsSettingKey[key.name])
 
     @strawberry.mutation
     @inject
@@ -97,4 +98,4 @@ class GeneralSettingsMutations:
         key: SettingKey,
         service: Injected[GeneralSettingsService],
     ) -> bool:
-        return await service.delete_tenant_wide(SettingKey(key.value))
+        return await service.delete_tenant_wide(CommonsSettingKey[key.name])

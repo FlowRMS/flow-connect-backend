@@ -1,5 +1,3 @@
-"""Warehouse queries."""
-
 from app.graphql.v2.core.warehouses.queries.warehouse_location_queries import (
     WarehouseLocationQueries,
 )
