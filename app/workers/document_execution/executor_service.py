@@ -66,7 +66,6 @@ DOCUMENT_TO_LINK_ENTITY_TYPE: dict[DocumentEntityType, EntityType] = {
 def _clean_currency_values(
     obj: dict | list | float | str | None,
 ) -> dict | list | float | str | None:
-    """Recursively clean NaN/inf values and currency-formatted strings."""
     if isinstance(obj, dict):
         return {k: _clean_currency_values(v) for k, v in obj.items()}
     if isinstance(obj, list):
