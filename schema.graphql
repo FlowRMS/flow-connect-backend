@@ -1400,7 +1400,7 @@ input FactoryInput {
   isParent: Boolean! = false
   parentId: UUID = null
   overageAllowed: Boolean! = false
-  overageType: Int! = 0
+  overageType: OverageTypeEnum! = BY_LINE
   repOverageShare: Decimal! = "100.0000"
 }
 
@@ -3151,6 +3151,11 @@ input OutsideSplitRateInput {
   splitRate: Decimal!
   position: Int!
   id: UUID = null
+}
+
+enum OverageTypeEnum {
+  BY_LINE
+  BY_TOTAL
 }
 
 enum OwnershipType {

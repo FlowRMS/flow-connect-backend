@@ -30,7 +30,7 @@ class FactoryInput(BaseInputGQL[Factory]):
     is_parent: bool = False
     parent_id: UUID | None = None
     overage_allowed: bool = False
-    overage_type: int = 0
+    overage_type: OverageTypeEnum = OverageTypeEnum.BY_LINE
     rep_overage_share: Decimal = Decimal("100.00")
 
     def to_orm_model(self) -> Factory:
@@ -52,7 +52,7 @@ class FactoryInput(BaseInputGQL[Factory]):
             is_parent=self.is_parent,
             parent_id=self.parent_id,
             overage_allowed=self.overage_allowed,
-            overage_type=OverageTypeEnum(self.overage_type),
+            overage_type=self.overage_type,
             rep_overage_share=self.rep_overage_share,
             split_rates=[rate.to_orm_model() for rate in self.split_rates],
         )
