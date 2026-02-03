@@ -6,7 +6,7 @@ from commons.db.v6.core.factories.factory import Factory
 from commons.db.v6.core.factories.factory_split_rate import FactorySplitRate
 from commons.db.v6.crm.links.entity_type import EntityType
 from commons.db.v6.crm.manufacturer_order_model import ManufacturerOrder
-from sqlalchemy import Select, String, delete, func, literal, select
+from sqlalchemy import Select, String, delete, func, literal, select, update
 from sqlalchemy.dialects.postgresql import ARRAY, array
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import aliased, joinedload, lazyload
@@ -50,6 +50,7 @@ class FactoriesRepository(BaseRepository[Factory]):
 
     def paginated_stmt(self) -> Select[Any]:
         split_rate_user = aliased(User)
+        parent_factory = aliased(Factory)
         empty_array = literal([]).cast(ARRAY(String))
 
         split_rates_subq = (
@@ -83,28 +84,23 @@ class FactoriesRepository(BaseRepository[Factory]):
                 func.coalesce(split_rates_subq.c.split_rates, empty_array).label(
                     "split_rates"
                 ),
+                Factory.is_parent,
+                parent_factory.title.label("parent"),
+                Factory.overage_allowed,
+                Factory.overage_type,
+                Factory.rep_overage_share,
                 array([Factory.created_by_id]).label("user_ids"),
             )
             .select_from(Factory)
             .options(lazyload("*"))
             .join(User, User.id == Factory.created_by_id)
             .outerjoin(split_rates_subq, split_rates_subq.c.factory_id == Factory.id)
+            .outerjoin(parent_factory, parent_factory.id == Factory.parent_id)
         )
 
     async def search_by_title(
         self, search_term: str, published: bool = True, limit: int = 20
     ) -> list[Factory]:
-        """
-        Search factories by title using case-insensitive pattern matching.
-
-        Args:
-            search_term: The search term to match against title
-            published: Filter by published status (default: True)
-            limit: Maximum number of factories to return (default: 20)
-
-        Returns:
-            List of Factory objects matching the search criteria
-        """
         stmt = (
             select(Factory)
             .options(
@@ -124,27 +120,12 @@ class FactoriesRepository(BaseRepository[Factory]):
         return list(result.unique().scalars().all())
 
     async def get_manufacturer_order(self) -> dict[UUID, int]:
-        """
-        Get the current manufacturer order.
-
-        Returns:
-            Dictionary mapping factory_id to sort_order
-        """
         stmt = select(ManufacturerOrder)
         result = await self.session.execute(stmt)
         orders = result.scalars().all()
         return {order.factory_id: order.sort_order for order in orders}
 
     async def update_manufacturer_order(self, factory_ids: list[UUID]) -> int:
-        """
-        Update the manufacturer order.
-
-        Args:
-            factory_ids: List of factory IDs in the desired order
-
-        Returns:
-            Number of manufacturers updated
-        """
         # Delete all existing orders
         _ = await self.session.execute(delete(ManufacturerOrder))
 
@@ -159,17 +140,6 @@ class FactoriesRepository(BaseRepository[Factory]):
     async def search_by_title_ordered(
         self, search_term: str, published: bool = True, limit: int = 20
     ) -> list[Factory]:
-        """
-        Search factories by title with custom sort order applied.
-
-        Args:
-            search_term: The search term to match against title
-            published: Filter by published status (default: True)
-            limit: Maximum number of factories to return (default: 20)
-
-        Returns:
-            List of Factory objects sorted by custom order, then by title
-        """
         # Get factories
         factories = await self.search_by_title(search_term, published, limit)
 
@@ -183,3 +153,24 @@ class FactoriesRepository(BaseRepository[Factory]):
             return (1, 0, factory.title)
 
         return sorted(factories, key=sort_key)
+
+    async def get_children(self, parent_id: UUID) -> list[Factory]:
+        stmt = (
+            select(Factory).where(Factory.parent_id == parent_id).options(lazyload("*"))
+        )
+        result = await self.session.execute(stmt)
+        return list(result.scalars().all())
+
+    async def set_children_parent_id(
+        self,
+        parent_id: UUID,
+        child_ids: list[UUID],
+    ) -> None:
+        if child_ids:
+            stmt = (
+                update(Factory)
+                .where(Factory.id.in_(child_ids))
+                .values(parent_id=parent_id)
+            )
+            _ = await self.session.execute(stmt)
+        await self.session.flush()

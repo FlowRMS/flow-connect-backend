@@ -1397,6 +1397,11 @@ input FactoryInput {
   additionalInformation: String = null
   freightTerms: String = null
   externalPaymentTerms: String = null
+  isParent: Boolean! = false
+  parentId: UUID = null
+  overageAllowed: Boolean! = false
+  overageType: OverageTypeEnum! = BY_LINE
+  repOverageShare: Decimal! = "100.0000"
 }
 
 type FactoryLandingPage implements LandingPageInterfaceBase {
@@ -1416,6 +1421,11 @@ type FactoryLandingPage implements LandingPageInterfaceBase {
   commissionDiscountRate: Decimal
   overallDiscountRate: Decimal!
   splitRates: [String!]!
+  isParent: Boolean!
+  parent: String
+  overageAllowed: Boolean!
+  overageType: Int!
+  repOverageShare: Decimal!
 }
 
 type FactoryLiteResponse {
@@ -1435,6 +1445,11 @@ type FactoryLiteResponse {
   additionalInformation: String
   freightTerms: String
   externalPaymentTerms: String
+  isParent: Boolean!
+  parentId: UUID
+  overageAllowed: Boolean!
+  overageType: Int!
+  repOverageShare: Decimal!
 }
 
 type FactoryResponse {
@@ -1454,8 +1469,14 @@ type FactoryResponse {
   additionalInformation: String
   freightTerms: String
   externalPaymentTerms: String
+  isParent: Boolean!
+  parentId: UUID
+  overageAllowed: Boolean!
+  overageType: Int!
+  repOverageShare: Decimal!
   createdBy: UserResponse!
   splitRates: [FactorySplitRateResponse!]!
+  parent: FactoryLiteResponse
 }
 
 input FactorySplitRateInput {
@@ -2475,6 +2496,7 @@ type Mutation {
   updateFactory(id: UUID!, input: FactoryInput!): FactoryResponse!
   deleteFactory(id: UUID!): Boolean!
   updateManufacturerOrder(factoryIds: [UUID!]!): Int!
+  assignChildFactories(parentId: UUID!, childIds: [UUID!]!): [FactoryLiteResponse!]!
   createFulfillmentOrder(input: CreateFulfillmentOrderInput!): FulfillmentOrderResponse!
   updateFulfillmentOrder(id: UUID!, input: UpdateFulfillmentOrderInput!): FulfillmentOrderResponse!
   releaseToWarehouse(id: UUID!): FulfillmentOrderResponse!
@@ -3131,6 +3153,11 @@ input OutsideSplitRateInput {
   id: UUID = null
 }
 
+enum OverageTypeEnum {
+  BY_LINE
+  BY_TOTAL
+}
+
 enum OwnershipType {
   CONSIGNMENT
   OWNED
@@ -3664,6 +3691,7 @@ type Query {
   recurringShipment(id: UUID!): RecurringShipmentResponse!
   factory(id: UUID!): FactoryResponse!
   factorySearch(searchTerm: String!, published: Boolean! = true, limit: Int! = 20, useCustomOrder: Boolean! = false): [FactoryResponse!]!
+  factoryChildren(parentId: UUID!): [FactoryLiteResponse!]!
   fulfillmentOrders(warehouseId: UUID = null, status: [FulfillmentOrderStatus!] = null, search: String = null, limit: Int! = 50, offset: Int! = 0): [FulfillmentOrderLiteResponse!]!
   fulfillmentOrder(id: UUID!): FulfillmentOrderResponse
   fulfillmentStats(warehouseId: UUID = null): FulfillmentStatsResponse!
