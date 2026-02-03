@@ -1377,6 +1377,24 @@ type ExecuteWorkflowResponse {
   message: String!
 }
 
+input FactoryCustomerReferenceInput {
+  factoryId: UUID!
+  customerId: UUID!
+  referenceNumber: String!
+  addressId: UUID = null
+}
+
+type FactoryCustomerReferenceResponse {
+  id: UUID!
+  factoryId: UUID!
+  customerId: UUID!
+  referenceNumber: String!
+  addressId: UUID
+  factory: FactoryLiteResponse!
+  customer: CustomerLiteResponse!
+  address: AddressResponse
+}
+
 input FactoryInput {
   title: String!
   splitRates: [FactorySplitRateInput!]! = []
@@ -2443,6 +2461,9 @@ type Mutation {
   updateCustomer(id: UUID!, input: CustomerInput!): CustomerResponse!
   deleteCustomer(id: UUID!): Boolean!
   assignChildCustomers(parentId: UUID!, childIds: [UUID!]!): [CustomerLiteResponse!]!
+  createFactoryCustomerReference(input: FactoryCustomerReferenceInput!): FactoryCustomerReferenceResponse!
+  updateFactoryCustomerReference(id: UUID!, input: FactoryCustomerReferenceInput!): FactoryCustomerReferenceResponse!
+  deleteFactoryCustomerReference(id: UUID!): Boolean!
   createDelivery(input: DeliveryInput!): DeliveryResponse!
   updateDelivery(id: UUID!, input: DeliveryInput!): DeliveryResponse!
   deleteDelivery(id: UUID!): Boolean!
@@ -3642,6 +3663,9 @@ type Query {
   customerSearch(searchTerm: String!, published: Boolean! = true, limit: Int! = 20): [CustomerResponse!]!
   customerChildren(parentId: UUID!): [CustomerLiteResponse!]!
   customerBuyingGroupMembers(buyingGroupId: UUID!): [CustomerLiteResponse!]!
+  factoryCustomerReference(id: UUID!): FactoryCustomerReferenceResponse!
+  listFactoryCustomerReferences(factoryId: UUID!): [FactoryCustomerReferenceResponse!]!
+  factoryCustomerReferenceByCustomer(customerId: UUID!, factoryId: UUID!): FactoryCustomerReferenceResponse
   deliveries(warehouseId: UUID = null, limit: Int = null, offset: Int = null): [DeliveryLiteResponse!]!
   delivery(id: UUID!): DeliveryResponse!
   deliveryAssignees(deliveryId: UUID!): [DeliveryAssigneeLiteResponse!]!
