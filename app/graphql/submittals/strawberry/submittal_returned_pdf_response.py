@@ -5,14 +5,17 @@ from typing import Self
 from uuid import UUID
 
 import strawberry
+from aioinject import Injected
 from commons.db.v6.crm.submittals import SubmittalReturnedPdf
 from sqlalchemy import inspect
 
 from app.core.db.adapters.dto import DTOMixin
+from app.graphql.inject import inject
 from app.graphql.submittals.strawberry.submittal_stakeholder_response import (
     SubmittalStakeholderResponse,
 )
 from app.graphql.v2.core.users.strawberry.user_response import UserResponse
+from app.graphql.v2.files.services.file_service import FileService
 
 
 @strawberry.type
@@ -25,11 +28,11 @@ class SubmittalReturnedPdfResponse(DTOMixin[SubmittalReturnedPdf]):
     _change_analysis_response: strawberry.Private[
         SubmittalChangeAnalysisResponse | None
     ]
+    _stored_file_url: strawberry.Private[str]
+    _file_id: strawberry.Private[UUID | None]
     id: UUID
     revision_id: UUID
     file_name: str
-    file_url: str
-    file_id: UUID | None
     file_size: int
     returned_by_stakeholder_id: UUID | None
     received_date: date | None
@@ -70,11 +73,11 @@ class SubmittalReturnedPdfResponse(DTOMixin[SubmittalReturnedPdf]):
             _created_by_response=created_by_response,
             _returned_by_stakeholder_response=returned_by_stakeholder_response,
             _change_analysis_response=change_analysis_response,
+            _stored_file_url=model.file_url,
+            _file_id=model.file_id,
             id=model.id,
             revision_id=model.revision_id,
             file_name=model.file_name,
-            file_url=model.file_url,
-            file_id=model.file_id,
             file_size=model.file_size,
             returned_by_stakeholder_id=model.returned_by_stakeholder_id,
             received_date=model.received_date,
@@ -82,6 +85,23 @@ class SubmittalReturnedPdfResponse(DTOMixin[SubmittalReturnedPdf]):
             created_at=model.created_at,
             created_by_id=model.created_by_id,
         )
+
+    @strawberry.field
+    @inject
+    async def file_url(self, file_service: Injected[FileService]) -> str:
+        """Generate a fresh presigned URL for the returned PDF file."""
+        if self._file_id:
+            try:
+                presigned_url = await file_service.get_presigned_url(self._file_id)
+                if presigned_url:
+                    return presigned_url
+            except Exception:
+                pass
+        return self._stored_file_url
+
+    @strawberry.field
+    def file_id(self) -> UUID | None:
+        return self._file_id
 
     @strawberry.field
     def created_by(self) -> UserResponse | None:
