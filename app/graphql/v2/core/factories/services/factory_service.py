@@ -77,15 +77,6 @@ class FactoryService:
         return await self.repository.update_manufacturer_order(factory_ids)
 
     async def get_children(self, parent_id: UUID) -> list[Factory]:
-        """
-        Get all child factories for a given parent factory.
-
-        Args:
-            parent_id: The ID of the parent factory
-
-        Returns:
-            List of child Factory objects
-        """
         return await self.repository.get_children(parent_id)
 
     async def assign_children(
@@ -93,16 +84,6 @@ class FactoryService:
         parent_id: UUID,
         child_ids: list[UUID],
     ) -> list[Factory]:
-        """
-        Assign child factories to a parent factory.
-
-        Args:
-            parent_id: The ID of the parent factory
-            child_ids: List of child factory IDs to assign
-
-        Returns:
-            List of updated child Factory objects
-        """
         if not await self.repository.exists(parent_id):
             raise NotFoundError(f"Parent factory with id {parent_id} not found")
 

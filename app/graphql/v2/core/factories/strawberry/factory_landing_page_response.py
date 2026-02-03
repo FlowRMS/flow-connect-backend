@@ -21,3 +21,6 @@ class FactoryLandingPageResponse(LandingPageInterfaceBase):
     split_rates: list[str]
     is_parent: bool
     parent: str | None
+    overage_allowed: bool
+    overage_type: int
+    rep_overage_share: Decimal

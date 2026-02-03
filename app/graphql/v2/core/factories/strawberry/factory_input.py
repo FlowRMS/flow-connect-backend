@@ -2,7 +2,7 @@ from decimal import Decimal
 from uuid import UUID
 
 import strawberry
-from commons.db.v6.core.factories.factory import Factory
+from commons.db.v6.core.factories.factory import Factory, OverageTypeEnum
 
 from app.core.strawberry.inputs import BaseInputGQL
 from app.graphql.v2.core.factories.strawberry.factory_split_rate_input import (
@@ -29,6 +29,9 @@ class FactoryInput(BaseInputGQL[Factory]):
     external_payment_terms: str | None = None
     is_parent: bool = False
     parent_id: UUID | None = None
+    overage_allowed: bool = False
+    overage_type: int = 0
+    rep_overage_share: Decimal = Decimal("100.00")
 
     def to_orm_model(self) -> Factory:
         return Factory(
@@ -48,5 +51,8 @@ class FactoryInput(BaseInputGQL[Factory]):
             external_payment_terms=self.external_payment_terms,
             is_parent=self.is_parent,
             parent_id=self.parent_id,
+            overage_allowed=self.overage_allowed,
+            overage_type=OverageTypeEnum(self.overage_type),
+            rep_overage_share=self.rep_overage_share,
             split_rates=[rate.to_orm_model() for rate in self.split_rates],
         )

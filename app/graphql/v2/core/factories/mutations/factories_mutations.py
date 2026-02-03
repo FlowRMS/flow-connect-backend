@@ -61,15 +61,5 @@ class FactoriesMutations:
         child_ids: list[UUID],
         service: Injected[FactoryService],
     ) -> list[FactoryLiteResponse]:
-        """
-        Assign child factories to a parent factory.
-
-        Args:
-            parent_id: The ID of the parent factory
-            child_ids: List of child factory IDs to assign
-
-        Returns:
-            List of FactoryLiteResponse objects for the updated children
-        """
         children = await service.assign_children(parent_id, child_ids)
         return [FactoryLiteResponse.from_orm_model(child) for child in children]

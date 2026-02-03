@@ -1,7 +1,7 @@
 """add_parent_child_to_factories
 
 Revision ID: add_factory_parent_child
-Revises: 14c956003e6b
+Revises: commons_v3_schema_changes
 Create Date: 2026-01-30 17:00:00.000000
 
 """
@@ -15,7 +15,7 @@ from alembic import op
 
 # revision identifiers, used by Alembic.
 revision: str = "add_factory_parent_child"
-down_revision: str | None = "14c956003e6b"
+down_revision: str | None = "commons_v3_schema_changes"
 branch_labels: str | Sequence[str] | None = None
 depends_on: str | Sequence[str] | None = None
 

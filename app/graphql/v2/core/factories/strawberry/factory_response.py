@@ -33,6 +33,9 @@ class FactoryLiteResponse(DTOMixin[Factory]):
     external_payment_terms: str | None
     is_parent: bool
     parent_id: UUID | None
+    overage_allowed: bool
+    overage_type: int
+    rep_overage_share: Decimal
 
     @classmethod
     def from_orm_model(cls, model: Factory) -> Self:
@@ -56,6 +59,9 @@ class FactoryLiteResponse(DTOMixin[Factory]):
             external_payment_terms=model.external_payment_terms,
             is_parent=model.is_parent,
             parent_id=model.parent_id,
+            overage_allowed=model.overage_allowed,
+            overage_type=model.overage_type,
+            rep_overage_share=model.rep_overage_share,
         )
 
 
