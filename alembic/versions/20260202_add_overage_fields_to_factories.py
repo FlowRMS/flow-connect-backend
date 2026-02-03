@@ -1,14 +1,9 @@
-"""add overage fields to factories
-
-Revision ID: add_overage_fields
-Revises: add_factory_parent_child
-Create Date: 2026-02-02
-
-"""
+# add overage fields to factories
+# Revision ID: add_overage_fields
+# Revises: add_factory_parent_child
+# Create Date: 2026-02-02
 
 from collections.abc import Sequence
-
-import sqlalchemy as sa
 
 from alembic import op
 
@@ -20,30 +15,19 @@ depends_on: str | Sequence[str] | None = None
 
 
 def upgrade() -> None:
-    op.add_column(
-        "factories",
-        sa.Column(
-            "overage_allowed", sa.Boolean(), nullable=False, server_default="false"
-        ),
-        schema="pycore",
-    )
-    op.add_column(
-        "factories",
-        sa.Column(
-            "overage_type", sa.SmallInteger(), nullable=False, server_default="0"
-        ),
-        schema="pycore",
-    )
-    op.add_column(
-        "factories",
-        sa.Column(
-            "rep_overage_share",
-            sa.Numeric(5, 2),
-            nullable=False,
-            server_default="100.00",
-        ),
-        schema="pycore",
-    )
+    # Use IF NOT EXISTS to make migration idempotent
+    op.execute("""
+        ALTER TABLE pycore.factories
+        ADD COLUMN IF NOT EXISTS overage_allowed BOOLEAN DEFAULT false NOT NULL
+    """)
+    op.execute("""
+        ALTER TABLE pycore.factories
+        ADD COLUMN IF NOT EXISTS overage_type SMALLINT DEFAULT 0 NOT NULL
+    """)
+    op.execute("""
+        ALTER TABLE pycore.factories
+        ADD COLUMN IF NOT EXISTS rep_overage_share NUMERIC(5, 2) DEFAULT 100.00 NOT NULL
+    """)
 
 
 def downgrade() -> None:
