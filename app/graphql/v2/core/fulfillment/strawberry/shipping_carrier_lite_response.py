@@ -1,5 +1,3 @@
-"""Lite response type for shipping carriers."""
-
 from datetime import datetime
 from typing import Self
 from uuid import UUID

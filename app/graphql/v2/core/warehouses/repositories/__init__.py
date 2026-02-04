@@ -1,5 +1,3 @@
-"""Warehouse repositories."""
-
 from app.graphql.v2.core.warehouses.repositories.location_product_assignment_repository import (
     LocationProductAssignmentRepository,
 )

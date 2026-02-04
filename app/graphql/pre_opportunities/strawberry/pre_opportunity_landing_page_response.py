@@ -1,5 +1,3 @@
-"""Landing page response type for PreOpportunity entity."""
-
 from datetime import date
 from decimal import Decimal
 

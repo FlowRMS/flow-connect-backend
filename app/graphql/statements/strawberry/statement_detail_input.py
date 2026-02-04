@@ -13,8 +13,8 @@ from app.graphql.statements.strawberry.statement_split_rate_input import (
 @strawberry.input
 class StatementDetailInput(BaseInputGQL[CommissionStatementDetail]):
     item_number: int
-    quantity: Decimal
-    unit_price: Decimal
+    quantity: Decimal | None = None
+    unit_price: Decimal | None = None
     id: UUID | None = None
     sold_to_customer_id: UUID | None = None
     order_id: UUID | None = None
@@ -34,7 +34,10 @@ class StatementDetailInput(BaseInputGQL[CommissionStatementDetail]):
     outside_split_rates: list[StatementSplitRateInput] | None = None
 
     def to_orm_model(self) -> CommissionStatementDetail:
-        subtotal = self.quantity * self.unit_price
+        quantity = self.quantity if self.quantity is not None else Decimal("0")
+        unit_price = self.unit_price if self.unit_price is not None else Decimal("0")
+
+        subtotal = quantity * unit_price
         discount = subtotal * (self.discount_rate / Decimal("100"))
         total = subtotal - discount
         commission = total * (self.commission_rate / Decimal("100"))
@@ -45,8 +48,8 @@ class StatementDetailInput(BaseInputGQL[CommissionStatementDetail]):
 
         detail = CommissionStatementDetail(
             item_number=self.item_number,
-            quantity=self.quantity,
-            unit_price=self.unit_price,
+            quantity=quantity,
+            unit_price=unit_price,
             subtotal=subtotal,
             discount_rate=self.discount_rate,
             discount=discount,

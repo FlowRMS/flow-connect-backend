@@ -3,13 +3,17 @@ from typing import Self
 from uuid import UUID
 
 import strawberry
+from aioinject import Injected
+from commons.db.v6.crm.links.entity_type import EntityType
 from commons.db.v6.crm.tasks.task_model import Task
 from commons.db.v6.crm.tasks.task_priority import TaskPriority
 from commons.db.v6.crm.tasks.task_status import TaskStatus
 
 from app.core.db.adapters.dto import DTOMixin
+from app.graphql.inject import inject
 from app.graphql.tasks.strawberry.task_category_response import TaskCategoryType
 from app.graphql.v2.core.users.strawberry.user_response import UserResponse
+from app.graphql.watchers.services.entity_watcher_service import EntityWatcherService
 
 
 @strawberry.type
@@ -58,3 +62,12 @@ class TaskType(TaskLiteType):
         self,
     ) -> TaskCategoryType | None:
         return TaskCategoryType.from_orm_model_optional(self._instance.category)
+
+    @strawberry.field
+    @inject
+    async def watchers(
+        self,
+        watcher_service: Injected[EntityWatcherService],
+    ) -> list[UserResponse]:
+        users = await watcher_service.get_watchers(EntityType.TASK, self.id)
+        return [UserResponse.from_orm_model(u) for u in users]

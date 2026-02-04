@@ -1,5 +1,3 @@
-"""Repository for JobStatus entity with specific database operations."""
-
 from commons.db.v6.crm.jobs.job_status_model import JobStatus
 from sqlalchemy.ext.asyncio import AsyncSession
 

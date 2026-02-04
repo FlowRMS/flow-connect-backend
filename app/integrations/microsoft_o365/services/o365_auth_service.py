@@ -1,14 +1,17 @@
-"""Service for Microsoft O365 OAuth authentication and email operations."""
-
+import base64
 import secrets
 import uuid
 from dataclasses import dataclass
 from datetime import datetime, timedelta, timezone
+from typing import TYPE_CHECKING
 from urllib.parse import urlencode
 
 import httpx
 from commons.auth import AuthInfo
 from commons.db.v6.crm import O365UserToken
+
+if TYPE_CHECKING:
+    from app.graphql.campaigns.services.email_provider_service import EmailAttachment
 
 from app.errors.common_errors import NotFoundError
 from app.integrations.microsoft_o365.config import O365Settings
@@ -277,6 +280,7 @@ class O365AuthService:
         cc: list[str] | None = None,
         bcc: list[str] | None = None,
         save_to_sent_items: bool = True,
+        attachments: list["EmailAttachment"] | None = None,
     ) -> SendEmailResult:
         """
         Send email on behalf of user via Microsoft Graph API.
@@ -289,6 +293,7 @@ class O365AuthService:
             cc: Optional list of CC recipients
             bcc: Optional list of BCC recipients
             save_to_sent_items: Whether to save to sent items folder
+            attachments: Optional list of file attachments
 
         Returns:
             SendEmailResult with success status and optional message_id or error
@@ -299,7 +304,7 @@ class O365AuthService:
             return SendEmailResult(success=False, error=str(e))
 
         # Build email message
-        message = {
+        message: dict = {
             "message": {
                 "subject": subject,
                 "body": {
@@ -319,6 +324,17 @@ class O365AuthService:
         if bcc:
             message["message"]["bccRecipients"] = [
                 {"emailAddress": {"address": email}} for email in bcc
+            ]
+
+        if attachments:
+            message["message"]["attachments"] = [
+                {
+                    "@odata.type": "#microsoft.graph.fileAttachment",
+                    "name": att.filename,
+                    "contentType": att.content_type,
+                    "contentBytes": base64.b64encode(att.content).decode("utf-8"),
+                }
+                for att in attachments
             ]
 
         async with httpx.AsyncClient() as client:

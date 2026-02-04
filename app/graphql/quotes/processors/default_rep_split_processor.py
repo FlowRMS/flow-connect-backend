@@ -28,6 +28,9 @@ class DefaultRepSplitProcessor(BaseProcessor[Quote]):
         quote = context.entity
         sold_to_customer_id = quote.sold_to_customer_id
 
+        if not sold_to_customer_id:
+            return
+
         for detail in quote.details:
             await self._apply_default_inside_reps(detail)
             if sold_to_customer_id:
@@ -53,14 +56,15 @@ class DefaultRepSplitProcessor(BaseProcessor[Quote]):
             return
 
         factory_split_rates = await self._get_factory_split_rates(detail.factory_id)
-        detail.inside_split_rates = [
-            QuoteInsideRep(
+        inside_reps = []
+        for sr in factory_split_rates:
+            obj = QuoteInsideRep(
                 user_id=sr.user_id,
                 split_rate=sr.split_rate,
                 position=sr.position,
             )
-            for sr in factory_split_rates
-        ]
+            inside_reps.append(obj)
+        detail.inside_split_rates = inside_reps
 
     async def _apply_default_outside_reps(
         self,
@@ -76,26 +80,28 @@ class DefaultRepSplitProcessor(BaseProcessor[Quote]):
                 customer_id, detail.factory_id
             )
             if customer_factory_reps:
-                detail.outside_split_rates = [
-                    QuoteSplitRate(
+                outside_reps = []
+                for rep in customer_factory_reps:
+                    obj = QuoteSplitRate(
                         user_id=rep.user_id,
                         split_rate=rep.rate,
                         position=rep.position,
                     )
-                    for rep in customer_factory_reps
-                ]
+                    outside_reps.append(obj)
+                detail.outside_split_rates = outside_reps
                 return
 
         # Fallback to customer outside reps
         customer_outside_reps = await self._get_customer_outside_reps(customer_id)
-        detail.outside_split_rates = [
-            QuoteSplitRate(
+        outside_reps = []
+        for rep in customer_outside_reps:
+            obj = QuoteSplitRate(
                 user_id=rep.user_id,
                 split_rate=rep.split_rate,
                 position=rep.position,
             )
-            for rep in customer_outside_reps
-        ]
+            outside_reps.append(obj)
+        detail.outside_split_rates = outside_reps
 
     async def _get_factory_split_rates(
         self, factory_id: UUID

@@ -1,5 +1,3 @@
-"""Notes repositories module."""
-
 from app.graphql.notes.repositories.note_conversations_repository import (
     NoteConversationsRepository,
 )

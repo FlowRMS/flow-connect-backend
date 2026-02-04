@@ -1,4 +1,4 @@
-from typing import Any
+from typing import Any, override
 from uuid import UUID
 
 from commons.db.v6 import RbacResourceEnum
@@ -14,6 +14,7 @@ from commons.db.v6.crm.pre_opportunities.pre_opportunity_model import PreOpportu
 from commons.db.v6.crm.tasks.task_assignee_model import TaskAssignee
 from commons.db.v6.crm.tasks.task_category_model import TaskCategory
 from commons.db.v6.crm.tasks.task_model import Task
+from commons.db.v6.rbac.rbac_role_enum import RbacRoleEnum
 from commons.db.v6.user import User
 from sqlalchemy import Select, case, func, literal, or_, select
 from sqlalchemy.dialects.postgresql import JSONB, array
@@ -27,6 +28,10 @@ from app.graphql.tasks.processors import SyncTaskAssigneesProcessor
 from app.graphql.tasks.strawberry.task_landing_page_response import (
     TaskLandingPageResponse,
 )
+from app.graphql.v2.rbac.services.rbac_filter_service import RbacFilterService
+from app.graphql.v2.rbac.strategies.base import RbacFilterStrategy
+from app.graphql.v2.rbac.strategies.created_by_filter import CreatedByFilterStrategy
+from app.graphql.v2.rbac.strategies.sales_team_filter import SalesTeamFilterStrategy
 
 
 class TasksRepository(BaseRepository[Task]):
@@ -37,6 +42,7 @@ class TasksRepository(BaseRepository[Task]):
         self,
         context_wrapper: ContextWrapper,
         session: AsyncSession,
+        rbac_filter_service: RbacFilterService,
         processor_executor: ProcessorExecutor,
         sync_assignees_processor: SyncTaskAssigneesProcessor,
     ) -> None:
@@ -44,10 +50,23 @@ class TasksRepository(BaseRepository[Task]):
             session,
             context_wrapper,
             Task,
-            processor_executor=processor_executor,
+            rbac_filter_service,
+            processor_executor,
             processor_executor_classes=[sync_assignees_processor],
         )
         self.sync_assignees_processor = sync_assignees_processor
+
+    @override
+    def get_rbac_filter_strategy(self) -> RbacFilterStrategy | None:
+        if RbacRoleEnum.SALES_MANAGER in self.auth_info.roles:
+            return SalesTeamFilterStrategy(
+                RbacResourceEnum.TASK,
+                Task.created_by_id,
+            )
+        return CreatedByFilterStrategy(
+            RbacResourceEnum.TASK,
+            Task,
+        )
 
     def paginated_stmt(self) -> Select[Any]:
         assignee_user_alias = aliased(User)

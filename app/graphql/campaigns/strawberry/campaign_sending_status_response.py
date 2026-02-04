@@ -1,14 +1,14 @@
-"""GraphQL response type for campaign sending status."""
-
+from typing import TYPE_CHECKING
 from uuid import UUID
 
 import strawberry
 from commons.db.v6.crm.campaigns.campaign_status import CampaignStatus
 from commons.db.v6.crm.campaigns.send_pace import SendPace
 
-from app.graphql.campaigns.services.campaign_email_sender_service import (
-    CampaignSendingStatus,
-)
+if TYPE_CHECKING:
+    from app.graphql.campaigns.services.campaign_email_sender_service import (
+        CampaignSendingStatus,
+    )
 
 
 @strawberry.type
@@ -38,7 +38,7 @@ class CampaignSendingStatusResponse:
 
     @classmethod
     def from_dataclass(
-        cls, status: CampaignSendingStatus
+        cls, status: "CampaignSendingStatus"
     ) -> "CampaignSendingStatusResponse":
         """Create response from service dataclass."""
         return cls(

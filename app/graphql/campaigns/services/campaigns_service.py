@@ -1,5 +1,3 @@
-"""Service for Campaigns entity business logic."""
-
 from typing import Any
 from uuid import UUID
 

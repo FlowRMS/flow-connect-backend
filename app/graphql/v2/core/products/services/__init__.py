@@ -1,6 +1,12 @@
 from app.graphql.v2.core.products.services.product_category_service import (
     ProductCategoryService,
 )
+from app.graphql.v2.core.products.services.product_cpn_import_service import (
+    ProductCpnImportService,
+)
+from app.graphql.v2.core.products.services.product_import_service import (
+    ProductImportService,
+)
 from app.graphql.v2.core.products.services.product_quantity_pricing_service import (
     ProductQuantityPricingService,
 )
@@ -12,4 +18,6 @@ __all__ = [
     "ProductUomService",
     "ProductCategoryService",
     "ProductQuantityPricingService",
+    "ProductImportService",
+    "ProductCpnImportService",
 ]

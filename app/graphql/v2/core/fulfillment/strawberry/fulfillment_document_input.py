@@ -1,7 +1,4 @@
-"""Input types for fulfillment documents."""
-
 from datetime import UTC, datetime
-from typing import Optional
 from uuid import UUID
 
 import strawberry
@@ -45,4 +42,4 @@ class UploadDocumentInput:
     fulfillment_order_id: UUID
     document_type: FulfillmentDocumentType
     file: Upload
-    notes: Optional[str] = None
+    notes: str | None = None

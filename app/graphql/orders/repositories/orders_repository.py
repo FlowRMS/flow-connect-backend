@@ -11,6 +11,7 @@ from commons.db.v6.core import Customer, Factory
 from commons.db.v6.crm.jobs.jobs_model import Job
 from commons.db.v6.crm.links.entity_type import EntityType
 from commons.db.v6.crm.links.link_relation_model import LinkRelation
+from commons.db.v6.rbac.rbac_role_enum import RbacRoleEnum
 from sqlalchemy import Select, func, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import joinedload, lazyload
@@ -20,19 +21,24 @@ from app.core.exceptions import NotFoundError
 from app.core.processors import ProcessorExecutor, ValidateCommissionRateProcessor
 from app.core.processors.events import RepositoryEvent
 from app.graphql.base_repository import BaseRepository
-from app.graphql.orders.processors.default_rep_split_processor import (
+from app.graphql.orders.processors import (
     OrderDefaultRepSplitProcessor,
+    SetShippingBalanceProcessor,
 )
 from app.graphql.orders.processors.recalculate_order_status_processor import (
     RecalculateOrderStatusProcessor,
 )
-from app.graphql.orders.processors.set_shipping_balance_processor import (
-    SetShippingBalanceProcessor,
-)
 from app.graphql.orders.repositories.order_balance_repository import (
     OrderBalanceRepository,
 )
+from app.graphql.orders.repositories.order_bulk_query_helper import (
+    build_find_order_by_number_customer_with_details_stmt,
+    build_find_orders_by_number_customer_pairs_stmt,
+)
 from app.graphql.orders.strategies.order_owner_filter import OrderOwnerFilterStrategy
+from app.graphql.orders.strategies.sales_team_order_filter import (
+    SalesTeamOrderFilterStrategy,
+)
 from app.graphql.orders.strawberry.order_landing_page_response import (
     OrderLandingPageResponse,
 )
@@ -41,6 +47,7 @@ from app.graphql.quotes.processors.validate_rep_split_processor import (
 )
 from app.graphql.v2.rbac.services.rbac_filter_service import RbacFilterService
 from app.graphql.v2.rbac.strategies.base import RbacFilterStrategy
+from app.graphql.watchers.processors import OrderWatcherNotificationProcessor
 
 
 class OrdersRepository(BaseRepository[Order]):
@@ -60,6 +67,7 @@ class OrdersRepository(BaseRepository[Order]):
         order_default_rep_split_processor: OrderDefaultRepSplitProcessor,
         validate_commission_rate_processor: ValidateCommissionRateProcessor,
         recalculate_order_status_processor: RecalculateOrderStatusProcessor,
+        order_watcher_notification_processor: OrderWatcherNotificationProcessor,
     ) -> None:
         super().__init__(
             session,
@@ -73,12 +81,15 @@ class OrdersRepository(BaseRepository[Order]):
                 set_shipping_balance_processor,
                 validate_commission_rate_processor,
                 recalculate_order_status_processor,
+                order_watcher_notification_processor,
             ],
         )
         self.balance_repository = balance_repository
 
     @override
     def get_rbac_filter_strategy(self) -> RbacFilterStrategy | None:
+        if RbacRoleEnum.SALES_MANAGER in self.auth_info.roles:
+            return SalesTeamOrderFilterStrategy(RbacResourceEnum.ORDER)
         return OrderOwnerFilterStrategy(RbacResourceEnum.ORDER)
 
     def paginated_stmt(self) -> Select[Any]:
@@ -186,6 +197,31 @@ class OrdersRepository(BaseRepository[Order]):
         )
         result = await self.session.execute(stmt)
         return result.scalar_one_or_none()
+
+    async def find_by_order_number_with_details(
+        self, order_number: str, customer_id: UUID
+    ) -> Order | None:
+        stmt = build_find_order_by_number_customer_with_details_stmt(
+            order_number, customer_id
+        )
+        result = await self.session.execute(stmt)
+        return result.unique().scalar_one_or_none()
+
+    async def find_orders_by_number_customer_pairs(
+        self,
+        order_customer_pairs: list[tuple[str, UUID]],
+    ) -> list[Order]:
+        if not order_customer_pairs:
+            return []
+        stmt = build_find_orders_by_number_customer_pairs_stmt(order_customer_pairs)
+        result = await self.execute(stmt)
+        rows = result.unique().scalars().all()
+        key_to_order = {(o.order_number, o.sold_to_customer_id): o for o in rows}
+        return [
+            key_to_order[(num, cid)]
+            for num, cid in order_customer_pairs
+            if (num, cid) in key_to_order
+        ]
 
     async def search_by_order_number(
         self, search_term: str, limit: int = 20

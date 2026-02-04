@@ -6,6 +6,7 @@ import strawberry
 from commons.db.v6.core import Factory
 
 from app.core.db.adapters.dto import DTOMixin
+from app.graphql.common.strawberry.overage_record import OverageTypeEnum
 from app.graphql.v2.core.factories.strawberry.factory_split_rate_response import (
     FactorySplitRateResponse,
 )
@@ -31,9 +32,19 @@ class FactoryLiteResponse(DTOMixin[Factory]):
     additional_information: str | None
     freight_terms: str | None
     external_payment_terms: str | None
+    is_parent: bool
+    parent_id: UUID | None
+    overage_allowed: bool
+    overage_type: OverageTypeEnum
+    rep_overage_share: Decimal
 
     @classmethod
     def from_orm_model(cls, model: Factory) -> Self:
+        # DB enum: BY_LINE=0, BY_TOTAL=1
+        overage_type_map = {
+            0: OverageTypeEnum.BY_LINE,
+            1: OverageTypeEnum.BY_TOTAL,
+        }
         return cls(
             _instance=model,
             id=model.id,
@@ -52,6 +63,13 @@ class FactoryLiteResponse(DTOMixin[Factory]):
             additional_information=model.additional_information,
             freight_terms=model.freight_terms,
             external_payment_terms=model.external_payment_terms,
+            is_parent=model.is_parent,
+            parent_id=model.parent_id,
+            overage_allowed=model.overage_allowed,
+            overage_type=overage_type_map.get(
+                int(model.overage_type), OverageTypeEnum.BY_LINE
+            ),
+            rep_overage_share=model.rep_overage_share,
         )
 
 
@@ -64,3 +82,9 @@ class FactoryResponse(FactoryLiteResponse):
     @strawberry.field
     def split_rates(self) -> list[FactorySplitRateResponse]:
         return FactorySplitRateResponse.from_orm_model_list(self._instance.split_rates)
+
+    @strawberry.field
+    def parent(self) -> "FactoryLiteResponse | None":
+        if not self._instance.parent:
+            return None
+        return FactoryLiteResponse.from_orm_model(self._instance.parent)

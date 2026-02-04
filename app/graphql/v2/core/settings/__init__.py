@@ -1,5 +1,4 @@
 from commons.db.v6.core.settings.general_setting import GeneralSetting
-from commons.db.v6.core.settings.setting_key import SettingKey
 
 from app.graphql.v2.core.settings.mutations import GeneralSettingsMutations
 from app.graphql.v2.core.settings.queries import GeneralSettingsQueries
@@ -9,6 +8,7 @@ from app.graphql.v2.core.settings.strawberry import (
     GeneralSettingsInput,
     GeneralSettingsResponse,
 )
+from app.graphql.v2.core.settings.strawberry.setting_key import SettingKey
 
 __all__ = [
     # Models (from commons)

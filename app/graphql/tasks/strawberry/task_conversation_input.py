@@ -1,5 +1,3 @@
-"""GraphQL input types for task conversations."""
-
 from uuid import UUID
 
 import strawberry

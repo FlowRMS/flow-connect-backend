@@ -1,5 +1,3 @@
-"""GraphQL input types for LinkRelation."""
-
 from uuid import UUID
 
 import strawberry

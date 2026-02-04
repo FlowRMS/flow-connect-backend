@@ -15,11 +15,11 @@ class QuoteSplitRateInput(BaseInputGQL[QuoteSplitRate]):
     id: UUID | None = None
 
     def to_orm_model(self) -> QuoteSplitRate:
-        split_rate = QuoteSplitRate(
+        obj = QuoteSplitRate(
             user_id=self.user_id,
             split_rate=self.split_rate,
             position=self.position,
         )
         if self.id:
-            split_rate.id = self.id
-        return split_rate
+            obj.id = self.id
+        return obj

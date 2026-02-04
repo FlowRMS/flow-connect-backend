@@ -1,5 +1,3 @@
-"""Service layer for container type operations."""
-
 from uuid import UUID
 
 from commons.auth import AuthInfo

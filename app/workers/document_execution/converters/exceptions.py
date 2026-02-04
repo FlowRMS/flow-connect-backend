@@ -88,3 +88,10 @@ class DeliveryProductRequiredError(ConversionError):
             "Product ID is required for delivery item at index "
             f"{flow_index} (part_number='{part_number}')"
         )
+
+
+class WarehouseRequiredForInventoryError(ConversionError):
+    def __init__(self, factory_part_number: str | None = None) -> None:
+        self.factory_part_number = factory_part_number
+        fpn = f" for product '{factory_part_number}'" if factory_part_number else ""
+        super().__init__(f"Warehouse ID is required to create inventory{fpn}")

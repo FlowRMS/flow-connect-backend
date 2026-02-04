@@ -1,5 +1,3 @@
-"""Lite response type for fulfillment orders - used for list endpoints."""
-
 from datetime import date, datetime
 from typing import Self
 from uuid import UUID

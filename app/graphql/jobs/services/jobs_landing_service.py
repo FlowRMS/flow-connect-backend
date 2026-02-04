@@ -1,5 +1,3 @@
-"""Landing page service for Jobs entity."""
-
 from commons.db.v6.crm.jobs.jobs_model import Job
 from commons.graphql.filter_types import Filter
 from commons.graphql.order_by_types import OrderBy

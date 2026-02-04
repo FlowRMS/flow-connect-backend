@@ -15,7 +15,6 @@ from app.graphql.class_discovery import class_discovery
 from app.graphql.inject import context_setter
 from app.graphql.schemas.date_time_scalar import DateTimeScalar
 from app.graphql.schemas.decimal_scalar import DecimalScalar
-from app.graphql.schemas.id_scalar import IdScalar
 from app.graphql.schemas.json_scalar import JsonScalar
 
 Query = merge_types(
@@ -53,7 +52,6 @@ schema = strawberry.federation.Schema(
         CommissionMaskingExtension,
     ],
     scalar_overrides={
-        strawberry.ID: IdScalar,
         datetime.datetime: DateTimeScalar,
         UploadFile: Upload,
         decimal.Decimal: DecimalScalar,

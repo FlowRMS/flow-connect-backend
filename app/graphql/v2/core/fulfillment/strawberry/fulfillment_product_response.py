@@ -1,5 +1,3 @@
-"""Fulfillment-specific product response with factory field."""
-
 import strawberry
 
 from app.graphql.v2.core.factories.strawberry.factory_response import (

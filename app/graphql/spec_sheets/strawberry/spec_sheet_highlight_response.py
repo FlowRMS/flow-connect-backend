@@ -1,5 +1,3 @@
-"""GraphQL response types for SpecSheet Highlights."""
-
 from datetime import datetime
 from typing import Self
 from uuid import UUID
@@ -28,6 +26,7 @@ class HighlightRegionResponse(DTOMixin[SpecSheetHighlightRegion]):
     shape_type: str
     color: str
     annotation: str | None
+    tags: list[str] | None
     created_at: datetime
 
     @classmethod
@@ -44,6 +43,7 @@ class HighlightRegionResponse(DTOMixin[SpecSheetHighlightRegion]):
             shape_type=model.shape_type,
             color=model.color,
             annotation=model.annotation,
+            tags=model.tags,
             created_at=model.created_at,
         )
 

@@ -1,16 +1,22 @@
 from uuid import UUID
 
 from commons.auth import AuthInfo
-from commons.db.v6.core.factories.factory import Factory
+from commons.db.v6.core.factories.factory import Factory, OverageTypeEnum
 from commons.db.v6.core.factories.factory_split_rate import FactorySplitRate
 from commons.db.v6.crm.links.entity_type import EntityType
 from sqlalchemy.orm import joinedload, lazyload
 
 from app.errors.common_errors import NameAlreadyExistsError, NotFoundError
+from app.graphql.common.strawberry.overage_record import (
+    OverageTypeEnum as GQLOverageTypeEnum,
+)
 from app.graphql.v2.core.factories.repositories.factories_repository import (
     FactoriesRepository,
 )
 from app.graphql.v2.core.factories.strawberry.factory_input import FactoryInput
+from app.graphql.v2.core.factories.strawberry.factory_overage_settings_input import (
+    FactoryOverageSettingsInput,
+)
 
 
 class FactoryService:
@@ -30,6 +36,7 @@ class FactoryService:
                 joinedload(Factory.split_rates),
                 joinedload(Factory.split_rates).joinedload(FactorySplitRate.user),
                 joinedload(Factory.created_by),
+                joinedload(Factory.parent),
                 lazyload("*"),
             ],
         )
@@ -74,3 +81,38 @@ class FactoryService:
 
     async def update_manufacturer_order(self, factory_ids: list[UUID]) -> int:
         return await self.repository.update_manufacturer_order(factory_ids)
+
+    async def get_children(self, parent_id: UUID) -> list[Factory]:
+        return await self.repository.get_children(parent_id)
+
+    async def assign_children(
+        self,
+        parent_id: UUID,
+        child_ids: list[UUID],
+    ) -> list[Factory]:
+        if not await self.repository.exists(parent_id):
+            raise NotFoundError(f"Parent factory with id {parent_id} not found")
+
+        await self.repository.set_children_parent_id(parent_id, child_ids)
+        return await self.repository.get_children(parent_id)
+
+    async def update_overage_settings(
+        self, factory_id: UUID, input: FactoryOverageSettingsInput
+    ) -> Factory:
+        if not await self.repository.exists(factory_id):
+            raise NotFoundError(f"Factory with id {factory_id} not found")
+
+        overage_type_map = {
+            GQLOverageTypeEnum.BY_LINE: OverageTypeEnum.BY_LINE,
+            GQLOverageTypeEnum.BY_TOTAL: OverageTypeEnum.BY_TOTAL,
+        }
+
+        _ = await self.repository.update_overage_settings(
+            factory_id=factory_id,
+            overage_allowed=input.overage_allowed,
+            overage_type=overage_type_map.get(
+                input.overage_type, OverageTypeEnum.BY_LINE
+            ),
+            rep_overage_share=input.rep_overage_share,
+        )
+        return await self.get_by_id(factory_id)

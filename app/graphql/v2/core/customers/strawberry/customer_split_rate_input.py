@@ -15,15 +15,15 @@ class InsideSplitRateInput(BaseInputGQL[CustomerSplitRate]):
     id: UUID | None = None
 
     def to_orm_model(self) -> CustomerSplitRate:
-        split_rate = CustomerSplitRate(
+        obj = CustomerSplitRate(
             user_id=self.user_id,
-            rep_type=RepTypeEnum.INSIDE,
             split_rate=self.split_rate,
+            rep_type=RepTypeEnum.INSIDE,
             position=self.position,
         )
         if self.id:
-            split_rate.id = self.id
-        return split_rate
+            obj.id = self.id
+        return obj
 
 
 @strawberry.input
@@ -34,12 +34,12 @@ class OutsideSplitRateInput(BaseInputGQL[CustomerSplitRate]):
     id: UUID | None = None
 
     def to_orm_model(self) -> CustomerSplitRate:
-        split_rate = CustomerSplitRate(
+        obj = CustomerSplitRate(
             user_id=self.user_id,
-            rep_type=RepTypeEnum.OUTSIDE,
             split_rate=self.split_rate,
+            rep_type=RepTypeEnum.OUTSIDE,
             position=self.position,
         )
         if self.id:
-            split_rate.id = self.id
-        return split_rate
+            obj.id = self.id
+        return obj

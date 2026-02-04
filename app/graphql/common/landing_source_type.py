@@ -1,5 +1,3 @@
-"""Landing page source type enum for generic landing page queries."""
-
 from enum import Enum
 
 import strawberry

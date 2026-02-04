@@ -22,7 +22,11 @@ def discover_providers(
             prefix=module.__name__ + ".",
         )
         repository_classes.extend(
-            [mod for mod in mods if mod.name.endswith(class_suffix)]
+            [
+                mod
+                for mod in mods
+                if mod.name.endswith(class_suffix) and ".tests." not in mod.name
+            ]
         )
 
     for mod in repository_classes:

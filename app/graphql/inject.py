@@ -1,5 +1,3 @@
-"""Custom aioinject decorator for Strawberry GraphQL with custom Context class."""
-
 import functools
 
 import aioinject

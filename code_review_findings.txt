@@ -1,0 +1,69 @@
+CODE REVIEW: Entity Mapping Empty DTO IDs Fix
+=============================================
+
+Branch: chore/entity-mapping-empty-dto-ids
+
+Files Reviewed:
+- app/workers/document_execution/batch_processor.py
+- app/workers/document_execution/converters/entity_mapping_builder.py
+
+
+CODE REVIEW CHECKLIST RESULTS
+-----------------------------
+[PASS] File under 300 lines (231 and 149 lines)
+[PASS] No file header comments
+[PASS] All functions have type hints
+[PASS] No redundant docstrings
+[PASS] Python 3.13 syntax (UUID | None, dict[UUID, EntityMapping])
+[PASS] Dependencies via constructor (N/A)
+[PASS] No global state
+[PASS] Async/await for I/O (N/A - pure data transforms)
+[PASS] Proper error handling
+
+
+REVIEW FINDINGS
+---------------
+
+1. POTENTIAL ISSUE: Early Exit in _get_fallback_mapping
+   Location: batch_processor.py lines 215-216
+
+   The early exit only checks for factory_id and sold_to_customer_id:
+
+       if fallback.factory_id and fallback.sold_to_customer_id:
+           break
+
+   However, bill_to_customer_id is also being collected (lines 213-214).
+   If bill_to_customer_id appears in a mapping AFTER the one that completes
+   the factory + sold_to pair, it will be missed.
+
+   Compare with entity_mapping_builder.py lines 39-46 which processes
+   all mappings without early exit.
+
+   Question: Is this intentional? If not, consider:
+
+       if fallback.factory_id and fallback.sold_to_customer_id and fallback.bill_to_customer_id:
+           break
+
+
+2. GOOD: Consistent Pattern in entity_mapping_builder.py
+
+   The addition of instance variables (_factory_id, _sold_to_customer_id,
+   _bill_to_customer_id) to track document-level globals is clean:
+
+   - Instance vars properly typed with UUID | None = None
+   - Globals captured during _apply_entity_to_mapping (lines 81, 84, 87)
+   - Applied to all mappings via _apply_globals_to_all_mappings at end of build()
+
+
+3. GOOD: Fallback Pattern in batch_processor.py
+
+   The _get_fallback_mapping pattern handles DTOs without explicit mappings.
+   Using `or fallback_mapping` instead of `EntityMapping()` ensures these
+   DTOs still get document-level customer/factory associations.
+
+
+RECOMMENDATION
+--------------
+Consider whether the early break condition at line 215-216 should include
+bill_to_customer_id for consistency. Otherwise, the changes look good and
+follow project patterns.
