@@ -146,7 +146,7 @@ class StatementConverter(
             else default_discount_rate
         )
 
-        sold_to_customer_id = entity_mapping.sold_to_customer_id
+        sold_to_customer_id = entity_mapping.get_sold_to_customer_id(flow_detail_index)
 
         return StatementDetailInput(
             item_number=item_number,

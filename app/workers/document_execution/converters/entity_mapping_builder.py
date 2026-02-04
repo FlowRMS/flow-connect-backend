@@ -67,6 +67,8 @@ class EntityMappingBuilder:
                 mapping.factory_id = entity_id
             case EntityPendingType.CUSTOMERS:
                 mapping.sold_to_customer_id = entity_id
+                if pe.flow_index_detail is not None:
+                    mapping.sold_to_customer_ids[pe.flow_index_detail] = entity_id
             case EntityPendingType.BILL_TO_CUSTOMERS:
                 mapping.bill_to_customer_id = entity_id
             case EntityPendingType.ORDERS:
