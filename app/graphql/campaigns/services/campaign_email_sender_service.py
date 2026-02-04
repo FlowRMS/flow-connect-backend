@@ -153,7 +153,7 @@ class CampaignEmailSenderService:
         # Update to SENDING if scheduled
         if campaign.status == CampaignStatus.SCHEDULED:
             campaign.status = CampaignStatus.SENDING
-            await self.campaigns_repository.session.flush()
+            await self.campaigns_repository.flush()
 
         # Check if user has email provider connected
         if not await self.email_provider.has_connected_provider():
@@ -285,7 +285,7 @@ class CampaignEmailSenderService:
     ) -> SendBatchResult:
         """Mark a campaign as completed."""
         campaign.status = CampaignStatus.COMPLETED
-        await self.campaigns_repository.session.flush()
+        await self.campaigns_repository.flush()
 
         return SendBatchResult(
             emails_sent=sent,
@@ -354,5 +354,5 @@ class CampaignEmailSenderService:
             raise ValueError(f"Cannot start campaign in {campaign.status.name} status")
 
         campaign.status = CampaignStatus.SENDING
-        await self.campaigns_repository.session.flush()
+        await self.campaigns_repository.flush()
         return await self.campaigns_repository.get_with_relations(campaign_id)  # type: ignore[return-value]

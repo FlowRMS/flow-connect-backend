@@ -10,7 +10,9 @@ from sqlalchemy import and_, func, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.sql import Select
 
-from app.graphql.campaigns.services.criteria_operators import apply_operator
+from app.core.context_wrapper import ContextWrapper
+from app.graphql.base_repository import BaseRepository
+from app.graphql.campaigns.repositories.criteria_operators import apply_operator
 from app.graphql.campaigns.strawberry.criteria_input import (
     CampaignCriteriaInput,
     CriteriaConditionInput,
@@ -20,7 +22,7 @@ from app.graphql.campaigns.strawberry.criteria_input import (
 )
 
 
-class CriteriaEvaluatorService:
+class CriteriaEvaluatorRepository(BaseRepository[Contact]):
     ENTITY_MODEL_MAP: dict[EntityType, type] = {
         EntityType.CONTACT: Contact,
         EntityType.COMPANY: Company,
@@ -28,9 +30,12 @@ class CriteriaEvaluatorService:
         EntityType.TASK: Task,
     }
 
-    def __init__(self, session: AsyncSession) -> None:
-        super().__init__()
-        self.session = session
+    def __init__(
+        self,
+        context_wrapper: ContextWrapper,
+        session: AsyncSession,
+    ) -> None:
+        super().__init__(session, context_wrapper, Contact)
 
     async def evaluate_criteria(
         self,
@@ -82,11 +87,9 @@ class CriteriaEvaluatorService:
 
         for condition in group.conditions:
             sql_condition = self._build_single_condition(condition)
-            # Skip None conditions (e.g., empty values for arrays)
             if sql_condition is not None:
                 conditions.append(sql_condition)
 
-        # If no valid conditions, return None to skip this group
         if not conditions:
             return None
 

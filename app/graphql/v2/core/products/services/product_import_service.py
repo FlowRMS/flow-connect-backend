@@ -2,7 +2,6 @@ from uuid import UUID
 
 from commons.db.v6.core.products.product import Product
 from loguru import logger
-from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.graphql.v2.core.customers.repositories.customers_repository import (
     CustomersRepository,
@@ -33,7 +32,6 @@ from app.graphql.v2.core.products.strawberry.product_import_types import (
 class ProductImportService:
     def __init__(
         self,
-        session: AsyncSession,
         products_repository: ProductsRepository,
         quantity_pricing_repository: ProductQuantityPricingRepository,
         customers_repository: CustomersRepository,
@@ -42,7 +40,6 @@ class ProductImportService:
         pricing_ops: ProductPricingOperations,
     ) -> None:
         super().__init__()
-        self.session = session
         self.products_repository = products_repository
         self.quantity_pricing_repository = quantity_pricing_repository
         self.customers_repository = customers_repository
@@ -140,7 +137,7 @@ class ProductImportService:
                     customer_pricing_updated += updated
                     errors.extend(cpn_errors)
 
-        await self.session.flush()
+        await self.products_repository.flush()
 
         return ProductImportResult(
             success=len(errors) == 0,

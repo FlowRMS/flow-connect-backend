@@ -3,9 +3,7 @@ from uuid import UUID
 
 from commons.db.v6.core.products.product import Product
 from loguru import logger
-from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError
-from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.graphql.v2.core.products.repositories.products_repository import (
     ProductsRepository,
@@ -22,11 +20,9 @@ class ProductImportOperations:
 
     def __init__(
         self,
-        session: AsyncSession,
         products_repository: ProductsRepository,
     ) -> None:
         super().__init__()
-        self.session = session
         self.products_repository = products_repository
 
     async def create_products(
@@ -41,36 +37,32 @@ class ProductImportOperations:
 
         for product_data in products_data:
             try:
-                async with self.session.begin_nested():
-                    product_input = ProductInput(
-                        factory_part_number=product_data.factory_part_number,
-                        factory_id=factory_id,
-                        unit_price=product_data.unit_price,
-                        default_commission_rate=(
-                            product_data.default_commission_rate
-                            or self.DEFAULT_COMMISSION_RATE
-                        ),
-                        product_uom_id=default_uom_id,
-                        description=product_data.description,
-                        upc=product_data.upc,
-                        published=True,
-                    )
-                    _ = await self.products_repository.create(
-                        product_input.to_orm_model()
-                    )
-                    created_count += 1
+                product_input = ProductInput(
+                    factory_part_number=product_data.factory_part_number,
+                    factory_id=factory_id,
+                    unit_price=product_data.unit_price,
+                    default_commission_rate=(
+                        product_data.default_commission_rate
+                        or self.DEFAULT_COMMISSION_RATE
+                    ),
+                    product_uom_id=default_uom_id,
+                    description=product_data.description,
+                    upc=product_data.upc,
+                    published=True,
+                )
+                _ = await self.products_repository.create_with_savepoint(
+                    product_input.to_orm_model()
+                )
+                created_count += 1
             except IntegrityError as e:
                 logger.info(
                     f"Product {product_data.factory_part_number} already exists, "
                     "updating instead"
                 )
                 try:
-                    stmt = select(Product).where(
-                        Product.factory_part_number == product_data.factory_part_number,
-                        Product.factory_id == factory_id,
+                    existing = await self.products_repository.find_by_fpn_and_factory(
+                        product_data.factory_part_number, factory_id
                     )
-                    result = await self.session.execute(stmt)
-                    existing = result.scalar_one_or_none()
 
                     if existing:
                         existing.unit_price = product_data.unit_price
@@ -152,5 +144,5 @@ class ProductImportOperations:
                     )
                 )
 
-        await self.session.flush()
+        await self.products_repository.flush()
         return updated_count, errors
