@@ -26,6 +26,8 @@ from .entity_mapping import EntityMapping
 from .exceptions import FactoryRequiredError
 
 
+DEFAULT_QUANTITY = Decimal("1")
+
 class StatementConverter(
     BaseEntityConverter[CommissionStatementDTO, StatementInput, CommissionStatement]
 ):
@@ -123,8 +125,16 @@ class StatementConverter(
         order_id = entity_mapping.get_order_id(flow_detail_index)
         invoice_id = entity_mapping.get_invoice_id(flow_detail_index)
 
-        quantity = Decimal(str(detail.quantity_determined or 1))
-        unit_price = detail.unit_price_determined or Decimal("0")
+        quantity = (
+            Decimal(str(detail.quantity_determined))
+            if detail.quantity_determined
+            else DEFAULT_QUANTITY
+        )
+        unit_price = (
+            detail.unit_price_determined
+            if detail.unit_price_determined is not None
+            else Decimal("0")
+        )
 
         order_detail_id = await self._match_order_detail(
             order_id=order_id,
@@ -134,7 +144,11 @@ class StatementConverter(
             item_number=item_number,
         )
 
-        commission_rate = detail.commission_rate_determined or default_commission_rate
+        commission_rate = (
+            detail.commission_rate_determined
+            if detail.commission_rate_determined is not None
+            else default_commission_rate
+        )
         commission_discount_rate = (
             detail.commission_discount_rate
             if detail.commission_discount_rate is not None
@@ -146,8 +160,11 @@ class StatementConverter(
             else default_discount_rate
         )
 
-        # Use actual commission value if available (from total_line_commission or paid_commission_amount)
-        commission = detail.total_line_commission or detail.paid_commission_amount
+        commission = (
+            detail.total_line_commission
+            if detail.total_line_commission is not None
+            else detail.paid_commission_amount
+        )
 
         sold_to_customer_id = entity_mapping.sold_to_customer_id
 
