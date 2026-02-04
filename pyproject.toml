@@ -53,7 +53,7 @@ dev = [
 ]
 
 [tool.uv.sources]
-flow-py-commons = { git = "ssh://git@github.com/FlowRMS/flowbot-commons.git", tag = "3.02.01" }
+flow-py-commons = { git = "ssh://git@github.com/FlowRMS/flowbot-commons.git", tag = "3.01.12" }
 
 [tool.pytest.ini_options]
 asyncio_mode = "auto"
