@@ -9,6 +9,7 @@ Create Date: 2026-02-03 10:00:00.000000
 from collections.abc import Sequence
 
 import sqlalchemy as sa
+from sqlalchemy import inspect
 
 from alembic import op
 
@@ -19,6 +20,13 @@ depends_on: str | Sequence[str] | None = None
 
 
 def upgrade() -> None:
+    conn = op.get_bind()
+    inspector = inspect(conn)
+    tables = inspector.get_table_names(schema="pycore")
+
+    if "factory_customer_references" in tables:
+        return
+
     _ = op.create_table(
         "factory_customer_references",
         sa.Column("id", sa.UUID(), nullable=False),
