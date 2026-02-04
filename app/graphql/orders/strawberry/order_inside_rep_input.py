@@ -15,11 +15,11 @@ class OrderInsideRepInput(BaseInputGQL[OrderInsideRep]):
     id: UUID | None = None
 
     def to_orm_model(self) -> OrderInsideRep:
-        inside_rep = OrderInsideRep(
+        obj = OrderInsideRep(
             user_id=self.user_id,
             split_rate=self.split_rate,
             position=self.position,
         )
         if self.id:
-            inside_rep.id = self.id
-        return inside_rep
+            obj.id = self.id
+        return obj

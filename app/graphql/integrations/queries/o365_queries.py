@@ -1,5 +1,3 @@
-"""GraphQL queries for O365 integration."""
-
 from datetime import datetime
 
 import strawberry

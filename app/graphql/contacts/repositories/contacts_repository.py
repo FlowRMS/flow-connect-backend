@@ -75,6 +75,7 @@ class ContactsRepository(BaseRepository[Contact]):
                 Contact.email,
                 Contact.phone,
                 Contact.role,
+                Contact.role_detail,
                 company_name_subq.label("company_name"),
                 Contact.tags,
                 array([Contact.created_by_id]).label("user_ids"),
@@ -234,6 +235,38 @@ class ContactsRepository(BaseRepository[Contact]):
                     (LinkRelation.source_entity_type == EntityType.NOTE)
                     & (LinkRelation.target_entity_type == EntityType.CONTACT)
                     & (LinkRelation.source_entity_id == note_id)
+                    & (LinkRelation.target_entity_id == Contact.id)
+                ),
+            ),
+        )
+        result = await self.session.execute(stmt)
+        return list(result.scalars().all())
+
+    async def find_by_quote_id(self, quote_id: UUID) -> list[Contact]:
+        """
+        Find all contacts linked to the given quote ID.
+
+        Args:
+            quote_id: The quote ID to find contacts for
+
+        Returns:
+            List of Contact objects linked to the given quote ID
+        """
+        stmt = select(Contact).join(
+            LinkRelation,
+            or_(
+                # Contacts as source, Quotes as target
+                (
+                    (LinkRelation.source_entity_type == EntityType.CONTACT)
+                    & (LinkRelation.target_entity_type == EntityType.QUOTE)
+                    & (LinkRelation.target_entity_id == quote_id)
+                    & (LinkRelation.source_entity_id == Contact.id)
+                ),
+                # Quotes as source, Contacts as target
+                (
+                    (LinkRelation.source_entity_type == EntityType.QUOTE)
+                    & (LinkRelation.target_entity_type == EntityType.CONTACT)
+                    & (LinkRelation.source_entity_id == quote_id)
                     & (LinkRelation.target_entity_id == Contact.id)
                 ),
             ),

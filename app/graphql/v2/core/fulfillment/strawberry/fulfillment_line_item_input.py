@@ -16,6 +16,7 @@ class CreateFulfillmentLineItemInput(BaseInputGQL[FulfillmentOrderLineItem]):
     def to_orm_model(self) -> FulfillmentOrderLineItem:
         item = FulfillmentOrderLineItem(
             ordered_qty=self.ordered_qty,
+            allocated_qty=self.ordered_qty,  # Initialize allocated_qty to ordered_qty
         )
         item.product_id = self.product_id
         item.order_detail_id = self.order_detail_id

@@ -17,6 +17,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import lazyload
 
 from app.core.context_wrapper import ContextWrapper
+from app.core.processors import ProcessorExecutor
 from app.graphql.base_repository import BaseRepository
 from app.graphql.pre_opportunities.repositories.pre_opportunity_balance_repository import (
     PreOpportunityBalanceRepository,
@@ -24,6 +25,7 @@ from app.graphql.pre_opportunities.repositories.pre_opportunity_balance_reposito
 from app.graphql.pre_opportunities.strawberry.pre_opportunity_landing_page_response import (
     PreOpportunityLandingPageResponse,
 )
+from app.graphql.watchers.processors import PreOpportunityWatcherNotificationProcessor
 
 
 class PreOpportunitiesRepository(BaseRepository[PreOpportunity]):
@@ -35,8 +37,16 @@ class PreOpportunitiesRepository(BaseRepository[PreOpportunity]):
         context_wrapper: ContextWrapper,
         session: AsyncSession,
         balance_repository: PreOpportunityBalanceRepository,
+        processor_executor: ProcessorExecutor,
+        pre_opportunity_watcher_notification_processor: PreOpportunityWatcherNotificationProcessor,
     ) -> None:
-        super().__init__(session, context_wrapper, PreOpportunity)
+        super().__init__(
+            session,
+            context_wrapper,
+            PreOpportunity,
+            processor_executor=processor_executor,
+            processor_executor_classes=[pre_opportunity_watcher_notification_processor],
+        )
         self.balance_repository = balance_repository
 
     def paginated_stmt(self) -> Select[Any]:

@@ -327,6 +327,7 @@ This runs:
 10. **Magic values**: Use enums or constants
 11. **Running database migrations**: NEVER run `alembic upgrade/downgrade` - only create migration files
 12. **`_validate_*` functions in services**: Use Processor pattern instead for validation logic
+13. **Pushing dev-only dependencies**: The `polars[rtcompat]` extra is for local development only (CPU compatibility on older processors). NEVER commit changes to flowbot-commons `pyproject.toml` that switch from `polars` to `polars[rtcompat]` - this is a local-only workaround that should not be pushed to GitHub
 
 ## Philosophy
 

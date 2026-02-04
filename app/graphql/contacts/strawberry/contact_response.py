@@ -17,6 +17,7 @@ class ContactLiteResponse(DTOMixin[Contact]):
     email: str | None
     phone: str | None
     role: str | None
+    role_detail: str | None
     territory: str | None
     tags: list[str] | None
     notes: str | None
@@ -32,6 +33,7 @@ class ContactLiteResponse(DTOMixin[Contact]):
             email=model.email,
             phone=model.phone,
             role=model.role,
+            role_detail=model.role_detail,
             territory=model.territory,
             tags=model.tags,
             notes=model.notes,

@@ -70,6 +70,7 @@ def create_app() -> FastAPI:
             "http://localhost:3001",
             "https://flowrms.com",
             "https://www.flowrms.com",
+            "https://staging-crm-v6.onrender.com",
         ],
         # allow_origin_regex=r"https?://.*\.?flowrms\.com",
         allow_credentials=True,

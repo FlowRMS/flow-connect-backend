@@ -1,5 +1,3 @@
-"""Service for evaluating campaign criteria and returning matching contacts."""
-
 from datetime import date, datetime
 from typing import Any
 from uuid import UUID

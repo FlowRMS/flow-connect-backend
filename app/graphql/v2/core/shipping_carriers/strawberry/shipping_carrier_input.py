@@ -1,5 +1,3 @@
-"""Strawberry input types for shipping carriers."""
-
 from decimal import Decimal
 from typing import Any, cast
 

@@ -66,6 +66,7 @@ class FulfillmentShippingService:
             line_item.shipped_qty = line_item.picked_qty
 
         order = await self.order_repository.update(order)
+
         _ = await self._log_activity(
             order.id, FulfillmentActivityType.SHIPPED, "Shipment completed"
         )

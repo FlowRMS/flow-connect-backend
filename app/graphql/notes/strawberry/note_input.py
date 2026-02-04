@@ -1,5 +1,3 @@
-"""GraphQL input types for notes."""
-
 from uuid import UUID
 
 import strawberry

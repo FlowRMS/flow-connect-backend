@@ -6,6 +6,7 @@ Generates authentication tokens for API testing.
 Usage:
     uv run python tests/products/token_generator.py --email your@email.com --password yourpassword
 """
+
 import argparse
 import asyncio
 import json

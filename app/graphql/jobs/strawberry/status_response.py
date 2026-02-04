@@ -1,5 +1,3 @@
-"""Strawberry GraphQL response types for Status entity."""
-
 import uuid
 from typing import Self
 

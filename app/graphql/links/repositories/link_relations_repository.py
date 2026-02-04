@@ -1,5 +1,3 @@
-"""Repository for LinkRelation entity."""
-
 from uuid import UUID
 
 from commons.db.v6.crm.links.entity_type import EntityType

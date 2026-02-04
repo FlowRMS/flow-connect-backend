@@ -1,5 +1,3 @@
-"""GraphQL input type for Campaign entity."""
-
 from datetime import datetime
 from uuid import UUID
 

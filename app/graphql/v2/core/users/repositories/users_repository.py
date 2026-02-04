@@ -1,3 +1,5 @@
+from uuid import UUID
+
 from commons.db.v6.user import User
 from graphql import GraphQLError
 from sqlalchemy import select
@@ -37,6 +39,13 @@ class UsersRepository(BaseRepository[User]):
         stmt = select(User).where(User.email == email)
         result = await self.session.execute(stmt)
         return result.scalar_one_or_none()
+
+    async def get_by_ids(self, user_ids: list[UUID]) -> list[User]:
+        if not user_ids:
+            return []
+        stmt = select(User).where(User.id.in_(user_ids))
+        result = await self.session.execute(stmt)
+        return list(result.scalars().all())
 
     async def get_by_username(self, username: str) -> User | None:
         stmt = select(User).where(User.username == username)

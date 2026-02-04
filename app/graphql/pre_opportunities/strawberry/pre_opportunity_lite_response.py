@@ -1,5 +1,3 @@
-"""GraphQL response type for PreOpportunity lite version without balance and details."""
-
 from datetime import date, datetime
 from typing import Self
 from uuid import UUID

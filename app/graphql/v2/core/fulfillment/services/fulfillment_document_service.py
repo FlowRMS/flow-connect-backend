@@ -1,5 +1,4 @@
 from datetime import UTC, datetime
-from typing import Optional
 from uuid import UUID
 
 from commons.auth import AuthInfo
@@ -87,7 +86,7 @@ class FulfillmentDocumentService:
         fulfillment_order_id: UUID,
         document_type: FulfillmentDocumentType,
         file: Upload,
-        notes: Optional[str] = None,
+        notes: str | None = None,
     ) -> FulfillmentDocument:
         """Upload a file and create a document record for a fulfillment order."""
         # Verify fulfillment order exists

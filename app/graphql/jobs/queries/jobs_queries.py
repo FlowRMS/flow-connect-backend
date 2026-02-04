@@ -1,5 +1,3 @@
-"""GraphQL queries for Jobs entity."""
-
 from uuid import UUID
 
 import strawberry

@@ -1,5 +1,3 @@
-"""Repository for container type operations."""
-
 from uuid import UUID
 
 from commons.db.v6 import ContainerType

@@ -1,5 +1,3 @@
-"""Landing page response type for Notes entity."""
-
 from typing import Any, Self
 from uuid import UUID
 

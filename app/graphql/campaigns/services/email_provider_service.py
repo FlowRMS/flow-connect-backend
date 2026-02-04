@@ -1,5 +1,3 @@
-"""Service to abstract email sending across O365 and Gmail providers."""
-
 from dataclasses import dataclass
 from enum import Enum, auto
 
@@ -24,6 +22,15 @@ class EmailProvider(Enum):
 
     O365 = auto()
     GMAIL = auto()
+
+
+@dataclass
+class EmailAttachment:
+    """Represents an email attachment."""
+
+    filename: str
+    content: bytes
+    content_type: str = "application/octet-stream"
 
 
 @dataclass
@@ -87,6 +94,7 @@ class EmailProviderService:
         body: str,
         body_type: str = "HTML",
         provider: EmailProvider | None = None,
+        attachments: list[EmailAttachment] | None = None,
     ) -> SendEmailResult:
         """
         Send an email using the specified or available provider.
@@ -97,6 +105,7 @@ class EmailProviderService:
             body: Email body content
             body_type: Body content type ("HTML" or "Text")
             provider: Specific provider to use, or None for auto-selection
+            attachments: Optional list of file attachments
 
         Returns:
             SendEmailResult with success status and details
@@ -126,6 +135,7 @@ class EmailProviderService:
                 subject=subject,
                 body=body,
                 body_type=body_type,
+                attachments=attachments,
             )
             return SendEmailResult(
                 success=result.success,
@@ -146,6 +156,7 @@ class EmailProviderService:
                 subject=subject,
                 body=body,
                 body_type=body_type,
+                attachments=attachments,
             )
             return SendEmailResult(
                 success=result_gmail.success,

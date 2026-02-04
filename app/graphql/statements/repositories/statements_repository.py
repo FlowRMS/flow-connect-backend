@@ -2,6 +2,7 @@ from typing import Any, override
 from uuid import UUID
 
 from commons.db.v6 import RbacResourceEnum, User
+from commons.db.v6.crm.links.entity_type import EntityType
 from commons.db.v6.commission.statements import (
     CommissionStatement,
     CommissionStatementBalance,

@@ -1,5 +1,3 @@
-"""GraphQL response type for estimate recipients query."""
-
 import strawberry
 
 from app.graphql.contacts.strawberry.contact_response import ContactResponse

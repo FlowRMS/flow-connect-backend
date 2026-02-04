@@ -1,5 +1,3 @@
-"""Lite response type for fulfillment order line items."""
-
 from decimal import Decimal
 from typing import Self
 from uuid import UUID

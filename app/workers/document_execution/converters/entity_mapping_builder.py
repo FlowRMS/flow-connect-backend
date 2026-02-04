@@ -23,6 +23,9 @@ class EntityMappingBuilder:
         super().__init__()
         self._pending_entities = pending_entities
         self._mappings: dict[UUID, EntityMapping] = {}
+        self._factory_id: UUID | None = None
+        self._sold_to_customer_id: UUID | None = None
+        self._bill_to_customer_id: UUID | None = None
 
     def build(self) -> dict[UUID, EntityMapping]:
         logger.info(
@@ -30,7 +33,17 @@ class EntityMappingBuilder:
         )
         self._process_base_entities()
         self._process_skipped_entities()
+        self._apply_globals_to_all_mappings()
         return self._mappings
+
+    def _apply_globals_to_all_mappings(self) -> None:
+        for mapping in self._mappings.values():
+            if not mapping.factory_id and self._factory_id:
+                mapping.factory_id = self._factory_id
+            if not mapping.sold_to_customer_id and self._sold_to_customer_id:
+                mapping.sold_to_customer_id = self._sold_to_customer_id
+            if not mapping.bill_to_customer_id and self._bill_to_customer_id:
+                mapping.bill_to_customer_id = self._bill_to_customer_id
 
     def _process_base_entities(self) -> None:
         for pe in self._pending_entities:
@@ -65,11 +78,14 @@ class EntityMappingBuilder:
         match pe.entity_type:
             case EntityPendingType.FACTORIES:
                 mapping.factory_id = entity_id
+                self._factory_id = entity_id
             case EntityPendingType.CUSTOMERS:
                 mapping.sold_to_customer_id = entity_id
                 mapping.sold_to_customer_ids[flow_idx] = entity_id
+                self._sold_to_customer_id = entity_id
             case EntityPendingType.BILL_TO_CUSTOMERS:
                 mapping.bill_to_customer_id = entity_id
+                self._bill_to_customer_id = entity_id
             case EntityPendingType.ORDERS:
                 mapping.orders[flow_idx] = entity_id
             case EntityPendingType.INVOICES:

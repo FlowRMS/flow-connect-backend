@@ -1,5 +1,3 @@
-"""Service for PreOpportunity entity business logic."""
-
 from uuid import UUID
 
 from commons.auth import AuthInfo

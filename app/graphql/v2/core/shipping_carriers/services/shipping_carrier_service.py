@@ -1,5 +1,3 @@
-"""Service layer for shipping carrier operations."""
-
 from uuid import UUID
 
 from commons.auth import AuthInfo

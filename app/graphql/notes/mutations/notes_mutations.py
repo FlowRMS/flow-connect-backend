@@ -1,5 +1,3 @@
-"""GraphQL mutations for Notes entity."""
-
 from uuid import UUID
 
 import strawberry

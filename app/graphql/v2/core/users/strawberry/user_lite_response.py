@@ -1,5 +1,3 @@
-"""Lite response type for users - minimal fields for nested responses."""
-
 from typing import Self
 from uuid import UUID
 

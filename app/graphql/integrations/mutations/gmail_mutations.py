@@ -1,5 +1,3 @@
-"""GraphQL mutations for Gmail integration."""
-
 import strawberry
 from aioinject import Injected
 

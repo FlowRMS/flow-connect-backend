@@ -1,5 +1,3 @@
-"""GraphQL mutations for Campaigns entity."""
-
 from uuid import UUID
 
 import strawberry

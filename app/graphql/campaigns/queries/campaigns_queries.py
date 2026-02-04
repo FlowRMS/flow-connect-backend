@@ -1,5 +1,3 @@
-"""GraphQL queries for Campaigns entity."""
-
 from uuid import UUID
 
 import strawberry
