@@ -30,7 +30,6 @@ dependencies = [
     "resend>=2.19.0",
     "pypdf>=6.6.2",
     "reportlab>=4.4.9",
-    "polars-lts-cpu>=1.33.1",
 ]
 
 [dependency-groups]
