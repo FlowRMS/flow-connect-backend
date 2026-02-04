@@ -5,7 +5,7 @@ from commons.db.v6.crm.campaigns.campaign_recipient_model import CampaignRecipie
 from commons.db.v6.crm.campaigns.email_status import EmailStatus
 from sqlalchemy import delete, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.orm import selectinload
+from sqlalchemy.orm import joinedload
 
 from app.core.context_wrapper import ContextWrapper
 from app.graphql.base_repository import BaseRepository
@@ -27,7 +27,7 @@ class CampaignRecipientsRepository(BaseRepository[CampaignRecipient]):
         stmt = (
             select(CampaignRecipient)
             .where(CampaignRecipient.campaign_id == campaign_id)
-            .options(selectinload(CampaignRecipient.contact))
+            .options(joinedload(CampaignRecipient.contact))
             .limit(limit)
             .offset(offset)
         )
@@ -103,7 +103,7 @@ class CampaignRecipientsRepository(BaseRepository[CampaignRecipient]):
                 CampaignRecipient.campaign_id == campaign_id,
                 CampaignRecipient.email_status == EmailStatus.PENDING,
             )
-            .options(selectinload(CampaignRecipient.contact))
+            .options(joinedload(CampaignRecipient.contact))
             .order_by(CampaignRecipient.id)
             .limit(limit)
         )

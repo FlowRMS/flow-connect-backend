@@ -1,5 +1,3 @@
-"""Tests for campaigns GraphQL endpoints."""
-
 from commons.db.v6.crm.campaigns.campaign_status import CampaignStatus
 from commons.db.v6.crm.campaigns.email_status import EmailStatus
 from commons.db.v6.crm.campaigns.recipient_list_type import RecipientListType

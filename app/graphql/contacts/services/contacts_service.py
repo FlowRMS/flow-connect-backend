@@ -132,15 +132,12 @@ class ContactsService:
         return await self.repository.search_by_name(search_term, limit)
 
     async def find_contacts_by_task_id(self, task_id: UUID) -> list[Contact]:
-        """Find all contacts linked to the given task ID."""
         return await self.repository.find_by_task_id(task_id)
 
     async def find_contacts_by_note_id(self, note_id: UUID) -> list[Contact]:
-        """Find all contacts linked to the given note ID."""
         return await self.repository.find_by_note_id(note_id)
 
     async def find_contacts_by_quote_id(self, quote_id: UUID) -> list[Contact]:
-        """Find all contacts linked to the given quote ID."""
         return await self.repository.find_by_quote_id(quote_id)
 
     async def get_contact_related_entities(

@@ -1,5 +1,3 @@
-"""Tests for entity watchers module."""
-
 from typing import TYPE_CHECKING
 from unittest.mock import AsyncMock, MagicMock
 from uuid import uuid4

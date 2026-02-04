@@ -71,5 +71,6 @@ guidelines.txt
 .github\instructions\codacy.instructions.md
 .mcp.json
 logins-workos.csv
+code_review_findings.txt
 
 PR-docs

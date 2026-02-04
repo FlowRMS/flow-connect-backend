@@ -1,15 +1,16 @@
 from uuid import UUID
 
 from commons.db.v6 import LocationProductAssignment, WarehouseLocation
-from sqlalchemy import select
+from sqlalchemy import Select, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
+from sqlalchemy.orm.strategy_options import _AbstractLoad
 
 from app.core.context_wrapper import ContextWrapper
 from app.graphql.base_repository import BaseRepository
 
 
-def _recursive_children_loader(depth: int = 6):
+def _recursive_children_loader(depth: int = 6) -> _AbstractLoad:
     """
     Create recursive eager loading options for WarehouseLocation children.
     Loads children and product_assignments (with product details) at each level up to the specified depth.
@@ -44,7 +45,7 @@ class WarehouseLocationRepository(BaseRepository[WarehouseLocation]):
         )
 
     @property
-    def base_query(self):
+    def base_query(self) -> Select[tuple[WarehouseLocation]]:
         """Base query with standard eager loading for locations."""
         return select(WarehouseLocation).options(
             selectinload(WarehouseLocation.product_assignments).joinedload(

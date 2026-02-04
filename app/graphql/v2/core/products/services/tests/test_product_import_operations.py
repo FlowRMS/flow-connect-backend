@@ -1,10 +1,3 @@
-"""
-Unit tests for ProductImportOperations.
-
-Tests validate product creation and update logic including
-error handling behavior.
-"""
-
 from decimal import Decimal
 from unittest.mock import AsyncMock, MagicMock, patch
 from uuid import uuid4

@@ -14,7 +14,6 @@ class FolderMutationsRepository:
     def __init__(  # pyright: ignore[reportMissingSuperCall]
         self, session: AsyncSession, queries: FolderQueriesRepository
     ) -> None:
-        """Initialize the repository."""
         self.session = session
         self.queries = queries
 

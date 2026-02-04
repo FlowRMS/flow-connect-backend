@@ -35,7 +35,7 @@ def upgrade() -> None:
         sa.Column("position", sa.Integer(), nullable=False, server_default="0"),
         sa.Column(
             "created_at",
-            sa.DateTime(timezone=True),
+            sa.TIMESTAMP(timezone=True),
             server_default=sa.text("now()"),
             nullable=False,
         ),

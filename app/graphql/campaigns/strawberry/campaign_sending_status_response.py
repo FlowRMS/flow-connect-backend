@@ -6,7 +6,7 @@ from commons.db.v6.crm.campaigns.campaign_status import CampaignStatus
 from commons.db.v6.crm.campaigns.send_pace import SendPace
 
 if TYPE_CHECKING:
-    from app.graphql.campaigns.services.campaign_email_sender_service import (
+    from app.graphql.campaigns.services.campaign_email_types import (
         CampaignSendingStatus,
     )
 

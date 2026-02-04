@@ -131,7 +131,7 @@ class SpecSheetsRepository(BaseRepository[SpecSheet]):
         spec_sheet = await self.get_by_id(spec_sheet_id)
         if spec_sheet:
             spec_sheet.usage_count += 1
-            await self.session.commit()
+            await self.session.flush()
 
     async def move_to_folder(
         self,

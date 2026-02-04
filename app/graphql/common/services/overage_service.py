@@ -4,10 +4,10 @@ from uuid import UUID
 from commons.db.v6.core.factories import OverageTypeEnum as DbOverageTypeEnum
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.graphql.common.repositories.overage_repository import OverageRepository
 from app.graphql.common.services.overage_pricing_calculator import (
     OveragePricingCalculator,
 )
-from app.graphql.common.services.overage_repository import OverageRepository
 from app.graphql.common.strawberry.overage_record import (
     OverageRecord,
 )

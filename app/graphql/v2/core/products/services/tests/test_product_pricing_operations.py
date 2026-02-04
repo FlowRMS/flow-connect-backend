@@ -1,10 +1,3 @@
-"""
-Unit tests for ProductPricingOperations.
-
-Tests validate quantity pricing replacement and customer pricing
-creation/update logic.
-"""
-
 from decimal import Decimal
 from typing import Any
 from unittest.mock import AsyncMock, MagicMock

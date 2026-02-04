@@ -28,7 +28,7 @@ def upgrade() -> None:
         sa.Column("created_by_id", sa.UUID(), nullable=False),
         sa.Column(
             "created_at",
-            sa.DateTime(timezone=True),
+            sa.TIMESTAMP(timezone=True),
             server_default=sa.text("now()"),
             nullable=False,
         ),
@@ -139,7 +139,7 @@ def upgrade() -> None:
         sa.Column("lead_time", sa.String(100), nullable=True),
         sa.Column(
             "created_at",
-            sa.DateTime(timezone=True),
+            sa.TIMESTAMP(timezone=True),
             server_default=sa.text("now()"),
             nullable=False,
         ),
@@ -207,7 +207,7 @@ def upgrade() -> None:
         sa.Column("created_by_id", sa.UUID(), nullable=False),
         sa.Column(
             "created_at",
-            sa.DateTime(timezone=True),
+            sa.TIMESTAMP(timezone=True),
             server_default=sa.text("now()"),
             nullable=False,
         ),
@@ -240,7 +240,7 @@ def upgrade() -> None:
         sa.Column("created_by_id", sa.UUID(), nullable=False),
         sa.Column(
             "created_at",
-            sa.DateTime(timezone=True),
+            sa.TIMESTAMP(timezone=True),
             server_default=sa.text("now()"),
             nullable=False,
         ),
@@ -278,7 +278,7 @@ def upgrade() -> None:
         sa.Column("created_by_id", sa.UUID(), nullable=False),
         sa.Column(
             "created_at",
-            sa.DateTime(timezone=True),
+            sa.TIMESTAMP(timezone=True),
             server_default=sa.text("now()"),
             nullable=False,
         ),
@@ -320,7 +320,7 @@ def upgrade() -> None:
         sa.Column("summary", sa.Text(), nullable=True),
         sa.Column(
             "created_at",
-            sa.DateTime(timezone=True),
+            sa.TIMESTAMP(timezone=True),
             server_default=sa.text("now()"),
             nullable=False,
         ),
@@ -358,13 +358,13 @@ def upgrade() -> None:
         sa.Column("resolved", sa.Boolean(), nullable=False, server_default="false"),
         sa.Column(
             "created_at",
-            sa.DateTime(timezone=True),
+            sa.TIMESTAMP(timezone=True),
             server_default=sa.text("now()"),
             nullable=False,
         ),
         sa.Column(
             "updated_at",
-            sa.DateTime(timezone=True),
+            sa.TIMESTAMP(timezone=True),
             server_default=sa.text("now()"),
             nullable=False,
         ),

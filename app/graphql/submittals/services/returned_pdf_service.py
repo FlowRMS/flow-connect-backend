@@ -79,7 +79,6 @@ class ReturnedPdfService:
         change_analysis_repository: SubmittalChangeAnalysisRepository,
         item_changes_repository: SubmittalItemChangesRepository,
     ) -> None:
-        """Initialize the service with repositories."""
         self.revisions_repository = revisions_repository
         self.returned_pdfs_repository = returned_pdfs_repository
         self.change_analysis_repository = change_analysis_repository
@@ -125,7 +124,6 @@ class ReturnedPdfService:
         )
 
     async def delete_returned_pdf(self, returned_pdf_id: UUID) -> bool:
-        """Delete a returned PDF."""
         result = await self.returned_pdfs_repository.delete(returned_pdf_id)
         if result:
             logger.info(f"Deleted returned PDF {returned_pdf_id}")
@@ -195,7 +193,6 @@ class ReturnedPdfService:
         return updated
 
     async def delete_change_analysis(self, analysis_id: UUID) -> bool:
-        """Delete a change analysis."""
         result = await self.change_analysis_repository.delete(analysis_id)
         if result:
             logger.info(f"Deleted change analysis {analysis_id}")
@@ -256,7 +253,6 @@ class ReturnedPdfService:
         return updated
 
     async def delete_item_change(self, item_change_id: UUID) -> bool:
-        """Delete an item change."""
         # Get the item change to find its parent analysis
         item_change = await self.item_changes_repository.get_by_id(item_change_id)
         if not item_change:

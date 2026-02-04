@@ -40,11 +40,11 @@ def upgrade() -> None:
         sa.Column("is_read", sa.Boolean(), nullable=False, server_default="false"),
         sa.Column(
             "created_at",
-            sa.DateTime(timezone=True),
+            sa.TIMESTAMP(timezone=True),
             server_default=sa.func.now(),
             nullable=False,
         ),
-        sa.Column("read_at", sa.DateTime(timezone=True), nullable=True),
+        sa.Column("read_at", sa.TIMESTAMP(timezone=True), nullable=True),
         schema="pycore",
     )
 

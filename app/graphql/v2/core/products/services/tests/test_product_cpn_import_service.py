@@ -1,10 +1,3 @@
-"""
-Unit tests for ProductCpnImportService.
-
-Tests validate CPN import logic including product/customer lookup,
-deduplication, and error handling.
-"""
-
 from decimal import Decimal
 from unittest.mock import AsyncMock, MagicMock
 from uuid import uuid4

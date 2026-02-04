@@ -1,5 +1,3 @@
-"""GraphQL input type for creating/updating pre-opportunity details."""
-
 from decimal import Decimal
 from uuid import UUID
 

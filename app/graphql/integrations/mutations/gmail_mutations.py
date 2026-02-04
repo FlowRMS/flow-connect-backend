@@ -7,10 +7,8 @@ from app.graphql.integrations.gmail_types import (
     GmailSendEmailInput,
     GmailSendEmailResultType,
 )
-from app.integrations.gmail.services.gmail_auth_service import (
-    GmailAuthError,
-    GmailAuthService,
-)
+from app.integrations.gmail.services.gmail_auth_service import GmailAuthService
+from app.integrations.gmail.services.gmail_types import GmailAuthError
 
 
 @strawberry.type

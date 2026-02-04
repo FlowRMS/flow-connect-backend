@@ -20,7 +20,7 @@ from app.graphql.quotes.strawberry.quote_input import QuoteInput
 class QuoteDuplicationError(Exception):
     """Raised when quote duplication fails due to missing referenced entities."""
 
-    def __init__(self, missing_entities: list[str]):
+    def __init__(self, missing_entities: list[str]) -> None:
         self.missing_entities = missing_entities
         message = "Cannot duplicate quote: " + "; ".join(missing_entities)
         super().__init__(message)
