@@ -3,13 +3,19 @@ from aioinject import Injected
 
 from app.graphql.inject import inject
 from app.graphql.spec_sheets.services.folders_service import FoldersService
-from app.graphql.spec_sheets.strawberry.folder_input import (
+from app.graphql.spec_sheets.strawberry.create_spec_sheet_folder_input import (
     CreateSpecSheetFolderInput,
+)
+from app.graphql.spec_sheets.strawberry.delete_spec_sheet_folder_input import (
     DeleteSpecSheetFolderInput,
-    MoveSpecSheetFolderInput,
-    RenameSpecSheetFolderInput,
 )
 from app.graphql.spec_sheets.strawberry.folder_response import SpecSheetFolderResponse
+from app.graphql.spec_sheets.strawberry.move_spec_sheet_folder_input import (
+    MoveSpecSheetFolderInput,
+)
+from app.graphql.spec_sheets.strawberry.rename_spec_sheet_folder_input import (
+    RenameSpecSheetFolderInput,
+)
 
 
 @strawberry.type

@@ -6,13 +6,13 @@ from strawberry.permission import PermissionExtension
 from app.core.middleware.route_extension import RolePermissionAccess
 from app.graphql.inject import inject
 from app.graphql.v2.rbac.services.rbac_service import RbacService
-from app.graphql.v2.rbac.strawberry.rbac_grid_input import (
-    RbacGridInput,
-    UpdateCommissionVisibilityInput,
-)
+from app.graphql.v2.rbac.strawberry.rbac_grid_input import RbacGridInput
 from app.graphql.v2.rbac.strawberry.rbac_grid_response import (
     RbacGridResponse,
     RbacRoleSettingResponse,
+)
+from app.graphql.v2.rbac.strawberry.update_commission_visibility_input import (
+    UpdateCommissionVisibilityInput,
 )
 
 

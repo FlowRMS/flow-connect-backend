@@ -15,9 +15,13 @@ from app.graphql.v2.core.customers.repositories.customers_repository import (
 from app.graphql.v2.core.products.repositories.product_cpn_repository import (
     ProductCpnRepository,
 )
-from app.graphql.v2.core.products.strawberry.product_import_types import (
+from app.graphql.v2.core.products.strawberry.customer_pricing_import_input import (
     CustomerPricingImportInput,
+)
+from app.graphql.v2.core.products.strawberry.product_import_error import (
     ProductImportError,
+)
+from app.graphql.v2.core.products.strawberry.quantity_pricing_import_input import (
     QuantityPricingImportInput,
 )
 

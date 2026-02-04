@@ -21,7 +21,9 @@ from app.graphql.submittals.services.pdf_item_filter import (
 from app.graphql.submittals.services.pdf_spec_sheet_service import PdfSpecSheetService
 from app.graphql.submittals.services.pdf_table_service import PdfTableService
 from app.graphql.submittals.services.pdf_types import PdfGenerationResult, RolledUpItem
-from app.graphql.submittals.strawberry.submittal_input import GenerateSubmittalPdfInput
+from app.graphql.submittals.strawberry.generate_submittal_pdf_input import (
+    GenerateSubmittalPdfInput,
+)
 
 if TYPE_CHECKING:
     from app.graphql.submittals.services.submittal_pdf_export_service import (

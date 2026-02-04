@@ -1,31 +1,10 @@
 import strawberry
-from commons.db.v6 import (
-    RbacPrivilegeOptionEnum,
-    RbacPrivilegeTypeEnum,
-    RbacResourceEnum,
-    RbacRoleEnum,
-)
+from commons.db.v6 import RbacResourceEnum
 
-
-@strawberry.input
-class RbacGridRolePrivilegeInput:
-    privilege: RbacPrivilegeTypeEnum
-    option: RbacPrivilegeOptionEnum
-
-
-@strawberry.input
-class RbacGridRoleInput:
-    role: RbacRoleEnum
-    privileges: list[RbacGridRolePrivilegeInput]
+from app.graphql.v2.rbac.strawberry.rbac_grid_role_input import RbacGridRoleInput
 
 
 @strawberry.input
 class RbacGridInput:
     resource: RbacResourceEnum
     roles: list[RbacGridRoleInput]
-
-
-@strawberry.input
-class UpdateCommissionVisibilityInput:
-    role: RbacRoleEnum
-    commission: bool

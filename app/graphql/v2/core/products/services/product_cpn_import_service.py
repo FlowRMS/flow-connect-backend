@@ -16,10 +16,16 @@ from app.graphql.v2.core.products.repositories.product_cpn_repository import (
 from app.graphql.v2.core.products.repositories.products_repository import (
     ProductsRepository,
 )
-from app.graphql.v2.core.products.strawberry.product_cpn_import_types import (
+from app.graphql.v2.core.products.strawberry.product_cpn_import_error import (
     ProductCpnImportError,
+)
+from app.graphql.v2.core.products.strawberry.product_cpn_import_input import (
     ProductCpnImportInput,
+)
+from app.graphql.v2.core.products.strawberry.product_cpn_import_item_input import (
     ProductCpnImportItemInput,
+)
+from app.graphql.v2.core.products.strawberry.product_cpn_import_result import (
     ProductCpnImportResult,
 )
 
