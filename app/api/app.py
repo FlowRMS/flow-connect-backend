@@ -102,7 +102,7 @@ def create_app() -> FastAPI:
         return response
 
     @app.get("/api/health", include_in_schema=True)
-    def health_check():  # pyright: ignore[reportUnusedFunction]
+    def health_check() -> dict[str, str]:  # pyright: ignore[reportUnusedFunction]
         return {"status": "ok"}
 
     return app
