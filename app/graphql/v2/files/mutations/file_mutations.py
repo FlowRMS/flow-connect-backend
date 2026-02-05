@@ -5,11 +5,9 @@ from aioinject import Injected
 
 from app.graphql.inject import inject
 from app.graphql.v2.files.services.file_service import FileService
-from app.graphql.v2.files.strawberry.file_input import (
-    FileUploadInput,
-    MultiFileUploadInput,
-)
 from app.graphql.v2.files.strawberry.file_response import FileLiteResponse, FileResponse
+from app.graphql.v2.files.strawberry.file_upload_input import FileUploadInput
+from app.graphql.v2.files.strawberry.multi_file_upload_input import MultiFileUploadInput
 
 
 @strawberry.type

@@ -2,7 +2,6 @@ from typing import Any, override
 from uuid import UUID
 
 from commons.db.v6 import RbacResourceEnum, User
-from commons.db.v6.crm.links.entity_type import EntityType
 from commons.db.v6.commission.statements import (
     CommissionStatement,
     CommissionStatementBalance,
@@ -10,6 +9,7 @@ from commons.db.v6.commission.statements import (
     CommissionStatementSplitRate,
 )
 from commons.db.v6.core import Factory
+from commons.db.v6.crm.links.entity_type import EntityType
 from sqlalchemy import Select, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import joinedload, lazyload

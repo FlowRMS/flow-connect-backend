@@ -2,7 +2,6 @@ from uuid import UUID
 
 from commons.db.v6.core.products.product import Product
 from loguru import logger
-from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.graphql.v2.core.customers.repositories.customers_repository import (
     CustomersRepository,
@@ -22,10 +21,16 @@ from app.graphql.v2.core.products.services.product_import_operations import (
 from app.graphql.v2.core.products.services.product_pricing_operations import (
     ProductPricingOperations,
 )
-from app.graphql.v2.core.products.strawberry.product_import_types import (
+from app.graphql.v2.core.products.strawberry.product_import_error import (
     ProductImportError,
+)
+from app.graphql.v2.core.products.strawberry.product_import_input import (
     ProductImportInput,
+)
+from app.graphql.v2.core.products.strawberry.product_import_item_input import (
     ProductImportItemInput,
+)
+from app.graphql.v2.core.products.strawberry.product_import_result import (
     ProductImportResult,
 )
 
@@ -33,22 +38,20 @@ from app.graphql.v2.core.products.strawberry.product_import_types import (
 class ProductImportService:
     def __init__(
         self,
-        session: AsyncSession,
         products_repository: ProductsRepository,
         quantity_pricing_repository: ProductQuantityPricingRepository,
         customers_repository: CustomersRepository,
         cpn_repository: ProductCpnRepository,
+        import_ops: ProductImportOperations,
+        pricing_ops: ProductPricingOperations,
     ) -> None:
         super().__init__()
-        self.session = session
         self.products_repository = products_repository
         self.quantity_pricing_repository = quantity_pricing_repository
         self.customers_repository = customers_repository
         self.cpn_repository = cpn_repository
-        self._import_ops = ProductImportOperations(session, products_repository)
-        self._pricing_ops = ProductPricingOperations(
-            session, customers_repository, cpn_repository
-        )
+        self._import_ops = import_ops
+        self._pricing_ops = pricing_ops
 
     async def import_products(
         self,
@@ -123,25 +126,24 @@ class ProductImportService:
             if customers_not_found:
                 logger.warning(f"Customers not found: {customers_not_found[:10]}...")
 
-            if self.cpn_repository:
-                for product_data in products_data:
-                    product = products_by_fpn.get(product_data.factory_part_number)
-                    if product and product_data.customer_pricing:
-                        (
-                            created,
-                            updated,
-                            cpn_errors,
-                        ) = await self._pricing_ops.process_customer_pricing(
-                            product.id,
-                            product_data.factory_part_number,
-                            product_data.customer_pricing,
-                            customers_by_name,
-                        )
-                        customer_pricing_created += created
-                        customer_pricing_updated += updated
-                        errors.extend(cpn_errors)
+            for product_data in products_data:
+                product = products_by_fpn.get(product_data.factory_part_number)
+                if product and product_data.customer_pricing:
+                    (
+                        created,
+                        updated,
+                        cpn_errors,
+                    ) = await self._pricing_ops.process_customer_pricing(
+                        product.id,
+                        product_data.factory_part_number,
+                        product_data.customer_pricing,
+                        customers_by_name,
+                    )
+                    customer_pricing_created += created
+                    customer_pricing_updated += updated
+                    errors.extend(cpn_errors)
 
-        await self.session.flush()
+        await self.products_repository.flush()
 
         return ProductImportResult(
             success=len(errors) == 0,

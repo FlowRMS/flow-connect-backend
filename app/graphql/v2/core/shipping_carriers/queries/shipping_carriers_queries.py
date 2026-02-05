@@ -42,7 +42,6 @@ class ShippingCarriersQueries:
         id: UUID,
         service: Injected[ShippingCarrierService],
     ) -> ShippingCarrierResponse:
-        """Get a shipping carrier by ID."""
         carrier = await service.get_by_id(id)
         return ShippingCarrierResponse.from_orm_model(carrier)
 
@@ -51,8 +50,8 @@ class ShippingCarriersQueries:
     async def shipping_carrier_search(
         self,
         search_term: str,
+        service: Injected[ShippingCarrierService],
         limit: int = 20,
-        service: Injected[ShippingCarrierService] = None,  # type: ignore[assignment]
     ) -> list[ShippingCarrierResponse]:
         """Search shipping carriers by name."""
         carriers = await service.search(search_term, limit)
@@ -63,8 +62,8 @@ class ShippingCarriersQueries:
     async def shipping_carriers_by_type(
         self,
         carrier_type: CarrierType,
+        service: Injected[ShippingCarrierService],
         active_only: bool = True,
-        service: Injected[ShippingCarrierService] = None,  # type: ignore[assignment]
     ) -> list[ShippingCarrierResponse]:
         """Get shipping carriers filtered by type (PARCEL or FREIGHT).
 

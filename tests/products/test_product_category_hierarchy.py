@@ -1,17 +1,4 @@
 #!/usr/bin/env python3
-"""
-Test script for Product Category Hierarchy (SUP-148).
-Tests the 3-level hierarchy: Grandparent -> Parent -> Child
-
-Requirements:
-- Server running on localhost:5555 (uv run ./start.py)
-- Valid authentication credentials
-
-Usage:
-    cd /home/jorge/flowrms/FLO-727/flow-py-backend
-    uv run python tests/products/test_product_category_hierarchy.py --email your@email.com --password yourpassword
-"""
-
 import argparse
 import asyncio
 import sys

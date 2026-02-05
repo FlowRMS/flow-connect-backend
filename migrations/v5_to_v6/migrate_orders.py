@@ -5,7 +5,9 @@ import asyncpg
 logger = logging.getLogger(__name__)
 
 
-async def migrate_order_balances(source: asyncpg.Connection, dest: asyncpg.Connection) -> int:
+async def migrate_order_balances(
+    source: asyncpg.Connection, dest: asyncpg.Connection
+) -> int:
     """Migrate order balances from v5 (commission.order_balances) to v6 (pycommission.order_balances)."""
     logger.info("Starting order balance migration...")
 
@@ -75,20 +77,23 @@ async def migrate_order_balances(source: asyncpg.Connection, dest: asyncpg.Conne
             shipping_balance = EXCLUDED.shipping_balance,
             freight_charge_balance = EXCLUDED.freight_charge_balance
         """,
-        [(
-            b["id"],
-            b["quantity"],
-            b["subtotal"],
-            b["total"],
-            b["commission"],
-            b["discount"],
-            b["discount_rate"],
-            b["commission_rate"],
-            b["commission_discount"],
-            b["commission_discount_rate"],
-            b["shipping_balance"],
-            b["freight_charge_balance"],
-        ) for b in balances],
+        [
+            (
+                b["id"],
+                b["quantity"],
+                b["subtotal"],
+                b["total"],
+                b["commission"],
+                b["discount"],
+                b["discount_rate"],
+                b["commission_rate"],
+                b["commission_discount"],
+                b["commission_discount_rate"],
+                b["shipping_balance"],
+                b["freight_charge_balance"],
+            )
+            for b in balances
+        ],
     )
 
     logger.info(f"Migrated {len(balances)} order balances")
@@ -168,37 +173,42 @@ async def migrate_orders(source: asyncpg.Connection, dest: asyncpg.Connection) -
             quote_id = EXCLUDED.quote_id,
             job_id = EXCLUDED.job_id
         """,
-        [(
-            o["id"],
-            o["order_number"],
-            o["entity_date"],
-            o["due_date"],
-            o["sold_to_customer_id"],
-            o["bill_to_customer_id"],
-            o["published"],
-            o["creation_type"],
-            o["status"],
-            o["order_type"],
-            o["header_status"],
-            o["factory_id"],
-            o["shipping_terms"],
-            o["freight_terms"],
-            o["mark_number"],
-            o["ship_date"],
-            o["fact_so_number"],
-            o["quote_id"],
-            o["balance_id"],
-            o["job_id"],
-            o["created_by_id"],
-            o["created_at"],
-        ) for o in orders],
+        [
+            (
+                o["id"],
+                o["order_number"],
+                o["entity_date"],
+                o["due_date"],
+                o["sold_to_customer_id"],
+                o["bill_to_customer_id"],
+                o["published"],
+                o["creation_type"],
+                o["status"],
+                o["order_type"],
+                o["header_status"],
+                o["factory_id"],
+                o["shipping_terms"],
+                o["freight_terms"],
+                o["mark_number"],
+                o["ship_date"],
+                o["fact_so_number"],
+                o["quote_id"],
+                o["balance_id"],
+                o["job_id"],
+                o["created_by_id"],
+                o["created_at"],
+            )
+            for o in orders
+        ],
     )
 
     logger.info(f"Migrated {len(orders)} orders")
     return len(orders)
 
 
-async def migrate_order_inside_reps(source: asyncpg.Connection, dest: asyncpg.Connection) -> int:
+async def migrate_order_inside_reps(
+    source: asyncpg.Connection, dest: asyncpg.Connection
+) -> int:
     """Migrate order inside reps from v5 (commission.order_inside_reps) to v6 (pycommission.order_inside_reps)."""
     logger.info("Starting order inside rep migration...")
 
@@ -233,19 +243,24 @@ async def migrate_order_inside_reps(source: asyncpg.Connection, dest: asyncpg.Co
             order_detail_id = EXCLUDED.order_detail_id,
             user_id = EXCLUDED.user_id
         """,
-        [(
-            ir["id"],
-            ir["order_detail_id"],
-            ir["user_id"],
-            ir["created_at"],
-        ) for ir in inside_reps],
+        [
+            (
+                ir["id"],
+                ir["order_detail_id"],
+                ir["user_id"],
+                ir["created_at"],
+            )
+            for ir in inside_reps
+        ],
     )
 
     logger.info(f"Migrated {len(inside_reps)} order inside reps")
     return len(inside_reps)
 
 
-async def migrate_order_details(source: asyncpg.Connection, dest: asyncpg.Connection) -> int:
+async def migrate_order_details(
+    source: asyncpg.Connection, dest: asyncpg.Connection
+) -> int:
     """Migrate order details from v5 (commission.order_details) to v6 (pycommission.order_details)."""
     logger.info("Starting order detail migration...")
 
@@ -343,36 +358,41 @@ async def migrate_order_details(source: asyncpg.Connection, dest: asyncpg.Connec
             freight_charge = EXCLUDED.freight_charge,
             shipping_balance = EXCLUDED.shipping_balance
         """,
-        [(
-            d["id"], # 1
-            d["order_id"], # 2
-            d["item_number"], # 3
-            d["quantity"], # 4
-            d["unit_price"], # 5
-            d["subtotal"], # 6
-            d["total"], # 7
-            d["total_line_commission"], # 8
-            d["commission_rate"], # 9
-            d["commission"], # 10
-            d["commission_discount_rate"], # 11
-            d["commission_discount"], # 12
-            d["discount_rate"], # 13
-            d["discount"], # 14
-            d["division_factor"], # 15
-            d["product_id"], # 16
-            d["end_user_id"], # 17
-            d["lead_time"], # 18
-            d["status"], 
-            d["freight_charge"],
-            d["shipping_balance"],
-        ) for d in details],
+        [
+            (
+                d["id"],  # 1
+                d["order_id"],  # 2
+                d["item_number"],  # 3
+                d["quantity"],  # 4
+                d["unit_price"],  # 5
+                d["subtotal"],  # 6
+                d["total"],  # 7
+                d["total_line_commission"],  # 8
+                d["commission_rate"],  # 9
+                d["commission"],  # 10
+                d["commission_discount_rate"],  # 11
+                d["commission_discount"],  # 12
+                d["discount_rate"],  # 13
+                d["discount"],  # 14
+                d["division_factor"],  # 15
+                d["product_id"],  # 16
+                d["end_user_id"],  # 17
+                d["lead_time"],  # 18
+                d["status"],
+                d["freight_charge"],
+                d["shipping_balance"],
+            )
+            for d in details
+        ],
     )
 
     logger.info(f"Migrated {len(details)} order details")
     return len(details)
 
 
-async def migrate_order_split_rates(source: asyncpg.Connection, dest: asyncpg.Connection) -> int:
+async def migrate_order_split_rates(
+    source: asyncpg.Connection, dest: asyncpg.Connection
+) -> int:
     """Migrate order split rates from v5 (commission.order_split_rates) to v6 (pycommission.order_split_rates)."""
     logger.info("Starting order split rate migration...")
 
@@ -412,14 +432,17 @@ async def migrate_order_split_rates(source: asyncpg.Connection, dest: asyncpg.Co
             split_rate = EXCLUDED.split_rate,
             position = EXCLUDED.position
         """,
-        [(
-            sr["id"],
-            sr["order_detail_id"],
-            sr["user_id"],
-            sr["split_rate"],
-            sr["position"],
-            sr["created_at"],
-        ) for sr in split_rates],
+        [
+            (
+                sr["id"],
+                sr["order_detail_id"],
+                sr["user_id"],
+                sr["split_rate"],
+                sr["position"],
+                sr["created_at"],
+            )
+            for sr in split_rates
+        ],
     )
 
     logger.info(f"Migrated {len(split_rates)} order split rates")
@@ -480,16 +503,19 @@ async def migrate_order_acknowledgements(
             quantity = EXCLUDED.quantity,
             creation_type = EXCLUDED.creation_type
         """,
-        [(
-            a["id"],
-            a["order_id"],
-            a["order_acknowledgement_number"],
-            a["entity_date"],
-            a["quantity"],
-            a["creation_type"],
-            a["created_by_id"],
-            a["created_at"],
-        ) for a in acknowledgements],
+        [
+            (
+                a["id"],
+                a["order_id"],
+                a["order_acknowledgement_number"],
+                a["entity_date"],
+                a["quantity"],
+                a["creation_type"],
+                a["created_by_id"],
+                a["created_at"],
+            )
+            for a in acknowledgements
+        ],
     )
 
     # Insert into junction table order_acknowledgement_details
@@ -500,11 +526,14 @@ async def migrate_order_acknowledgements(
         ) VALUES (gen_random_uuid(), $1, $2, $3)
         ON CONFLICT (order_acknowledgement_id, order_detail_id) DO NOTHING
         """,
-        [(
-            a["id"],
-            a["order_detail_id"],
-            a["created_at"],
-        ) for a in acknowledgements],
+        [
+            (
+                a["id"],
+                a["order_detail_id"],
+                a["created_at"],
+            )
+            for a in acknowledgements
+        ],
     )
 
     logger.info(f"Migrated {len(acknowledgements)} order acknowledgements")

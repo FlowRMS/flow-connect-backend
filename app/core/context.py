@@ -11,7 +11,7 @@ from strawberry.fastapi import BaseContext
 
 
 class ContextModel:
-    def __init__(self, auth_info: AuthInfo):
+    def __init__(self, auth_info: AuthInfo) -> None:
         super().__init__()
         self.auth_info = auth_info
 
@@ -63,5 +63,5 @@ class Context(BaseContext):
         return ConnectionParams(access_token=token)
 
 
-async def get_context():
+async def get_context() -> Context:
     return Context()

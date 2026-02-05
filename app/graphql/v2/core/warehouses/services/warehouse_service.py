@@ -18,7 +18,11 @@ from app.graphql.v2.core.warehouses.repositories import (
 )
 from app.graphql.v2.core.warehouses.strawberry.warehouse_input import (
     WarehouseInput,
+)
+from app.graphql.v2.core.warehouses.strawberry.warehouse_settings_input import (
     WarehouseSettingsInput,
+)
+from app.graphql.v2.core.warehouses.strawberry.warehouse_structure_level_input import (
     WarehouseStructureLevelInput,
 )
 
@@ -43,22 +47,18 @@ class WarehouseService:
 
     # Warehouse CRUD
     async def get_by_id(self, warehouse_id: UUID) -> Warehouse:
-        """Get a warehouse by ID."""
         warehouse = await self.repository.get_with_relations(warehouse_id)
         if not warehouse:
             raise NotFoundError(f"Warehouse with id {warehouse_id} not found")
         return warehouse
 
     async def list_all(self) -> list[Warehouse]:
-        """Get all warehouses."""
         return await self.repository.list_all_with_relations()
 
     async def create(self, input: WarehouseInput) -> Warehouse:
-        """Create a new warehouse."""
         return await self.repository.create(input.to_orm_model())
 
     async def update(self, warehouse_id: UUID, input: WarehouseInput) -> Warehouse:
-        """Update a warehouse using base repository update."""
         # Use get_with_relations to ensure warehouse is not soft-deleted
         existing = await self.repository.get_with_relations(warehouse_id)
         if not existing:
@@ -123,7 +123,6 @@ class WarehouseService:
         return await self.members_repository.update(member)
 
     async def remove_worker(self, warehouse_id: UUID, user_id: UUID) -> bool:
-        """Remove a worker from a warehouse."""
         await self._ensure_warehouse_active(warehouse_id)
         member = await self.members_repository.get_by_warehouse_and_user(
             warehouse_id, user_id
@@ -135,16 +134,13 @@ class WarehouseService:
         return await self.members_repository.delete(member.id)
 
     async def get_members(self, warehouse_id: UUID) -> list[WarehouseMember]:
-        """Get all members for a warehouse."""
         return await self.members_repository.list_by_warehouse(warehouse_id)
 
     # Settings management
     async def get_settings(self, warehouse_id: UUID) -> WarehouseSettings | None:
-        """Get settings for a warehouse."""
         return await self.settings_repository.get_by_warehouse(warehouse_id)
 
     async def update_settings(self, input: WarehouseSettingsInput) -> WarehouseSettings:
-        """Update or create warehouse settings."""
         await self._ensure_warehouse_active(input.warehouse_id)
         existing = await self.settings_repository.get_by_warehouse(input.warehouse_id)
         if existing:
@@ -156,7 +152,6 @@ class WarehouseService:
 
     # Structure (location level configuration) management
     async def get_structure(self, warehouse_id: UUID) -> list[WarehouseStructure]:
-        """Get location level configuration for a warehouse."""
         return await self.structure_repository.list_by_warehouse(warehouse_id)
 
     async def update_structure(

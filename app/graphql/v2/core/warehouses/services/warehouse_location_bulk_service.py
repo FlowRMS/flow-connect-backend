@@ -3,8 +3,6 @@ from decimal import Decimal
 from uuid import UUID
 
 from commons.db.v6 import WarehouseLocation
-from commons.db.v6.warehouse.inventory.inventory_item import InventoryItem
-from sqlalchemy import select
 
 from app.errors.common_errors import NotFoundError
 from app.graphql.v2.core.warehouses.repositories import (
@@ -106,7 +104,7 @@ class WarehouseLocationBulkService:
             )
             result.append(saved)
 
-        await self.location_repository.session.flush()
+        await self.location_repository.flush()
 
         locations_not_in_input = existing_ids - input_ids
         if locations_not_in_input:
@@ -124,11 +122,7 @@ class WarehouseLocationBulkService:
 
         while to_check:
             current_id = to_check.pop()
-            stmt = select(WarehouseLocation.id).where(
-                WarehouseLocation.parent_id == current_id
-            )
-            result = await self.location_repository.session.execute(stmt)
-            child_ids = {row[0] for row in result.fetchall()}
+            child_ids = await self.location_repository.get_child_ids(current_id)
             new_ids = child_ids - all_ids
             all_ids.update(new_ids)
             to_check.extend(new_ids)
@@ -142,13 +136,11 @@ class WarehouseLocationBulkService:
 
         all_affected_ids = await self._get_all_descendant_ids(location_ids)
 
-        stmt = (
-            select(InventoryItem.location_id)
-            .where(InventoryItem.location_id.in_(all_affected_ids))
-            .distinct()
+        locations_with_items = (
+            await self.location_repository.get_location_ids_with_inventory(
+                all_affected_ids
+            )
         )
-        result = await self.location_repository.session.execute(stmt)
-        locations_with_items = {row[0] for row in result.fetchall()}
 
         affected_top_level: set[UUID] = set()
         for loc_id in location_ids:

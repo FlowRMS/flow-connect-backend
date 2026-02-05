@@ -8,8 +8,6 @@ from app.graphql.base_repository import BaseRepository
 
 
 class ShippingCarriersRepository(BaseRepository[ShippingCarrier]):
-    """Repository for ShippingCarrier entity."""
-
     def __init__(
         self,
         context_wrapper: ContextWrapper,

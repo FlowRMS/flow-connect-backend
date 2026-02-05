@@ -46,6 +46,7 @@ class OrderDetailLiteResponse(DTOMixin[OrderDetail]):
     lead_time: str | None
     note: str | None
     status: OrderStatus
+    division_factor: Decimal | None
     freight_charge: Decimal
     shipping_balance: Decimal
     cancelled_balance: Decimal
@@ -75,6 +76,7 @@ class OrderDetailLiteResponse(DTOMixin[OrderDetail]):
             lead_time=model.lead_time,
             note=model.note,
             status=model.status,
+            division_factor=model.division_factor,
             freight_charge=model.freight_charge,
             shipping_balance=model.shipping_balance,
             cancelled_balance=model.cancelled_balance,

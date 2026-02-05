@@ -1,5 +1,3 @@
-"""S3 storage settings."""
-
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 

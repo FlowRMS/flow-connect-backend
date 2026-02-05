@@ -1,4 +1,5 @@
 import uuid
+from typing import Any
 
 from commons.db.controller import MultiTenantController
 from commons.db.models.tenant import Tenant
@@ -37,7 +38,7 @@ class AdminUserService:
             self.settings.pg_url.unicode_string().rsplit("/", 1)[0] + f"/{tenant.url}"
         )
 
-    async def _get_workos_org_id_for_tenant(self, tenant: Tenant):
+    async def _get_workos_org_id_for_tenant(self, tenant: Tenant) -> Any:
         return await self.workos_service.client.organizations.get_organization_by_external_id(
             str(tenant.id)
         )

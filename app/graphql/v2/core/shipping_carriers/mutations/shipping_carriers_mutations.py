@@ -42,7 +42,6 @@ class ShippingCarriersMutations:
         input: ShippingCarrierInput,
         service: Injected[ShippingCarrierService],
     ) -> ShippingCarrierResponse:
-        """Create a new shipping carrier."""
         carrier = await service.create(input)
         return ShippingCarrierResponse.from_orm_model(carrier)
 
@@ -54,7 +53,6 @@ class ShippingCarriersMutations:
         input: ShippingCarrierInput,
         service: Injected[ShippingCarrierService],
     ) -> ShippingCarrierResponse:
-        """Update a shipping carrier."""
         carrier = await service.update(id, input)
         return ShippingCarrierResponse.from_orm_model(carrier)
 
@@ -65,5 +63,4 @@ class ShippingCarriersMutations:
         id: UUID,
         service: Injected[ShippingCarrierService],
     ) -> bool:
-        """Delete a shipping carrier."""
         return await service.delete(id)

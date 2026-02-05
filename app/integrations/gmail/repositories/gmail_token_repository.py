@@ -1,5 +1,3 @@
-"""Repository for Gmail user token operations."""
-
 import uuid
 from datetime import datetime
 

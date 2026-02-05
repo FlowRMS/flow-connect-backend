@@ -20,7 +20,6 @@ class LinksQueries:
         id: UUID,
         service: Injected[LinksService],
     ) -> LinkRelationType:
-        """Get a link by ID."""
         return LinkRelationType.from_orm_model(await service.get_link(id))
 
     @strawberry.field
@@ -43,7 +42,6 @@ class LinksQueries:
         source_id: UUID,
         service: Injected[LinksService],
     ) -> list[LinkRelationType]:
-        """Get all links where the entity is the source."""
         links = await service.get_links_from_source(source_type, source_id)
         return [LinkRelationType.from_orm_model(link) for link in links]
 
@@ -55,6 +53,5 @@ class LinksQueries:
         target_id: UUID,
         service: Injected[LinksService],
     ) -> list[LinkRelationType]:
-        """Get all links where the entity is the target."""
         links = await service.get_links_to_target(target_type, target_id)
         return [LinkRelationType.from_orm_model(link) for link in links]

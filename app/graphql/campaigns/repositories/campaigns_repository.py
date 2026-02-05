@@ -2,6 +2,7 @@ from typing import Any
 from uuid import UUID
 
 from commons.db.v6 import RbacResourceEnum, User
+from commons.db.v6.crm.campaigns.campaign_criteria_model import CampaignCriteria
 from commons.db.v6.crm.campaigns.campaign_model import Campaign
 from commons.db.v6.crm.campaigns.campaign_recipient_model import CampaignRecipient
 from commons.db.v6.crm.campaigns.campaign_status import CampaignStatus
@@ -71,6 +72,14 @@ class CampaignsRepository(BaseRepository[Campaign]):
             .outerjoin(sent_count_subq, sent_count_subq.c.campaign_id == Campaign.id)
         )
 
+    async def flush(self) -> None:
+        await self.session.flush()
+
+    async def create_criteria(self, criteria: CampaignCriteria) -> CampaignCriteria:
+        self.session.add(criteria)
+        await self.session.flush([criteria])
+        return criteria
+
     async def get_with_relations(self, campaign_id: UUID) -> Campaign | None:
         """Get campaign with recipients and criteria loaded."""
         stmt = (
@@ -92,10 +101,6 @@ class CampaignsRepository(BaseRepository[Campaign]):
 
     async def get_dynamic_campaigns(self) -> list[Campaign]:
         """Get all campaigns with dynamic recipient lists."""
-        from commons.db.v6.crm.campaigns.campaign_criteria_model import (
-            CampaignCriteria,
-        )
-
         stmt = (
             select(Campaign)
             .join(CampaignCriteria, Campaign.id == CampaignCriteria.campaign_id)

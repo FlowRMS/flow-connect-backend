@@ -404,9 +404,11 @@ class TestSalesTeamSyncService:
             mock_rate2,
         ]
 
-        has_mismatch, only_in_team, only_in_territory = (
-            await sync_service.check_list_mismatch(team_id, territory_id)
-        )
+        (
+            has_mismatch,
+            only_in_team,
+            only_in_territory,
+        ) = await sync_service.check_list_mismatch(team_id, territory_id)
 
         assert has_mismatch is False
         assert only_in_team == []
@@ -432,9 +434,11 @@ class TestSalesTeamSyncService:
         mock_rate.user_id = user3
         mock_split_rate_repository.get_by_territory.return_value = [mock_rate]
 
-        has_mismatch, only_in_team, only_in_territory = (
-            await sync_service.check_list_mismatch(team_id, territory_id)
-        )
+        (
+            has_mismatch,
+            only_in_team,
+            only_in_territory,
+        ) = await sync_service.check_list_mismatch(team_id, territory_id)
 
         assert has_mismatch is True
         assert set(only_in_team) == {user1, user2}

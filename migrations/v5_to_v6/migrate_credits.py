@@ -5,7 +5,9 @@ import asyncpg
 logger = logging.getLogger(__name__)
 
 
-async def migrate_credit_balances(source: asyncpg.Connection, dest: asyncpg.Connection) -> int:
+async def migrate_credit_balances(
+    source: asyncpg.Connection, dest: asyncpg.Connection
+) -> int:
     """Migrate credit balances from v5 (commission.credit_balances) to v6 (pycommission.credit_balances)."""
     logger.info("Starting credit balance migration...")
 
@@ -34,13 +36,16 @@ async def migrate_credit_balances(source: asyncpg.Connection, dest: asyncpg.Conn
             total = EXCLUDED.total,
             commission = EXCLUDED.commission
         """,
-        [(
-            b["id"],
-            b["quantity"],
-            b["subtotal"],
-            b["total"],
-            b["commission"],
-        ) for b in balances],
+        [
+            (
+                b["id"],
+                b["quantity"],
+                b["subtotal"],
+                b["total"],
+                b["commission"],
+            )
+            for b in balances
+        ],
     )
 
     logger.info(f"Migrated {len(balances)} credit balances")
@@ -89,24 +94,29 @@ async def migrate_credits(source: asyncpg.Connection, dest: asyncpg.Connection) 
             creation_type = EXCLUDED.creation_type,
             status = EXCLUDED.status
         """,
-        [(
-            c["id"],
-            c["credit_number"],
-            c["order_id"],
-            c["entity_date"],
-            c["creation_type"],
-            c["status"],
-            c["balance_id"],
-            c["created_by_id"],
-            c["created_at"],
-        ) for c in credits],
+        [
+            (
+                c["id"],
+                c["credit_number"],
+                c["order_id"],
+                c["entity_date"],
+                c["creation_type"],
+                c["status"],
+                c["balance_id"],
+                c["created_by_id"],
+                c["created_at"],
+            )
+            for c in credits
+        ],
     )
 
     logger.info(f"Migrated {len(credits)} credits")
     return len(credits)
 
 
-async def migrate_credit_details(source: asyncpg.Connection, dest: asyncpg.Connection) -> int:
+async def migrate_credit_details(
+    source: asyncpg.Connection, dest: asyncpg.Connection
+) -> int:
     """Migrate credit details from v5 (commission.credit_details) to v6 (pycommission.credit_details)."""
     logger.info("Starting credit detail migration...")
 
@@ -156,26 +166,31 @@ async def migrate_credit_details(source: asyncpg.Connection, dest: asyncpg.Conne
             commission_rate = EXCLUDED.commission_rate,
             commission = EXCLUDED.commission
         """,
-        [(
-            d["id"],
-            d["credit_id"],
-            d["order_detail_id"],
-            d["status"],
-            d["item_number"],
-            d["quantity"],
-            d["unit_price"],
-            d["subtotal"],
-            d["total"],
-            d["commission_rate"],
-            d["commission"],
-        ) for d in details],
+        [
+            (
+                d["id"],
+                d["credit_id"],
+                d["order_detail_id"],
+                d["status"],
+                d["item_number"],
+                d["quantity"],
+                d["unit_price"],
+                d["subtotal"],
+                d["total"],
+                d["commission_rate"],
+                d["commission"],
+            )
+            for d in details
+        ],
     )
 
     logger.info(f"Migrated {len(details)} credit details")
     return len(details)
 
 
-async def migrate_credit_split_rates(source: asyncpg.Connection, dest: asyncpg.Connection) -> int:
+async def migrate_credit_split_rates(
+    source: asyncpg.Connection, dest: asyncpg.Connection
+) -> int:
     """Migrate credit split rates from v5 (commission.credit_split_rates) to v6 (pycommission.credit_split_rates)."""
     logger.info("Starting credit split rate migration...")
 
@@ -207,14 +222,17 @@ async def migrate_credit_split_rates(source: asyncpg.Connection, dest: asyncpg.C
             split_rate = EXCLUDED.split_rate,
             "position" = EXCLUDED."position"
         """,
-        [(
-            sr["id"],
-            sr["credit_detail_id"],
-            sr["user_id"],
-            sr["split_rate"],
-            sr["position"],
-            sr["created_at"],
-        ) for sr in split_rates],
+        [
+            (
+                sr["id"],
+                sr["credit_detail_id"],
+                sr["user_id"],
+                sr["split_rate"],
+                sr["position"],
+                sr["created_at"],
+            )
+            for sr in split_rates
+        ],
     )
 
     logger.info(f"Migrated {len(split_rates)} credit split rates")

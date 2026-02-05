@@ -99,7 +99,7 @@ class OrderAcknowledgementRepository(BaseRepository[OrderAcknowledgement]):
         )
 
     @property
-    def base_query(self):
+    def base_query(self) -> Select[tuple[OrderAcknowledgement]]:
         return select(OrderAcknowledgement).options(
             joinedload(OrderAcknowledgement.details).joinedload(
                 OrderAcknowledgementDetail.order_detail

@@ -1,28 +1,4 @@
 #!/usr/bin/env python3
-"""
-Test for the Overage calculation endpoint in flow-py-backend.
-
-This test verifies the findEffectiveCommissionRateAndOverageUnitPriceByProduct query.
-
-Requirements:
-- flow-py-backend running on localhost:5555
-- Valid UUIDs for product, factory, and end_user
-
-Usage:
-    cd /home/jorge/flowrms/FLO-727/flow-py-backend
-
-    # Run with test UUIDs (will show schema validation)
-    uv run python tests/overage/test_overage_endpoint.py
-
-    # Run with real UUIDs (you need to provide these)
-    uv run python tests/overage/test_overage_endpoint.py \
-        --product-id "uuid-here" \
-        --factory-id "uuid-here" \
-        --end-user-id "uuid-here" \
-        --unit-price 150.00 \
-        --email jorge@flowrms.com \
-        --password 'CucoHermoso2026$'
-"""
 import argparse
 import asyncio
 import sys
@@ -81,11 +57,16 @@ query IntrospectOverage {
 """
 
 
-async def get_auth_headers(email: str, password: str, org_id: str | None = None) -> dict:
+async def get_auth_headers(
+    email: str, password: str, org_id: str | None = None
+) -> dict:
     """Get authentication headers."""
     try:
         from tests.common.token_generator import generate_token
-        return await generate_token(email=email, password=password, organization_id=org_id)
+
+        return await generate_token(
+            email=email, password=password, organization_id=org_id
+        )
     except Exception as e:
         print(f"Warning: Could not generate token: {e}")
         return {"Content-Type": "application/json"}
@@ -108,19 +89,21 @@ async def test_schema_introspection(headers: dict) -> bool:
 
     result = await graphql_request(INTROSPECT_QUERY, None, headers)
 
-    if 'errors' in result:
+    if "errors" in result:
         print(f"  ❌ FAILED: {result['errors']}")
         return False
 
-    overage_type = result.get('data', {}).get('__type')
+    overage_type = result.get("data", {}).get("__type")
     if not overage_type:
         print("  ❌ FAILED: OverageRecord type not found in schema")
         return False
 
     print(f"  ✅ OverageRecord type found")
     print(f"     Fields:")
-    for field in overage_type.get('fields', []):
-        print(f"       - {field['name']}: {field['type']['name'] or field['type']['kind']}")
+    for field in overage_type.get("fields", []):
+        print(
+            f"       - {field['name']}: {field['type']['name'] or field['type']['kind']}"
+        )
 
     return True
 
@@ -153,27 +136,31 @@ async def test_overage_calculation(
         headers,
     )
 
-    if 'errors' in result:
+    if "errors" in result:
         print(f"  ❌ FAILED: {result['errors']}")
         return False
 
-    overage = result.get('data', {}).get('findEffectiveCommissionRateAndOverageUnitPriceByProduct', {})
+    overage = result.get("data", {}).get(
+        "findEffectiveCommissionRateAndOverageUnitPriceByProduct", {}
+    )
 
     print(f"\n  Response:")
     print(f"    success: {overage.get('success')}")
     print(f"    errorMessage: {overage.get('errorMessage')}")
     print(f"    baseUnitPrice: ${overage.get('baseUnitPrice') or 0:.2f}")
     print(f"    overageUnitPrice: ${overage.get('overageUnitPrice') or 0:.2f}")
-    print(f"    effectiveCommissionRate: {overage.get('effectiveCommissionRate') or 0:.2f}%")
+    print(
+        f"    effectiveCommissionRate: {overage.get('effectiveCommissionRate') or 0:.2f}%"
+    )
     print(f"    repShare: {(overage.get('repShare') or 0) * 100:.1f}%")
     print(f"    overageType: {overage.get('overageType')}")
 
-    if overage.get('success'):
+    if overage.get("success"):
         print("\n  ✅ Overage calculation successful")
 
         # Check if there's overage
-        base = overage.get('baseUnitPrice') or 0
-        ovg = overage.get('overageUnitPrice') or 0
+        base = overage.get("baseUnitPrice") or 0
+        ovg = overage.get("overageUnitPrice") or 0
         if ovg > 0:
             print(f"  📊 Overage detected: ${ovg:.2f} (markup over base ${base:.2f})")
         else:
@@ -189,11 +176,18 @@ async def main():
     parser = argparse.ArgumentParser(description="Test Overage endpoint")
     parser.add_argument("--email", "-e", help="User email")
     parser.add_argument("--password", "-p", help="User password")
-    parser.add_argument("--org-id", "-o", default="org_01KE7D0TTXV7TZ9JSXFPXCXJ35", help="Organization ID")
+    parser.add_argument(
+        "--org-id",
+        "-o",
+        default="org_01KE7D0TTXV7TZ9JSXFPXCXJ35",
+        help="Organization ID",
+    )
     parser.add_argument("--product-id", help="Product UUID")
     parser.add_argument("--factory-id", help="Factory UUID")
     parser.add_argument("--end-user-id", help="End User (Customer) UUID")
-    parser.add_argument("--unit-price", type=float, default=150.0, help="Unit price to test")
+    parser.add_argument(
+        "--unit-price", type=float, default=150.0, help="Unit price to test"
+    )
     parser.add_argument("--quantity", type=float, default=1.0, help="Quantity")
 
     args = parser.parse_args()

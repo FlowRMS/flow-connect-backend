@@ -152,7 +152,7 @@ class FileService:
                 )
                 return
 
-            async def insert_page(idx: int, page_content: str):
+            async def insert_page(idx: int, page_content: str) -> None:
                 await self.vector_repository.insert_document(
                     file.id,
                     file.file_name,

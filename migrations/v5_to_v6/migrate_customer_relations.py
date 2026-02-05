@@ -50,19 +50,23 @@ async def migrate_customer_split_rates(
             rep_type = EXCLUDED.rep_type,
             "position" = EXCLUDED."position"
         """,
-        [(
-            sr["id"],
-            sr["user_id"],
-            sr["customer_id"],
-            sr["split_rate"],
-            sr["rep_type"],
-            sr["position"],
-            sr["created_at"],
-        ) for sr in split_rates],
+        [
+            (
+                sr["id"],
+                sr["user_id"],
+                sr["customer_id"],
+                sr["split_rate"],
+                sr["rep_type"],
+                sr["position"],
+                sr["created_at"],
+            )
+            for sr in split_rates
+        ],
     )
 
     logger.info(f"Migrated {len(split_rates)} customer split rates")
     return len(split_rates)
+
 
 async def migrate_inside_customer_split_rates(
     source: asyncpg.Connection,
@@ -118,7 +122,8 @@ async def migrate_inside_customer_split_rates(
     existing_keys = {(r["user_id"], r["customer_id"], r["rep_type"]) for r in existing}
 
     new_split_rates = [
-        sr for sr in split_rates
+        sr
+        for sr in split_rates
         if (sr["user_id"], sr["customer_id"], sr["rep_type"]) not in existing_keys
     ]
 
@@ -135,15 +140,18 @@ async def migrate_inside_customer_split_rates(
             split_rate = EXCLUDED.split_rate,
             "position" = EXCLUDED."position"
         """,
-        [(
-            sr["id"],
-            sr["user_id"],
-            sr["customer_id"],
-            sr["split_rate"],
-            sr["rep_type"],
-            sr["position"],
-            sr["created_at"],
-        ) for sr in new_split_rates],
+        [
+            (
+                sr["id"],
+                sr["user_id"],
+                sr["customer_id"],
+                sr["split_rate"],
+                sr["rep_type"],
+                sr["position"],
+                sr["created_at"],
+            )
+            for sr in new_split_rates
+        ],
     )
 
     logger.info(f"Migrated {len(new_split_rates)} inside customer split rates")
@@ -174,8 +182,7 @@ async def migrate_factory_split_rates(
         FROM core.factories f
         JOIN "user".users u ON u.id = f.inside_rep_id
         WHERE f.inside_rep_id IS NOT NULL
-    """
-)
+    """)
     if not split_rates:
         logger.info("No factory split rates to migrate")
         return 0
@@ -191,14 +198,17 @@ async def migrate_factory_split_rates(
             split_rate = EXCLUDED.split_rate,
             "position" = EXCLUDED."position"
         """,
-        [(
-            sr["id"],
-            sr["user_id"],
-            sr["factory_id"],
-            sr["split_rate"],
-            sr["position"],
-            sr["created_at"],
-        ) for sr in split_rates],
+        [
+            (
+                sr["id"],
+                sr["user_id"],
+                sr["factory_id"],
+                sr["split_rate"],
+                sr["position"],
+                sr["created_at"],
+            )
+            for sr in split_rates
+        ],
     )
 
     logger.info(f"Migrated {len(split_rates)} factory split rates")
@@ -246,15 +256,18 @@ async def migrate_customer_factory_sales_reps(
             rate = EXCLUDED.rate,
             "position" = EXCLUDED."position"
         """,
-        [(
-            sr["id"],
-            sr["customer_id"],
-            sr["factory_id"],
-            sr["user_id"],
-            sr["rate"],
-            sr["position"],
-            sr["created_at"],
-        ) for sr in sales_reps],
+        [
+            (
+                sr["id"],
+                sr["customer_id"],
+                sr["factory_id"],
+                sr["user_id"],
+                sr["rate"],
+                sr["position"],
+                sr["created_at"],
+            )
+            for sr in sales_reps
+        ],
     )
 
     logger.info(f"Migrated {len(sales_reps)} customer factory sales reps")
@@ -322,18 +335,21 @@ async def migrate_addresses(
             state = EXCLUDED.state,
             zip_code = EXCLUDED.zip_code
         """,
-        [(
-            a["id"],
-            a["source_id"],
-            a["source_type"],
-            a["country"],
-            a["city"],
-            a["line_1"],
-            a["line_2"],
-            a["state"],
-            a["zip_code"],
-            a["created_at"],
-        ) for a in addresses],
+        [
+            (
+                a["id"],
+                a["source_id"],
+                a["source_type"],
+                a["country"],
+                a["city"],
+                a["line_1"],
+                a["line_2"],
+                a["state"],
+                a["zip_code"],
+                a["created_at"],
+            )
+            for a in addresses
+        ],
     )
 
     # Insert address types into the junction table
@@ -392,16 +408,19 @@ async def migrate_contacts(
             phone = EXCLUDED.phone,
             role = EXCLUDED.role
         """,
-        [(
-            c["id"],
-            c["first_name"],
-            c["last_name"],
-            c["email"],
-            c["phone"],
-            c["role"],
-            c["created_by_id"],
-            c["created_at"],
-        ) for c in contacts],
+        [
+            (
+                c["id"],
+                c["first_name"],
+                c["last_name"],
+                c["email"],
+                c["phone"],
+                c["role"],
+                c["created_by_id"],
+                c["created_at"],
+            )
+            for c in contacts
+        ],
     )
 
     logger.info(f"Migrated {len(contacts)} contacts")
@@ -457,19 +476,24 @@ async def migrate_contact_links(
         ) VALUES ($1, 3, $2, $3, $4, $5, $6)
         ON CONFLICT DO NOTHING
         """,
-        [(
-            link["id"],
-            link["contact_id"],
-            link["target_entity_type"],
-            link["source_id"],
-            link["created_by_id"],
-            link["created_at"],
-        ) for link in contact_links],
+        [
+            (
+                link["id"],
+                link["contact_id"],
+                link["target_entity_type"],
+                link["source_id"],
+                link["created_by_id"],
+                link["created_at"],
+            )
+            for link in contact_links
+        ],
     )
 
     # Log breakdown by type
     factory_count = sum(1 for link in contact_links if link["target_entity_type"] == 11)
-    customer_count = sum(1 for link in contact_links if link["target_entity_type"] == 12)
+    customer_count = sum(
+        1 for link in contact_links if link["target_entity_type"] == 12
+    )
     logger.info(
         f"Migrated {len(contact_links)} contact links "
         f"({factory_count} factory, {customer_count} customer)"

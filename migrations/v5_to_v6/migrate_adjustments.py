@@ -5,7 +5,9 @@ import asyncpg
 logger = logging.getLogger(__name__)
 
 
-async def migrate_adjustments(source: asyncpg.Connection, dest: asyncpg.Connection) -> int:
+async def migrate_adjustments(
+    source: asyncpg.Connection, dest: asyncpg.Connection
+) -> int:
     """Migrate adjustments from v5 (commission.expenses) to v6 (pycommission.adjustments).
 
     Only migrates expenses that have an associated check (to get factory_id).
@@ -58,20 +60,23 @@ async def migrate_adjustments(source: asyncpg.Connection, dest: asyncpg.Connecti
             reason = EXCLUDED.reason,
             creation_type = EXCLUDED.creation_type
         """,
-        [(
-            a["id"],
-            a["adjustment_number"],
-            a["entity_date"],
-            a["factory_id"],
-            a["customer_id"],
-            a["allocation_method"],
-            a["status"],
-            a["amount"],
-            a["reason"],
-            a["creation_type"],
-            a["created_by_id"],
-            a["created_at"],
-        ) for a in adjustments],
+        [
+            (
+                a["id"],
+                a["adjustment_number"],
+                a["entity_date"],
+                a["factory_id"],
+                a["customer_id"],
+                a["allocation_method"],
+                a["status"],
+                a["amount"],
+                a["reason"],
+                a["creation_type"],
+                a["created_by_id"],
+                a["created_at"],
+            )
+            for a in adjustments
+        ],
     )
 
     logger.info(f"Migrated {len(adjustments)} adjustments")
@@ -114,13 +119,16 @@ async def migrate_adjustment_split_rates(
             split_rate = EXCLUDED.split_rate,
             "position" = EXCLUDED."position"
         """,
-        [(
-            sr["id"],
-            sr["adjustment_id"],
-            sr["user_id"],
-            sr["split_rate"],
-            sr["position"],
-        ) for sr in split_rates],
+        [
+            (
+                sr["id"],
+                sr["adjustment_id"],
+                sr["user_id"],
+                sr["split_rate"],
+                sr["position"],
+            )
+            for sr in split_rates
+        ],
     )
 
     logger.info(f"Migrated {len(split_rates)} adjustment split rates")

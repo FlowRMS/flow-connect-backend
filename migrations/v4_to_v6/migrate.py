@@ -5,7 +5,9 @@ from dataclasses import dataclass
 
 import asyncpg
 
-logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
+logging.basicConfig(
+    level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s"
+)
 logger = logging.getLogger(__name__)
 
 
@@ -137,19 +139,22 @@ async def migrate_users(source: asyncpg.Connection, dest: asyncpg.Connection) ->
             inside = EXCLUDED.inside,
             outside = EXCLUDED.outside
         """,
-        [(
-            u["id"],
-            u["username"],
-            u["first_name"],
-            u["last_name"],
-            u["email"],
-            u["auth_provider_id"],
-            u["role"],
-            u["enabled"],
-            u["inside"],
-            u["outside"],
-            u["created_at"],
-        ) for u in users],
+        [
+            (
+                u["id"],
+                u["username"],
+                u["first_name"],
+                u["last_name"],
+                u["email"],
+                u["auth_provider_id"],
+                u["role"],
+                u["enabled"],
+                u["inside"],
+                u["outside"],
+                u["created_at"],
+            )
+            for u in users
+        ],
     )
 
     logger.info(f"Migrated {len(users)} users")
@@ -197,16 +202,21 @@ async def migrate_customers(
                 contact_email = EXCLUDED.contact_email,
                 contact_number = EXCLUDED.contact_number
             """,
-            [(
-                c["id"],
-                c["company_name"],
-                c["published"],
-                c["is_parent"],
-                c["contact_email"],
-                c["contact_number"],
-                c["created_by_id"] if c["created_by_id"] in valid_user_ids else default_user_id,
-                c["created_at"],
-            ) for c in parent_customers],
+            [
+                (
+                    c["id"],
+                    c["company_name"],
+                    c["published"],
+                    c["is_parent"],
+                    c["contact_email"],
+                    c["contact_number"],
+                    c["created_by_id"]
+                    if c["created_by_id"] in valid_user_ids
+                    else default_user_id,
+                    c["created_at"],
+                )
+                for c in parent_customers
+            ],
         )
 
     # Then get and insert child customers (mapping parent_id integer to parent's uuid)
@@ -241,21 +251,28 @@ async def migrate_customers(
                 contact_email = EXCLUDED.contact_email,
                 contact_number = EXCLUDED.contact_number
             """,
-            [(
-                c["id"],
-                c["company_name"],
-                c["parent_id"],
-                c["published"],
-                c["is_parent"],
-                c["contact_email"],
-                c["contact_number"],
-                c["created_by_id"] if c["created_by_id"] in valid_user_ids else default_user_id,
-                c["created_at"],
-            ) for c in child_customers],
+            [
+                (
+                    c["id"],
+                    c["company_name"],
+                    c["parent_id"],
+                    c["published"],
+                    c["is_parent"],
+                    c["contact_email"],
+                    c["contact_number"],
+                    c["created_by_id"]
+                    if c["created_by_id"] in valid_user_ids
+                    else default_user_id,
+                    c["created_at"],
+                )
+                for c in child_customers
+            ],
         )
 
     total = len(parent_customers) + len(child_customers)
-    logger.info(f"Migrated {total} customers ({len(parent_customers)} parents, {len(child_customers)} children)")
+    logger.info(
+        f"Migrated {total} customers ({len(parent_customers)} parents, {len(child_customers)} children)"
+    )
     return total
 
 
@@ -331,33 +348,40 @@ async def migrate_factories(
             freight_discount_type = EXCLUDED.freight_discount_type,
             creation_type = EXCLUDED.creation_type
         """,
-        [(
-            f["id"],
-            f["title"],
-            f["account_number"],
-            f["email"],
-            f["phone"],
-            f["lead_time"],
-            f["payment_terms"],
-            f["base_commission_rate"],
-            f["commission_discount_rate"],
-            f["overall_discount_rate"],
-            f["additional_information"],
-            f["freight_terms"],
-            f["external_payment_terms"],
-            f["published"],
-            map_freight_discount_type(f["freight_discount_type"]),
-            map_creation_type(f["creation_type"]),
-            f["created_by_id"] if f["created_by_id"] in valid_user_ids else default_user_id,
-            f["created_at"],
-        ) for f in factories],
+        [
+            (
+                f["id"],
+                f["title"],
+                f["account_number"],
+                f["email"],
+                f["phone"],
+                f["lead_time"],
+                f["payment_terms"],
+                f["base_commission_rate"],
+                f["commission_discount_rate"],
+                f["overall_discount_rate"],
+                f["additional_information"],
+                f["freight_terms"],
+                f["external_payment_terms"],
+                f["published"],
+                map_freight_discount_type(f["freight_discount_type"]),
+                map_creation_type(f["creation_type"]),
+                f["created_by_id"]
+                if f["created_by_id"] in valid_user_ids
+                else default_user_id,
+                f["created_at"],
+            )
+            for f in factories
+        ],
     )
 
     logger.info(f"Migrated {len(factories)} factories")
     return len(factories)
 
 
-async def migrate_product_uoms(source: asyncpg.Connection, dest: asyncpg.Connection) -> int:
+async def migrate_product_uoms(
+    source: asyncpg.Connection, dest: asyncpg.Connection
+) -> int:
     """Migrate product UOMs from v4 (public.unit_of_measures) to v6 (pycore.product_uoms)."""
     logger.info("Starting product UOM migration...")
 
@@ -389,21 +413,26 @@ async def migrate_product_uoms(source: asyncpg.Connection, dest: asyncpg.Connect
             creation_type = EXCLUDED.creation_type,
             division_factor = EXCLUDED.division_factor
         """,
-        [(
-            u["id"],
-            u["title"],
-            u["description"],
-            1,  # IMPORT (CreationType.IMPORT = 1)
-            u["created_at"],
-            u["division_factor"],
-        ) for u in uoms],
+        [
+            (
+                u["id"],
+                u["title"],
+                u["description"],
+                1,  # IMPORT (CreationType.IMPORT = 1)
+                u["created_at"],
+                u["division_factor"],
+            )
+            for u in uoms
+        ],
     )
 
     logger.info(f"Migrated {len(uoms)} product UOMs")
     return len(uoms)
 
 
-async def migrate_product_categories(source: asyncpg.Connection, dest: asyncpg.Connection) -> int:
+async def migrate_product_categories(
+    source: asyncpg.Connection, dest: asyncpg.Connection
+) -> int:
     """Migrate product categories from v4 (public.product_categories) to v6 (pycore.product_categories)."""
     logger.info("Starting product category migration...")
 
@@ -432,12 +461,15 @@ async def migrate_product_categories(source: asyncpg.Connection, dest: asyncpg.C
             commission_rate = EXCLUDED.commission_rate,
             factory_id = EXCLUDED.factory_id
         """,
-        [(
-            c["id"],
-            c["title"],
-            c["commission_rate"],
-            c["factory_id"],
-        ) for c in categories],
+        [
+            (
+                c["id"],
+                c["title"],
+                c["commission_rate"],
+                c["factory_id"],
+            )
+            for c in categories
+        ],
     )
 
     logger.info(f"Migrated {len(categories)} product categories")
@@ -522,35 +554,42 @@ async def migrate_products(
             approval_date = EXCLUDED.approval_date,
             approval_comments = EXCLUDED.approval_comments
         """,
-        [(
-            p["id"],
-            p["factory_part_number"],
-            p["unit_price"],
-            p["default_commission_rate"],
-            p["factory_id"],
-            p["product_category_id"],
-            p["product_uom_id"],
-            p["published"],
-            p["approval_needed"],
-            p["description"],
-            map_creation_type(p["creation_type"]),
-            p["created_at"],
-            p["created_by_id"] if p["created_by_id"] in valid_user_ids else default_user_id,
-            p["upc"],
-            p["min_order_qty"],
-            p["lead_time"],
-            p["unit_price_discount_rate"],
-            p["commission_discount_rate"],
-            p["approval_date"],
-            p["approval_comments"],
-        ) for p in products],
+        [
+            (
+                p["id"],
+                p["factory_part_number"],
+                p["unit_price"],
+                p["default_commission_rate"],
+                p["factory_id"],
+                p["product_category_id"],
+                p["product_uom_id"],
+                p["published"],
+                p["approval_needed"],
+                p["description"],
+                map_creation_type(p["creation_type"]),
+                p["created_at"],
+                p["created_by_id"]
+                if p["created_by_id"] in valid_user_ids
+                else default_user_id,
+                p["upc"],
+                p["min_order_qty"],
+                p["lead_time"],
+                p["unit_price_discount_rate"],
+                p["commission_discount_rate"],
+                p["approval_date"],
+                p["approval_comments"],
+            )
+            for p in products
+        ],
     )
 
     logger.info(f"Migrated {len(products)} products")
     return len(products)
 
 
-async def migrate_product_cpns(source: asyncpg.Connection, dest: asyncpg.Connection) -> int:
+async def migrate_product_cpns(
+    source: asyncpg.Connection, dest: asyncpg.Connection
+) -> int:
     """Migrate product CPNs from v4 (public.product_cpn) to v6 (pycore.product_cpns)."""
     logger.info("Starting product CPN migration...")
 
@@ -584,21 +623,26 @@ async def migrate_product_cpns(source: asyncpg.Connection, dest: asyncpg.Connect
             product_id = EXCLUDED.product_id,
             customer_id = EXCLUDED.customer_id
         """,
-        [(
-            c["id"],
-            c["customer_part_number"],
-            c["unit_price"],
-            c["commission_rate"],
-            c["product_id"],
-            c["customer_id"],
-        ) for c in cpns],
+        [
+            (
+                c["id"],
+                c["customer_part_number"],
+                c["unit_price"],
+                c["commission_rate"],
+                c["product_id"],
+                c["customer_id"],
+            )
+            for c in cpns
+        ],
     )
 
     logger.info(f"Migrated {len(cpns)} product CPNs")
     return len(cpns)
 
 
-async def migrate_customer_split_rates(source: asyncpg.Connection, dest: asyncpg.Connection) -> int:
+async def migrate_customer_split_rates(
+    source: asyncpg.Connection, dest: asyncpg.Connection
+) -> int:
     """Migrate customer split rates from v4 to v6."""
     logger.info("Starting customer split rate migration...")
 
@@ -621,7 +665,9 @@ async def migrate_customer_split_rates(source: asyncpg.Connection, dest: asyncpg
     """)
 
     # Filter to only include split rates for customers that were migrated
-    split_rates = [sr for sr in split_rates if sr["customer_id"] in migrated_customer_ids]
+    split_rates = [
+        sr for sr in split_rates if sr["customer_id"] in migrated_customer_ids
+    ]
 
     if not split_rates:
         logger.info("No customer split rates to migrate")
@@ -639,22 +685,27 @@ async def migrate_customer_split_rates(source: asyncpg.Connection, dest: asyncpg
             rep_type = EXCLUDED.rep_type,
             "position" = EXCLUDED."position"
         """,
-        [(
-            sr["id"],
-            sr["user_id"],
-            sr["customer_id"],
-            sr["split_rate"],
-            sr["rep_type"],
-            sr["position"],
-            sr["created_at"],
-        ) for sr in split_rates],
+        [
+            (
+                sr["id"],
+                sr["user_id"],
+                sr["customer_id"],
+                sr["split_rate"],
+                sr["rep_type"],
+                sr["position"],
+                sr["created_at"],
+            )
+            for sr in split_rates
+        ],
     )
 
     logger.info(f"Migrated {len(split_rates)} customer split rates")
     return len(split_rates)
 
 
-async def migrate_customer_factory_sales_reps(source: asyncpg.Connection, dest: asyncpg.Connection) -> int:
+async def migrate_customer_factory_sales_reps(
+    source: asyncpg.Connection, dest: asyncpg.Connection
+) -> int:
     """Migrate customer factory sales reps from v4 to v6."""
     logger.info("Starting customer factory sales rep migration...")
 
@@ -683,8 +734,10 @@ async def migrate_customer_factory_sales_reps(source: asyncpg.Connection, dest: 
 
     # Filter to only include sales reps for customers and factories that were migrated
     sales_reps = [
-        sr for sr in sales_reps
-        if sr["customer_id"] in migrated_customer_ids and sr["factory_id"] in migrated_factory_ids
+        sr
+        for sr in sales_reps
+        if sr["customer_id"] in migrated_customer_ids
+        and sr["factory_id"] in migrated_factory_ids
     ]
 
     if not sales_reps:
@@ -703,15 +756,18 @@ async def migrate_customer_factory_sales_reps(source: asyncpg.Connection, dest: 
             rate = EXCLUDED.rate,
             "position" = EXCLUDED."position"
         """,
-        [(
-            sr["id"],
-            sr["customer_id"],
-            sr["factory_id"],
-            sr["user_id"],
-            sr["rate"],
-            sr["position"],
-            sr["created_at"],
-        ) for sr in sales_reps],
+        [
+            (
+                sr["id"],
+                sr["customer_id"],
+                sr["factory_id"],
+                sr["user_id"],
+                sr["rate"],
+                sr["position"],
+                sr["created_at"],
+            )
+            for sr in sales_reps
+        ],
     )
 
     logger.info(f"Migrated {len(sales_reps)} customer factory sales reps")
@@ -776,13 +832,16 @@ async def migrate_orders(
 
     # Filter to only include orders for customers and factories that were migrated
     orders = [
-        o for o in orders
+        o
+        for o in orders
         if o["sold_to_customer_id"] in migrated_customer_ids
         and o["factory_id"] in migrated_factory_ids
     ]
 
     if not orders:
-        logger.info("No orders to migrate after filtering for migrated customers/factories")
+        logger.info(
+            "No orders to migrate after filtering for migrated customers/factories"
+        )
         return 0
 
     # First, create order_balances records
@@ -795,17 +854,20 @@ async def migrate_orders(
         ) VALUES ($1, $2, $3, $4, $5, $6, 0, $7, $8, 0, $9, 0, 0)
         ON CONFLICT (id) DO NOTHING
         """,
-        [(
-            o["balance_id"],
-            o["quantity"],
-            o["subtotal"],
-            o["total"],
-            o["commission"],
-            o["discount"],
-            o["commission_rate"],
-            o["commission_discount"],
-            o["shipping_balance"],
-        ) for o in orders],
+        [
+            (
+                o["balance_id"],
+                o["quantity"],
+                o["subtotal"],
+                o["total"],
+                o["commission"],
+                o["discount"],
+                o["commission_rate"],
+                o["commission_discount"],
+                o["shipping_balance"],
+            )
+            for o in orders
+        ],
     )
 
     # Get valid user IDs from destination
@@ -839,39 +901,47 @@ async def migrate_orders(
             fact_so_number = EXCLUDED.fact_so_number,
             balance_id = EXCLUDED.balance_id
         """,
-        [(
-            o["id"],
-            o["order_number"],
-            o["entity_date"],
-            o["due_date"],
-            o["sold_to_customer_id"],
-            o["bill_to_customer_id"],
-            o["published"],
-            map_creation_type(o["creation_type"]),
-            map_order_status(o["status"]),
-            o["order_type"],
-            o["header_status"],
-            o["factory_id"],
-            o["shipping_terms"],
-            o["freight_terms"],
-            o["mark_number"],
-            o["ship_date"],
-            o["fact_so_number"],
-            o["balance_id"],
-            o["created_by_id"] if o["created_by_id"] in valid_user_ids else default_user_id,
-            o["created_at"],
-        ) for o in orders],
+        [
+            (
+                o["id"],
+                o["order_number"],
+                o["entity_date"],
+                o["due_date"],
+                o["sold_to_customer_id"],
+                o["bill_to_customer_id"],
+                o["published"],
+                map_creation_type(o["creation_type"]),
+                map_order_status(o["status"]),
+                o["order_type"],
+                o["header_status"],
+                o["factory_id"],
+                o["shipping_terms"],
+                o["freight_terms"],
+                o["mark_number"],
+                o["ship_date"],
+                o["fact_so_number"],
+                o["balance_id"],
+                o["created_by_id"]
+                if o["created_by_id"] in valid_user_ids
+                else default_user_id,
+                o["created_at"],
+            )
+            for o in orders
+        ],
     )
 
     logger.info(f"Migrated {len(orders)} orders")
     return len(orders)
 
 
-async def migrate_order_details(source: asyncpg.Connection, dest: asyncpg.Connection) -> int:
+async def migrate_order_details(
+    source: asyncpg.Connection, dest: asyncpg.Connection
+) -> int:
     """Migrate order details from v4 to v6."""
     logger.info("Starting order detail migration...")
 
-    details = await source.fetch("""
+    details = await source.fetch(
+        """
         SELECT
             gen_random_uuid() as id,
             o.uuid as order_id,
@@ -899,7 +969,9 @@ async def migrate_order_details(source: asyncpg.Connection, dest: asyncpg.Connec
         LEFT JOIN public.products p ON od.product_id = p.product_id
         LEFT JOIN public.customers eu ON od.end_user = eu.customer_id
         WHERE c.uuid IS NOT NULL AND f.uuid IS NOT NULL
-    """, timeout=600)
+    """,
+        timeout=600,
+    )
 
     if not details:
         logger.info("No order details to migrate")
@@ -918,7 +990,9 @@ async def migrate_order_details(source: asyncpg.Connection, dest: asyncpg.Connec
     details = [
         {
             **d,
-            "end_user_id": d["end_user_id"] if d["end_user_id"] in migrated_customer_ids else None,
+            "end_user_id": d["end_user_id"]
+            if d["end_user_id"] in migrated_customer_ids
+            else None,
         }
         for d in details
         if d["order_id"] in migrated_order_ids
@@ -938,27 +1012,30 @@ async def migrate_order_details(source: asyncpg.Connection, dest: asyncpg.Connec
             uom_id, lead_time, note, status, freight_charge, shipping_balance, cancelled_balance
         ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, NULL, $15, NULL, NULL, $16, NULL, $17, NULL, $18, 0, $19, 0)
         """,
-        [(
-            d["id"],
-            d["order_id"],
-            d["item_number"],
-            d["quantity"],
-            d["unit_price"],
-            d["subtotal"],
-            d["total"],
-            d["total_line_commission"],
-            d["commission_rate"],
-            d["commission"],
-            d["commission_discount_rate"],
-            d["commission_discount"],
-            d["discount_rate"],
-            d["discount"],
-            d["product_id"],
-            d["end_user_id"],
-            d["lead_time"],
-            map_order_status(d["status"]),
-            d["shipping_balance"],
-        ) for d in details],
+        [
+            (
+                d["id"],
+                d["order_id"],
+                d["item_number"],
+                d["quantity"],
+                d["unit_price"],
+                d["subtotal"],
+                d["total"],
+                d["total_line_commission"],
+                d["commission_rate"],
+                d["commission"],
+                d["commission_discount_rate"],
+                d["commission_discount"],
+                d["discount_rate"],
+                d["discount"],
+                d["product_id"],
+                d["end_user_id"],
+                d["lead_time"],
+                map_order_status(d["status"]),
+                d["shipping_balance"],
+            )
+            for d in details
+        ],
     )
 
     logger.info(f"Migrated {len(details)} order details")
@@ -1023,10 +1100,7 @@ async def migrate_quotes(
     migrated_customer_ids = {row["id"] for row in migrated_customers}
 
     # Filter to only include quotes for customers that were migrated
-    quotes = [
-        q for q in quotes
-        if q["sold_to_customer_id"] in migrated_customer_ids
-    ]
+    quotes = [q for q in quotes if q["sold_to_customer_id"] in migrated_customer_ids]
 
     if not quotes:
         logger.info("No quotes to migrate after filtering for migrated customers")
@@ -1041,16 +1115,19 @@ async def migrate_quotes(
         ) VALUES ($1, $2, $3, $4, $5, $6, 0, $7, $8, 0)
         ON CONFLICT (id) DO NOTHING
         """,
-        [(
-            q["balance_id"],
-            q["quantity"],
-            q["subtotal"],
-            q["total"],
-            q["commission"],
-            q["discount"],
-            q["commission_rate"],
-            q["commission_discount"],
-        ) for q in quotes],
+        [
+            (
+                q["balance_id"],
+                q["quantity"],
+                q["subtotal"],
+                q["total"],
+                q["commission"],
+                q["discount"],
+                q["commission_rate"],
+                q["commission_discount"],
+            )
+            for q in quotes
+        ],
     )
 
     # Get valid user IDs from destination
@@ -1083,37 +1160,45 @@ async def migrate_quotes(
             blanket = EXCLUDED.blanket,
             balance_id = EXCLUDED.balance_id
         """,
-        [(
-            q["id"],
-            q["quote_number"],
-            q["entity_date"],
-            q["sold_to_customer_id"],
-            q["bill_to_customer_id"],
-            q["published"],
-            map_creation_type(q["creation_type"]),
-            q["status"],
-            q["payment_terms"],
-            q["customer_ref"],
-            q["freight_terms"],
-            q["exp_date"],
-            q["revise_date"],
-            q["accept_date"],
-            q["blanket"],
-            q["balance_id"],
-            q["created_by_id"] if q["created_by_id"] in valid_user_ids else default_user_id,
-            q["created_at"],
-        ) for q in quotes],
+        [
+            (
+                q["id"],
+                q["quote_number"],
+                q["entity_date"],
+                q["sold_to_customer_id"],
+                q["bill_to_customer_id"],
+                q["published"],
+                map_creation_type(q["creation_type"]),
+                q["status"],
+                q["payment_terms"],
+                q["customer_ref"],
+                q["freight_terms"],
+                q["exp_date"],
+                q["revise_date"],
+                q["accept_date"],
+                q["blanket"],
+                q["balance_id"],
+                q["created_by_id"]
+                if q["created_by_id"] in valid_user_ids
+                else default_user_id,
+                q["created_at"],
+            )
+            for q in quotes
+        ],
     )
 
     logger.info(f"Migrated {len(quotes)} quotes")
     return len(quotes)
 
 
-async def migrate_quote_details(source: asyncpg.Connection, dest: asyncpg.Connection) -> int:
+async def migrate_quote_details(
+    source: asyncpg.Connection, dest: asyncpg.Connection
+) -> int:
     """Migrate quote details from v4 to v6."""
     logger.info("Starting quote detail migration...")
 
-    details = await source.fetch("""
+    details = await source.fetch(
+        """
         SELECT
             gen_random_uuid() as id,
             q.uuid as quote_id,
@@ -1142,7 +1227,9 @@ async def migrate_quote_details(source: asyncpg.Connection, dest: asyncpg.Connec
         LEFT JOIN public.factories f ON p.factory_id = f.factory_id
         LEFT JOIN public.customers eu ON qd.end_user = eu.customer_id
         WHERE c.uuid IS NOT NULL
-    """, timeout=600)
+    """,
+        timeout=600,
+    )
 
     if not details:
         logger.info("No quote details to migrate")
@@ -1161,7 +1248,9 @@ async def migrate_quote_details(source: asyncpg.Connection, dest: asyncpg.Connec
     details = [
         {
             **d,
-            "end_user_id": d["end_user_id"] if d["end_user_id"] in migrated_customer_ids else None,
+            "end_user_id": d["end_user_id"]
+            if d["end_user_id"] in migrated_customer_ids
+            else None,
         }
         for d in details
         if d["quote_id"] in migrated_quote_ids
@@ -1181,28 +1270,31 @@ async def migrate_quote_details(source: asyncpg.Connection, dest: asyncpg.Connec
             status, lost_reason_id, uom_id, division_factor, order_id
         ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, NULL, NULL, $16, $17, $18, NULL, $19, $20, NULL, NULL, NULL)
         """,
-        [(
-            d["id"],
-            d["quote_id"],
-            d["item_number"],
-            d["quantity"],
-            d["unit_price"],
-            d["subtotal"],
-            d["total"],
-            d["total_line_commission"],
-            d["commission_rate"],
-            d["commission"],
-            d["commission_discount_rate"],
-            d["commission_discount"],
-            d["discount_rate"],
-            d["discount"],
-            d["product_id"],
-            d["factory_id"],
-            d["end_user_id"],
-            d["lead_time"],
-            d["status"],
-            None,  # lost_reason_id - not migrated
-        ) for d in details],
+        [
+            (
+                d["id"],
+                d["quote_id"],
+                d["item_number"],
+                d["quantity"],
+                d["unit_price"],
+                d["subtotal"],
+                d["total"],
+                d["total_line_commission"],
+                d["commission_rate"],
+                d["commission"],
+                d["commission_discount_rate"],
+                d["commission_discount"],
+                d["discount_rate"],
+                d["discount"],
+                d["product_id"],
+                d["factory_id"],
+                d["end_user_id"],
+                d["lead_time"],
+                d["status"],
+                None,  # lost_reason_id - not migrated
+            )
+            for d in details
+        ],
     )
 
     logger.info(f"Migrated {len(details)} quote details")
@@ -1217,7 +1309,8 @@ async def migrate_invoices(
     """Migrate invoices from v4 to v6."""
     logger.info("Starting invoice migration...")
 
-    invoices = await source.fetch("""
+    invoices = await source.fetch(
+        """
         SELECT
             i.uuid as id,
             gen_random_uuid() as balance_id,
@@ -1241,7 +1334,9 @@ async def migrate_invoices(
         JOIN public.customers c ON o.customer = c.customer_id
         JOIN public.factories f ON i.factory_id = f.factory_id
         WHERE o.uuid IS NOT NULL AND f.uuid IS NOT NULL AND c.uuid IS NOT NULL
-    """, timeout=600)
+    """,
+        timeout=600,
+    )
 
     if not invoices:
         logger.info("No invoices to migrate")
@@ -1257,12 +1352,16 @@ async def migrate_invoices(
 
     # Filter to only include invoices for orders and factories that were migrated
     invoices = [
-        inv for inv in invoices
-        if inv["order_id"] in migrated_order_ids and inv["factory_id"] in migrated_factory_ids
+        inv
+        for inv in invoices
+        if inv["order_id"] in migrated_order_ids
+        and inv["factory_id"] in migrated_factory_ids
     ]
 
     if not invoices:
-        logger.info("No invoices to migrate after filtering for migrated orders/factories")
+        logger.info(
+            "No invoices to migrate after filtering for migrated orders/factories"
+        )
         return 0
 
     # First, create invoice_balances records
@@ -1274,13 +1373,16 @@ async def migrate_invoices(
         ) VALUES ($1, 0, $2, $2, $3, 0, 0, $4, 0, 0, $5)
         ON CONFLICT (id) DO NOTHING
         """,
-        [(
-            inv["balance_id"],
-            inv["total"],
-            inv["commission"],
-            inv["commission_rate"],
-            inv["paid_balance"],
-        ) for inv in invoices],
+        [
+            (
+                inv["balance_id"],
+                inv["total"],
+                inv["commission"],
+                inv["commission_rate"],
+                inv["paid_balance"],
+            )
+            for inv in invoices
+        ],
     )
 
     # Get valid user IDs from destination
@@ -1305,32 +1407,40 @@ async def migrate_invoices(
             status = EXCLUDED.status,
             balance_id = EXCLUDED.balance_id
         """,
-        [(
-            inv["id"],
-            inv["invoice_number"],
-            inv["factory_id"],
-            inv["order_id"],
-            inv["entity_date"],
-            inv["due_date"],
-            inv["published"],
-            inv["locked"],
-            map_creation_type(inv["creation_type"]),
-            inv["status"],
-            inv["balance_id"],
-            inv["created_by_id"] if inv["created_by_id"] in valid_user_ids else default_user_id,
-            inv["created_at"],
-        ) for inv in invoices],
+        [
+            (
+                inv["id"],
+                inv["invoice_number"],
+                inv["factory_id"],
+                inv["order_id"],
+                inv["entity_date"],
+                inv["due_date"],
+                inv["published"],
+                inv["locked"],
+                map_creation_type(inv["creation_type"]),
+                inv["status"],
+                inv["balance_id"],
+                inv["created_by_id"]
+                if inv["created_by_id"] in valid_user_ids
+                else default_user_id,
+                inv["created_at"],
+            )
+            for inv in invoices
+        ],
     )
 
     logger.info(f"Migrated {len(invoices)} invoices")
     return len(invoices)
 
 
-async def migrate_invoice_details(source: asyncpg.Connection, dest: asyncpg.Connection) -> int:
+async def migrate_invoice_details(
+    source: asyncpg.Connection, dest: asyncpg.Connection
+) -> int:
     """Migrate invoice details from v4 to v6."""
     logger.info("Starting invoice detail migration...")
 
-    details = await source.fetch("""
+    details = await source.fetch(
+        """
         SELECT
             gen_random_uuid() as id,
             inv.uuid as invoice_id,
@@ -1358,7 +1468,9 @@ async def migrate_invoice_details(source: asyncpg.Connection, dest: asyncpg.Conn
         LEFT JOIN public.products p ON id.product_id = p.product_id
         LEFT JOIN public.customers eu ON id.end_user = eu.customer_id
         WHERE inv.uuid IS NOT NULL AND c.uuid IS NOT NULL AND f.uuid IS NOT NULL
-    """, timeout=600)
+    """,
+        timeout=600,
+    )
 
     if not details:
         logger.info("No invoice details to migrate")
@@ -1387,7 +1499,9 @@ async def migrate_invoice_details(source: asyncpg.Connection, dest: asyncpg.Conn
         SELECT id, order_id, item_number
         FROM pycommission.order_details
     """)
-    dest_detail_lookup = {(d["order_id"], d["item_number"]): d["id"] for d in dest_order_details}
+    dest_detail_lookup = {
+        (d["order_id"], d["item_number"]): d["id"] for d in dest_order_details
+    }
 
     # Map v4 order_detail_id -> v6 order_detail.id
     v4_to_v6_order_detail: dict[int, uuid.UUID] = {}
@@ -1402,7 +1516,9 @@ async def migrate_invoice_details(source: asyncpg.Connection, dest: asyncpg.Conn
     details = [
         {
             **d,
-            "end_user_id": d["end_user_id"] if d["end_user_id"] in migrated_customer_ids else None,
+            "end_user_id": d["end_user_id"]
+            if d["end_user_id"] in migrated_customer_ids
+            else None,
             "order_detail_id": v4_to_v6_order_detail.get(d["v4_order_detail_id"]),
         }
         for d in details
@@ -1410,7 +1526,9 @@ async def migrate_invoice_details(source: asyncpg.Connection, dest: asyncpg.Conn
     ]
 
     if not details:
-        logger.info("No invoice details to migrate after filtering for migrated invoices")
+        logger.info(
+            "No invoice details to migrate after filtering for migrated invoices"
+        )
         return 0
 
     await dest.executemany(
@@ -1423,39 +1541,45 @@ async def migrate_invoice_details(source: asyncpg.Connection, dest: asyncpg.Conn
             lead_time, note, status, invoiced_balance, order_detail_id
         ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, NULL, $15, NULL, NULL, NULL, $16, NULL, NULL, $17, 0, $18)
         """,
-        [(
-            d["id"],
-            d["invoice_id"],
-            d["item_number"],
-            d["quantity"],
-            d["unit_price"],
-            d["subtotal"],
-            d["total"],
-            d["total_line_commission"],
-            d["commission_rate"],
-            d["commission"],
-            d["commission_discount_rate"],
-            d["commission_discount"],
-            d["discount_rate"],
-            d["discount"],
-            d["product_id"],
-            d["end_user_id"],
-            d["status"],
-            d["order_detail_id"],
-        ) for d in details],
+        [
+            (
+                d["id"],
+                d["invoice_id"],
+                d["item_number"],
+                d["quantity"],
+                d["unit_price"],
+                d["subtotal"],
+                d["total"],
+                d["total_line_commission"],
+                d["commission_rate"],
+                d["commission"],
+                d["commission_discount_rate"],
+                d["commission_discount"],
+                d["discount_rate"],
+                d["discount"],
+                d["product_id"],
+                d["end_user_id"],
+                d["status"],
+                d["order_detail_id"],
+            )
+            for d in details
+        ],
     )
 
     logger.info(f"Migrated {len(details)} invoice details")
     return len(details)
 
 
-async def migrate_order_split_rates(source: asyncpg.Connection, dest: asyncpg.Connection) -> int:
+async def migrate_order_split_rates(
+    source: asyncpg.Connection, dest: asyncpg.Connection
+) -> int:
     """Migrate order split rates from v4 order_sales_rep_split to v6 order_split_rates."""
     logger.info("Starting order split rate migration...")
 
     # Get the mapping of v4 order_detail_id to v6 order_detail uuid
     # We need to join through orders to get the mapping
-    split_rates = await source.fetch("""
+    split_rates = await source.fetch(
+        """
         SELECT
             osrs.id,
             osrs.user_id,
@@ -1473,7 +1597,9 @@ async def migrate_order_split_rates(source: asyncpg.Connection, dest: asyncpg.Co
           AND c.uuid IS NOT NULL
           AND f.uuid IS NOT NULL
           AND o.uuid IS NOT NULL
-    """, timeout=600)
+    """,
+        timeout=600,
+    )
 
     if not split_rates:
         logger.info("No order split rates to migrate")
@@ -1484,7 +1610,9 @@ async def migrate_order_split_rates(source: asyncpg.Connection, dest: asyncpg.Co
         SELECT id, order_id, item_number
         FROM pycommission.order_details
     """)
-    detail_lookup = {(d["order_id"], d["item_number"]): d["id"] for d in order_detail_map}
+    detail_lookup = {
+        (d["order_id"], d["item_number"]): d["id"] for d in order_detail_map
+    }
 
     # Get valid user IDs
     valid_users = await dest.fetch("SELECT id FROM pyuser.users")
@@ -1495,14 +1623,16 @@ async def migrate_order_split_rates(source: asyncpg.Connection, dest: asyncpg.Co
     for sr in split_rates:
         order_detail_id = detail_lookup.get((sr["order_id"], sr["item_number"]))
         if order_detail_id and sr["user_id"] in valid_user_ids:
-            records.append((
-                sr["id"],
-                order_detail_id,
-                sr["user_id"],
-                sr["split_rate"],
-                0,  # position
-                sr["created_at"],
-            ))
+            records.append(
+                (
+                    sr["id"],
+                    order_detail_id,
+                    sr["user_id"],
+                    sr["split_rate"],
+                    0,  # position
+                    sr["created_at"],
+                )
+            )
 
     if not records:
         logger.info("No valid order split rates to migrate")
@@ -1526,11 +1656,14 @@ async def migrate_order_split_rates(source: asyncpg.Connection, dest: asyncpg.Co
     return len(records)
 
 
-async def migrate_quote_split_rates(source: asyncpg.Connection, dest: asyncpg.Connection) -> int:
+async def migrate_quote_split_rates(
+    source: asyncpg.Connection, dest: asyncpg.Connection
+) -> int:
     """Migrate quote split rates from v4 quote_sales_rep_split to v6 quote_split_rates."""
     logger.info("Starting quote split rate migration...")
 
-    split_rates = await source.fetch("""
+    split_rates = await source.fetch(
+        """
         SELECT
             qsrs.id,
             qsrs.user_id,
@@ -1546,7 +1679,9 @@ async def migrate_quote_split_rates(source: asyncpg.Connection, dest: asyncpg.Co
         WHERE qsrs.user_id IS NOT NULL
           AND c.uuid IS NOT NULL
           AND q.uuid IS NOT NULL
-    """, timeout=600)
+    """,
+        timeout=600,
+    )
 
     if not split_rates:
         logger.info("No quote split rates to migrate")
@@ -1557,7 +1692,9 @@ async def migrate_quote_split_rates(source: asyncpg.Connection, dest: asyncpg.Co
         SELECT id, quote_id, item_number
         FROM pycrm.quote_details
     """)
-    detail_lookup = {(d["quote_id"], d["item_number"]): d["id"] for d in quote_detail_map}
+    detail_lookup = {
+        (d["quote_id"], d["item_number"]): d["id"] for d in quote_detail_map
+    }
 
     # Get valid user IDs
     valid_users = await dest.fetch("SELECT id FROM pyuser.users")
@@ -1568,14 +1705,16 @@ async def migrate_quote_split_rates(source: asyncpg.Connection, dest: asyncpg.Co
     for sr in split_rates:
         quote_detail_id = detail_lookup.get((sr["quote_id"], sr["item_number"]))
         if quote_detail_id and sr["user_id"] in valid_user_ids:
-            records.append((
-                sr["id"],
-                quote_detail_id,
-                sr["user_id"],
-                sr["split_rate"],
-                0,  # position
-                sr["created_at"],
-            ))
+            records.append(
+                (
+                    sr["id"],
+                    quote_detail_id,
+                    sr["user_id"],
+                    sr["split_rate"],
+                    0,  # position
+                    sr["created_at"],
+                )
+            )
 
     if not records:
         logger.info("No valid quote split rates to migrate")
@@ -1632,11 +1771,13 @@ async def migrate_invoice_split_rates(dest: asyncpg.Connection) -> int:
     for osr in order_split_rates:
         if osr["order_detail_id"] not in order_splits_lookup:
             order_splits_lookup[osr["order_detail_id"]] = []
-        order_splits_lookup[osr["order_detail_id"]].append((
-            osr["user_id"],
-            osr["split_rate"],
-            osr["position"],
-        ))
+        order_splits_lookup[osr["order_detail_id"]].append(
+            (
+                osr["user_id"],
+                osr["split_rate"],
+                osr["position"],
+            )
+        )
 
     # Build invoice split rate records
     records = []
@@ -1644,13 +1785,15 @@ async def migrate_invoice_split_rates(dest: asyncpg.Connection) -> int:
         order_detail_id = inv_detail["order_detail_id"]
         if order_detail_id in order_splits_lookup:
             for user_id, split_rate, position in order_splits_lookup[order_detail_id]:
-                records.append((
-                    uuid.uuid4(),  # new id
-                    inv_detail["invoice_detail_id"],
-                    user_id,
-                    split_rate,
-                    position,
-                ))
+                records.append(
+                    (
+                        uuid.uuid4(),  # new id
+                        inv_detail["invoice_detail_id"],
+                        user_id,
+                        split_rate,
+                        position,
+                    )
+                )
 
     if not records:
         logger.info("No invoice split rates to create from orders")
@@ -1678,7 +1821,8 @@ async def migrate_checks(
     """Migrate checks from v4 to v6."""
     logger.info("Starting check migration...")
 
-    checks = await source.fetch(r"""
+    checks = await source.fetch(
+        r"""
         SELECT
             c.uuid as id,
             c.check_number,
@@ -1700,7 +1844,9 @@ async def migrate_checks(
         FROM public.checks c
         JOIN public.factories f ON c.factory = f.factory_id
         WHERE f.uuid IS NOT NULL
-    """, timeout=600)
+    """,
+        timeout=600,
+    )
 
     if not checks:
         logger.info("No checks to migrate")
@@ -1727,19 +1873,24 @@ async def migrate_checks(
             status = EXCLUDED.status,
             creation_type = EXCLUDED.creation_type
         """,
-        [(
-            c["id"],
-            c["check_number"],
-            c["entity_date"],
-            c["post_date"],
-            c["commission_month"],
-            c["entered_commission_amount"],
-            c["factory_id"],
-            c["status"],
-            map_creation_type(c["creation_type"]),
-            c["created_by_id"] if c["created_by_id"] in valid_user_ids else default_user_id,
-            c["created_at"],
-        ) for c in checks],
+        [
+            (
+                c["id"],
+                c["check_number"],
+                c["entity_date"],
+                c["post_date"],
+                c["commission_month"],
+                c["entered_commission_amount"],
+                c["factory_id"],
+                c["status"],
+                map_creation_type(c["creation_type"]),
+                c["created_by_id"]
+                if c["created_by_id"] in valid_user_ids
+                else default_user_id,
+                c["created_at"],
+            )
+            for c in checks
+        ],
     )
 
     logger.info(f"Migrated {len(checks)} checks")
@@ -1783,8 +1934,12 @@ async def run_migration(config: MigrationConfig) -> dict[str, int]:
         results["product_categories"] = await migrate_product_categories(source, dest)
         results["products"] = await migrate_products(source, dest, default_user_id)
         results["product_cpns"] = await migrate_product_cpns(source, dest)
-        results["customer_split_rates"] = await migrate_customer_split_rates(source, dest)
-        results["customer_factory_sales_reps"] = await migrate_customer_factory_sales_reps(source, dest)
+        results["customer_split_rates"] = await migrate_customer_split_rates(
+            source, dest
+        )
+        results[
+            "customer_factory_sales_reps"
+        ] = await migrate_customer_factory_sales_reps(source, dest)
         results["orders"] = await migrate_orders(source, dest, default_user_id)
         results["order_details"] = await migrate_order_details(source, dest)
         results["order_split_rates"] = await migrate_order_split_rates(source, dest)
@@ -1864,12 +2019,16 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     if not args.source_url or not args.dest_url:
-        parser.error("--source-url and --dest-url are required (or set V4_DATABASE_URL and V6_DATABASE_URL)")
+        parser.error(
+            "--source-url and --dest-url are required (or set V4_DATABASE_URL and V6_DATABASE_URL)"
+        )
 
-    _ = asyncio.run(run_migration_for_tenant(
-        source_tenant=args.source_tenant,
-        dest_tenant=args.dest_tenant,
-        source_base_url=args.source_url,
-        dest_base_url=args.dest_url,
-        default_user_id=uuid.UUID(args.default_user_id),
-    ))
+    _ = asyncio.run(
+        run_migration_for_tenant(
+            source_tenant=args.source_tenant,
+            dest_tenant=args.dest_tenant,
+            source_base_url=args.source_url,
+            dest_base_url=args.dest_url,
+            default_user_id=uuid.UUID(args.default_user_id),
+        )
+    )

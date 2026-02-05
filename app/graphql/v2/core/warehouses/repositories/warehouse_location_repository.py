@@ -1,15 +1,17 @@
 from uuid import UUID
 
 from commons.db.v6 import LocationProductAssignment, WarehouseLocation
-from sqlalchemy import select
+from commons.db.v6.warehouse.inventory.inventory_item import InventoryItem
+from sqlalchemy import Select, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
+from sqlalchemy.orm.strategy_options import _AbstractLoad
 
 from app.core.context_wrapper import ContextWrapper
 from app.graphql.base_repository import BaseRepository
 
 
-def _recursive_children_loader(depth: int = 6):
+def _recursive_children_loader(depth: int = 6) -> _AbstractLoad:
     """
     Create recursive eager loading options for WarehouseLocation children.
     Loads children and product_assignments (with product details) at each level up to the specified depth.
@@ -44,7 +46,7 @@ class WarehouseLocationRepository(BaseRepository[WarehouseLocation]):
         )
 
     @property
-    def base_query(self):
+    def base_query(self) -> Select[tuple[WarehouseLocation]]:
         """Base query with standard eager loading for locations."""
         return select(WarehouseLocation).options(
             selectinload(WarehouseLocation.product_assignments).joinedload(
@@ -91,6 +93,29 @@ class WarehouseLocationRepository(BaseRepository[WarehouseLocation]):
         for item in result.scalars().all():
             await self.session.delete(item)
         await self.session.flush()
+
+    async def flush(self) -> None:
+        await self.session.flush()
+
+    async def get_child_ids(self, parent_id: UUID) -> set[UUID]:
+        stmt = select(WarehouseLocation.id).where(
+            WarehouseLocation.parent_id == parent_id
+        )
+        result = await self.session.execute(stmt)
+        return {row[0] for row in result.fetchall()}
+
+    async def get_location_ids_with_inventory(
+        self, location_ids: set[UUID]
+    ) -> set[UUID]:
+        if not location_ids:
+            return set()
+        stmt = (
+            select(InventoryItem.location_id)
+            .where(InventoryItem.location_id.in_(location_ids))
+            .distinct()
+        )
+        result = await self.session.execute(stmt)
+        return {row[0] for row in result.fetchall()}
 
     async def find_by_name(
         self, warehouse_id: UUID, name: str

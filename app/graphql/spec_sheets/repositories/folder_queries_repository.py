@@ -14,7 +14,6 @@ class FolderQueriesRepository(BaseRepository[SpecSheetFolder]):
     """Repository for spec sheet folder query operations."""
 
     def __init__(self, context_wrapper: ContextWrapper, session: AsyncSession) -> None:
-        """Initialize the repository."""
         super().__init__(session, context_wrapper, SpecSheetFolder)
 
     async def find_by_factory(self, factory_id: UUID) -> list[Folder]:

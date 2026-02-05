@@ -1,5 +1,3 @@
-"""Service for Microsoft O365 calendar operations."""
-
 from dataclasses import dataclass
 from datetime import datetime
 

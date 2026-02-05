@@ -1,5 +1,3 @@
-"""S3 service provider for dependency injection."""
-
 from collections.abc import Iterable
 from typing import Any
 

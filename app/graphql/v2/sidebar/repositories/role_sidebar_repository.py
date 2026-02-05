@@ -71,7 +71,10 @@ class RoleSidebarRepository:
         )
         self.session.add(assignment)
         await self.session.flush()
-        return await self.get_role_assignment(role)  # type: ignore
+        result = await self.get_role_assignment(role)
+        if not result:
+            raise RuntimeError(f"Role assignment for {role} not found after creation")
+        return result
 
     async def remove_role_assignment(self, role: RbacRoleEnum) -> bool:
         stmt = delete(RoleSidebarAssignment).where(RoleSidebarAssignment.role == role)

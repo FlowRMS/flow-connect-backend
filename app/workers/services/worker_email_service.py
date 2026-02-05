@@ -1,5 +1,3 @@
-"""Worker email service for sending campaign emails without AuthInfo context."""
-
 from datetime import datetime, timezone
 from uuid import UUID
 

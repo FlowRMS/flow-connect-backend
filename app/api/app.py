@@ -1,5 +1,6 @@
 import contextlib
 import time
+from collections.abc import AsyncIterator
 from typing import Any
 
 from aioinject.ext.fastapi import AioInjectMiddleware
@@ -18,6 +19,7 @@ from app.api.o365_router import router as o365_router
 from app.core.config.settings import Settings
 from app.core.container import create_container
 from app.graphql.app import create_graphql_app
+from app.webhooks.workos.router import router as workos_webhook_router
 from app.workers.broker import broker
 
 
@@ -25,7 +27,7 @@ def create_app() -> FastAPI:
     container = create_container()
 
     @contextlib.asynccontextmanager
-    async def lifespan(_app: FastAPI):
+    async def lifespan(_app: FastAPI) -> AsyncIterator[None]:
         configure_mappers()
         async with container:
             async with container.context() as ctx:
@@ -62,6 +64,7 @@ def create_app() -> FastAPI:
     app.include_router(create_graphql_app(), prefix="/graphql")
     app.include_router(create_admin_graphql_app(), prefix="/admin/graphql")
     app.include_router(o365_router, prefix="/api")
+    app.include_router(workos_webhook_router, prefix="/webhooks/workos")
 
     app.add_middleware(
         CORSMiddleware,
@@ -70,6 +73,7 @@ def create_app() -> FastAPI:
             "http://localhost:3001",
             "https://flowrms.com",
             "https://www.flowrms.com",
+            "https://staging-crm-v6.onrender.com",
         ],
         # allow_origin_regex=r"https?://.*\.?flowrms\.com",
         allow_credentials=True,
@@ -100,7 +104,7 @@ def create_app() -> FastAPI:
         return response
 
     @app.get("/api/health", include_in_schema=True)
-    def health_check():  # pyright: ignore[reportUnusedFunction]
+    def health_check() -> dict[str, str]:  # pyright: ignore[reportUnusedFunction]
         return {"status": "ok"}
 
     return app

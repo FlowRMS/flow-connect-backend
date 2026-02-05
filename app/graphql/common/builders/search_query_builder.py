@@ -5,7 +5,7 @@ from commons.db.v6 import BaseModel
 from sqlalchemy import Integer, func, literal, literal_column, or_, select
 from sqlalchemy.orm import InstrumentedAttribute
 
-from app.graphql.common.strawberry.search_types import SourceType
+from app.graphql.common.strawberry.source_type import SourceType
 
 T = TypeVar("T", bound=BaseModel)
 

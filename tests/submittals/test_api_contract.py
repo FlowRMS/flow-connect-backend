@@ -1,18 +1,4 @@
 #!/usr/bin/env python3
-"""
-API Contract Tests for Submittals and Spec Sheets.
-
-These tests verify that the API responses match what the frontend expects.
-This is a contract test - it ensures frontend and backend stay in sync.
-
-Requirements:
-- Server running on localhost:5555 (uv run ./start.py)
-- Valid authentication credentials
-
-Usage:
-    cd /home/jorge/flowrms/FLO-727/flow-py-backend
-    uv run python tests/submittals/test_api_contract.py --email your@email.com --password yourpassword
-"""
 import argparse
 import asyncio
 import sys
@@ -126,54 +112,71 @@ query GetFactories {
 # Contract Verification Functions
 # ============================================================================
 
+
 def verify_spec_sheet_response(spec_sheet: dict) -> list[str]:
     """Verify spec sheet response has all fields frontend expects."""
     errors = []
 
     # Required string fields
-    required_strings = ['id', 'factoryId', 'fileName', 'displayName', 'uploadSource', 'fileUrl', 'createdAt']
+    required_strings = [
+        "id",
+        "factoryId",
+        "fileName",
+        "displayName",
+        "uploadSource",
+        "fileUrl",
+        "createdAt",
+    ]
     for field in required_strings:
         if field not in spec_sheet:
             errors.append(f"Missing required field: {field}")
         elif not isinstance(spec_sheet[field], str):
-            errors.append(f"Field {field} should be string, got {type(spec_sheet[field])}")
+            errors.append(
+                f"Field {field} should be string, got {type(spec_sheet[field])}"
+            )
 
     # Required numeric fields
-    required_numbers = ['fileSize', 'pageCount', 'usageCount', 'highlightCount']
+    required_numbers = ["fileSize", "pageCount", "usageCount", "highlightCount"]
     for field in required_numbers:
         if field not in spec_sheet:
             errors.append(f"Missing required field: {field}")
         elif not isinstance(spec_sheet[field], (int, float)):
-            errors.append(f"Field {field} should be number, got {type(spec_sheet[field])}")
+            errors.append(
+                f"Field {field} should be number, got {type(spec_sheet[field])}"
+            )
 
     # Required boolean fields
-    required_bools = ['needsReview', 'published']
+    required_bools = ["needsReview", "published"]
     for field in required_bools:
         if field not in spec_sheet:
             errors.append(f"Missing required field: {field}")
         elif not isinstance(spec_sheet[field], bool):
-            errors.append(f"Field {field} should be boolean, got {type(spec_sheet[field])}")
+            errors.append(
+                f"Field {field} should be boolean, got {type(spec_sheet[field])}"
+            )
 
     # Required array fields
-    required_arrays = ['categories']
+    required_arrays = ["categories"]
     for field in required_arrays:
         if field not in spec_sheet:
             errors.append(f"Missing required field: {field}")
         elif not isinstance(spec_sheet[field], list):
-            errors.append(f"Field {field} should be array, got {type(spec_sheet[field])}")
+            errors.append(
+                f"Field {field} should be array, got {type(spec_sheet[field])}"
+            )
 
     # Nullable fields (should exist but can be null)
-    nullable_fields = ['sourceUrl', 'tags', 'folderPath']
+    nullable_fields = ["sourceUrl", "tags", "folderPath"]
     for field in nullable_fields:
         if field not in spec_sheet:
             errors.append(f"Missing nullable field: {field}")
 
     # createdBy object
-    if 'createdBy' not in spec_sheet:
+    if "createdBy" not in spec_sheet:
         errors.append("Missing createdBy object")
-    elif spec_sheet['createdBy']:
-        created_by = spec_sheet['createdBy']
-        for field in ['id', 'fullName']:
+    elif spec_sheet["createdBy"]:
+        created_by = spec_sheet["createdBy"]
+        for field in ["id", "fullName"]:
             if field not in created_by:
                 errors.append(f"createdBy missing field: {field}")
 
@@ -185,32 +188,60 @@ def verify_highlight_version_response(version: dict) -> list[str]:
     errors = []
 
     # Required fields
-    required_fields = ['id', 'specSheetId', 'name', 'versionNumber', 'isActive', 'createdAt']
+    required_fields = [
+        "id",
+        "specSheetId",
+        "name",
+        "versionNumber",
+        "isActive",
+        "createdAt",
+    ]
     for field in required_fields:
         if field not in version:
             errors.append(f"Missing required field: {field}")
 
     # regions array
-    if 'regions' not in version:
+    if "regions" not in version:
         errors.append("Missing regions array")
-    elif version['regions']:
-        for i, region in enumerate(version['regions']):
+    elif version["regions"]:
+        for i, region in enumerate(version["regions"]):
             # Verify region has required fields
-            region_fields = ['id', 'pageNumber', 'x', 'y', 'width', 'height', 'shapeType', 'color']
+            region_fields = [
+                "id",
+                "pageNumber",
+                "x",
+                "y",
+                "width",
+                "height",
+                "shapeType",
+                "color",
+            ]
             for field in region_fields:
                 if field not in region:
                     errors.append(f"Region {i} missing field: {field}")
 
             # Verify shapeType is valid
-            valid_shapes = ['highlight', 'rectangle', 'circle', 'arrow', 'text', 'freehand']
-            if 'shapeType' in region and region['shapeType'].lower() not in valid_shapes:
-                errors.append(f"Region {i} has invalid shapeType: {region['shapeType']}")
+            valid_shapes = [
+                "highlight",
+                "rectangle",
+                "circle",
+                "arrow",
+                "text",
+                "freehand",
+            ]
+            if (
+                "shapeType" in region
+                and region["shapeType"].lower() not in valid_shapes
+            ):
+                errors.append(
+                    f"Region {i} has invalid shapeType: {region['shapeType']}"
+                )
 
     # createdBy object
-    if 'createdBy' not in version:
+    if "createdBy" not in version:
         errors.append("Missing createdBy object")
-    elif version['createdBy']:
-        if 'fullName' not in version['createdBy']:
+    elif version["createdBy"]:
+        if "fullName" not in version["createdBy"]:
             errors.append("createdBy missing fullName")
 
     return errors
@@ -221,9 +252,9 @@ def verify_factory_response(factory: dict) -> list[str]:
     errors = []
 
     # Frontend expects id and title (mapped to name)
-    if 'id' not in factory:
+    if "id" not in factory:
         errors.append("Missing id field")
-    if 'title' not in factory:
+    if "title" not in factory:
         errors.append("Missing title field (frontend maps this to 'name')")
 
     return errors
@@ -232,6 +263,7 @@ def verify_factory_response(factory: dict) -> list[str]:
 # ============================================================================
 # Main Test Runner
 # ============================================================================
+
 
 async def run_contract_tests(headers: dict) -> bool:
     """Run all contract tests and return success status."""
@@ -245,13 +277,13 @@ async def run_contract_tests(headers: dict) -> bool:
     print("\n[1] Testing GET_FACTORIES...")
     try:
         result = await graphql_request(GET_FACTORIES, headers=headers)
-        if 'errors' in result:
+        if "errors" in result:
             print(f"  FAILED: GraphQL errors: {result['errors']}")
             all_passed = False
-        elif not result.get('data', {}).get('factories', {}).get('items'):
+        elif not result.get("data", {}).get("factories", {}).get("items"):
             print("  SKIPPED: No factories found")
         else:
-            factories = result['data']['factories']['items']
+            factories = result["data"]["factories"]["items"]
             for factory in factories[:3]:  # Test first 3
                 errors = verify_factory_response(factory)
                 if errors:
@@ -266,21 +298,21 @@ async def run_contract_tests(headers: dict) -> bool:
     print("\n[2] Testing GET_SPEC_SHEETS_BY_FACTORY...")
     try:
         result = await graphql_request(GET_FACTORIES, headers=headers)
-        factories = result.get('data', {}).get('factories', {}).get('items', [])
+        factories = result.get("data", {}).get("factories", {}).get("items", [])
         if not factories:
             print("  SKIPPED: No factories available")
         else:
-            factory_id = factories[0]['id']
+            factory_id = factories[0]["id"]
             result = await graphql_request(
                 GET_SPEC_SHEETS_BY_FACTORY,
-                variables={'factoryId': factory_id, 'publishedOnly': False},
+                variables={"factoryId": factory_id, "publishedOnly": False},
                 headers=headers,
             )
-            if 'errors' in result:
+            if "errors" in result:
                 print(f"  FAILED: GraphQL errors: {result['errors']}")
                 all_passed = False
             else:
-                spec_sheets = result.get('data', {}).get('specSheetsByFactory', [])
+                spec_sheets = result.get("data", {}).get("specSheetsByFactory", [])
                 if not spec_sheets:
                     print(f"  SKIPPED: No spec sheets for factory {factory_id}")
                 else:

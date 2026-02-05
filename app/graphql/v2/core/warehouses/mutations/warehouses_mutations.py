@@ -8,13 +8,23 @@ from app.graphql.inject import inject
 from app.graphql.v2.core.warehouses.services.warehouse_service import WarehouseService
 from app.graphql.v2.core.warehouses.strawberry.warehouse_input import (
     WarehouseInput,
-    WarehouseSettingsInput,
-    WarehouseStructureLevelInput,
+)
+from app.graphql.v2.core.warehouses.strawberry.warehouse_member_response import (
+    WarehouseMemberResponse,
 )
 from app.graphql.v2.core.warehouses.strawberry.warehouse_response import (
-    WarehouseMemberResponse,
     WarehouseResponse,
+)
+from app.graphql.v2.core.warehouses.strawberry.warehouse_settings_input import (
+    WarehouseSettingsInput,
+)
+from app.graphql.v2.core.warehouses.strawberry.warehouse_settings_response import (
     WarehouseSettingsResponse,
+)
+from app.graphql.v2.core.warehouses.strawberry.warehouse_structure_level_input import (
+    WarehouseStructureLevelInput,
+)
+from app.graphql.v2.core.warehouses.strawberry.warehouse_structure_response import (
     WarehouseStructureResponse,
 )
 

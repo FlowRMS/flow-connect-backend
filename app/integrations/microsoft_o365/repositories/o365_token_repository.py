@@ -1,5 +1,3 @@
-"""Repository for O365 user token operations."""
-
 import uuid
 from datetime import datetime
 

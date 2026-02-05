@@ -1,26 +1,4 @@
 #!/usr/bin/env python3
-"""
-API Contract Tests for Overage View.
-
-These tests verify that the Overage View API responses match what the frontend expects.
-This allows testing the Overage View feature end-to-end.
-
-Requirements:
-- Server running on localhost:5555 (uv run ./start.py)
-- Valid authentication credentials
-
-Usage:
-    cd /home/jorge/flowrms/FLO-727/flow-py-backend
-
-    # Run all overage tests
-    uv run python tests/overage/test_overage_api_contract.py --email your@email.com --password yourpassword
-
-    # Test specific factory by name
-    uv run python tests/overage/test_overage_api_contract.py --email your@email.com --password yourpassword --factory "COOPER LIGHTING"
-
-    # Enable overage for a factory (requires factory to have overage_allowed=true in DB)
-    uv run python tests/overage/test_overage_api_contract.py --email your@email.com --password yourpassword --enable-for "COOPER LIGHTING LLC"
-"""
 import argparse
 import asyncio
 import sys
@@ -165,20 +143,35 @@ query GetQuotesByFactory($factoryId: ID!, $limit: Int) {
 # Contract Verification Functions
 # ============================================================================
 
+
 def verify_factory_overage_fields(factory: dict) -> list[str]:
     """Verify factory has overage-related fields for frontend."""
     errors = []
 
-    required_fields = ['id', 'title', 'overageAllowed', 'overageType', 'repOverageShare']
+    required_fields = [
+        "id",
+        "title",
+        "overageAllowed",
+        "overageType",
+        "repOverageShare",
+    ]
     for field in required_fields:
         if field not in factory:
             errors.append(f"Missing required field: {field}")
 
     # Type checks
-    if 'overageAllowed' in factory and not isinstance(factory['overageAllowed'], bool):
-        errors.append(f"overageAllowed should be bool, got {type(factory['overageAllowed'])}")
+    if "overageAllowed" in factory and not isinstance(factory["overageAllowed"], bool):
+        errors.append(
+            f"overageAllowed should be bool, got {type(factory['overageAllowed'])}"
+        )
 
-    if 'overageType' in factory and factory['overageType'] not in [None, 'BY_LINE', 'BY_TOTAL', 0, 1]:
+    if "overageType" in factory and factory["overageType"] not in [
+        None,
+        "BY_LINE",
+        "BY_TOTAL",
+        0,
+        1,
+    ]:
         errors.append(f"Invalid overageType: {factory['overageType']}")
 
     return errors
@@ -189,29 +182,33 @@ def verify_overage_record_response(record: dict) -> list[str]:
     errors = []
 
     # Required fields
-    required_fields = ['success', 'overageType']
+    required_fields = ["success", "overageType"]
     for field in required_fields:
         if field not in record:
             errors.append(f"Missing required field: {field}")
 
     # Nullable numeric fields
     numeric_fields = [
-        'effectiveCommissionRate',
-        'overageUnitPrice',
-        'baseUnitPrice',
-        'repShare',
-        'levelRate',
-        'levelUnitPrice',
+        "effectiveCommissionRate",
+        "overageUnitPrice",
+        "baseUnitPrice",
+        "repShare",
+        "levelRate",
+        "levelUnitPrice",
     ]
     for field in numeric_fields:
         if field in record and record[field] is not None:
             if not isinstance(record[field], (int, float)):
-                errors.append(f"Field {field} should be numeric, got {type(record[field])}")
+                errors.append(
+                    f"Field {field} should be numeric, got {type(record[field])}"
+                )
 
     # errorMessage should be string or null
-    if 'errorMessage' in record and record['errorMessage'] is not None:
-        if not isinstance(record['errorMessage'], str):
-            errors.append(f"errorMessage should be string, got {type(record['errorMessage'])}")
+    if "errorMessage" in record and record["errorMessage"] is not None:
+        if not isinstance(record["errorMessage"], str):
+            errors.append(
+                f"errorMessage should be string, got {type(record['errorMessage'])}"
+            )
 
     return errors
 
@@ -220,7 +217,10 @@ def verify_overage_record_response(record: dict) -> list[str]:
 # Test Functions
 # ============================================================================
 
-async def test_factories_with_overage(headers: dict, factory_name: str | None = None) -> dict | None:
+
+async def test_factories_with_overage(
+    headers: dict, factory_name: str | None = None
+) -> dict | None:
     """Test that factories have overage fields and find one with overage enabled."""
     print("\n[1] Testing Factory Overage Fields...")
 
@@ -228,21 +228,21 @@ async def test_factories_with_overage(headers: dict, factory_name: str | None = 
         if factory_name:
             result = await graphql_request(
                 GET_FACTORY_BY_NAME,
-                variables={'search': factory_name},
+                variables={"search": factory_name},
                 headers=headers,
             )
         else:
             result = await graphql_request(
                 GET_FACTORIES_WITH_OVERAGE,
-                variables={'limit': 50},
+                variables={"limit": 50},
                 headers=headers,
             )
 
-        if 'errors' in result:
+        if "errors" in result:
             print(f"  FAILED: GraphQL errors: {result['errors']}")
             return None
 
-        factories = result.get('data', {}).get('factories', {}).get('items', [])
+        factories = result.get("data", {}).get("factories", {}).get("items", [])
         if not factories:
             print("  SKIPPED: No factories found")
             return None
@@ -254,7 +254,7 @@ async def test_factories_with_overage(headers: dict, factory_name: str | None = 
             if errors:
                 print(f"  WARNING: Factory {factory.get('id')}: {errors}")
 
-            if factory.get('overageAllowed'):
+            if factory.get("overageAllowed"):
                 overage_factory = factory
                 print(f"  FOUND: Factory with overage enabled: {factory['title']}")
                 print(f"         ID: {factory['id']}")
@@ -263,9 +263,13 @@ async def test_factories_with_overage(headers: dict, factory_name: str | None = 
                 print(f"         Base Commission: {factory.get('baseCommissionRate')}%")
 
         if not overage_factory:
-            print(f"  INFO: No factories with overage_allowed=true found (checked {len(factories)} factories)")
+            print(
+                f"  INFO: No factories with overage_allowed=true found (checked {len(factories)} factories)"
+            )
             print("  TIP: Use SQL to enable overage:")
-            print("       UPDATE pycore.factories SET overage_allowed = true WHERE title = 'YOUR_FACTORY';")
+            print(
+                "       UPDATE pycore.factories SET overage_allowed = true WHERE title = 'YOUR_FACTORY';"
+            )
             # Return first factory for testing anyway
             return factories[0]
 
@@ -285,20 +289,20 @@ async def test_overage_calculation(
     print("\n[2] Testing Overage Calculation...")
 
     try:
-        factory_id = factory['id']
+        factory_id = factory["id"]
 
         # Get a product from this factory
         result = await graphql_request(
             GET_PRODUCTS_BY_FACTORY,
-            variables={'factoryId': factory_id, 'limit': 5},
+            variables={"factoryId": factory_id, "limit": 5},
             headers=headers,
         )
 
-        if 'errors' in result:
+        if "errors" in result:
             print(f"  FAILED: GraphQL errors: {result['errors']}")
             return False
 
-        products = result.get('data', {}).get('products', {}).get('items', [])
+        products = result.get("data", {}).get("products", {}).get("items", [])
         if not products:
             print(f"  SKIPPED: No products for factory {factory['title']}")
             return True
@@ -306,15 +310,15 @@ async def test_overage_calculation(
         # Get a customer (end user)
         result = await graphql_request(
             GET_CUSTOMERS,
-            variables={'limit': 1},
+            variables={"limit": 1},
             headers=headers,
         )
 
-        if 'errors' in result:
+        if "errors" in result:
             print(f"  FAILED: GraphQL errors getting customers: {result['errors']}")
             return False
 
-        customers = result.get('data', {}).get('customers', {}).get('items', [])
+        customers = result.get("data", {}).get("customers", {}).get("items", [])
         if not customers:
             print("  SKIPPED: No customers found")
             return True
@@ -329,26 +333,28 @@ async def test_overage_calculation(
         print(f"    Customer: {customer.get('title')} (ID: {customer['id']})")
 
         # Test overage calculation with detail price higher than base
-        base_price = float(product.get('unitPrice', 100))
+        base_price = float(product.get("unitPrice", 100))
         test_price = base_price * 1.2  # 20% markup
 
         result = await graphql_request(
             FIND_OVERAGE_BY_PRODUCT,
             variables={
-                'productId': product['id'],
-                'detailUnitPrice': test_price,
-                'factoryId': factory_id,
-                'endUserId': customer['id'],
-                'quantity': 1.0,
+                "productId": product["id"],
+                "detailUnitPrice": test_price,
+                "factoryId": factory_id,
+                "endUserId": customer["id"],
+                "quantity": 1.0,
             },
             headers=headers,
         )
 
-        if 'errors' in result:
+        if "errors" in result:
             print(f"  FAILED: GraphQL errors: {result['errors']}")
             return False
 
-        overage = result.get('data', {}).get('findEffectiveCommissionRateAndOverageUnitPriceByProduct', {})
+        overage = result.get("data", {}).get(
+            "findEffectiveCommissionRateAndOverageUnitPriceByProduct", {}
+        )
 
         errors = verify_overage_record_response(overage)
         if errors:
@@ -362,13 +368,15 @@ async def test_overage_calculation(
         print(f"    Base Unit Price: ${overage.get('baseUnitPrice', 'N/A')}")
         print(f"    Detail Unit Price: ${test_price}")
         print(f"    Overage Unit Price: ${overage.get('overageUnitPrice', 'N/A')}")
-        print(f"    Effective Commission Rate: {overage.get('effectiveCommissionRate', 'N/A')}%")
+        print(
+            f"    Effective Commission Rate: {overage.get('effectiveCommissionRate', 'N/A')}%"
+        )
         print(f"    Rep Share: {overage.get('repShare', 'N/A')}")
 
-        if overage.get('success'):
-            if factory.get('overageAllowed') and overage.get('overageUnitPrice'):
+        if overage.get("success"):
+            if factory.get("overageAllowed") and overage.get("overageUnitPrice"):
                 print("  PASSED: Overage calculation working correctly")
-            elif not factory.get('overageAllowed'):
+            elif not factory.get("overageAllowed"):
                 print("  PASSED: Overage disabled for factory (expected)")
             else:
                 print("  PASSED: No overage (detail price <= base price)")
@@ -380,6 +388,7 @@ async def test_overage_calculation(
     except Exception as e:
         print(f"  ERROR: {e}")
         import traceback
+
         traceback.print_exc()
         return False
 
@@ -389,19 +398,19 @@ async def test_quote_with_overage(headers: dict, factory: dict) -> bool:
     print("\n[3] Testing Quotes with Overage...")
 
     try:
-        factory_id = factory['id']
+        factory_id = factory["id"]
 
         result = await graphql_request(
             GET_QUOTES_BY_FACTORY,
-            variables={'factoryId': factory_id, 'limit': 3},
+            variables={"factoryId": factory_id, "limit": 3},
             headers=headers,
         )
 
-        if 'errors' in result:
+        if "errors" in result:
             print(f"  FAILED: GraphQL errors: {result['errors']}")
             return False
 
-        quotes = result.get('data', {}).get('quotes', {}).get('items', [])
+        quotes = result.get("data", {}).get("quotes", {}).get("items", [])
         if not quotes:
             print(f"  SKIPPED: No quotes for factory {factory['title']}")
             return True
@@ -410,21 +419,21 @@ async def test_quote_with_overage(headers: dict, factory: dict) -> bool:
 
         for quote in quotes:
             print(f"\n  Quote #{quote.get('quoteNumber', 'N/A')} (ID: {quote['id']})")
-            details = quote.get('details', [])
+            details = quote.get("details", [])
 
             if not details:
                 print("    No line items")
                 continue
 
-            end_user_id = quote.get('endUserId')
+            end_user_id = quote.get("endUserId")
             if not end_user_id:
                 print("    No end user - skipping overage calc")
                 continue
 
             print(f"    {len(details)} line items:")
             for detail in details[:3]:  # Test first 3 items
-                product_id = detail.get('productId')
-                unit_price = detail.get('unitPrice', 0)
+                product_id = detail.get("productId")
+                unit_price = detail.get("unitPrice", 0)
 
                 if not product_id:
                     continue
@@ -433,25 +442,29 @@ async def test_quote_with_overage(headers: dict, factory: dict) -> bool:
                 result = await graphql_request(
                     FIND_OVERAGE_BY_PRODUCT,
                     variables={
-                        'productId': product_id,
-                        'detailUnitPrice': float(unit_price) if unit_price else 100.0,
-                        'factoryId': factory_id,
-                        'endUserId': end_user_id,
-                        'quantity': float(detail.get('quantity', 1)),
+                        "productId": product_id,
+                        "detailUnitPrice": float(unit_price) if unit_price else 100.0,
+                        "factoryId": factory_id,
+                        "endUserId": end_user_id,
+                        "quantity": float(detail.get("quantity", 1)),
                     },
                     headers=headers,
                 )
 
-                if 'errors' in result:
+                if "errors" in result:
                     print(f"      Product {product_id}: Error - {result['errors']}")
                     continue
 
-                overage = result.get('data', {}).get('findEffectiveCommissionRateAndOverageUnitPriceByProduct', {})
+                overage = result.get("data", {}).get(
+                    "findEffectiveCommissionRateAndOverageUnitPriceByProduct", {}
+                )
 
-                ovg_price = overage.get('overageUnitPrice')
-                eff_rate = overage.get('effectiveCommissionRate')
+                ovg_price = overage.get("overageUnitPrice")
+                eff_rate = overage.get("effectiveCommissionRate")
 
-                print(f"      Product: ${unit_price:.2f} | Base: ${overage.get('baseUnitPrice') or 0:.2f} | Ovg: ${ovg_price or 0:.2f} | Eff Rate: {eff_rate or 0:.2f}%")
+                print(
+                    f"      Product: ${unit_price:.2f} | Base: ${overage.get('baseUnitPrice') or 0:.2f} | Ovg: ${ovg_price or 0:.2f} | Eff Rate: {eff_rate or 0:.2f}%"
+                )
 
         print("\n  PASSED: Quote overage calculation completed")
         return True
@@ -459,6 +472,7 @@ async def test_quote_with_overage(headers: dict, factory: dict) -> bool:
     except Exception as e:
         print(f"  ERROR: {e}")
         import traceback
+
         traceback.print_exc()
         return False
 
@@ -466,6 +480,7 @@ async def test_quote_with_overage(headers: dict, factory: dict) -> bool:
 # ============================================================================
 # Main Test Runner
 # ============================================================================
+
 
 async def run_overage_tests(headers: dict, factory_name: str | None = None) -> bool:
     """Run all overage contract tests and return success status."""

@@ -14,9 +14,11 @@ from app.graphql.submittals.repositories.submittals_repository import (
     SubmittalReturnedPdfsRepository,
     SubmittalRevisionsRepository,
 )
-from app.graphql.submittals.strawberry.submittal_input import (
+from app.graphql.submittals.strawberry.add_change_analysis_input import (
     AddChangeAnalysisInput,
-    AddReturnedPdfInput,
+)
+from app.graphql.submittals.strawberry.add_returned_pdf_input import AddReturnedPdfInput
+from app.graphql.submittals.strawberry.update_item_change_input import (
     UpdateItemChangeInput,
 )
 
@@ -66,26 +68,33 @@ class SubmittalsChangeService:
         if not item_change:
             raise ValueError(f"SubmittalItemChange with id {item_change_id} not found")
 
-        if input_data.status is not None:
-            item_change.status = ItemChangeStatus(input_data.status.value)
+        status = input_data.optional_field(input_data.status)
+        if status is not None:
+            item_change.status = ItemChangeStatus(status.value)
 
-        if input_data.notes is not None:
-            item_change.notes = input_data.notes
+        notes = input_data.optional_field(input_data.notes)
+        if notes is not None:
+            item_change.notes = notes
 
-        if input_data.page_references is not None:
-            item_change.page_references = input_data.page_references
+        page_references = input_data.optional_field(input_data.page_references)
+        if page_references is not None:
+            item_change.page_references = page_references
 
-        if input_data.resolved is not None:
-            item_change.resolved = input_data.resolved
+        resolved = input_data.optional_field(input_data.resolved)
+        if resolved is not None:
+            item_change.resolved = resolved
 
-        if input_data.fixture_type is not None:
-            item_change.fixture_type = input_data.fixture_type
+        fixture_type = input_data.optional_field(input_data.fixture_type)
+        if fixture_type is not None:
+            item_change.fixture_type = fixture_type
 
-        if input_data.catalog_number is not None:
-            item_change.catalog_number = input_data.catalog_number
+        catalog_number = input_data.optional_field(input_data.catalog_number)
+        if catalog_number is not None:
+            item_change.catalog_number = catalog_number
 
-        if input_data.manufacturer is not None:
-            item_change.manufacturer = input_data.manufacturer
+        manufacturer = input_data.optional_field(input_data.manufacturer)
+        if manufacturer is not None:
+            item_change.manufacturer = manufacturer
 
         updated = await self.item_changes_repository.update(item_change)
         logger.info(f"Updated item change {item_change_id}")

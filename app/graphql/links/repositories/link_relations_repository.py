@@ -39,7 +39,6 @@ class LinkRelationsRepository(BaseRepository[LinkRelation]):
         source_type: EntityType,
         source_id: UUID,
     ) -> list[LinkRelation]:
-        """Get all links from a specific source entity."""
         stmt = select(LinkRelation).where(
             (LinkRelation.source_entity_type == source_type)
             & (LinkRelation.source_entity_id == source_id)
@@ -52,7 +51,6 @@ class LinkRelationsRepository(BaseRepository[LinkRelation]):
         target_type: EntityType,
         target_id: UUID,
     ) -> list[LinkRelation]:
-        """Get all links to a specific target entity."""
         stmt = select(LinkRelation).where(
             (LinkRelation.target_entity_type == target_type)
             & (LinkRelation.target_entity_id == target_id)

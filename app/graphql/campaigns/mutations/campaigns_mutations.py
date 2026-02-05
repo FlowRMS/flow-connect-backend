@@ -9,7 +9,7 @@ from app.graphql.campaigns.services.campaign_email_sender_service import (
 from app.graphql.campaigns.services.campaigns_service import CampaignsService
 from app.graphql.campaigns.strawberry.campaign_input import CampaignInput
 from app.graphql.campaigns.strawberry.campaign_response import CampaignResponse
-from app.graphql.campaigns.strawberry.campaign_sending_status_response import (
+from app.graphql.campaigns.strawberry.send_test_email_response import (
     SendTestEmailResponse,
 )
 from app.graphql.inject import inject

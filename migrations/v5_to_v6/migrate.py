@@ -4,15 +4,6 @@ from dataclasses import dataclass
 
 import asyncpg
 
-from migrations.v5_to_v6.migrate_customer_relations import (
-    migrate_addresses,
-    migrate_contact_links,
-    migrate_contacts,
-    migrate_customer_factory_sales_reps,
-    migrate_inside_customer_split_rates,
-    migrate_customer_split_rates,
-    migrate_factory_split_rates,
-)
 from migrations.v5_to_v6.migrate_adjustments import (
     migrate_adjustment_split_rates,
     migrate_adjustments,
@@ -20,25 +11,34 @@ from migrations.v5_to_v6.migrate_adjustments import (
 from migrations.v5_to_v6.migrate_ai import (
     AI_TABLES,
     migrate_ai_table,
-    migrate_pending_documents,
-    migrate_pending_document_pages,
-    migrate_pending_document_entities,
-    migrate_pending_document_correction_changes,
     migrate_extracted_data_versions,
+    migrate_pending_document_correction_changes,
+    migrate_pending_document_entities,
+    migrate_pending_document_pages,
+    migrate_pending_documents,
 )
 from migrations.v5_to_v6.migrate_checks import (
     migrate_check_details,
     migrate_checks,
-)
-from migrations.v5_to_v6.migrate_files import (
-    migrate_files,
-    migrate_folders,
 )
 from migrations.v5_to_v6.migrate_credits import (
     migrate_credit_balances,
     migrate_credit_details,
     migrate_credit_split_rates,
     migrate_credits,
+)
+from migrations.v5_to_v6.migrate_customer_relations import (
+    migrate_addresses,
+    migrate_contact_links,
+    migrate_contacts,
+    migrate_customer_factory_sales_reps,
+    migrate_customer_split_rates,
+    migrate_factory_split_rates,
+    migrate_inside_customer_split_rates,
+)
+from migrations.v5_to_v6.migrate_files import (
+    migrate_files,
+    migrate_folders,
 )
 from migrations.v5_to_v6.migrate_invoices import (
     migrate_invoice_balances,
@@ -62,7 +62,9 @@ from migrations.v5_to_v6.migrate_pycrm_entities import (
     # migrate_tasks,
 )
 
-logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
+logging.basicConfig(
+    level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s"
+)
 logger = logging.getLogger(__name__)
 
 
@@ -123,26 +125,31 @@ async def migrate_users(source: asyncpg.Connection, dest: asyncpg.Connection) ->
             inside = EXCLUDED.inside,
             outside = EXCLUDED.outside
         """,
-        [(
-            u["id"],
-            u["username"],
-            u["first_name"],
-            u["last_name"],
-            u["email"],
-            u["auth_provider_id"],
-            u["role"],
-            u["enabled"],
-            u["inside"],
-            u["outside"],
-            u["created_at"],
-        ) for u in users],
+        [
+            (
+                u["id"],
+                u["username"],
+                u["first_name"],
+                u["last_name"],
+                u["email"],
+                u["auth_provider_id"],
+                u["role"],
+                u["enabled"],
+                u["inside"],
+                u["outside"],
+                u["created_at"],
+            )
+            for u in users
+        ],
     )
 
     logger.info(f"Migrated {len(users)} users")
     return len(users)
 
 
-async def migrate_customers(source: asyncpg.Connection, dest: asyncpg.Connection) -> int:
+async def migrate_customers(
+    source: asyncpg.Connection, dest: asyncpg.Connection
+) -> int:
     """Migrate customers from v5 (core.customers) to v6 (pycore.customers)."""
     logger.info("Starting customer migration...")
 
@@ -172,14 +179,17 @@ async def migrate_customers(source: asyncpg.Connection, dest: asyncpg.Connection
                 published = EXCLUDED.published,
                 is_parent = EXCLUDED.is_parent
             """,
-            [(
-                c["id"],
-                c["company_name"],
-                c["published"],
-                c["is_parent"],
-                c["created_by_id"],
-                c["created_at"],
-            ) for c in parent_customers],
+            [
+                (
+                    c["id"],
+                    c["company_name"],
+                    c["published"],
+                    c["is_parent"],
+                    c["created_by_id"],
+                    c["created_at"],
+                )
+                for c in parent_customers
+            ],
         )
 
     # Then get and insert child customers
@@ -209,23 +219,30 @@ async def migrate_customers(source: asyncpg.Connection, dest: asyncpg.Connection
                 published = EXCLUDED.published,
                 is_parent = EXCLUDED.is_parent
             """,
-            [(
-                c["id"],
-                c["company_name"],
-                c["parent_id"],
-                c["published"],
-                c["is_parent"],
-                c["created_by_id"],
-                c["created_at"],
-            ) for c in child_customers],
+            [
+                (
+                    c["id"],
+                    c["company_name"],
+                    c["parent_id"],
+                    c["published"],
+                    c["is_parent"],
+                    c["created_by_id"],
+                    c["created_at"],
+                )
+                for c in child_customers
+            ],
         )
 
     total = len(parent_customers) + len(child_customers)
-    logger.info(f"Migrated {total} customers ({len(parent_customers)} parents, {len(child_customers)} children)")
+    logger.info(
+        f"Migrated {total} customers ({len(parent_customers)} parents, {len(child_customers)} children)"
+    )
     return total
 
 
-async def migrate_factories(source: asyncpg.Connection, dest: asyncpg.Connection) -> int:
+async def migrate_factories(
+    source: asyncpg.Connection, dest: asyncpg.Connection
+) -> int:
     """Migrate factories from v5 (core.factories) to v6 (pycore.factories)."""
     logger.info("Starting factory migration...")
 
@@ -289,33 +306,38 @@ async def migrate_factories(source: asyncpg.Connection, dest: asyncpg.Connection
             freight_discount_type = EXCLUDED.freight_discount_type,
             creation_type = EXCLUDED.creation_type
         """,
-        [(
-            f["id"],
-            f["title"],
-            f["account_number"],
-            f["email"],
-            f["phone"],
-            f["lead_time"],
-            f["payment_terms"],
-            f["base_commission_rate"],
-            f["commission_discount_rate"],
-            f["overall_discount_rate"],
-            f["additional_information"],
-            f["freight_terms"],
-            f["external_payment_terms"],
-            f["published"],
-            f["freight_discount_type"],
-            f["creation_type"],
-            f["created_by_id"],
-            f["created_at"],
-        ) for f in factories],
+        [
+            (
+                f["id"],
+                f["title"],
+                f["account_number"],
+                f["email"],
+                f["phone"],
+                f["lead_time"],
+                f["payment_terms"],
+                f["base_commission_rate"],
+                f["commission_discount_rate"],
+                f["overall_discount_rate"],
+                f["additional_information"],
+                f["freight_terms"],
+                f["external_payment_terms"],
+                f["published"],
+                f["freight_discount_type"],
+                f["creation_type"],
+                f["created_by_id"],
+                f["created_at"],
+            )
+            for f in factories
+        ],
     )
 
     logger.info(f"Migrated {len(factories)} factories")
     return len(factories)
 
 
-async def migrate_product_uoms(source: asyncpg.Connection, dest: asyncpg.Connection) -> int:
+async def migrate_product_uoms(
+    source: asyncpg.Connection, dest: asyncpg.Connection
+) -> int:
     """Migrate product UOMs from v5 (core.product_uoms) to v6 (pycore.product_uoms)."""
     logger.info("Starting product UOM migration...")
 
@@ -349,21 +371,26 @@ async def migrate_product_uoms(source: asyncpg.Connection, dest: asyncpg.Connect
             creation_type = EXCLUDED.creation_type,
             division_factor = EXCLUDED.division_factor
         """,
-        [(
-            u["id"],
-            u["title"],
-            u["description"],
-            u["creation_type"],
-            u["created_at"],
-            u["division_factor"],
-        ) for u in uoms],
+        [
+            (
+                u["id"],
+                u["title"],
+                u["description"],
+                u["creation_type"],
+                u["created_at"],
+                u["division_factor"],
+            )
+            for u in uoms
+        ],
     )
 
     logger.info(f"Migrated {len(uoms)} product UOMs")
     return len(uoms)
 
 
-async def migrate_product_categories(source: asyncpg.Connection, dest: asyncpg.Connection) -> int:
+async def migrate_product_categories(
+    source: asyncpg.Connection, dest: asyncpg.Connection
+) -> int:
     """Migrate product categories from v5 (core.product_categories) to v6 (pycore.product_categories)."""
     logger.info("Starting product category migration...")
 
@@ -390,12 +417,15 @@ async def migrate_product_categories(source: asyncpg.Connection, dest: asyncpg.C
             commission_rate = EXCLUDED.commission_rate,
             factory_id = EXCLUDED.factory_id
         """,
-        [(
-            c["id"],
-            c["title"],
-            c["commission_rate"],
-            c["factory_id"],
-        ) for c in categories],
+        [
+            (
+                c["id"],
+                c["title"],
+                c["commission_rate"],
+                c["factory_id"],
+            )
+            for c in categories
+        ],
     )
 
     logger.info(f"Migrated {len(categories)} product categories")
@@ -471,35 +501,40 @@ async def migrate_products(source: asyncpg.Connection, dest: asyncpg.Connection)
             approval_date = EXCLUDED.approval_date,
             approval_comments = EXCLUDED.approval_comments
         """,
-        [(
-            p["id"],
-            p["factory_part_number"],
-            p["unit_price"],
-            p["default_commission_rate"],
-            p["factory_id"],
-            p["product_category_id"],
-            p["product_uom_id"],
-            p["published"],
-            p["approval_needed"],
-            p["description"],
-            p["creation_type"],
-            p["created_at"],
-            p["created_by_id"],
-            p["upc"],
-            p["min_order_qty"],
-            p["lead_time"],
-            p["unit_price_discount_rate"],
-            p["commission_discount_rate"],
-            p["approval_date"],
-            p["approval_comments"],
-        ) for p in products],
+        [
+            (
+                p["id"],
+                p["factory_part_number"],
+                p["unit_price"],
+                p["default_commission_rate"],
+                p["factory_id"],
+                p["product_category_id"],
+                p["product_uom_id"],
+                p["published"],
+                p["approval_needed"],
+                p["description"],
+                p["creation_type"],
+                p["created_at"],
+                p["created_by_id"],
+                p["upc"],
+                p["min_order_qty"],
+                p["lead_time"],
+                p["unit_price_discount_rate"],
+                p["commission_discount_rate"],
+                p["approval_date"],
+                p["approval_comments"],
+            )
+            for p in products
+        ],
     )
 
     logger.info(f"Migrated {len(products)} products")
     return len(products)
 
 
-async def migrate_product_cpns(source: asyncpg.Connection, dest: asyncpg.Connection) -> int:
+async def migrate_product_cpns(
+    source: asyncpg.Connection, dest: asyncpg.Connection
+) -> int:
     """Migrate product CPNs from v5 (core.product_cpns) to v6 (pycore.product_cpns)."""
     logger.info("Starting product CPN migration...")
 
@@ -530,21 +565,26 @@ async def migrate_product_cpns(source: asyncpg.Connection, dest: asyncpg.Connect
             product_id = EXCLUDED.product_id,
             customer_id = EXCLUDED.customer_id
         """,
-        [(
-            c["id"],
-            c["customer_part_number"],
-            c["unit_price"],
-            c["commission_rate"],
-            c["product_id"],
-            c["customer_id"],
-        ) for c in cpns],
+        [
+            (
+                c["id"],
+                c["customer_part_number"],
+                c["unit_price"],
+                c["commission_rate"],
+                c["product_id"],
+                c["customer_id"],
+            )
+            for c in cpns
+        ],
     )
 
     logger.info(f"Migrated {len(cpns)} product CPNs")
     return len(cpns)
 
 
-async def migrate_job_statuses(source: asyncpg.Connection, dest: asyncpg.Connection) -> int:
+async def migrate_job_statuses(
+    source: asyncpg.Connection, dest: asyncpg.Connection
+) -> int:
     """Migrate job statuses from v5 (crm.jobs.status) to v6 (pycrm.job_statuses)."""
     logger.info("Starting job status migration...")
 
@@ -584,7 +624,9 @@ async def migrate_job_statuses(source: asyncpg.Connection, dest: asyncpg.Connect
             [(name,) for name in new_statuses],
         )
 
-    logger.info(f"Migrated {len(new_statuses)} job statuses (total: {len(status_names)})")
+    logger.info(
+        f"Migrated {len(new_statuses)} job statuses (total: {len(status_names)})"
+    )
     return len(new_statuses)
 
 
@@ -634,25 +676,30 @@ async def migrate_jobs(source: asyncpg.Connection, dest: asyncpg.Connection) -> 
             requester_id = EXCLUDED.requester_id,
             job_owner_id = EXCLUDED.job_owner_id
         """,
-        [(
-            j["id"],
-            j["job_name"],
-            status_map.get(j["status"], default_status_id),
-            j["start_date"],
-            j["end_date"],
-            j["description"],
-            j["requester_id"],
-            j["job_owner_id"],
-            j["created_at"],
-            j["created_by_id"],
-        ) for j in jobs],
+        [
+            (
+                j["id"],
+                j["job_name"],
+                status_map.get(j["status"], default_status_id),
+                j["start_date"],
+                j["end_date"],
+                j["description"],
+                j["requester_id"],
+                j["job_owner_id"],
+                j["created_at"],
+                j["created_by_id"],
+            )
+            for j in jobs
+        ],
     )
 
     logger.info(f"Migrated {len(jobs)} jobs")
     return len(jobs)
 
 
-async def migrate_quote_balances(source: asyncpg.Connection, dest: asyncpg.Connection) -> int:
+async def migrate_quote_balances(
+    source: asyncpg.Connection, dest: asyncpg.Connection
+) -> int:
     """Migrate quote balances from v5 (crm.quote_balances) to v6 (pycrm.quote_balances)."""
     logger.info("Starting quote balance migration...")
 
@@ -692,25 +739,30 @@ async def migrate_quote_balances(source: asyncpg.Connection, dest: asyncpg.Conne
             commission_discount = EXCLUDED.commission_discount,
             commission_discount_rate = EXCLUDED.commission_discount_rate
         """,
-        [(
-            b["id"],
-            b["quantity"],
-            b["subtotal"],
-            b["total"],
-            b["commission"],
-            b["discount"],
-            b["discount_rate"],
-            b["commission_rate"],
-            b["commission_discount"],
-            b["commission_discount_rate"],
-        ) for b in balances],
+        [
+            (
+                b["id"],
+                b["quantity"],
+                b["subtotal"],
+                b["total"],
+                b["commission"],
+                b["discount"],
+                b["discount_rate"],
+                b["commission_rate"],
+                b["commission_discount"],
+                b["commission_discount_rate"],
+            )
+            for b in balances
+        ],
     )
 
     logger.info(f"Migrated {len(balances)} quote balances")
     return len(balances)
 
 
-async def migrate_quote_lost_reasons(source: asyncpg.Connection, dest: asyncpg.Connection) -> int:
+async def migrate_quote_lost_reasons(
+    source: asyncpg.Connection, dest: asyncpg.Connection
+) -> int:
     """Migrate quote lost reasons from v5 (crm.quote_lost_reasons) to v6 (pycrm.quote_lost_reasons)."""
     logger.info("Starting quote lost reason migration...")
 
@@ -738,13 +790,16 @@ async def migrate_quote_lost_reasons(source: asyncpg.Connection, dest: asyncpg.C
             title = EXCLUDED.title,
             "position" = EXCLUDED."position"
         """,
-        [(
-            r["id"],
-            r["created_by_id"],
-            r["title"],
-            r["position"],
-            r["created_at"],
-        ) for r in reasons],
+        [
+            (
+                r["id"],
+                r["created_by_id"],
+                r["title"],
+                r["position"],
+                r["created_at"],
+            )
+            for r in reasons
+        ],
     )
 
     logger.info(f"Migrated {len(reasons)} quote lost reasons")
@@ -818,35 +873,40 @@ async def migrate_quotes(source: asyncpg.Connection, dest: asyncpg.Connection) -
             balance_id = EXCLUDED.balance_id,
             job_id = EXCLUDED.job_id
         """,
-        [(
-            q["id"],
-            q["quote_number"],
-            q["entity_date"],
-            q["sold_to_customer_id"],
-            q["bill_to_customer_id"],
-            q["published"],
-            q["creation_type"],
-            q["status"],
-            q["payment_terms"],
-            q["customer_ref"],
-            q["freight_terms"],
-            q["exp_date"],
-            q["revise_date"],
-            q["accept_date"],
-            q["blanket"],
-            q["duplicated_from"],
-            q["balance_id"],
-            q["created_by_id"],
-            q["created_at"],
-            q["job_id"],
-        ) for q in quotes],
+        [
+            (
+                q["id"],
+                q["quote_number"],
+                q["entity_date"],
+                q["sold_to_customer_id"],
+                q["bill_to_customer_id"],
+                q["published"],
+                q["creation_type"],
+                q["status"],
+                q["payment_terms"],
+                q["customer_ref"],
+                q["freight_terms"],
+                q["exp_date"],
+                q["revise_date"],
+                q["accept_date"],
+                q["blanket"],
+                q["duplicated_from"],
+                q["balance_id"],
+                q["created_by_id"],
+                q["created_at"],
+                q["job_id"],
+            )
+            for q in quotes
+        ],
     )
 
     logger.info(f"Migrated {len(quotes)} quotes")
     return len(quotes)
 
 
-async def migrate_quote_details(source: asyncpg.Connection, dest: asyncpg.Connection) -> int:
+async def migrate_quote_details(
+    source: asyncpg.Connection, dest: asyncpg.Connection
+) -> int:
     """Migrate quote details from v5 (crm.quote_details) to v6 (pycrm.quote_details)."""
     logger.info("Starting quote detail migration...")
 
@@ -919,37 +979,42 @@ async def migrate_quote_details(source: asyncpg.Connection, dest: asyncpg.Connec
             lost_reason_id = EXCLUDED.lost_reason_id,
             division_factor = EXCLUDED.division_factor
         """,
-        [(
-            d["id"],
-            d["quote_id"],
-            d["item_number"],
-            d["quantity"],
-            d["unit_price"],
-            d["subtotal"],
-            d["total"],
-            d["total_line_commission"],
-            d["commission_rate"],
-            d["commission"],
-            d["commission_discount_rate"],
-            d["commission_discount"],
-            d["discount_rate"],
-            d["discount"],
-            d["product_id"],
-            d["factory_id"],
-            d["end_user_id"],
-            d["lead_time"],
-            d["note"],
-            d["status"],
-            d["lost_reason_id"],
-            d["division_factor"],
-        ) for d in details],
+        [
+            (
+                d["id"],
+                d["quote_id"],
+                d["item_number"],
+                d["quantity"],
+                d["unit_price"],
+                d["subtotal"],
+                d["total"],
+                d["total_line_commission"],
+                d["commission_rate"],
+                d["commission"],
+                d["commission_discount_rate"],
+                d["commission_discount"],
+                d["discount_rate"],
+                d["discount"],
+                d["product_id"],
+                d["factory_id"],
+                d["end_user_id"],
+                d["lead_time"],
+                d["note"],
+                d["status"],
+                d["lost_reason_id"],
+                d["division_factor"],
+            )
+            for d in details
+        ],
     )
 
     logger.info(f"Migrated {len(details)} quote details")
     return len(details)
 
 
-async def migrate_quote_split_rates(source: asyncpg.Connection, dest: asyncpg.Connection) -> int:
+async def migrate_quote_split_rates(
+    source: asyncpg.Connection, dest: asyncpg.Connection
+) -> int:
     """Migrate quote split rates from v5 (crm.quote_split_rates) to v6 (pycrm.quote_split_rates)."""
     logger.info("Starting quote split rate migration...")
 
@@ -983,21 +1048,26 @@ async def migrate_quote_split_rates(source: asyncpg.Connection, dest: asyncpg.Co
             split_rate = EXCLUDED.split_rate,
             "position" = EXCLUDED."position"
         """,
-        [(
-            sr["id"],
-            sr["quote_detail_id"],
-            sr["user_id"],
-            sr["split_rate"],
-            sr["position"],
-            sr["created_at"],
-        ) for sr in split_rates],
+        [
+            (
+                sr["id"],
+                sr["quote_detail_id"],
+                sr["user_id"],
+                sr["split_rate"],
+                sr["position"],
+                sr["created_at"],
+            )
+            for sr in split_rates
+        ],
     )
 
     logger.info(f"Migrated {len(split_rates)} quote split rates")
     return len(split_rates)
 
 
-async def migrate_quote_inside_reps(source: asyncpg.Connection, dest: asyncpg.Connection) -> int:
+async def migrate_quote_inside_reps(
+    source: asyncpg.Connection, dest: asyncpg.Connection
+) -> int:
     """Migrate quote inside reps from v5 (crm.quote_inside_reps) to v6 (pycrm.quote_inside_reps)."""
     logger.info("Starting quote inside rep migration...")
 
@@ -1027,12 +1097,15 @@ async def migrate_quote_inside_reps(source: asyncpg.Connection, dest: asyncpg.Co
             quote_detail_id = EXCLUDED.quote_detail_id,
             user_id = EXCLUDED.user_id
         """,
-        [(
-            ir["id"],
-            ir["quote_detail_id"],
-            ir["user_id"],
-            ir["created_at"],
-        ) for ir in inside_reps],
+        [
+            (
+                ir["id"],
+                ir["quote_detail_id"],
+                ir["user_id"],
+                ir["created_at"],
+            )
+            for ir in inside_reps
+        ],
     )
 
     logger.info(f"Migrated {len(inside_reps)} quote inside reps")
@@ -1183,11 +1256,15 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     if not args.source_url or not args.dest_url:
-        parser.error("--source-url and --dest-url are required (or set V5_DATABASE_URL and V6_DATABASE_URL)")
+        parser.error(
+            "--source-url and --dest-url are required (or set V5_DATABASE_URL and V6_DATABASE_URL)"
+        )
 
-    _ = asyncio.run(run_migration_for_tenant(
-        source_tenant=args.source_tenant,
-        dest_tenant=args.dest_tenant,
-        source_base_url=args.source_url,
-        dest_base_url=args.dest_url,
-    ))
+    _ = asyncio.run(
+        run_migration_for_tenant(
+            source_tenant=args.source_tenant,
+            dest_tenant=args.dest_tenant,
+            source_base_url=args.source_url,
+            dest_base_url=args.dest_url,
+        )
+    )

@@ -8,7 +8,9 @@ from commons.db.v6.crm.campaigns.recipient_list_type import RecipientListType
 from commons.db.v6.crm.campaigns.send_pace import SendPace
 
 from app.core.strawberry.inputs import BaseInputGQL
-from app.graphql.campaigns.strawberry.criteria_input import CampaignCriteriaInput
+from app.graphql.campaigns.strawberry.campaign_criteria_input import (
+    CampaignCriteriaInput,
+)
 
 
 @strawberry.input
