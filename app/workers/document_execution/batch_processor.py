@@ -212,12 +212,18 @@ class DocumentBatchProcessor:
                 fallback.sold_to_customer_id = mapping.sold_to_customer_id
             if mapping.bill_to_customer_id and not fallback.bill_to_customer_id:
                 fallback.bill_to_customer_id = mapping.bill_to_customer_id
-            if (
-                fallback.factory_id
-                and fallback.sold_to_customer_id
-                and fallback.bill_to_customer_id
-            ):
-                break
+            fallback.products.update(mapping.products)
+            fallback.end_users.update(mapping.end_users)
+            if mapping.default_end_user_id and not fallback.default_end_user_id:
+                fallback.default_end_user_id = mapping.default_end_user_id
+            fallback.orders.update(mapping.orders)
+            fallback.invoices.update(mapping.invoices)
+            fallback.credits.update(mapping.credits)
+            fallback.adjustments.update(mapping.adjustments)
+            fallback.sold_to_customer_ids.update(mapping.sold_to_customer_ids)
+            fallback.skipped_product_indices.update(mapping.skipped_product_indices)
+            fallback.skipped_order_indices.update(mapping.skipped_order_indices)
+            fallback.skipped_invoice_indices.update(mapping.skipped_invoice_indices)
         return fallback
 
     @staticmethod

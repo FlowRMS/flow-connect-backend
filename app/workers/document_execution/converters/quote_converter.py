@@ -5,10 +5,12 @@ from uuid import UUID
 
 from commons.db.v6 import AutoNumberEntityType
 from commons.db.v6.ai.documents.enums.entity_type import DocumentEntityType
+from commons.db.v6.core import Product
 from commons.db.v6.crm.quotes import PipelineStage, Quote, QuoteStatus
 from commons.dtos.common.dto_loader_service import DTOLoaderService
 from commons.dtos.quote.quote_detail_dto import BaseQuoteDetailDTO
 from commons.dtos.quote.quote_dto import QuoteDTO
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.graphql.auto_numbers.services.auto_number_settings_service import (
@@ -137,11 +139,19 @@ class QuoteConverter(BaseEntityConverter[QuoteDTO, QuoteInput, Quote]):
 
         entity_date = dto.quote_date or date.today()
 
+        product_ids = [
+            pid
+            for detail in dto.details
+            if (pid := entity_mapping.get_product_id(detail.flow_index))
+        ]
+        product_factories = await self._get_product_factory_ids(product_ids)
+
         details = [
             self._convert_detail(
                 detail=detail,
                 entity_mapping=entity_mapping,
                 factory_id=factory_id,
+                product_factories=product_factories,
                 default_commission_rate=default_commission_rate,
                 default_commission_discount=default_commission_discount,
                 default_discount_rate=default_discount_rate,
@@ -170,6 +180,7 @@ class QuoteConverter(BaseEntityConverter[QuoteDTO, QuoteInput, Quote]):
         detail: BaseQuoteDetailDTO,
         entity_mapping: EntityMapping,
         factory_id: UUID,
+        product_factories: dict[UUID, UUID],
         default_commission_rate: Decimal,
         default_commission_discount: Decimal,
         default_discount_rate: Decimal,
@@ -177,6 +188,7 @@ class QuoteConverter(BaseEntityConverter[QuoteDTO, QuoteInput, Quote]):
         flow_index = detail.flow_index
         product_id = entity_mapping.get_product_id(flow_index)
         end_user_id = entity_mapping.get_end_user_id(flow_index)
+        detail_factory_id = product_factories.get(product_id) if product_id else None
 
         commission_rate = (
             detail.commission_rate
@@ -199,7 +211,7 @@ class QuoteConverter(BaseEntityConverter[QuoteDTO, QuoteInput, Quote]):
             quantity=Decimal(str(detail.quantity or 1)),
             unit_price=detail.unit_price or Decimal("0"),
             end_user_id=end_user_id,
-            factory_id=factory_id,
+            factory_id=detail_factory_id or factory_id,
             product_id=product_id,
             product_name_adhoc=self._get_adhoc_name(detail) if not product_id else None,
             product_description_adhoc=detail.description if not product_id else None,
@@ -208,6 +220,13 @@ class QuoteConverter(BaseEntityConverter[QuoteDTO, QuoteInput, Quote]):
             commission_rate=commission_rate,
             commission_discount_rate=commission_discount_rate,
         )
+
+    async def _get_product_factory_ids(self, product_ids: list[UUID]) -> dict[UUID, UUID]:
+        if not product_ids:
+            return {}
+        stmt = select(Product.id, Product.factory_id).where(Product.id.in_(product_ids))
+        result = await self.session.execute(stmt)
+        return {row.id: row.factory_id for row in result.fetchall()}
 
     def _get_adhoc_name(self, detail: BaseQuoteDetailDTO) -> str | None:
         if detail.factory_part_number:
