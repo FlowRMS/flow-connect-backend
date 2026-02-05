@@ -1,5 +1,3 @@
-"""Email sending strategies."""
-
 from .base import EmailStrategy, WorkerSendEmailResult
 from .gmail_strategy import GmailEmailStrategy
 from .o365_strategy import O365EmailStrategy

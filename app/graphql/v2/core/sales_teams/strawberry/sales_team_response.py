@@ -6,19 +6,13 @@ import strawberry
 from commons.db.v6.core.sales_teams.sales_team import SalesTeam
 
 from app.core.db.adapters.dto import DTOMixin
+from app.graphql.v2.core.sales_teams.strawberry.sales_team_member_response import (
+    SalesTeamMemberResponse,
+)
 from app.graphql.v2.core.territories.strawberry.territory_response import (
     TerritoryLiteResponse,
 )
 from app.graphql.v2.core.users.strawberry.user_response import UserResponse
-
-
-@strawberry.type
-class SalesTeamMemberResponse:
-    id: UUID
-    user_id: UUID
-    position: int
-    user: UserResponse
-    created_at: datetime
 
 
 @strawberry.type
@@ -65,10 +59,3 @@ class SalesTeamResponse(DTOMixin[SalesTeam]):
             )
             for member in self._instance.members
         ]
-
-
-@strawberry.type
-class MismatchCheckResponse:
-    has_mismatch: bool
-    only_in_team: list[UserResponse]
-    only_in_territory: list[UserResponse]

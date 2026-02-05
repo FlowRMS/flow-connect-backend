@@ -1,5 +1,3 @@
-"""Base classes for email sending strategies."""
-
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from uuid import UUID

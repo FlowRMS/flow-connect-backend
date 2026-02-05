@@ -93,7 +93,6 @@ class SubmittalsItemService:
         return item_with_relations or updated
 
     async def remove_item(self, item_id: UUID) -> bool:
-        """Remove a submittal item."""
         result = await self.items_repository.delete(item_id)
         if result:
             logger.info(f"Removed submittal item {item_id}")

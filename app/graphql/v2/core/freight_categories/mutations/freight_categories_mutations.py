@@ -24,7 +24,6 @@ class FreightCategoriesMutations:
         input: FreightCategoryInput,
         service: Injected[FreightCategoryService],
     ) -> FreightCategoryResponse:
-        """Create a new freight category."""
         freight_category = await service.create(input)
         return FreightCategoryResponse.from_orm_model(freight_category)
 
@@ -36,7 +35,6 @@ class FreightCategoriesMutations:
         input: FreightCategoryInput,
         service: Injected[FreightCategoryService],
     ) -> FreightCategoryResponse:
-        """Update a freight category."""
         freight_category = await service.update(id, input)
         return FreightCategoryResponse.from_orm_model(freight_category)
 
@@ -47,7 +45,6 @@ class FreightCategoriesMutations:
         id: UUID,
         service: Injected[FreightCategoryService],
     ) -> bool:
-        """Delete a freight category."""
         return await service.delete(id)
 
     @strawberry.mutation

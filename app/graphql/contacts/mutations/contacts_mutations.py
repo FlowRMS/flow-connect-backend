@@ -20,7 +20,6 @@ class ContactsMutations:
         input: ContactInput,
         service: Injected[ContactsService],
     ) -> ContactResponse:
-        """Create a new contact."""
         return ContactResponse.from_orm_model(
             await service.create_contact(contact_input=input)
         )
@@ -32,7 +31,6 @@ class ContactsMutations:
         id: UUID,
         service: Injected[ContactsService],
     ) -> bool:
-        """Delete a contact by ID."""
         return await service.delete_contact(contact_id=id)
 
     @strawberry.mutation

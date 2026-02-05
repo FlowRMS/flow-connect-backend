@@ -45,7 +45,6 @@ class GenerateSubmittalPdfResponse(DTOMixin[SubmittalRevision]):
 
     @classmethod
     def error_response(cls, error: str) -> Self:
-        """Create an error response."""
         return cls(
             success=False,
             error=error,

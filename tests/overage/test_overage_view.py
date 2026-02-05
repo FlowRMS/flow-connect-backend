@@ -1,47 +1,37 @@
 #!/usr/bin/env python3
-"""
-Unit tests for Overage View calculations.
-
-Tests the overage calculation logic with various scenarios:
-1. Factory with overage_allowed=true (BY_LINE mode)
-2. Factory with overage_allowed=false
-3. Different price scenarios (markup, at-cost, below-cost)
-4. Rep share calculations
-
-These tests use mocks and don't require a running server.
-
-Usage:
-    cd /home/jorge/flowrms/FLO-727/flow-py-backend
-    uv run pytest tests/overage/test_overage_view.py -v
-"""
-import pytest
 from decimal import Decimal
 from unittest.mock import AsyncMock, MagicMock, PropertyMock
 from uuid import uuid4
+
+import pytest
 
 # Check if required modules are available
 try:
     from commons.db.v6.core.factories import Factory, OverageTypeEnum
     from commons.db.v6.core.products import Product, ProductCpn
+
     from app.graphql.common.services.overage_service import OverageService
     from app.graphql.common.strawberry.overage_record import (
         OverageRecord,
+    )
+    from app.graphql.common.strawberry.overage_record import (
         OverageTypeEnum as GqlOverageTypeEnum,
     )
+
     MODULES_AVAILABLE = True
 except ImportError as e:
     print(f"Import error: {e}")
     MODULES_AVAILABLE = False
 
 pytestmark = pytest.mark.skipif(
-    not MODULES_AVAILABLE,
-    reason="Required modules not available"
+    not MODULES_AVAILABLE, reason="Required modules not available"
 )
 
 
 # ============================================================================
 # Fixtures
 # ============================================================================
+
 
 @pytest.fixture
 def mock_session():
@@ -103,6 +93,7 @@ def factory_by_total():
 # Test Overage Enabled - BY_LINE Mode
 # ============================================================================
 
+
 class TestOverageEnabledByLine:
     """Test scenarios where factory has overage_allowed=true and BY_LINE mode."""
 
@@ -119,7 +110,9 @@ class TestOverageEnabledByLine:
         factory_result.scalar_one_or_none.return_value = factory_overage_enabled
 
         cpn_result = MagicMock()
-        cpn_result.scalar_one_or_none.return_value = None  # No customer-specific pricing
+        cpn_result.scalar_one_or_none.return_value = (
+            None  # No customer-specific pricing
+        )
 
         qty_result = MagicMock()
         qty_result.scalar_one_or_none.return_value = None  # No quantity pricing
@@ -224,6 +217,7 @@ class TestOverageEnabledByLine:
 # Test Overage Disabled
 # ============================================================================
 
+
 class TestOverageDisabled:
     """Test scenarios where factory has overage_allowed=false."""
 
@@ -268,6 +262,7 @@ class TestOverageDisabled:
 # Test BY_TOTAL Mode
 # ============================================================================
 
+
 class TestByTotalMode:
     """Test scenarios with BY_TOTAL overage mode."""
 
@@ -308,6 +303,7 @@ class TestByTotalMode:
 # ============================================================================
 # Test Rep Share Calculations
 # ============================================================================
+
 
 class TestRepShareCalculations:
     """Test rep_overage_share percentage calculations."""
@@ -393,6 +389,7 @@ class TestRepShareCalculations:
 # Test Frontend Expected Values
 # ============================================================================
 
+
 class TestFrontendExpectedValues:
     """Test that response contains all fields expected by frontend Overage View."""
 
@@ -431,14 +428,14 @@ class TestFrontendExpectedValues:
         )
 
         # Frontend expects these fields for Overage View columns
-        assert hasattr(result, 'effective_commission_rate')  # Eff Rate %
-        assert hasattr(result, 'overage_unit_price')  # Ovg $
-        assert hasattr(result, 'base_unit_price')  # Base price
-        assert hasattr(result, 'rep_share')  # Rep's share of overage
-        assert hasattr(result, 'overage_type')  # BY_LINE or BY_TOTAL
-        assert hasattr(result, 'success')  # Error handling
-        assert hasattr(result, 'error_message')  # Error message
+        assert hasattr(result, "effective_commission_rate")  # Eff Rate %
+        assert hasattr(result, "overage_unit_price")  # Ovg $
+        assert hasattr(result, "base_unit_price")  # Base price
+        assert hasattr(result, "rep_share")  # Rep's share of overage
+        assert hasattr(result, "overage_type")  # BY_LINE or BY_TOTAL
+        assert hasattr(result, "success")  # Error handling
+        assert hasattr(result, "error_message")  # Error message
 
 
-if __name__ == '__main__':
-    pytest.main([__file__, '-v'])
+if __name__ == "__main__":
+    pytest.main([__file__, "-v"])

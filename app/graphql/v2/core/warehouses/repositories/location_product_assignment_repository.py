@@ -34,7 +34,6 @@ class LocationProductAssignmentRepository(BaseRepository[LocationProductAssignme
     async def get_with_product(
         self, assignment_id: UUID
     ) -> LocationProductAssignment | None:
-        """Get assignment by ID with product relationship loaded."""
         stmt = (
             select(LocationProductAssignment)
             .options(joinedload(LocationProductAssignment.product))

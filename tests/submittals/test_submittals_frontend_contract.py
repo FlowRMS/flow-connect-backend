@@ -1,24 +1,4 @@
 #!/usr/bin/env python3
-"""
-Submittals Frontend Contract Tests.
-
-These tests verify that the API responses match exactly what the frontend expects.
-Based on: flow-crm/components/lib/graphql/submittals.ts
-
-This ensures:
-1. All fields the frontend expects are present
-2. Field types match (string, number, boolean, array, object)
-3. Enum values match frontend expectations
-4. Nullable fields are handled correctly
-
-Requirements:
-- Server running on localhost:5555 (uv run ./start.py)
-- Valid authentication credentials
-
-Usage:
-    cd /home/jorge/flowrms/FLO-727/flow-py-backend
-    uv run python tests/submittals/test_submittals_frontend_contract.py --email jorge@flowrms.com --password CucoHermoso2026$
-"""
 import argparse
 import asyncio
 import sys
@@ -57,11 +37,36 @@ async def graphql_request(
 # ============================================================================
 
 # Expected enum values that frontend uses
-EXPECTED_SUBMITTAL_STATUS = ['DRAFT', 'SUBMITTED', 'APPROVED', 'APPROVED_AS_NOTED', 'REVISE_AND_RESUBMIT', 'REJECTED']
-EXPECTED_ITEM_APPROVAL_STATUS = ['PENDING', 'APPROVED', 'APPROVED_AS_NOTED', 'REVISE', 'REJECTED']
-EXPECTED_ITEM_MATCH_STATUS = ['NO_MATCH', 'PARTIAL_MATCH', 'EXACT_MATCH']
-EXPECTED_STAKEHOLDER_ROLE = ['CUSTOMER', 'ENGINEER', 'ARCHITECT', 'GENERAL_CONTRACTOR', 'OTHER']
-EXPECTED_TRANSMITTAL_PURPOSE = ['FOR_APPROVAL', 'FOR_REVIEW', 'FOR_INFORMATION', 'FOR_RECORD', 'RESUBMITTAL']
+EXPECTED_SUBMITTAL_STATUS = [
+    "DRAFT",
+    "SUBMITTED",
+    "APPROVED",
+    "APPROVED_AS_NOTED",
+    "REVISE_AND_RESUBMIT",
+    "REJECTED",
+]
+EXPECTED_ITEM_APPROVAL_STATUS = [
+    "PENDING",
+    "APPROVED",
+    "APPROVED_AS_NOTED",
+    "REVISE",
+    "REJECTED",
+]
+EXPECTED_ITEM_MATCH_STATUS = ["NO_MATCH", "PARTIAL_MATCH", "EXACT_MATCH"]
+EXPECTED_STAKEHOLDER_ROLE = [
+    "CUSTOMER",
+    "ENGINEER",
+    "ARCHITECT",
+    "GENERAL_CONTRACTOR",
+    "OTHER",
+]
+EXPECTED_TRANSMITTAL_PURPOSE = [
+    "FOR_APPROVAL",
+    "FOR_REVIEW",
+    "FOR_INFORMATION",
+    "FOR_RECORD",
+    "RESUBMITTAL",
+]
 
 
 # ============================================================================
@@ -235,6 +240,7 @@ mutation DeleteSubmittal($id: UUID!) {
 # Contract Verification Functions
 # ============================================================================
 
+
 def verify_submittal_response(submittal: dict) -> list[str]:
     """
     Verify submittal response matches frontend SubmittalResponse interface.
@@ -258,65 +264,78 @@ def verify_submittal_response(submittal: dict) -> list[str]:
     errors = []
 
     # Required string fields
-    required_strings = ['id', 'submittalNumber', 'createdAt']
+    required_strings = ["id", "submittalNumber", "createdAt"]
     for field in required_strings:
         if field not in submittal:
             errors.append(f"Missing required field: {field}")
         elif not isinstance(submittal[field], str):
-            errors.append(f"Field {field} should be string, got {type(submittal[field]).__name__}")
+            errors.append(
+                f"Field {field} should be string, got {type(submittal[field]).__name__}"
+            )
 
     # Nullable string fields
-    nullable_strings = ['quoteId', 'jobId', 'description']
+    nullable_strings = ["quoteId", "jobId", "description"]
     for field in nullable_strings:
         if field not in submittal:
             errors.append(f"Missing nullable field: {field}")
         elif submittal[field] is not None and not isinstance(submittal[field], str):
-            errors.append(f"Field {field} should be string or null, got {type(submittal[field]).__name__}")
+            errors.append(
+                f"Field {field} should be string or null, got {type(submittal[field]).__name__}"
+            )
 
     # Status enum
-    if 'status' not in submittal:
+    if "status" not in submittal:
         errors.append("Missing required field: status")
-    elif submittal['status'] not in EXPECTED_SUBMITTAL_STATUS:
-        errors.append(f"Invalid status value: {submittal['status']}. Expected one of {EXPECTED_SUBMITTAL_STATUS}")
+    elif submittal["status"] not in EXPECTED_SUBMITTAL_STATUS:
+        errors.append(
+            f"Invalid status value: {submittal['status']}. Expected one of {EXPECTED_SUBMITTAL_STATUS}"
+        )
 
     # Transmittal purpose enum (nullable)
-    if 'transmittalPurpose' not in submittal:
+    if "transmittalPurpose" not in submittal:
         errors.append("Missing nullable field: transmittalPurpose")
-    elif submittal['transmittalPurpose'] is not None and submittal['transmittalPurpose'] not in EXPECTED_TRANSMITTAL_PURPOSE:
-        errors.append(f"Invalid transmittalPurpose: {submittal['transmittalPurpose']}. Expected one of {EXPECTED_TRANSMITTAL_PURPOSE}")
+    elif (
+        submittal["transmittalPurpose"] is not None
+        and submittal["transmittalPurpose"] not in EXPECTED_TRANSMITTAL_PURPOSE
+    ):
+        errors.append(
+            f"Invalid transmittalPurpose: {submittal['transmittalPurpose']}. Expected one of {EXPECTED_TRANSMITTAL_PURPOSE}"
+        )
 
     # createdBy object
-    if 'createdBy' not in submittal:
+    if "createdBy" not in submittal:
         errors.append("Missing required field: createdBy")
-    elif submittal['createdBy']:
-        created_by = submittal['createdBy']
-        if 'id' not in created_by:
+    elif submittal["createdBy"]:
+        created_by = submittal["createdBy"]
+        if "id" not in created_by:
             errors.append("createdBy missing field: id")
-        if 'fullName' not in created_by:
+        if "fullName" not in created_by:
             errors.append("createdBy missing field: fullName")
 
     # Required arrays
-    for field in ['items', 'stakeholders', 'revisions']:
+    for field in ["items", "stakeholders", "revisions"]:
         if field not in submittal:
             errors.append(f"Missing required array: {field}")
         elif not isinstance(submittal[field], list):
-            errors.append(f"Field {field} should be array, got {type(submittal[field]).__name__}")
+            errors.append(
+                f"Field {field} should be array, got {type(submittal[field]).__name__}"
+            )
 
     # Verify items if present
-    if 'items' in submittal and isinstance(submittal['items'], list):
-        for i, item in enumerate(submittal['items']):
+    if "items" in submittal and isinstance(submittal["items"], list):
+        for i, item in enumerate(submittal["items"]):
             item_errors = verify_submittal_item_response(item)
             errors.extend([f"items[{i}].{e}" for e in item_errors])
 
     # Verify stakeholders if present
-    if 'stakeholders' in submittal and isinstance(submittal['stakeholders'], list):
-        for i, stakeholder in enumerate(submittal['stakeholders']):
+    if "stakeholders" in submittal and isinstance(submittal["stakeholders"], list):
+        for i, stakeholder in enumerate(submittal["stakeholders"]):
             stakeholder_errors = verify_submittal_stakeholder_response(stakeholder)
             errors.extend([f"stakeholders[{i}].{e}" for e in stakeholder_errors])
 
     # Verify revisions if present
-    if 'revisions' in submittal and isinstance(submittal['revisions'], list):
-        for i, revision in enumerate(submittal['revisions']):
+    if "revisions" in submittal and isinstance(submittal["revisions"], list):
+        for i, revision in enumerate(submittal["revisions"]):
             revision_errors = verify_submittal_revision_response(revision)
             errors.extend([f"revisions[{i}].{e}" for e in revision_errors])
 
@@ -349,37 +368,48 @@ def verify_submittal_item_response(item: dict) -> list[str]:
     errors = []
 
     # Required strings
-    for field in ['id', 'submittalId', 'createdAt']:
+    for field in ["id", "submittalId", "createdAt"]:
         if field not in item:
             errors.append(f"Missing required field: {field}")
         elif not isinstance(item[field], str):
-            errors.append(f"Field {field} should be string, got {type(item[field]).__name__}")
+            errors.append(
+                f"Field {field} should be string, got {type(item[field]).__name__}"
+            )
 
     # Required number
-    if 'itemNumber' not in item:
+    if "itemNumber" not in item:
         errors.append("Missing required field: itemNumber")
-    elif not isinstance(item['itemNumber'], (int, float)):
-        errors.append(f"Field itemNumber should be number, got {type(item['itemNumber']).__name__}")
+    elif not isinstance(item["itemNumber"], (int, float)):
+        errors.append(
+            f"Field itemNumber should be number, got {type(item['itemNumber']).__name__}"
+        )
 
     # Nullable strings
-    nullable_strings = ['quoteDetailId', 'specSheetId', 'highlightVersionId', 'partNumber', 'description', 'notes']
+    nullable_strings = [
+        "quoteDetailId",
+        "specSheetId",
+        "highlightVersionId",
+        "partNumber",
+        "description",
+        "notes",
+    ]
     for field in nullable_strings:
         if field not in item:
             errors.append(f"Missing nullable field: {field}")
 
     # Nullable number
-    if 'quantity' not in item:
+    if "quantity" not in item:
         errors.append("Missing nullable field: quantity")
 
     # Enums
-    if 'approvalStatus' not in item:
+    if "approvalStatus" not in item:
         errors.append("Missing required field: approvalStatus")
-    elif item['approvalStatus'] not in EXPECTED_ITEM_APPROVAL_STATUS:
+    elif item["approvalStatus"] not in EXPECTED_ITEM_APPROVAL_STATUS:
         errors.append(f"Invalid approvalStatus: {item['approvalStatus']}")
 
-    if 'matchStatus' not in item:
+    if "matchStatus" not in item:
         errors.append("Missing required field: matchStatus")
-    elif item['matchStatus'] not in EXPECTED_ITEM_MATCH_STATUS:
+    elif item["matchStatus"] not in EXPECTED_ITEM_MATCH_STATUS:
         errors.append(f"Invalid matchStatus: {item['matchStatus']}")
 
     return errors
@@ -405,26 +435,34 @@ def verify_submittal_stakeholder_response(stakeholder: dict) -> list[str]:
     errors = []
 
     # Required strings
-    for field in ['id', 'submittalId']:
+    for field in ["id", "submittalId"]:
         if field not in stakeholder:
             errors.append(f"Missing required field: {field}")
         elif not isinstance(stakeholder[field], str):
             errors.append(f"Field {field} should be string")
 
     # Required boolean
-    if 'isPrimary' not in stakeholder:
+    if "isPrimary" not in stakeholder:
         errors.append("Missing required field: isPrimary")
-    elif not isinstance(stakeholder['isPrimary'], bool):
-        errors.append(f"Field isPrimary should be boolean, got {type(stakeholder['isPrimary']).__name__}")
+    elif not isinstance(stakeholder["isPrimary"], bool):
+        errors.append(
+            f"Field isPrimary should be boolean, got {type(stakeholder['isPrimary']).__name__}"
+        )
 
     # Role enum
-    if 'role' not in stakeholder:
+    if "role" not in stakeholder:
         errors.append("Missing required field: role")
-    elif stakeholder['role'] not in EXPECTED_STAKEHOLDER_ROLE:
+    elif stakeholder["role"] not in EXPECTED_STAKEHOLDER_ROLE:
         errors.append(f"Invalid role: {stakeholder['role']}")
 
     # Nullable strings
-    nullable_strings = ['customerId', 'contactName', 'contactEmail', 'contactPhone', 'companyName']
+    nullable_strings = [
+        "customerId",
+        "contactName",
+        "contactEmail",
+        "contactPhone",
+        "companyName",
+    ]
     for field in nullable_strings:
         if field not in stakeholder:
             errors.append(f"Missing nullable field: {field}")
@@ -452,32 +490,32 @@ def verify_submittal_revision_response(revision: dict) -> list[str]:
     errors = []
 
     # Required strings
-    for field in ['id', 'submittalId', 'createdAt']:
+    for field in ["id", "submittalId", "createdAt"]:
         if field not in revision:
             errors.append(f"Missing required field: {field}")
         elif not isinstance(revision[field], str):
             errors.append(f"Field {field} should be string")
 
     # Required number
-    if 'revisionNumber' not in revision:
+    if "revisionNumber" not in revision:
         errors.append("Missing required field: revisionNumber")
-    elif not isinstance(revision['revisionNumber'], (int, float)):
+    elif not isinstance(revision["revisionNumber"], (int, float)):
         errors.append(f"Field revisionNumber should be number")
 
     # Nullable strings
-    nullable_strings = ['pdfFileId', 'pdfFileUrl', 'pdfFileName', 'notes']
+    nullable_strings = ["pdfFileId", "pdfFileUrl", "pdfFileName", "notes"]
     for field in nullable_strings:
         if field not in revision:
             errors.append(f"Missing nullable field: {field}")
 
     # createdBy object
-    if 'createdBy' not in revision:
+    if "createdBy" not in revision:
         errors.append("Missing required field: createdBy")
-    elif revision['createdBy']:
-        created_by = revision['createdBy']
-        if 'id' not in created_by:
+    elif revision["createdBy"]:
+        created_by = revision["createdBy"]
+        if "id" not in created_by:
             errors.append("createdBy missing field: id")
-        if 'fullName' not in created_by:
+        if "fullName" not in created_by:
             errors.append("createdBy missing field: fullName")
 
     return errors
@@ -500,24 +538,30 @@ def verify_generate_pdf_response(response: dict) -> list[str]:
     errors = []
 
     # Required boolean
-    if 'success' not in response:
+    if "success" not in response:
         errors.append("Missing required field: success")
-    elif not isinstance(response['success'], bool):
-        errors.append(f"Field success should be boolean, got {type(response['success']).__name__}")
+    elif not isinstance(response["success"], bool):
+        errors.append(
+            f"Field success should be boolean, got {type(response['success']).__name__}"
+        )
 
     # Optional fields (should be present but can be null)
-    optional_strings = ['error', 'pdfUrl', 'pdfFileName']
+    optional_strings = ["error", "pdfUrl", "pdfFileName"]
     for field in optional_strings:
-        if field in response and response[field] is not None and not isinstance(response[field], str):
+        if (
+            field in response
+            and response[field] is not None
+            and not isinstance(response[field], str)
+        ):
             errors.append(f"Field {field} should be string or null")
 
-    if 'pdfFileSizeBytes' in response and response['pdfFileSizeBytes'] is not None:
-        if not isinstance(response['pdfFileSizeBytes'], (int, float)):
+    if "pdfFileSizeBytes" in response and response["pdfFileSizeBytes"] is not None:
+        if not isinstance(response["pdfFileSizeBytes"], (int, float)):
             errors.append(f"Field pdfFileSizeBytes should be number or null")
 
     # Revision object (optional)
-    if 'revision' in response and response['revision']:
-        revision_errors = verify_submittal_revision_response(response['revision'])
+    if "revision" in response and response["revision"]:
+        revision_errors = verify_submittal_revision_response(response["revision"])
         errors.extend([f"revision.{e}" for e in revision_errors])
 
     return errors
@@ -526,6 +570,7 @@ def verify_generate_pdf_response(response: dict) -> list[str]:
 # ============================================================================
 # Test Results Tracking
 # ============================================================================
+
 
 class ContractTestResults:
     """Track contract test results."""
@@ -556,7 +601,9 @@ class ContractTestResults:
         print(f"Contract Test Results: {self.passed}/{total} tests passed")
         if self.failed > 0:
             print("\nFailed tests indicate frontend/backend contract mismatches!")
-            print("The frontend expects certain fields/types that the backend doesn't provide.")
+            print(
+                "The frontend expects certain fields/types that the backend doesn't provide."
+            )
         print("=" * 60)
         return self.failed == 0
 
@@ -565,7 +612,10 @@ class ContractTestResults:
 # Contract Tests
 # ============================================================================
 
-async def test_create_submittal_contract(headers: dict, results: ContractTestResults) -> bool:
+
+async def test_create_submittal_contract(
+    headers: dict, results: ContractTestResults
+) -> bool:
     """Test that createSubmittal response matches frontend expectations."""
     test_name = "CreateSubmittal Response Contract"
 
@@ -610,7 +660,9 @@ async def test_create_submittal_contract(headers: dict, results: ContractTestRes
         return False
 
 
-async def test_get_submittal_contract(headers: dict, results: ContractTestResults) -> bool:
+async def test_get_submittal_contract(
+    headers: dict, results: ContractTestResults
+) -> bool:
     """Test that getSubmittal response matches frontend expectations."""
     test_name = "GetSubmittal Response Contract"
 
@@ -648,7 +700,9 @@ async def test_get_submittal_contract(headers: dict, results: ContractTestResult
         return False
 
 
-async def test_generate_pdf_contract(headers: dict, results: ContractTestResults) -> bool:
+async def test_generate_pdf_contract(
+    headers: dict, results: ContractTestResults
+) -> bool:
     """Test that generateSubmittalPdf response matches frontend expectations."""
     test_name = "GenerateSubmittalPdf Response Contract"
 
@@ -694,7 +748,9 @@ async def test_generate_pdf_contract(headers: dict, results: ContractTestResults
         return False
 
 
-async def test_input_types_accepted(headers: dict, results: ContractTestResults) -> bool:
+async def test_input_types_accepted(
+    headers: dict, results: ContractTestResults
+) -> bool:
     """Test that all frontend input types are accepted by the backend."""
     test_name = "Frontend Input Types Accepted"
 
@@ -719,7 +775,9 @@ async def test_input_types_accepted(headers: dict, results: ContractTestResults)
         )
 
         if "errors" in result:
-            results.fail_test(test_name, [f"CreateSubmittalInput rejected: {result['errors']}"])
+            results.fail_test(
+                test_name, [f"CreateSubmittalInput rejected: {result['errors']}"]
+            )
             return False
 
         submittal = result.get("data", {}).get("createSubmittal")
@@ -762,6 +820,7 @@ async def cleanup_test_submittal(headers: dict, results: ContractTestResults):
 # Main Test Runner
 # ============================================================================
 
+
 async def run_contract_tests(headers: dict) -> bool:
     """Run all frontend contract tests."""
     results = ContractTestResults()
@@ -789,7 +848,9 @@ async def run_contract_tests(headers: dict) -> bool:
 
 async def main():
     """Main entry point."""
-    parser = argparse.ArgumentParser(description="Run Submittals frontend contract tests")
+    parser = argparse.ArgumentParser(
+        description="Run Submittals frontend contract tests"
+    )
     parser.add_argument("--email", "-e", required=True, help="User email")
     parser.add_argument("--password", "-p", required=True, help="User password")
     parser.add_argument("--org-id", "-o", help="Organization ID (optional)")

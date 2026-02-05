@@ -29,15 +29,18 @@ async def migrate_notes(
             tags = EXCLUDED.tags,
             mentions = EXCLUDED.mentions
         """,
-        [(
-            n["id"],
-            n["title"],
-            n["content"],
-            n["tags"],
-            n["mentions"],
-            n["created_by_id"],
-            n["created_at"],
-        ) for n in notes],
+        [
+            (
+                n["id"],
+                n["title"],
+                n["content"],
+                n["tags"],
+                n["mentions"],
+                n["created_by_id"],
+                n["created_at"],
+            )
+            for n in notes
+        ],
     )
 
     logger.info(f"Migrated {len(notes)} notes")
@@ -73,19 +76,22 @@ async def migrate_tasks(
             reminder_date = EXCLUDED.reminder_date,
             tags = EXCLUDED.tags
         """,
-        [(
-            t["id"],
-            t["title"],
-            t["status"],
-            t["priority"],
-            t["description"],
-            t["assigned_to_id"],
-            t["due_date"],
-            t["reminder_date"],
-            t["tags"],
-            t["created_by_id"],
-            t["created_at"],
-        ) for t in tasks],
+        [
+            (
+                t["id"],
+                t["title"],
+                t["status"],
+                t["priority"],
+                t["description"],
+                t["assigned_to_id"],
+                t["due_date"],
+                t["reminder_date"],
+                t["tags"],
+                t["created_by_id"],
+                t["created_at"],
+            )
+            for t in tasks
+        ],
     )
 
     logger.info(f"Migrated {len(tasks)} tasks")
@@ -99,7 +105,9 @@ async def migrate_link_relations(
     """Migrate link relations from pycrm.link_relations using SELECT *."""
     logger.info("Starting link relations migration...")
 
-    links = await source.fetch("""SELECT l.* FROM pycrm.link_relations l JOIN "user".users ON l.created_by_id = users.id""")
+    links = await source.fetch(
+        """SELECT l.* FROM pycrm.link_relations l JOIN "user".users ON l.created_by_id = users.id"""
+    )
 
     if not links:
         logger.info("No link relations to migrate")
@@ -118,15 +126,18 @@ async def migrate_link_relations(
             target_entity_type = EXCLUDED.target_entity_type,
             target_entity_id = EXCLUDED.target_entity_id
         """,
-        [(
-            link["id"],
-            link["source_entity_type"],
-            link["source_entity_id"],
-            link["target_entity_type"],
-            link["target_entity_id"],
-            link["created_by_id"],
-            link["created_at"],
-        ) for link in links],
+        [
+            (
+                link["id"],
+                link["source_entity_type"],
+                link["source_entity_id"],
+                link["target_entity_type"],
+                link["target_entity_id"],
+                link["created_by_id"],
+                link["created_at"],
+            )
+            for link in links
+        ],
     )
 
     logger.info(f"Migrated {len(links)} link relations")
@@ -180,7 +191,9 @@ async def migrate_file_entity_links(
     """)
 
     # Filter out unmapped entity types
-    valid_links = [link for link in file_links if link["target_entity_type"] is not None]
+    valid_links = [
+        link for link in file_links if link["target_entity_type"] is not None
+    ]
 
     if not valid_links:
         logger.info("No file entity links to migrate")
@@ -195,13 +208,16 @@ async def migrate_file_entity_links(
         ) VALUES ($1, 14, $2, $3, $4, $5, now())
         ON CONFLICT DO NOTHING
         """,
-        [(
-            link["id"],
-            link["file_id"],
-            link["target_entity_type"],
-            link["entity_id"],
-            link["created_by_id"],
-        ) for link in valid_links],
+        [
+            (
+                link["id"],
+                link["file_id"],
+                link["target_entity_type"],
+                link["entity_id"],
+                link["created_by_id"],
+            )
+            for link in valid_links
+        ],
     )
 
     logger.info(f"Migrated {len(valid_links)} file entity links")
@@ -244,17 +260,20 @@ async def migrate_companies(
             tags = EXCLUDED.tags,
             parent_company_id = EXCLUDED.parent_company_id
         """,
-        [(
-            c["id"],
-            c["name"],
-            type_map.get(c["company_source_type"]),
-            c["website"],
-            c["phone"],
-            c["tags"],
-            c["parent_company_id"],
-            c["created_by_id"],
-            c["created_at"],
-        ) for c in companies],
+        [
+            (
+                c["id"],
+                c["name"],
+                type_map.get(c["company_source_type"]),
+                c["website"],
+                c["phone"],
+                c["tags"],
+                c["parent_company_id"],
+                c["created_by_id"],
+                c["created_at"],
+            )
+            for c in companies
+        ],
     )
 
     logger.info(f"Migrated {len(companies)} companies")

@@ -10,8 +10,6 @@ from app.graphql.base_repository import BaseRepository
 
 
 class CampaignSendLogRepository(BaseRepository[CampaignSendLog]):
-    """Repository for CampaignSendLog entity."""
-
     def __init__(self, context_wrapper: ContextWrapper, session: AsyncSession) -> None:
         super().__init__(session, context_wrapper, CampaignSendLog)
 

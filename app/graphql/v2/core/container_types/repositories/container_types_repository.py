@@ -9,8 +9,6 @@ from app.graphql.base_repository import BaseRepository
 
 
 class ContainerTypesRepository(BaseRepository[ContainerType]):
-    """Repository for ContainerType entity."""
-
     def __init__(
         self,
         context_wrapper: ContextWrapper,
@@ -23,13 +21,11 @@ class ContainerTypesRepository(BaseRepository[ContainerType]):
         )
 
     async def list_all_ordered(self) -> list[ContainerType]:
-        """Get all container types ordered by display position."""
         stmt = select(ContainerType).order_by(ContainerType.position)
         result = await self.session.execute(stmt)
         return list(result.scalars().all())
 
     async def get_max_position(self) -> int:
-        """Get the maximum position value."""
         from sqlalchemy import func
 
         stmt = select(func.max(ContainerType.position))

@@ -23,7 +23,6 @@ class LinksMutations:
         input: LinkRelationInput,
         service: Injected[LinksService],
     ) -> LinkRelationType:
-        """Create a new link between two entities."""
         link = await service.create_link(
             source_type=input.source_entity_type,
             source_id=input.source_entity_id,
@@ -39,7 +38,6 @@ class LinksMutations:
         id: UUID,
         service: Injected[LinksService],
     ) -> bool:
-        """Delete a link by ID."""
         return await service.delete_link(link_id=id)
 
     @strawberry.mutation
@@ -49,7 +47,6 @@ class LinksMutations:
         input: DeleteLinkByEntitiesInput,
         service: Injected[LinksService],
     ) -> bool:
-        """Delete a link between two specific entities."""
         return await service.delete_link_by_entities(
             source_type=input.source_entity_type,
             source_id=input.source_entity_id,

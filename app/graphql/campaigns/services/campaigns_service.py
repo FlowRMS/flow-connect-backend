@@ -164,7 +164,6 @@ class CampaignsService:
         }
 
     async def get_campaign(self, campaign_id: UUID) -> Campaign:
-        """Get a campaign by ID with relations."""
         campaign = await self.repository.get_with_relations(campaign_id)
         if not campaign:
             raise NotFoundError(str(campaign_id))
@@ -175,7 +174,6 @@ class CampaignsService:
         campaign_id: UUID,
         campaign_input: CampaignInput,
     ) -> Campaign:
-        """Update an existing campaign."""
         if not await self.repository.exists(campaign_id):
             raise NotFoundError(str(campaign_id))
 
@@ -188,7 +186,6 @@ class CampaignsService:
         return result
 
     async def delete_campaign(self, campaign_id: UUID) -> bool:
-        """Delete a campaign and all its recipients."""
         if not await self.repository.exists(campaign_id):
             raise NotFoundError(str(campaign_id))
         return await self.repository.delete(campaign_id)
@@ -245,7 +242,6 @@ class CampaignsService:
         limit: int = 100,
         offset: int = 0,
     ) -> list[CampaignRecipient]:
-        """Get recipients for a campaign with pagination."""
         if not await self.repository.exists(campaign_id):
             raise NotFoundError(str(campaign_id))
         return await self.recipients_repository.get_by_campaign_id(

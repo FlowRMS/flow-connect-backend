@@ -36,7 +36,7 @@ def upgrade() -> None:
         sa.Column("address_id", sa.UUID(), nullable=True),
         sa.Column(
             "created_at",
-            sa.DateTime(timezone=True),
+            sa.TIMESTAMP(timezone=True),
             nullable=False,
             server_default=sa.func.now(),
         ),

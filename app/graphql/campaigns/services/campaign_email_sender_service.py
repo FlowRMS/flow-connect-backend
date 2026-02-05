@@ -51,7 +51,6 @@ class CampaignEmailSenderService:
         self.auth_info = auth_info
 
     async def get_sending_status(self, campaign_id: UUID) -> CampaignSendingStatus:
-        """Get the current sending status of a campaign."""
         campaign = await self.campaigns_repository.get_by_id(campaign_id)
         if not campaign:
             raise NotFoundError(f"Campaign {campaign_id} not found")
@@ -283,7 +282,6 @@ class CampaignEmailSenderService:
         failed: int = 0,
         errors: list[str] | None = None,
     ) -> SendBatchResult:
-        """Mark a campaign as completed."""
         campaign.status = CampaignStatus.COMPLETED
         await self.campaigns_repository.flush()
 

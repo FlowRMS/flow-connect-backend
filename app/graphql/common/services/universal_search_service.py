@@ -1,10 +1,10 @@
-from typing import Any
-
-from sqlalchemy import Result, text, union
-from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy import text, union
 
 from app.graphql.common.interfaces.search_query_interface import (
     SearchQueryStrategyRegistry,
+)
+from app.graphql.common.repositories.universal_search_repository import (
+    UniversalSearchRepository,
 )
 from app.graphql.common.strawberry.search_result_gql import SearchResultGQL
 
@@ -12,11 +12,11 @@ from app.graphql.common.strawberry.search_result_gql import SearchResultGQL
 class UniversalSearchService:
     def __init__(
         self,
-        session: AsyncSession,
+        repository: UniversalSearchRepository,
         strategy_registry: SearchQueryStrategyRegistry,
     ) -> None:
         super().__init__()
-        self.session = session
+        self.repository = repository
         self.strategy_registry = strategy_registry
 
     async def search(
@@ -36,5 +36,5 @@ class UniversalSearchService:
             union(*strategy_queries).limit(limit).order_by(text("similarity DESC"))
         )
 
-        result: Result[Any] = await self.session.execute(combined_query)
-        return SearchResultGQL.from_row_list(result.fetchall())
+        rows = await self.repository.execute_search_query(combined_query)
+        return SearchResultGQL.from_row_list(rows)

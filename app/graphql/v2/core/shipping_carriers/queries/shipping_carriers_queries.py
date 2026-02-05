@@ -42,7 +42,6 @@ class ShippingCarriersQueries:
         id: UUID,
         service: Injected[ShippingCarrierService],
     ) -> ShippingCarrierResponse:
-        """Get a shipping carrier by ID."""
         carrier = await service.get_by_id(id)
         return ShippingCarrierResponse.from_orm_model(carrier)
 

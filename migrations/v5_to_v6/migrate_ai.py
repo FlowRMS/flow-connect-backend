@@ -13,7 +13,7 @@ AI_TABLES = [
     "pending_document_correction_changes",
     "extracted_data_versions",
     "pending_entities",
-    "entity_match_candidates"
+    "entity_match_candidates",
 ]
 
 

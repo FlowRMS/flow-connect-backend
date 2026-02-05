@@ -5,7 +5,9 @@ import asyncpg
 logger = logging.getLogger(__name__)
 
 
-async def migrate_invoice_balances(source: asyncpg.Connection, dest: asyncpg.Connection) -> int:
+async def migrate_invoice_balances(
+    source: asyncpg.Connection, dest: asyncpg.Connection
+) -> int:
     """Migrate invoice balances from v5 (commission.invoice_balances) to v6 (pycommission.invoice_balances)."""
     logger.info("Starting invoice balance migration...")
 
@@ -25,8 +27,7 @@ async def migrate_invoice_balances(source: asyncpg.Connection, dest: asyncpg.Con
         FROM commission.invoice_balances ib
         JOIN commission.invoices i ON i.balance_id = ib.id
         LEFT JOIN commission.check_details cd ON cd.invoice_id = i.id
-        """
-    )
+        """)
     if not balances:
         logger.info("No invoice balances to migrate")
         return 0
@@ -49,19 +50,22 @@ async def migrate_invoice_balances(source: asyncpg.Connection, dest: asyncpg.Con
             commission_discount = EXCLUDED.commission_discount,
             commission_discount_rate = EXCLUDED.commission_discount_rate
         """,
-        [(
-            b["id"],
-            b["quantity"],
-            b["subtotal"],
-            b["total"],
-            b["commission"],
-            b["discount"],
-            b["discount_rate"],
-            b["commission_rate"],
-            b["commission_discount"],
-            b["commission_discount_rate"],
-            b["paid_balance"],
-        ) for b in balances],
+        [
+            (
+                b["id"],
+                b["quantity"],
+                b["subtotal"],
+                b["total"],
+                b["commission"],
+                b["discount"],
+                b["discount_rate"],
+                b["commission_rate"],
+                b["commission_discount"],
+                b["commission_discount_rate"],
+                b["paid_balance"],
+            )
+            for b in balances
+        ],
     )
 
     logger.info(f"Migrated {len(balances)} invoice balances")
@@ -121,28 +125,33 @@ async def migrate_invoices(source: asyncpg.Connection, dest: asyncpg.Connection)
             creation_type = EXCLUDED.creation_type,
             status = EXCLUDED.status
         """,
-        [(
-            inv["id"],
-            inv["invoice_number"],
-            inv["order_id"],
-            inv["entity_date"],
-            inv["due_date"],
-            inv["published"],
-            inv["locked"],
-            inv["creation_type"],
-            inv["status"],
-            inv["balance_id"],
-            inv["created_by_id"],
-            inv["created_at"],
-            inv["factory_id"],
-        ) for inv in invoices],
+        [
+            (
+                inv["id"],
+                inv["invoice_number"],
+                inv["order_id"],
+                inv["entity_date"],
+                inv["due_date"],
+                inv["published"],
+                inv["locked"],
+                inv["creation_type"],
+                inv["status"],
+                inv["balance_id"],
+                inv["created_by_id"],
+                inv["created_at"],
+                inv["factory_id"],
+            )
+            for inv in invoices
+        ],
     )
 
     logger.info(f"Migrated {len(invoices)} invoices")
     return len(invoices)
 
 
-async def migrate_invoice_details(source: asyncpg.Connection, dest: asyncpg.Connection) -> int:
+async def migrate_invoice_details(
+    source: asyncpg.Connection, dest: asyncpg.Connection
+) -> int:
     """Migrate invoice details from v5 (commission.invoice_details) to v6 (pycommission.invoice_details)."""
     logger.info("Starting invoice detail migration...")
 
@@ -217,35 +226,40 @@ async def migrate_invoice_details(source: asyncpg.Connection, dest: asyncpg.Conn
             end_user_id = EXCLUDED.end_user_id,
             lead_time = EXCLUDED.lead_time
         """,
-        [(
-            d["id"],
-            d["invoice_id"],
-            d["item_number"],
-            d["quantity"],
-            d["unit_price"],
-            d["subtotal"],
-            d["total"],
-            d["total_line_commission"],
-            d["commission_rate"],
-            d["commission"],
-            d["commission_discount_rate"],
-            d["commission_discount"],
-            d["discount_rate"],
-            d["discount"],
-            d["order_detail_id"],
-            d["status"],
-            d["division_factor"],
-            d["product_id"],
-            d["end_user_id"],
-            d["lead_time"],
-        ) for d in details],
+        [
+            (
+                d["id"],
+                d["invoice_id"],
+                d["item_number"],
+                d["quantity"],
+                d["unit_price"],
+                d["subtotal"],
+                d["total"],
+                d["total_line_commission"],
+                d["commission_rate"],
+                d["commission"],
+                d["commission_discount_rate"],
+                d["commission_discount"],
+                d["discount_rate"],
+                d["discount"],
+                d["order_detail_id"],
+                d["status"],
+                d["division_factor"],
+                d["product_id"],
+                d["end_user_id"],
+                d["lead_time"],
+            )
+            for d in details
+        ],
     )
 
     logger.info(f"Migrated {len(details)} invoice details")
     return len(details)
 
 
-async def migrate_invoice_split_rates(source: asyncpg.Connection, dest: asyncpg.Connection) -> int:
+async def migrate_invoice_split_rates(
+    source: asyncpg.Connection, dest: asyncpg.Connection
+) -> int:
     """Migrate invoice split rates from v5 (commission.invoice_split_rates) to v6 (pycommission.invoice_split_rates)."""
     logger.info("Starting invoice split rate migration...")
 
@@ -284,14 +298,17 @@ async def migrate_invoice_split_rates(source: asyncpg.Connection, dest: asyncpg.
             split_rate = EXCLUDED.split_rate,
             "position" = EXCLUDED."position"
         """,
-        [(
-            sr["id"],
-            sr["invoice_detail_id"],
-            sr["user_id"],
-            sr["split_rate"],
-            sr["position"],
-            sr["created_at"],
-        ) for sr in split_rates],
+        [
+            (
+                sr["id"],
+                sr["invoice_detail_id"],
+                sr["user_id"],
+                sr["split_rate"],
+                sr["position"],
+                sr["created_at"],
+            )
+            for sr in split_rates
+        ],
     )
 
     logger.info(f"Migrated {len(split_rates)} invoice split rates")

@@ -1,5 +1,3 @@
-"""Email strategy for Gmail."""
-
 import base64
 from datetime import datetime, timedelta, timezone
 from email.mime.multipart import MIMEMultipart

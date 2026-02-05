@@ -119,7 +119,6 @@ class FulfillmentMutations:
         assignment_id: UUID,
         service: Injected[FulfillmentAssignmentService],
     ) -> FulfillmentOrderResponse:
-        """Remove an assignment from a fulfillment order."""
         order = await service.remove_assignment(assignment_id)
         return FulfillmentOrderResponse.from_orm_model(order)
 
@@ -304,7 +303,6 @@ class FulfillmentMutations:
         input: MarkManufacturerFulfilledInput,
         service: Injected[FulfillmentBackorderService],
     ) -> FulfillmentOrderResponse:
-        """Mark line items as being fulfilled directly by manufacturer."""
         order = await service.mark_manufacturer_fulfilled(
             input.fulfillment_order_id,
             input.line_item_ids,
@@ -413,5 +411,4 @@ class FulfillmentMutations:
         document_id: UUID,
         service: Injected[FulfillmentDocumentService],
     ) -> bool:
-        """Delete a document from a fulfillment order."""
         return await service.delete_document(document_id)

@@ -1,5 +1,3 @@
-"""TaskIQ tasks for campaign email processing."""
-
 from datetime import datetime, timezone
 from uuid import UUID
 

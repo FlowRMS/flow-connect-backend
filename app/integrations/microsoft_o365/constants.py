@@ -1,5 +1,3 @@
-"""Microsoft O365 OAuth and Graph API constants."""
-
 # Microsoft Identity Platform endpoints
 MICROSOFT_AUTHORITY = "https://login.microsoftonline.com"
 MICROSOFT_GRAPH_API = "https://graph.microsoft.com/v1.0"
