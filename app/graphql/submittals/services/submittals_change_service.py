@@ -14,9 +14,11 @@ from app.graphql.submittals.repositories.submittals_repository import (
     SubmittalReturnedPdfsRepository,
     SubmittalRevisionsRepository,
 )
-from app.graphql.submittals.strawberry.submittal_input import (
+from app.graphql.submittals.strawberry.add_change_analysis_input import (
     AddChangeAnalysisInput,
-    AddReturnedPdfInput,
+)
+from app.graphql.submittals.strawberry.add_returned_pdf_input import AddReturnedPdfInput
+from app.graphql.submittals.strawberry.update_item_change_input import (
     UpdateItemChangeInput,
 )
 

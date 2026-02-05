@@ -6,7 +6,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.graphql.common.interfaces.search_query_interface import (
     SearchQueryStrategyRegistry,
 )
-from app.graphql.common.strawberry.search_types import SearchResultGQL
+from app.graphql.common.strawberry.search_result_gql import SearchResultGQL
 
 
 class UniversalSearchService:

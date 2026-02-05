@@ -10,7 +10,9 @@ from app.graphql.submittals.strawberry.enums import (
     SubmittalStatusGQL,
     TransmittalPurposeGQL,
 )
-from app.graphql.submittals.strawberry.submittal_config import SubmittalConfigResponse
+from app.graphql.submittals.strawberry.submittal_config_response import (
+    SubmittalConfigResponse,
+)
 from app.graphql.v2.core.users.strawberry.user_response import UserResponse
 
 

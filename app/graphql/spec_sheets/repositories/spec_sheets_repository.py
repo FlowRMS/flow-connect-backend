@@ -121,6 +121,13 @@ class SpecSheetsRepository(BaseRepository[SpecSheet]):
         result = await self.session.execute(stmt)
         return list(result.scalars().all())
 
+    async def get_by_ids(self, spec_sheet_ids: list[UUID]) -> list[SpecSheet]:
+        if not spec_sheet_ids:
+            return []
+        stmt = select(SpecSheet).where(SpecSheet.id.in_(spec_sheet_ids))
+        result = await self.session.execute(stmt)
+        return list(result.scalars().all())
+
     async def increment_usage_count(self, spec_sheet_id: UUID) -> None:
         """
         Increment the usage count for a spec sheet.

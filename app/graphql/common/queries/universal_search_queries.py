@@ -2,7 +2,7 @@ import strawberry
 from aioinject import Injected
 
 from app.graphql.common.services.universal_search_service import UniversalSearchService
-from app.graphql.common.strawberry.search_types import SearchResultGQL
+from app.graphql.common.strawberry.search_result_gql import SearchResultGQL
 from app.graphql.inject import inject
 
 

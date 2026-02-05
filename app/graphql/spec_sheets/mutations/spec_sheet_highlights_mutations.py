@@ -7,13 +7,17 @@ from app.graphql.inject import inject
 from app.graphql.spec_sheets.services.spec_sheet_highlights_service import (
     SpecSheetHighlightsService,
 )
-from app.graphql.spec_sheets.strawberry.spec_sheet_highlight_input import (
+from app.graphql.spec_sheets.strawberry.create_highlight_version_input import (
     CreateHighlightVersionInput,
-    UpdateHighlightRegionsInput,
-    UpdateHighlightVersionInput,
 )
 from app.graphql.spec_sheets.strawberry.spec_sheet_highlight_response import (
     HighlightVersionResponse,
+)
+from app.graphql.spec_sheets.strawberry.update_highlight_regions_input import (
+    UpdateHighlightRegionsInput,
+)
+from app.graphql.spec_sheets.strawberry.update_highlight_version_input import (
+    UpdateHighlightVersionInput,
 )
 
 

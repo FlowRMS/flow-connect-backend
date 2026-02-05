@@ -9,6 +9,7 @@ Create Date: 2026-01-29
 from collections.abc import Sequence
 
 import sqlalchemy as sa
+from sqlalchemy import inspect
 from sqlalchemy.dialects import postgresql
 
 from alembic import op
@@ -23,6 +24,13 @@ depends_on: str | Sequence[str] | None = None
 
 
 def upgrade() -> None:
+    conn = op.get_bind()
+    inspector = inspect(conn)
+    tables = inspector.get_table_names(schema="pycore")
+
+    if "notifications" in tables:
+        return
+
     _ = op.create_table(
         "notifications",
         sa.Column("id", postgresql.UUID(as_uuid=True), primary_key=True),

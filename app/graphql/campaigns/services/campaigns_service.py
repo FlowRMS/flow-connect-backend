@@ -17,18 +17,22 @@ from app.graphql.campaigns.repositories.campaign_recipients_repository import (
     CampaignRecipientsRepository,
 )
 from app.graphql.campaigns.repositories.campaigns_repository import CampaignsRepository
-from app.graphql.campaigns.services.criteria_evaluator_service import (
-    CriteriaEvaluatorService,
+from app.graphql.campaigns.repositories.criteria_evaluator_repository import (
+    CriteriaEvaluatorRepository,
 )
 from app.graphql.campaigns.services.email_provider_service import EmailProviderService
-from app.graphql.campaigns.strawberry.campaign_input import CampaignInput
-from app.graphql.campaigns.strawberry.criteria_input import (
+from app.graphql.campaigns.strawberry.campaign_criteria_input import (
     CampaignCriteriaInput,
+)
+from app.graphql.campaigns.strawberry.campaign_input import CampaignInput
+from app.graphql.campaigns.strawberry.criteria_condition_input import (
     CriteriaConditionInput,
-    CriteriaGroupInput,
+)
+from app.graphql.campaigns.strawberry.criteria_enums import (
     CriteriaOperator,
     LogicalOperator,
 )
+from app.graphql.campaigns.strawberry.criteria_group_input import CriteriaGroupInput
 
 
 class NoEmailProviderError(Exception):
@@ -47,7 +51,7 @@ class CampaignsService:
         self,
         repository: CampaignsRepository,
         recipients_repository: CampaignRecipientsRepository,
-        criteria_evaluator: CriteriaEvaluatorService,
+        criteria_evaluator: CriteriaEvaluatorRepository,
         email_provider: EmailProviderService,
         auth_info: AuthInfo,
     ) -> None:
@@ -123,7 +127,7 @@ class CampaignsService:
             criteria_json=self._criteria_to_dict(criteria),
             is_dynamic=is_dynamic,
         )
-        self.repository.session.add(criteria_model)
+        _ = await self.repository.create_criteria(criteria_model)
 
         contacts = await self.criteria_evaluator.evaluate_criteria(criteria)
 
@@ -196,7 +200,7 @@ class CampaignsService:
             raise NotFoundError(str(campaign_id))
 
         campaign.status = CampaignStatus.PAUSED
-        await self.repository.session.flush()
+        await self.repository.flush()
         result = await self.repository.get_with_relations(campaign_id)
         if not result:
             raise NotFoundError(str(campaign_id))
@@ -209,7 +213,7 @@ class CampaignsService:
             raise NotFoundError(str(campaign_id))
 
         campaign.status = CampaignStatus.SENDING
-        await self.repository.session.flush()
+        await self.repository.flush()
         result = await self.repository.get_with_relations(campaign_id)
         if not result:
             raise NotFoundError(str(campaign_id))

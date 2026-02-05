@@ -5,9 +5,7 @@ from commons.db.v6.core.customers.customer import Customer
 from commons.db.v6.core.products.product_cpn import ProductCpn
 from commons.db.v6.core.products.product_quantity_pricing import ProductQuantityPricing
 from loguru import logger
-from sqlalchemy import delete, select
 from sqlalchemy.exc import IntegrityError
-from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.graphql.v2.core.customers.repositories.customers_repository import (
     CustomersRepository,
@@ -15,9 +13,16 @@ from app.graphql.v2.core.customers.repositories.customers_repository import (
 from app.graphql.v2.core.products.repositories.product_cpn_repository import (
     ProductCpnRepository,
 )
-from app.graphql.v2.core.products.strawberry.product_import_types import (
+from app.graphql.v2.core.products.repositories.product_quantity_pricing_repository import (
+    ProductQuantityPricingRepository,
+)
+from app.graphql.v2.core.products.strawberry.customer_pricing_import_input import (
     CustomerPricingImportInput,
+)
+from app.graphql.v2.core.products.strawberry.product_import_error import (
     ProductImportError,
+)
+from app.graphql.v2.core.products.strawberry.quantity_pricing_import_input import (
     QuantityPricingImportInput,
 )
 
@@ -27,24 +32,21 @@ class ProductPricingOperations:
 
     def __init__(
         self,
-        session: AsyncSession,
         customers_repository: CustomersRepository,
         cpn_repository: ProductCpnRepository,
+        quantity_pricing_repository: ProductQuantityPricingRepository,
     ) -> None:
         super().__init__()
-        self.session = session
         self.customers_repository = customers_repository
         self.cpn_repository = cpn_repository
+        self.quantity_pricing_repository = quantity_pricing_repository
 
     async def replace_quantity_pricing(
         self,
         product_id: UUID,
         quantity_pricing_data: list[QuantityPricingImportInput],
     ) -> int:
-        delete_stmt = delete(ProductQuantityPricing).where(
-            ProductQuantityPricing.product_id == product_id
-        )
-        _ = await self.session.execute(delete_stmt)
+        await self.quantity_pricing_repository.delete_by_product_id(product_id)
 
         created_count = 0
         for band in quantity_pricing_data:
@@ -60,7 +62,7 @@ class ProductPricingOperations:
                 quantity_high=quantity_high,
                 unit_price=band.unit_price,
             )
-            self.session.add(pricing)
+            await self.quantity_pricing_repository.add_pricing(pricing)
             created_count += 1
 
         return created_count
@@ -112,26 +114,24 @@ class ProductPricingOperations:
                     updated_count += 1
                 else:
                     try:
-                        async with self.session.begin_nested():
-                            new_cpn = ProductCpn(
-                                customer_id=customer_id,
-                                customer_part_number=cp_data.customer_part_number or "",
-                                unit_price=cp_data.unit_price,
-                                commission_rate=cp_data.commission_rate,
-                            )
-                            new_cpn.product_id = product_id
-                            self.session.add(new_cpn)
-                            created_count += 1
+                        new_cpn = ProductCpn(
+                            customer_id=customer_id,
+                            customer_part_number=cp_data.customer_part_number or "",
+                            unit_price=cp_data.unit_price,
+                            commission_rate=cp_data.commission_rate,
+                        )
+                        new_cpn.product_id = product_id
+                        _ = await self.cpn_repository.create_with_savepoint(new_cpn)
+                        created_count += 1
                     except IntegrityError:
                         logger.info(
                             f"CPN for {factory_part_number}/{customer_name} exists, updating"
                         )
-                        stmt = select(ProductCpn).where(
-                            ProductCpn.product_id == product_id,
-                            ProductCpn.customer_id == customer_id,
+                        existing = (
+                            await self.cpn_repository.find_cpn_by_product_and_customer(
+                                product_id, customer_id
+                            )
                         )
-                        result = await self.session.execute(stmt)
-                        existing = result.scalar_one_or_none()
                         if existing:
                             if cp_data.customer_part_number is not None:
                                 existing.customer_part_number = (

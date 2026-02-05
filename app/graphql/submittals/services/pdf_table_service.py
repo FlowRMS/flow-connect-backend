@@ -16,7 +16,9 @@ from app.graphql.submittals.services.pdf_transmittal_service import (
     PdfTransmittalService,
 )
 from app.graphql.submittals.services.pdf_types import RolledUpItem
-from app.graphql.submittals.strawberry.submittal_input import GenerateSubmittalPdfInput
+from app.graphql.submittals.strawberry.generate_submittal_pdf_input import (
+    GenerateSubmittalPdfInput,
+)
 
 
 class PdfTableService:
