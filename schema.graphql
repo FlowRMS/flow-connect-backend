@@ -2718,6 +2718,7 @@ type Mutation {
   bulkAssignFulfillmentOrders(input: BulkAssignmentInput!): [FulfillmentOrderResponse!]!
   addFulfillmentAssignment(fulfillmentOrderId: UUID!, userId: UUID!, role: FulfillmentAssignmentRole!): FulfillmentOrderResponse!
   removeFulfillmentAssignment(assignmentId: UUID!): FulfillmentOrderResponse!
+  addFulfillmentNote(fulfillmentOrderId: UUID!, content: String!): FulfillmentOrderResponse!
   startPicking(id: UUID!): FulfillmentOrderResponse!
   updatePickedQuantity(input: UpdatePickedQuantityInput!): FulfillmentOrderLineItemResponse!
   completePicking(id: UUID!): FulfillmentOrderResponse!
@@ -2731,7 +2732,6 @@ type Mutation {
   completeShipping(id: UUID!, input: CompleteShippingInput!): FulfillmentOrderResponse!
   markCommunicated(id: UUID!): FulfillmentOrderResponse!
   markDelivered(id: UUID!): FulfillmentOrderResponse!
-  addFulfillmentNote(fulfillmentOrderId: UUID!, content: String!): FulfillmentOrderResponse!
   markManufacturerFulfilled(input: MarkManufacturerFulfilledInput!): FulfillmentOrderResponse!
   splitFulfillmentLineItem(input: SplitLineItemInput!): FulfillmentOrderLineItemResponse!
   cancelBackorderItems(input: CancelBackorderInput!): FulfillmentOrderResponse!
@@ -4852,8 +4852,8 @@ type StatementBalanceResponse {
 
 input StatementDetailInput {
   itemNumber: Int!
-  quantity: Decimal = null
-  unitPrice: Decimal = null
+  quantity: Decimal!
+  unitPrice: Decimal!
   id: UUID = null
   soldToCustomerId: UUID = null
   orderId: UUID = null
@@ -4870,6 +4870,7 @@ input StatementDetailInput {
   discountRate: Decimal! = "0.0000"
   commissionRate: Decimal! = "0.0000"
   commissionDiscountRate: Decimal! = "0.0000"
+  commission: Decimal = null
   outsideSplitRates: [StatementSplitRateInput!] = null
 }
 
@@ -5379,8 +5380,8 @@ enum TransmittalPurposeGQL {
 scalar UUID
 
 input UpdateChangeAnalysisInput {
-  overallStatus: OverallChangeStatusGQL = null
-  summary: String = null
+  overallStatus: OverallChangeStatusGQL
+  summary: String
 }
 
 input UpdateCommissionVisibilityInput {
@@ -5415,9 +5416,9 @@ input UpdateHighlightRegionsInput {
 }
 
 input UpdateHighlightVersionInput {
-  name: String = null
-  description: String = null
-  isActive: Boolean = null
+  name: String
+  description: String
+  isActive: Boolean
 }
 
 input UpdateInventoryInput {
@@ -5436,10 +5437,13 @@ input UpdateInventoryItemInput {
 }
 
 input UpdateItemChangeInput {
-  status: ItemChangeStatusGQL = null
-  notes: [String!] = null
-  pageReferences: [Int!] = null
-  resolved: Boolean = null
+  status: ItemChangeStatusGQL
+  notes: [String!]
+  pageReferences: [Int!]
+  resolved: Boolean
+  fixtureType: String
+  catalogNumber: String
+  manufacturer: String
 }
 
 input UpdatePackingBoxInput {
@@ -5476,13 +5480,13 @@ input UpdateSpecSheetInput {
 }
 
 input UpdateSubmittalInput {
-  status: SubmittalStatusGQL = null
-  transmittalPurpose: TransmittalPurposeGQL = null
-  description: String = null
-  jobLocation: String = null
-  bidDate: Date = null
-  tags: [String!] = null
-  config: SubmittalConfigInput = null
+  status: SubmittalStatusGQL
+  transmittalPurpose: TransmittalPurposeGQL
+  description: String
+  jobLocation: String
+  bidDate: Date
+  tags: [String!]
+  config: SubmittalConfigInput
 }
 
 input UpdateSubmittalItemInput {
