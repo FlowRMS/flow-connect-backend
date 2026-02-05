@@ -1,5 +1,3 @@
-"""Email strategy for Microsoft Office 365."""
-
 from datetime import datetime, timedelta, timezone
 from uuid import UUID
 

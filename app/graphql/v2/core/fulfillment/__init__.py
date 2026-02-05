@@ -12,7 +12,11 @@ from commons.db.v6.fulfillment import (
     PackingBoxItem,
 )
 
-from app.graphql.v2.core.fulfillment.mutations import FulfillmentMutations
+from app.graphql.v2.core.fulfillment.mutations import (
+    FulfillmentMutations,
+    FulfillmentPickingMutations,
+    FulfillmentShippingMutations,
+)
 from app.graphql.v2.core.fulfillment.queries import FulfillmentQueries
 from app.graphql.v2.core.fulfillment.repositories import (
     FulfillmentActivityRepository,
@@ -115,4 +119,6 @@ __all__ = [
     # GraphQL Operations
     "FulfillmentQueries",
     "FulfillmentMutations",
+    "FulfillmentPickingMutations",
+    "FulfillmentShippingMutations",
 ]

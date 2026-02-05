@@ -22,7 +22,6 @@ class ContainerTypesQueries:
         self,
         service: Injected[ContainerTypeService],
     ) -> list[ContainerTypeResponse]:
-        """Get all container types ordered by display order."""
         container_types = await service.list_all()
         return ContainerTypeResponse.from_orm_model_list(container_types)
 
@@ -33,6 +32,5 @@ class ContainerTypesQueries:
         id: UUID,
         service: Injected[ContainerTypeService],
     ) -> ContainerTypeResponse:
-        """Get a container type by ID."""
         container_type = await service.get_by_id(id)
         return ContainerTypeResponse.from_orm_model(container_type)

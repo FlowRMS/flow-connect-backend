@@ -19,7 +19,6 @@ class CompaniesQueries:
         id: UUID,
         service: Injected[CompaniesService],
     ) -> CompanyResponse:
-        """Get a company by ID."""
         return CompanyResponse.from_orm_model(await service.get_company(id))
 
     @strawberry.field

@@ -26,7 +26,6 @@ class ContainerTypesMutations:
         input: ContainerTypeInput,
         service: Injected[ContainerTypeService],
     ) -> ContainerTypeResponse:
-        """Create a new container type."""
         container_type = await service.create(input)
         return ContainerTypeResponse.from_orm_model(container_type)
 
@@ -38,7 +37,6 @@ class ContainerTypesMutations:
         input: ContainerTypeInput,
         service: Injected[ContainerTypeService],
     ) -> ContainerTypeResponse:
-        """Update a container type."""
         container_type = await service.update(id, input)
         return ContainerTypeResponse.from_orm_model(container_type)
 
@@ -49,7 +47,6 @@ class ContainerTypesMutations:
         id: UUID,
         service: Injected[ContainerTypeService],
     ) -> bool:
-        """Delete a container type."""
         return await service.delete(id)
 
     @strawberry.mutation

@@ -1,24 +1,4 @@
 #!/usr/bin/env python3
-"""
-Submittals API Flow Tests.
-
-Tests the complete submittal workflow via the GraphQL API:
-1. Create submittal
-2. Add items
-3. Add stakeholders
-4. Create revision
-5. Generate PDF
-6. Update submittal
-7. Delete submittal
-
-Requirements:
-- Server running on localhost:5555 (uv run ./start.py)
-- Valid authentication credentials
-
-Usage:
-    cd /home/jorge/flowrms/FLO-727/flow-py-backend
-    uv run python tests/submittals/test_submittals_api_flow.py --email jorge@flowrms.com --password CucoHermoso2026$
-"""
 import argparse
 import asyncio
 import sys
@@ -256,6 +236,7 @@ mutation GenerateSubmittalPdf($input: GenerateSubmittalPdfInput!) {{
 # Test Results Tracking
 # ============================================================================
 
+
 class TestResults:
     """Track test results."""
 
@@ -293,6 +274,7 @@ class TestResults:
 # Test Functions
 # ============================================================================
 
+
 async def test_create_submittal(headers: dict, results: TestResults) -> bool:
     """Test creating a new submittal."""
     test_name = "Create Submittal"
@@ -329,7 +311,9 @@ async def test_create_submittal(headers: dict, results: TestResults) -> bool:
             return False
 
         if submittal.get("status") != "DRAFT":
-            results.fail_test(test_name, f"Expected DRAFT status, got {submittal.get('status')}")
+            results.fail_test(
+                test_name, f"Expected DRAFT status, got {submittal.get('status')}"
+            )
             return False
 
         results.created_submittal_id = submittal["id"]
@@ -397,7 +381,7 @@ async def test_add_item(headers: dict, results: TestResults) -> bool:
                     "quantity": 10,
                     "approvalStatus": "PENDING",
                     "matchStatus": "NO_MATCH",
-                }
+                },
             },
             headers=headers,
         )
@@ -441,7 +425,7 @@ async def test_update_item(headers: dict, results: TestResults) -> bool:
                     "description": "Updated description",
                     "quantity": 20,
                     "approvalStatus": "APPROVED",
-                }
+                },
             },
             headers=headers,
         )
@@ -457,11 +441,16 @@ async def test_update_item(headers: dict, results: TestResults) -> bool:
 
         # Compare as float since Decimal may be serialized as string "20.0000"
         if float(item.get("quantity") or 0) != 20.0:
-            results.fail_test(test_name, f"quantity not updated, got {item.get('quantity')}")
+            results.fail_test(
+                test_name, f"quantity not updated, got {item.get('quantity')}"
+            )
             return False
 
         if item.get("approvalStatus") != "APPROVED":
-            results.fail_test(test_name, f"approvalStatus not updated, got {item.get('approvalStatus')}")
+            results.fail_test(
+                test_name,
+                f"approvalStatus not updated, got {item.get('approvalStatus')}",
+            )
             return False
 
         results.pass_test(test_name)
@@ -491,7 +480,7 @@ async def test_add_stakeholder(headers: dict, results: TestResults) -> bool:
                     "contactName": "Test Engineer",
                     "contactEmail": "engineer@test.com",
                     "companyName": "Test Engineering Inc",
-                }
+                },
             },
             headers=headers,
         )
@@ -506,7 +495,9 @@ async def test_add_stakeholder(headers: dict, results: TestResults) -> bool:
             return False
 
         if stakeholder.get("role") != "ENGINEER":
-            results.fail_test(test_name, f"role mismatch, got {stakeholder.get('role')}")
+            results.fail_test(
+                test_name, f"role mismatch, got {stakeholder.get('role')}"
+            )
             return False
 
         if stakeholder.get("contactName") != "Test Engineer":
@@ -550,7 +541,9 @@ async def test_create_revision(headers: dict, results: TestResults) -> bool:
             return False
 
         if revision.get("revisionNumber") != 1:
-            results.fail_test(test_name, f"Expected revision 1, got {revision.get('revisionNumber')}")
+            results.fail_test(
+                test_name, f"Expected revision 1, got {revision.get('revisionNumber')}"
+            )
             return False
 
         results.created_revision_id = revision["id"]
@@ -595,7 +588,9 @@ async def test_generate_pdf(headers: dict, results: TestResults) -> bool:
             return False
 
         if not pdf_response.get("success"):
-            results.fail_test(test_name, f"PDF generation failed: {pdf_response.get('error')}")
+            results.fail_test(
+                test_name, f"PDF generation failed: {pdf_response.get('error')}"
+            )
             return False
 
         if not pdf_response.get("pdfUrl"):
@@ -607,7 +602,9 @@ async def test_generate_pdf(headers: dict, results: TestResults) -> bool:
         is_s3_url = pdf_url.startswith("http://") or pdf_url.startswith("https://")
         is_data_url = pdf_url.startswith("data:application/pdf;base64,")
         if not (is_s3_url or is_data_url):
-            results.fail_test(test_name, f"PDF URL is not in expected format: {pdf_url[:50]}...")
+            results.fail_test(
+                test_name, f"PDF URL is not in expected format: {pdf_url[:50]}..."
+            )
             return False
 
         results.pass_test(test_name)
@@ -634,7 +631,7 @@ async def test_update_submittal(headers: dict, results: TestResults) -> bool:
                 "input": {
                     "status": "SUBMITTED",
                     "description": "Updated description for test submittal",
-                }
+                },
             },
             headers=headers,
         )
@@ -649,7 +646,9 @@ async def test_update_submittal(headers: dict, results: TestResults) -> bool:
             return False
 
         if submittal.get("status") != "SUBMITTED":
-            results.fail_test(test_name, f"status not updated, got {submittal.get('status')}")
+            results.fail_test(
+                test_name, f"status not updated, got {submittal.get('status')}"
+            )
             return False
 
         results.pass_test(test_name)
@@ -687,7 +686,9 @@ async def test_search_submittals(headers: dict, results: TestResults) -> bool:
         found = any(s["id"] == results.created_submittal_id for s in submittals)
         if not found and results.created_submittal_id:
             # This might fail if the submittal was already deleted or search index is delayed
-            print(f"  ⚠️  WARNING: Created submittal not found in search results (may be timing issue)")
+            print(
+                f"  ⚠️  WARNING: Created submittal not found in search results (may be timing issue)"
+            )
 
         results.pass_test(test_name)
         return True
@@ -808,6 +809,7 @@ async def test_delete_submittal(headers: dict, results: TestResults) -> bool:
 # ============================================================================
 # Main Test Runner
 # ============================================================================
+
 
 async def run_api_flow_tests(headers: dict) -> bool:
     """Run all API flow tests."""

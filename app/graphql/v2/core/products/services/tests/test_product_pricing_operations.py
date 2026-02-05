@@ -1,10 +1,3 @@
-"""
-Unit tests for ProductPricingOperations.
-
-Tests validate quantity pricing replacement and customer pricing
-creation/update logic.
-"""
-
 from decimal import Decimal
 from typing import Any
 from unittest.mock import AsyncMock, MagicMock
@@ -15,8 +8,10 @@ import pytest
 from app.graphql.v2.core.products.services.product_pricing_operations import (
     ProductPricingOperations,
 )
-from app.graphql.v2.core.products.strawberry.product_import_types import (
+from app.graphql.v2.core.products.strawberry.customer_pricing_import_input import (
     CustomerPricingImportInput,
+)
+from app.graphql.v2.core.products.strawberry.quantity_pricing_import_input import (
     QuantityPricingImportInput,
 )
 
@@ -25,11 +20,8 @@ class TestReplaceQuantityPricing:
     """Test cases for replace_quantity_pricing method."""
 
     @pytest.fixture
-    def mock_session(self) -> AsyncMock:
-        session = AsyncMock()
-        session.execute = AsyncMock()
-        session.add = MagicMock()
-        return session
+    def mock_quantity_pricing_repository(self) -> AsyncMock:
+        return AsyncMock()
 
     @pytest.fixture
     def mock_customers_repository(self) -> AsyncMock:
@@ -42,12 +34,12 @@ class TestReplaceQuantityPricing:
     @pytest.fixture
     def operations(
         self,
-        mock_session: AsyncMock,
+        mock_quantity_pricing_repository: AsyncMock,
         mock_customers_repository: AsyncMock,
         mock_cpn_repository: AsyncMock,
     ) -> ProductPricingOperations:
         return ProductPricingOperations(
-            session=mock_session,
+            quantity_pricing_repository=mock_quantity_pricing_repository,
             customers_repository=mock_customers_repository,
             cpn_repository=mock_cpn_repository,
         )
@@ -56,7 +48,7 @@ class TestReplaceQuantityPricing:
     async def test_replace_quantity_pricing_deletes_old_and_creates_new(
         self,
         operations: ProductPricingOperations,
-        mock_session: AsyncMock,
+        mock_quantity_pricing_repository: AsyncMock,
     ) -> None:
         """Test replace_quantity_pricing deletes existing and creates new bands."""
         product_id = uuid4()
@@ -79,15 +71,17 @@ class TestReplaceQuantityPricing:
 
         assert created_count == 2
         # Verify delete was called
-        assert mock_session.execute.called
-        # Verify add was called for each band
-        assert mock_session.add.call_count == 2
+        mock_quantity_pricing_repository.delete_by_product_id.assert_called_once_with(
+            product_id
+        )
+        # Verify add_pricing was called for each band
+        assert mock_quantity_pricing_repository.add_pricing.call_count == 2
 
     @pytest.mark.asyncio
     async def test_replace_quantity_pricing_uses_max_for_none_quantity_high(
         self,
         operations: ProductPricingOperations,
-        mock_session: AsyncMock,
+        mock_quantity_pricing_repository: AsyncMock,
     ) -> None:
         """Test replace_quantity_pricing uses MAX_QUANTITY_HIGH for None quantity_high."""
         product_id = uuid4()
@@ -105,14 +99,14 @@ class TestReplaceQuantityPricing:
 
         assert created_count == 1
         # Verify the pricing was added with MAX_QUANTITY_HIGH
-        call_args = mock_session.add.call_args[0][0]
+        call_args = mock_quantity_pricing_repository.add_pricing.call_args[0][0]
         assert call_args.quantity_high == ProductPricingOperations.MAX_QUANTITY_HIGH
 
     @pytest.mark.asyncio
     async def test_replace_quantity_pricing_empty_list(
         self,
         operations: ProductPricingOperations,
-        mock_session: AsyncMock,
+        mock_quantity_pricing_repository: AsyncMock,
     ) -> None:
         """Test replace_quantity_pricing with empty list only deletes."""
         product_id = uuid4()
@@ -124,22 +118,17 @@ class TestReplaceQuantityPricing:
 
         assert created_count == 0
         # Delete should still be called
-        assert mock_session.execute.called
+        mock_quantity_pricing_repository.delete_by_product_id.assert_called_once()
         # No adds
-        assert mock_session.add.call_count == 0
+        assert mock_quantity_pricing_repository.add_pricing.call_count == 0
 
 
 class TestProcessCustomerPricing:
     """Test cases for process_customer_pricing method."""
 
     @pytest.fixture
-    def mock_session(self) -> AsyncMock:
-        session = AsyncMock()
-        session.begin_nested = MagicMock(return_value=AsyncMock())
-        session.begin_nested.return_value.__aenter__ = AsyncMock()
-        session.begin_nested.return_value.__aexit__ = AsyncMock()
-        session.add = MagicMock()
-        return session
+    def mock_quantity_pricing_repository(self) -> AsyncMock:
+        return AsyncMock()
 
     @pytest.fixture
     def mock_customers_repository(self) -> AsyncMock:
@@ -154,12 +143,12 @@ class TestProcessCustomerPricing:
     @pytest.fixture
     def operations(
         self,
-        mock_session: AsyncMock,
+        mock_quantity_pricing_repository: AsyncMock,
         mock_customers_repository: AsyncMock,
         mock_cpn_repository: AsyncMock,
     ) -> ProductPricingOperations:
         return ProductPricingOperations(
-            session=mock_session,
+            quantity_pricing_repository=mock_quantity_pricing_repository,
             customers_repository=mock_customers_repository,
             cpn_repository=mock_cpn_repository,
         )

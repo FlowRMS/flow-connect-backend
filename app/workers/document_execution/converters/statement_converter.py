@@ -4,7 +4,7 @@ from typing import override
 from uuid import UUID
 
 from commons.db.v6.ai.documents.enums.entity_type import DocumentEntityType
-from commons.db.v6.commission import Invoice, Order
+from commons.db.v6.commission import Invoice, Order, OrderDetail
 from commons.db.v6.commission.statements import CommissionStatement
 from commons.dtos.common.dto_loader_service import DTOLoaderService
 from commons.dtos.statement.statement_detail_dto import CommissionStatementDetailDTO
@@ -92,6 +92,7 @@ class StatementConverter(
             detail_input = await self._convert_detail(
                 detail=detail,
                 item_number=idx + 1,
+                factory_id=factory_id,
                 entity_mapping=entity_mapping,
                 default_commission_rate=default_commission_rate,
                 default_commission_discount=default_commission_discount,
@@ -112,6 +113,7 @@ class StatementConverter(
         self,
         detail: CommissionStatementDetailDTO,
         item_number: int,
+        factory_id: UUID,
         entity_mapping: EntityMapping,
         default_commission_rate: Decimal,
         default_commission_discount: Decimal,
@@ -119,9 +121,15 @@ class StatementConverter(
     ) -> StatementDetailInput:
         flow_detail_index = detail.flow_detail_index
         product_id = entity_mapping.get_product_id(flow_detail_index)
-        end_user_id = entity_mapping.get_end_user_id(flow_detail_index)
-        order_id = entity_mapping.get_order_id(flow_detail_index)
-        invoice_id = entity_mapping.get_invoice_id(flow_detail_index)
+        sold_to_customer_id = entity_mapping.get_sold_to_customer_id(flow_detail_index)
+        end_user_id = entity_mapping.get_end_user_id(
+            flow_detail_index, fallback=sold_to_customer_id
+        )
+
+        order_id = await self._resolve_order_id(
+            detail, sold_to_customer_id, entity_mapping
+        )
+        invoice_id = await self._resolve_invoice_id(detail, factory_id, entity_mapping)
 
         quantity = Decimal(str(detail.quantity_determined))
         unit_price = detail.unit_price_determined or Decimal("0")
@@ -133,6 +141,11 @@ class StatementConverter(
             quantity=quantity,
             item_number=item_number,
         )
+
+        order_detail = await self._get_order_detail(order_id, order_detail_id)
+        if order_detail:
+            product_id = product_id or order_detail.product_id
+            end_user_id = end_user_id or order_detail.end_user_id
 
         commission_rate = detail.commission_rate_determined or default_commission_rate
         commission_discount_rate = (
@@ -146,7 +159,16 @@ class StatementConverter(
             else default_discount_rate
         )
 
-        sold_to_customer_id = entity_mapping.sold_to_customer_id
+        if order_detail:
+            commission_rate = (
+                commission_rate or order_detail.commission_rate or Decimal("0")
+            )
+            commission_discount_rate = (
+                commission_discount_rate
+                or order_detail.commission_discount_rate
+                or Decimal("0")
+            )
+            discount_rate = discount_rate or order_detail.discount_rate or Decimal("0")
 
         return StatementDetailInput(
             item_number=item_number,
@@ -188,6 +210,49 @@ class StatementConverter(
             quantity=quantity,
             item_number=item_number,
         )
+
+    async def _resolve_order_id(
+        self,
+        detail: CommissionStatementDetailDTO,
+        sold_to_customer_id: UUID | None,
+        entity_mapping: EntityMapping,
+    ) -> UUID | None:
+        if detail.order_number and sold_to_customer_id:
+            order = await self.orders_repository.find_by_order_number(
+                detail.order_number, sold_to_customer_id
+            )
+            if order:
+                return order.id
+        return entity_mapping.get_order_id(detail.flow_detail_index)
+
+    async def _resolve_invoice_id(
+        self,
+        detail: CommissionStatementDetailDTO,
+        factory_id: UUID,
+        entity_mapping: EntityMapping,
+    ) -> UUID | None:
+        if detail.invoice_number:
+            invoice = await self._find_invoice_by_number_and_factory(
+                detail.invoice_number, factory_id
+            )
+            if invoice:
+                return invoice.id
+        return entity_mapping.get_invoice_id(detail.flow_detail_index)
+
+    async def _get_order_detail(
+        self,
+        order_id: UUID | None,
+        order_detail_id: UUID | None,
+    ) -> OrderDetail | None:
+        if not order_id or not order_detail_id:
+            return None
+        order = await self._get_order(order_id)
+        if not order:
+            return None
+        for detail in order.details:
+            if detail.id == order_detail_id:
+                return detail
+        return None
 
     async def _get_order(self, order_id: UUID) -> Order | None:
         if order_id in self._order_cache:

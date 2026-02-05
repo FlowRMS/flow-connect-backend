@@ -267,9 +267,7 @@ async def migrate_users_to_v6(
             logger.info(f"[DRY RUN] Would migrate user: {user.email}")
             continue
 
-        role_int = {"admin": 1, "manager": 2, "sales_rep": 3}.get(
-            user.role.lower(), 3
-        )
+        role_int = {"admin": 1, "manager": 2, "sales_rep": 3}.get(user.role.lower(), 3)
         _ = await dest_conn.execute(
             """
             INSERT INTO pyuser.users (

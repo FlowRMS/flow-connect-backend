@@ -12,8 +12,8 @@ from app.graphql.submittals.repositories.submittals_repository import (
     SubmittalItemsRepository,
     SubmittalsRepository,
 )
-from app.graphql.submittals.strawberry.submittal_input import (
-    SubmittalItemInput,
+from app.graphql.submittals.strawberry.submittal_item_input import SubmittalItemInput
+from app.graphql.submittals.strawberry.update_submittal_item_input import (
     UpdateSubmittalItemInput,
 )
 
@@ -93,7 +93,6 @@ class SubmittalsItemService:
         return item_with_relations or updated
 
     async def remove_item(self, item_id: UUID) -> bool:
-        """Remove a submittal item."""
         result = await self.items_repository.delete(item_id)
         if result:
             logger.info(f"Removed submittal item {item_id}")

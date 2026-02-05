@@ -3,7 +3,7 @@ from typing import Any
 
 from sqlalchemy import Select
 
-from app.graphql.common.strawberry.search_types import SourceType
+from app.graphql.common.strawberry.source_type import SourceType
 
 
 class SearchQueryStrategy(ABC):

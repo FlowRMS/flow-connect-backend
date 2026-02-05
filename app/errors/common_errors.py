@@ -1,5 +1,3 @@
-"""Service layer for Jobs entity with business logic."""
-
 from app.errors.base_exception import BaseException
 
 

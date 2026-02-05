@@ -121,8 +121,10 @@ class FulfillmentDocumentService:
         document.file_id = file_record.id
 
         created = await self.document_repository.create(document)
-        # Reload with relationships for GraphQL response
-        return await self.document_repository.get_with_user(created.id)  # type: ignore
+        result = await self.document_repository.get_with_user(created.id)
+        if not result:
+            raise RuntimeError(f"Document {created.id} not found after creation")
+        return result
 
     async def get_documents_by_order(
         self, fulfillment_order_id: UUID

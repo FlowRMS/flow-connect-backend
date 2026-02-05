@@ -20,7 +20,6 @@ class FreightCategoriesQueries:
         self,
         service: Injected[FreightCategoryService],
     ) -> list[FreightCategoryResponse]:
-        """Get all freight categories ordered by display order."""
         freight_categories = await service.list_all()
         return FreightCategoryResponse.from_orm_model_list(freight_categories)
 
@@ -41,6 +40,5 @@ class FreightCategoriesQueries:
         id: UUID,
         service: Injected[FreightCategoryService],
     ) -> FreightCategoryResponse:
-        """Get a freight category by ID."""
         freight_category = await service.get_by_id(id)
         return FreightCategoryResponse.from_orm_model(freight_category)

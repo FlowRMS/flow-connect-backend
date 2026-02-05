@@ -1,10 +1,3 @@
-"""
-Unit tests for ProductCpnImportService.
-
-Tests validate CPN import logic including product/customer lookup,
-deduplication, and error handling.
-"""
-
 from decimal import Decimal
 from unittest.mock import AsyncMock, MagicMock
 from uuid import uuid4
@@ -14,24 +7,16 @@ import pytest
 from app.graphql.v2.core.products.services.product_cpn_import_service import (
     ProductCpnImportService,
 )
-from app.graphql.v2.core.products.strawberry.product_cpn_import_types import (
+from app.graphql.v2.core.products.strawberry.product_cpn_import_input import (
     ProductCpnImportInput,
+)
+from app.graphql.v2.core.products.strawberry.product_cpn_import_item_input import (
     ProductCpnImportItemInput,
 )
 
 
 class TestImportCpns:
     """Test cases for import_cpns method."""
-
-    @pytest.fixture
-    def mock_session(self) -> AsyncMock:
-        session = AsyncMock()
-        session.begin_nested = MagicMock(return_value=AsyncMock())
-        session.begin_nested.return_value.__aenter__ = AsyncMock()
-        session.begin_nested.return_value.__aexit__ = AsyncMock()
-        session.add = MagicMock()
-        session.flush = AsyncMock()
-        return session
 
     @pytest.fixture
     def mock_products_repository(self) -> AsyncMock:
@@ -50,13 +35,11 @@ class TestImportCpns:
     @pytest.fixture
     def service(
         self,
-        mock_session: AsyncMock,
         mock_products_repository: AsyncMock,
         mock_cpn_repository: AsyncMock,
         mock_customers_repository: AsyncMock,
     ) -> ProductCpnImportService:
         return ProductCpnImportService(
-            session=mock_session,
             products_repository=mock_products_repository,
             cpn_repository=mock_cpn_repository,
             customers_repository=mock_customers_repository,

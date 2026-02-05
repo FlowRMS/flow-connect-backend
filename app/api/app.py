@@ -1,5 +1,6 @@
 import contextlib
 import time
+from collections.abc import AsyncIterator
 from typing import Any
 
 from aioinject.ext.fastapi import AioInjectMiddleware
@@ -25,7 +26,7 @@ def create_app() -> FastAPI:
     container = create_container()
 
     @contextlib.asynccontextmanager
-    async def lifespan(_app: FastAPI):
+    async def lifespan(_app: FastAPI) -> AsyncIterator[None]:
         configure_mappers()
         async with container:
             async with container.context() as ctx:
@@ -101,7 +102,7 @@ def create_app() -> FastAPI:
         return response
 
     @app.get("/api/health", include_in_schema=True)
-    def health_check():  # pyright: ignore[reportUnusedFunction]
+    def health_check() -> dict[str, str]:  # pyright: ignore[reportUnusedFunction]
         return {"status": "ok"}
 
     return app

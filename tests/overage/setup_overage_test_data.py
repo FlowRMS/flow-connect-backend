@@ -1,31 +1,4 @@
 #!/usr/bin/env python3
-"""
-Setup script for Overage View frontend testing.
-
-This script prepares the database with test data for the Overage View feature:
-1. Enables overage for a specific factory
-2. Sets up products with base prices for overage calculations
-3. Optionally creates a test quote with line items
-
-Requirements:
-- Database connection configured in environment
-- Valid authentication credentials for API calls
-
-Usage:
-    cd /home/jorge/flowrms/FLO-727/flow-py-backend
-
-    # Enable overage for a factory
-    uv run python tests/overage/setup_overage_test_data.py --enable-overage "COOPER LIGHTING LLC"
-
-    # Check factory overage status
-    uv run python tests/overage/setup_overage_test_data.py --check "COOPER LIGHTING LLC"
-
-    # Create a test quote with overage line items
-    uv run python tests/overage/setup_overage_test_data.py --create-quote --factory "COOPER LIGHTING LLC" --email your@email.com --password yourpassword
-
-    # Full setup: enable overage + create test quote
-    uv run python tests/overage/setup_overage_test_data.py --full-setup --factory "COOPER LIGHTING LLC" --email your@email.com --password yourpassword
-"""
 import argparse
 import asyncio
 import os
@@ -42,6 +15,7 @@ import httpx
 try:
     from sqlalchemy import create_engine, text
     from sqlalchemy.orm import sessionmaker
+
     DB_AVAILABLE = True
 except ImportError:
     DB_AVAILABLE = False
@@ -55,10 +29,11 @@ BASE_URL = "http://localhost:5555/graphql"
 # Database Operations
 # ============================================================================
 
+
 def get_database_url() -> str:
     """Get database URL from environment."""
     # Try different environment variable names
-    for var in ['DATABASE_URL', 'NEON_DATABASE_URL', 'POSTGRES_URL']:
+    for var in ["DATABASE_URL", "NEON_DATABASE_URL", "POSTGRES_URL"]:
         url = os.environ.get(var)
         if url:
             return url
@@ -70,7 +45,9 @@ def get_database_url() -> str:
     )
 
 
-def enable_overage_for_factory(factory_name: str, overage_type: int = 0, rep_share: float = 100.0) -> bool:
+def enable_overage_for_factory(
+    factory_name: str, overage_type: int = 0, rep_share: float = 100.0
+) -> bool:
     """
     Enable overage for a factory in the database.
 
@@ -90,8 +67,10 @@ def enable_overage_for_factory(factory_name: str, overage_type: int = 0, rep_sha
         with engine.connect() as conn:
             # First, find the factory
             result = conn.execute(
-                text("SELECT id, title, overage_allowed, overage_type, rep_overage_share FROM pycore.factories WHERE title ILIKE :name"),
-                {"name": f"%{factory_name}%"}
+                text(
+                    "SELECT id, title, overage_allowed, overage_type, rep_overage_share FROM pycore.factories WHERE title ILIKE :name"
+                ),
+                {"name": f"%{factory_name}%"},
             )
             rows = result.fetchall()
 
@@ -111,7 +90,9 @@ def enable_overage_for_factory(factory_name: str, overage_type: int = 0, rep_sha
             print(f"\nFactory: {title}")
             print(f"  ID: {factory_id}")
             print(f"  Current overage_allowed: {current_overage}")
-            print(f"  Current overage_type: {current_type} ({'BY_LINE' if current_type == 0 else 'BY_TOTAL'})")
+            print(
+                f"  Current overage_type: {current_type} ({'BY_LINE' if current_type == 0 else 'BY_TOTAL'})"
+            )
             print(f"  Current rep_overage_share: {current_share}%")
 
             # Update the factory
@@ -127,13 +108,15 @@ def enable_overage_for_factory(factory_name: str, overage_type: int = 0, rep_sha
                     "factory_id": factory_id,
                     "overage_type": overage_type,
                     "rep_share": rep_share,
-                }
+                },
             )
             conn.commit()
 
             print(f"\n✅ Updated factory '{title}':")
             print(f"  overage_allowed: true")
-            print(f"  overage_type: {overage_type} ({'BY_LINE' if overage_type == 0 else 'BY_TOTAL'})")
+            print(
+                f"  overage_type: {overage_type} ({'BY_LINE' if overage_type == 0 else 'BY_TOTAL'})"
+            )
             print(f"  rep_overage_share: {rep_share}%")
 
             return True
@@ -160,7 +143,7 @@ def check_factory_overage(factory_name: str) -> dict | None:
                     FROM pycore.factories
                     WHERE title ILIKE :name
                 """),
-                {"name": f"%{factory_name}%"}
+                {"name": f"%{factory_name}%"},
             )
             rows = result.fetchall()
 
@@ -170,9 +153,22 @@ def check_factory_overage(factory_name: str) -> dict | None:
 
             print(f"\nFactories matching '{factory_name}':\n")
             for row in rows:
-                factory_id, title, overage_allowed, overage_type, rep_share, base_rate = row
-                overage_type_str = 'BY_LINE' if overage_type == 0 else 'BY_TOTAL' if overage_type == 1 else 'N/A'
-                status = '✅ ENABLED' if overage_allowed else '❌ DISABLED'
+                (
+                    factory_id,
+                    title,
+                    overage_allowed,
+                    overage_type,
+                    rep_share,
+                    base_rate,
+                ) = row
+                overage_type_str = (
+                    "BY_LINE"
+                    if overage_type == 0
+                    else "BY_TOTAL"
+                    if overage_type == 1
+                    else "N/A"
+                )
+                status = "✅ ENABLED" if overage_allowed else "❌ DISABLED"
 
                 print(f"  {title}")
                 print(f"    ID: {factory_id}")
@@ -215,18 +211,20 @@ def get_products_for_factory(factory_name: str, limit: int = 5) -> list:
                     AND p.unit_price > 0
                     LIMIT :limit
                 """),
-                {"name": f"%{factory_name}%", "limit": limit}
+                {"name": f"%{factory_name}%", "limit": limit},
             )
 
             products = []
             for row in result.fetchall():
-                products.append({
-                    "id": str(row[0]),
-                    "partNumber": row[1],
-                    "description": row[2],
-                    "unitPrice": float(row[3]) if row[3] else 0,
-                    "commissionRate": float(row[4]) if row[4] else 0,
-                })
+                products.append(
+                    {
+                        "id": str(row[0]),
+                        "partNumber": row[1],
+                        "description": row[2],
+                        "unitPrice": float(row[3]) if row[3] else 0,
+                        "commissionRate": float(row[4]) if row[4] else 0,
+                    }
+                )
 
             return products
 
@@ -239,9 +237,11 @@ def get_products_for_factory(factory_name: str, limit: int = 5) -> list:
 # API Operations
 # ============================================================================
 
+
 async def get_auth_headers(email: str, password: str) -> dict:
     """Get authentication headers."""
     from tests.common.token_generator import generate_token
+
     return await generate_token(email=email, password=password)
 
 
@@ -296,19 +296,21 @@ async def create_test_quote(
         print(f"  - {p['partNumber']}: ${p['unitPrice']:.2f}")
 
     # Build quote input with markup prices (to generate overage)
-    fixture_types = ['TYPE_A', 'TYPE_B', 'TYPE_C', 'TYPE_D', 'TYPE_E']
+    fixture_types = ["TYPE_A", "TYPE_B", "TYPE_C", "TYPE_D", "TYPE_E"]
     details = []
     for i, product in enumerate(products):
-        base_price = product['unitPrice']
+        base_price = product["unitPrice"]
         # Add 20% markup to generate overage
         markup_price = base_price * 1.2
 
-        details.append({
-            "productId": product['id'],
-            "quantity": 1 + i,
-            "unitPrice": str(round(markup_price, 2)),
-            "fixtureSchedule": fixture_types[i % len(fixture_types)],
-        })
+        details.append(
+            {
+                "productId": product["id"],
+                "quantity": 1 + i,
+                "unitPrice": str(round(markup_price, 2)),
+                "fixtureSchedule": fixture_types[i % len(fixture_types)],
+            }
+        )
 
     quote_input = {
         "quoteNumber": f"TEST-OVERAGE-{uuid4().hex[:8].upper()}",
@@ -321,7 +323,9 @@ async def create_test_quote(
 
     print(f"\nQuote number: {quote_input['quoteNumber']}")
     print("\nNote: This requires a valid soldToCustomerId to work.")
-    print("Use the frontend to create the quote instead, or update this script with a valid customer ID.")
+    print(
+        "Use the frontend to create the quote instead, or update this script with a valid customer ID."
+    )
 
     return quote_input
 
@@ -329,6 +333,7 @@ async def create_test_quote(
 # ============================================================================
 # Main
 # ============================================================================
+
 
 async def main():
     parser = argparse.ArgumentParser(
@@ -344,19 +349,38 @@ Examples:
 
     # List products for a factory
     uv run python tests/overage/setup_overage_test_data.py --list-products "COOPER LIGHTING"
-        """
+        """,
     )
 
-    parser.add_argument("--enable-overage", metavar="FACTORY", help="Enable overage for factory")
-    parser.add_argument("--check", metavar="FACTORY", help="Check factory overage status")
-    parser.add_argument("--list-products", metavar="FACTORY", help="List products for factory")
-    parser.add_argument("--overage-type", type=int, default=0, choices=[0, 1], help="0=BY_LINE, 1=BY_TOTAL")
-    parser.add_argument("--rep-share", type=float, default=100.0, help="Rep overage share percentage (0-100)")
+    parser.add_argument(
+        "--enable-overage", metavar="FACTORY", help="Enable overage for factory"
+    )
+    parser.add_argument(
+        "--check", metavar="FACTORY", help="Check factory overage status"
+    )
+    parser.add_argument(
+        "--list-products", metavar="FACTORY", help="List products for factory"
+    )
+    parser.add_argument(
+        "--overage-type",
+        type=int,
+        default=0,
+        choices=[0, 1],
+        help="0=BY_LINE, 1=BY_TOTAL",
+    )
+    parser.add_argument(
+        "--rep-share",
+        type=float,
+        default=100.0,
+        help="Rep overage share percentage (0-100)",
+    )
     parser.add_argument("--create-quote", action="store_true", help="Create test quote")
     parser.add_argument("--factory", help="Factory name for quote creation")
     parser.add_argument("--email", "-e", help="User email for API auth")
     parser.add_argument("--password", "-p", help="User password for API auth")
-    parser.add_argument("--full-setup", action="store_true", help="Enable overage + create quote")
+    parser.add_argument(
+        "--full-setup", action="store_true", help="Enable overage + create quote"
+    )
 
     args = parser.parse_args()
 
@@ -375,8 +399,14 @@ Examples:
         if products:
             print(f"\nProducts for '{args.list_products}':\n")
             for p in products:
-                print(f"  {p['partNumber']}: ${p['unitPrice']:.2f} ({p['commissionRate']}% commission)")
-                print(f"    {p['description'][:60]}..." if len(p.get('description', '') or '') > 60 else f"    {p.get('description', 'No description')}")
+                print(
+                    f"  {p['partNumber']}: ${p['unitPrice']:.2f} ({p['commissionRate']}% commission)"
+                )
+                print(
+                    f"    {p['description'][:60]}..."
+                    if len(p.get("description", "") or "") > 60
+                    else f"    {p.get('description', 'No description')}"
+                )
                 print()
 
     elif args.create_quote or args.full_setup:
@@ -404,9 +434,13 @@ Examples:
         print("Quick Start:")
         print("=" * 60)
         print("\n1. Check factory status:")
-        print('   uv run python tests/overage/setup_overage_test_data.py --check "COOPER LIGHTING"')
+        print(
+            '   uv run python tests/overage/setup_overage_test_data.py --check "COOPER LIGHTING"'
+        )
         print("\n2. Enable overage:")
-        print('   uv run python tests/overage/setup_overage_test_data.py --enable-overage "COOPER LIGHTING LLC"')
+        print(
+            '   uv run python tests/overage/setup_overage_test_data.py --enable-overage "COOPER LIGHTING LLC"'
+        )
         print("\n3. Test in frontend:")
         print("   - Open a quote for COOPER LIGHTING LLC")
         print("   - Switch to Overage View")

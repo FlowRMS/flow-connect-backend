@@ -20,7 +20,6 @@ class CompaniesMutations:
         input: CompanyInput,
         service: Injected[CompaniesService],
     ) -> CompanyResponse:
-        """Create a new company."""
         return CompanyResponse.from_orm_model(
             await service.create_company(company_input=input)
         )
@@ -32,7 +31,6 @@ class CompaniesMutations:
         id: UUID,
         service: Injected[CompaniesService],
     ) -> bool:
-        """Delete a company by ID."""
         return await service.delete_company(company_id=id)
 
     @strawberry.mutation

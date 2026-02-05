@@ -23,18 +23,15 @@ class ContainerTypeService:
         self.auth_info = auth_info
 
     async def get_by_id(self, container_type_id: UUID) -> ContainerType:
-        """Get a container type by ID."""
         container_type = await self.repository.get_by_id(container_type_id)
         if not container_type:
             raise NotFoundError(f"Container type with id {container_type_id} not found")
         return container_type
 
     async def list_all(self) -> list[ContainerType]:
-        """Get all container types ordered by display order."""
         return await self.repository.list_all_ordered()
 
     async def create(self, input: ContainerTypeInput) -> ContainerType:
-        """Create a new container type."""
         container_type = input.to_orm_model()
 
         # Auto-assign position if not provided
@@ -47,7 +44,6 @@ class ContainerTypeService:
     async def update(
         self, container_type_id: UUID, input: ContainerTypeInput
     ) -> ContainerType:
-        """Update a container type."""
         existing = await self.repository.get_by_id(container_type_id)
         if not existing:
             raise NotFoundError(f"Container type with id {container_type_id} not found")
@@ -62,7 +58,6 @@ class ContainerTypeService:
         return await self.repository.update(container_type)
 
     async def delete(self, container_type_id: UUID) -> bool:
-        """Delete a container type."""
         if not await self.repository.exists(container_type_id):
             raise NotFoundError(f"Container type with id {container_type_id} not found")
         return await self.repository.delete(container_type_id)

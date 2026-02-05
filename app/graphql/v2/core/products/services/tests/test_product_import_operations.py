@@ -1,10 +1,3 @@
-"""
-Unit tests for ProductImportOperations.
-
-Tests validate product creation and update logic including
-error handling behavior.
-"""
-
 from decimal import Decimal
 from unittest.mock import AsyncMock, MagicMock, patch
 from uuid import uuid4
@@ -14,7 +7,7 @@ import pytest
 from app.graphql.v2.core.products.services.product_import_operations import (
     ProductImportOperations,
 )
-from app.graphql.v2.core.products.strawberry.product_import_types import (
+from app.graphql.v2.core.products.strawberry.product_import_item_input import (
     ProductImportItemInput,
 )
 
@@ -23,23 +16,12 @@ class TestCreateProducts:
     """Test cases for create_products method."""
 
     @pytest.fixture
-    def mock_session(self) -> AsyncMock:
-        session = AsyncMock()
-        session.begin_nested = MagicMock(return_value=AsyncMock())
-        session.begin_nested.return_value.__aenter__ = AsyncMock()
-        session.begin_nested.return_value.__aexit__ = AsyncMock()
-        return session
-
-    @pytest.fixture
     def mock_repository(self) -> AsyncMock:
         return AsyncMock()
 
     @pytest.fixture
-    def operations(
-        self, mock_session: AsyncMock, mock_repository: AsyncMock
-    ) -> ProductImportOperations:
+    def operations(self, mock_repository: AsyncMock) -> ProductImportOperations:
         return ProductImportOperations(
-            session=mock_session,
             products_repository=mock_repository,
         )
 
@@ -63,7 +45,7 @@ class TestCreateProducts:
             ),
         ]
 
-        mock_repository.create = AsyncMock(return_value=MagicMock())
+        mock_repository.create_with_savepoint = AsyncMock(return_value=MagicMock())
 
         created, updated, errors = await operations.create_products(
             products_data, factory_id, uom_id
@@ -72,23 +54,15 @@ class TestCreateProducts:
         assert created == 2
         assert updated == 0
         assert errors == []
-        assert mock_repository.create.call_count == 2
+        assert mock_repository.create_with_savepoint.call_count == 2
 
     @pytest.mark.asyncio
     async def test_create_products_handles_errors_gracefully(
         self,
-        mock_session: AsyncMock,
         mock_repository: AsyncMock,
     ) -> None:
         """Test create_products handles errors and returns them in errors list."""
-        # Create a context manager that raises the exception
-        mock_nested = MagicMock()
-        mock_nested.__aenter__ = AsyncMock(return_value=None)
-        mock_nested.__aexit__ = AsyncMock(return_value=False)
-        mock_session.begin_nested = MagicMock(return_value=mock_nested)
-
         operations = ProductImportOperations(
-            session=mock_session,
             products_repository=mock_repository,
         )
 
@@ -103,7 +77,7 @@ class TestCreateProducts:
         ]
 
         # Simulate general error on create
-        mock_repository.create = AsyncMock(
+        mock_repository.create_with_savepoint = AsyncMock(
             side_effect=Exception("Database connection failed")
         )
 
@@ -131,7 +105,7 @@ class TestCreateProducts:
             ),
         ]
 
-        mock_repository.create = AsyncMock(return_value=MagicMock())
+        mock_repository.create_with_savepoint = AsyncMock(return_value=MagicMock())
 
         with patch(
             "app.graphql.v2.core.products.services.product_import_operations.ProductInput"
@@ -148,21 +122,12 @@ class TestUpdateProducts:
     """Test cases for update_products method."""
 
     @pytest.fixture
-    def mock_session(self) -> AsyncMock:
-        session = AsyncMock()
-        session.flush = AsyncMock()
-        return session
-
-    @pytest.fixture
     def mock_repository(self) -> AsyncMock:
         return AsyncMock()
 
     @pytest.fixture
-    def operations(
-        self, mock_session: AsyncMock, mock_repository: AsyncMock
-    ) -> ProductImportOperations:
+    def operations(self, mock_repository: AsyncMock) -> ProductImportOperations:
         return ProductImportOperations(
-            session=mock_session,
             products_repository=mock_repository,
         )
 

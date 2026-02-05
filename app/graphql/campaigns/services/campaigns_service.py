@@ -17,18 +17,22 @@ from app.graphql.campaigns.repositories.campaign_recipients_repository import (
     CampaignRecipientsRepository,
 )
 from app.graphql.campaigns.repositories.campaigns_repository import CampaignsRepository
-from app.graphql.campaigns.services.criteria_evaluator_service import (
-    CriteriaEvaluatorService,
+from app.graphql.campaigns.repositories.criteria_evaluator_repository import (
+    CriteriaEvaluatorRepository,
 )
 from app.graphql.campaigns.services.email_provider_service import EmailProviderService
-from app.graphql.campaigns.strawberry.campaign_input import CampaignInput
-from app.graphql.campaigns.strawberry.criteria_input import (
+from app.graphql.campaigns.strawberry.campaign_criteria_input import (
     CampaignCriteriaInput,
+)
+from app.graphql.campaigns.strawberry.campaign_input import CampaignInput
+from app.graphql.campaigns.strawberry.criteria_condition_input import (
     CriteriaConditionInput,
-    CriteriaGroupInput,
+)
+from app.graphql.campaigns.strawberry.criteria_enums import (
     CriteriaOperator,
     LogicalOperator,
 )
+from app.graphql.campaigns.strawberry.criteria_group_input import CriteriaGroupInput
 
 
 class NoEmailProviderError(Exception):
@@ -47,7 +51,7 @@ class CampaignsService:
         self,
         repository: CampaignsRepository,
         recipients_repository: CampaignRecipientsRepository,
-        criteria_evaluator: CriteriaEvaluatorService,
+        criteria_evaluator: CriteriaEvaluatorRepository,
         email_provider: EmailProviderService,
         auth_info: AuthInfo,
     ) -> None:
@@ -84,7 +88,10 @@ class CampaignsService:
                     campaign.id, campaign_input.criteria, is_dynamic=True
                 )
 
-        return await self.repository.get_with_relations(campaign.id)  # type: ignore[return-value]
+        result = await self.repository.get_with_relations(campaign.id)
+        if not result:
+            raise NotFoundError(str(campaign.id))
+        return result
 
     async def _add_static_recipients(
         self,
@@ -120,7 +127,7 @@ class CampaignsService:
             criteria_json=self._criteria_to_dict(criteria),
             is_dynamic=is_dynamic,
         )
-        self.repository.session.add(criteria_model)
+        _ = await self.repository.create_criteria(criteria_model)
 
         contacts = await self.criteria_evaluator.evaluate_criteria(criteria)
 
@@ -157,7 +164,6 @@ class CampaignsService:
         }
 
     async def get_campaign(self, campaign_id: UUID) -> Campaign:
-        """Get a campaign by ID with relations."""
         campaign = await self.repository.get_with_relations(campaign_id)
         if not campaign:
             raise NotFoundError(str(campaign_id))
@@ -168,17 +174,18 @@ class CampaignsService:
         campaign_id: UUID,
         campaign_input: CampaignInput,
     ) -> Campaign:
-        """Update an existing campaign."""
         if not await self.repository.exists(campaign_id):
             raise NotFoundError(str(campaign_id))
 
         campaign = campaign_input.to_orm_model()
         campaign.id = campaign_id
         updated = await self.repository.update(campaign)
-        return await self.repository.get_with_relations(updated.id)  # type: ignore[return-value]
+        result = await self.repository.get_with_relations(updated.id)
+        if not result:
+            raise NotFoundError(str(updated.id))
+        return result
 
     async def delete_campaign(self, campaign_id: UUID) -> bool:
-        """Delete a campaign and all its recipients."""
         if not await self.repository.exists(campaign_id):
             raise NotFoundError(str(campaign_id))
         return await self.repository.delete(campaign_id)
@@ -190,8 +197,11 @@ class CampaignsService:
             raise NotFoundError(str(campaign_id))
 
         campaign.status = CampaignStatus.PAUSED
-        await self.repository.session.flush()
-        return await self.repository.get_with_relations(campaign_id)  # type: ignore[return-value]
+        await self.repository.flush()
+        result = await self.repository.get_with_relations(campaign_id)
+        if not result:
+            raise NotFoundError(str(campaign_id))
+        return result
 
     async def resume_campaign(self, campaign_id: UUID) -> Campaign:
         """Resume a paused campaign."""
@@ -200,8 +210,11 @@ class CampaignsService:
             raise NotFoundError(str(campaign_id))
 
         campaign.status = CampaignStatus.SENDING
-        await self.repository.session.flush()
-        return await self.repository.get_with_relations(campaign_id)  # type: ignore[return-value]
+        await self.repository.flush()
+        result = await self.repository.get_with_relations(campaign_id)
+        if not result:
+            raise NotFoundError(str(campaign_id))
+        return result
 
     async def estimate_recipients(
         self,
@@ -229,7 +242,6 @@ class CampaignsService:
         limit: int = 100,
         offset: int = 0,
     ) -> list[CampaignRecipient]:
-        """Get recipients for a campaign with pagination."""
         if not await self.repository.exists(campaign_id):
             raise NotFoundError(str(campaign_id))
         return await self.recipients_repository.get_by_campaign_id(
@@ -268,7 +280,10 @@ class CampaignsService:
             ]
             _ = await self.recipients_repository.bulk_create(new_recipients)
 
-        return await self.repository.get_with_relations(campaign_id)  # type: ignore[return-value]
+        result = await self.repository.get_with_relations(campaign_id)
+        if not result:
+            raise NotFoundError(str(campaign_id))
+        return result
 
     def _dict_to_criteria(
         self,

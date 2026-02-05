@@ -1,44 +1,11 @@
 #!/usr/bin/env python3
-"""
-Create a test quote with overage for frontend testing.
-
-This script:
-1. Enables overage for a factory (requires DB access)
-2. Creates/finds a product with a base price
-3. Creates a quote with markup price to generate overage
-4. The quote can then be viewed in the frontend Overage View
-
-Requirements:
-- CRM backend access (staging.v6.api.flowrms.com)
-- Database access to enable overage (pycore schema)
-- Valid authentication credentials
-
-Usage:
-    cd /home/jorge/flowrms/FLO-727/flow-py-backend
-
-    # Step 1: Enable overage for factory (run this SQL manually or provide DB_URL)
-    # See the SQL output from this script
-
-    # Step 2: Create test quote
-    uv run python tests/overage/create_overage_test_quote.py \
-        --email jorge@flowrms.com \
-        --password 'CucoHermoso2026$' \
-        --create-quote
-
-    # Or do everything if you have DB access
-    uv run python tests/overage/create_overage_test_quote.py \
-        --email jorge@flowrms.com \
-        --password 'CucoHermoso2026$' \
-        --db-url "postgresql://user:pass@host/db" \
-        --full-setup
-"""
 import argparse
 import asyncio
 import sys
-from pathlib import Path
-from decimal import Decimal
-from uuid import uuid4
 from datetime import date
+from decimal import Decimal
+from pathlib import Path
+from uuid import uuid4
 
 import httpx
 
@@ -70,9 +37,12 @@ QUOTE_DETAILS = [
 ]
 
 
-async def get_auth_headers(email: str, password: str, org_id: str = "org_01KE7D0TTXV7TZ9JSXFPXCXJ35") -> dict:
+async def get_auth_headers(
+    email: str, password: str, org_id: str = "org_01KE7D0TTXV7TZ9JSXFPXCXJ35"
+) -> dict:
     """Get authentication headers."""
     from tests.common.token_generator import generate_token
+
     return await generate_token(email=email, password=password, organization_id=org_id)
 
 
@@ -131,8 +101,10 @@ async def enable_overage_db(db_url: str) -> bool:
         with engine.connect() as conn:
             # Check if factory exists
             result = conn.execute(
-                text("SELECT title, overage_allowed FROM pycore.factories WHERE id = :id"),
-                {"id": FACTORY_ID}
+                text(
+                    "SELECT title, overage_allowed FROM pycore.factories WHERE id = :id"
+                ),
+                {"id": FACTORY_ID},
             )
             row = result.fetchone()
 
@@ -151,7 +123,7 @@ async def enable_overage_db(db_url: str) -> bool:
                         rep_overage_share = 100.00
                     WHERE id = :id
                 """),
-                {"id": FACTORY_ID}
+                {"id": FACTORY_ID},
             )
             conn.commit()
 
@@ -193,17 +165,17 @@ async def create_test_product(headers: dict) -> str | None:
 
     result = await graphql_request(mutation, variables, headers)
 
-    if 'errors' in result:
+    if "errors" in result:
         print(f"  ❌ Failed to create product: {result['errors']}")
         return None
 
-    product = result.get('data', {}).get('createProduct', {})
+    product = result.get("data", {}).get("createProduct", {})
     if product:
         print(f"  ✅ Created product: {product['factoryPartNumber']}")
         print(f"     ID: {product['id']}")
         print(f"     Base Price: ${product['unitPrice']}")
         print(f"     Commission Rate: {product['defaultCommissionRate']}%")
-        return product['id']
+        return product["id"]
 
     return None
 
@@ -223,21 +195,17 @@ async def find_or_create_product(headers: dict) -> tuple[str, float] | None:
     }
     """
 
-    result = await graphql_request(
-        query,
-        {"factoryId": FACTORY_ID},
-        headers
-    )
+    result = await graphql_request(query, {"factoryId": FACTORY_ID}, headers)
 
-    if 'data' in result:
-        products = result['data'].get('productSearch', [])
+    if "data" in result:
+        products = result["data"].get("productSearch", [])
         for p in products:
-            price = float(p.get('unitPrice') or 0)
+            price = float(p.get("unitPrice") or 0)
             if price > 0:
                 print(f"  ✅ Found existing product: {p['factoryPartNumber']}")
                 print(f"     ID: {p['id']}")
                 print(f"     Base Price: ${price:.2f}")
-                return p['id'], price
+                return p["id"], price
 
     # If not found, create one
     print("  No existing test product found. Creating new one...")
@@ -248,7 +216,9 @@ async def find_or_create_product(headers: dict) -> tuple[str, float] | None:
     return None
 
 
-async def create_test_quote(headers: dict, product_id: str, base_price: float) -> str | None:
+async def create_test_quote(
+    headers: dict, product_id: str, base_price: float
+) -> str | None:
     """Create a test quote with markup prices for overage testing."""
     print("\n[2] Creating test quote with overage line items...")
 
@@ -260,17 +230,21 @@ async def create_test_quote(headers: dict, product_id: str, base_price: float) -
         markup_price = base_price * item["markup"]
         overage_amount = markup_price - base_price
 
-        details.append({
-            "productId": product_id,
-            "factoryId": FACTORY_ID,  # Factory at detail level
-            "endUserId": CUSTOMER_ID,  # End user at detail level
-            "quantity": item["qty"],
-            "unitPrice": str(round(markup_price, 2)),
-            "itemNumber": i + 1,
-            "fixtureSchedule": item["fixture"],  # Now supported in flow-py-backend!
-        })
+        details.append(
+            {
+                "productId": product_id,
+                "factoryId": FACTORY_ID,  # Factory at detail level
+                "endUserId": CUSTOMER_ID,  # End user at detail level
+                "quantity": item["qty"],
+                "unitPrice": str(round(markup_price, 2)),
+                "itemNumber": i + 1,
+                "fixtureSchedule": item["fixture"],  # Now supported in flow-py-backend!
+            }
+        )
 
-        print(f"  Line {i+1}: ${markup_price:.2f} (base: ${base_price:.2f}, overage: ${overage_amount:.2f}) - {item['fixture']}")
+        print(
+            f"  Line {i + 1}: ${markup_price:.2f} (base: ${base_price:.2f}, overage: ${overage_amount:.2f}) - {item['fixture']}"
+        )
 
     mutation = """
     mutation CreateQuote($input: QuoteInput!) {
@@ -304,18 +278,18 @@ async def create_test_quote(headers: dict, product_id: str, base_price: float) -
 
     result = await graphql_request(mutation, variables, headers)
 
-    if 'errors' in result:
+    if "errors" in result:
         print(f"\n  ❌ Failed to create quote: {result['errors']}")
 
         # Check if it's a field error
-        for error in result.get('errors', []):
-            msg = error.get('message', '')
-            if 'field' in msg.lower():
+        for error in result.get("errors", []):
+            msg = error.get("message", "")
+            if "field" in msg.lower():
                 print(f"  Hint: Check the QuoteInput schema for required fields")
 
         return None
 
-    quote = result.get('data', {}).get('createQuote', {})
+    quote = result.get("data", {}).get("createQuote", {})
     if quote:
         print(f"\n  ✅ Created quote: {quote['quoteNumber']}")
         print(f"     ID: {quote['id']}")
@@ -329,7 +303,7 @@ To test in the frontend:
 
 1. Open FlowCRM: https://staging.console.flowrms.com
 2. Navigate to Quotes
-3. Search for: {quote['quoteNumber']}
+3. Search for: {quote["quoteNumber"]}
 4. Open the quote
 5. Switch to "Overage View" in the dropdown
 
@@ -342,7 +316,7 @@ Expected behavior:
 """)
         print("=" * 70)
 
-        return quote['id']
+        return quote["id"]
 
     return None
 
@@ -354,11 +328,17 @@ async def main():
     )
     parser.add_argument("--email", "-e", required=True, help="User email")
     parser.add_argument("--password", "-p", required=True, help="User password")
-    parser.add_argument("--org-id", default="org_01KE7D0TTXV7TZ9JSXFPXCXJ35", help="Organization ID")
+    parser.add_argument(
+        "--org-id", default="org_01KE7D0TTXV7TZ9JSXFPXCXJ35", help="Organization ID"
+    )
     parser.add_argument("--db-url", help="Database URL for enabling overage")
     parser.add_argument("--create-quote", action="store_true", help="Create test quote")
-    parser.add_argument("--full-setup", action="store_true", help="Enable overage + create quote")
-    parser.add_argument("--show-sql", action="store_true", help="Show SQL for enabling overage")
+    parser.add_argument(
+        "--full-setup", action="store_true", help="Enable overage + create quote"
+    )
+    parser.add_argument(
+        "--show-sql", action="store_true", help="Show SQL for enabling overage"
+    )
 
     args = parser.parse_args()
 
