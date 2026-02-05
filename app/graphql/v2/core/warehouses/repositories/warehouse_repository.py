@@ -1,7 +1,7 @@
 from uuid import UUID
 
 from commons.db.v6 import Warehouse
-from sqlalchemy import select
+from sqlalchemy import Select, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
@@ -22,7 +22,7 @@ class WarehouseRepository(BaseRepository[Warehouse]):
         )
 
     @property
-    def base_query(self):
+    def base_query(self) -> Select[tuple[Warehouse]]:
         """Base query with standard eager loading for warehouses."""
         return select(Warehouse).options(
             selectinload(Warehouse.members),

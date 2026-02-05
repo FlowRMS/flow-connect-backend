@@ -1,19 +1,12 @@
-from app.graphql.spec_sheets.strawberry.folder_input import (
-    CreateSpecSheetFolderInput,
-    DeleteSpecSheetFolderInput,
-    MoveSpecSheetFolderInput,
-    MoveSpecSheetToFolderInput,
-    RenameSpecSheetFolderInput,
+from app.graphql.spec_sheets.strawberry.create_highlight_version_input import (
+    CreateHighlightVersionInput,
 )
 from app.graphql.spec_sheets.strawberry.folder_response import (
     FolderWithChildrenResponse,
     SpecSheetFolderResponse,
 )
-from app.graphql.spec_sheets.strawberry.spec_sheet_highlight_input import (
-    CreateHighlightVersionInput,
+from app.graphql.spec_sheets.strawberry.highlight_region_input import (
     HighlightRegionInput,
-    UpdateHighlightRegionsInput,
-    UpdateHighlightVersionInput,
 )
 from app.graphql.spec_sheets.strawberry.spec_sheet_highlight_response import (
     HighlightRegionResponse,
@@ -24,6 +17,18 @@ from app.graphql.spec_sheets.strawberry.spec_sheet_input import (
     UpdateSpecSheetInput,
 )
 from app.graphql.spec_sheets.strawberry.spec_sheet_response import SpecSheetResponse
+from app.graphql.spec_sheets.strawberry.update_highlight_regions_input import (
+    UpdateHighlightRegionsInput,
+)
+from app.graphql.spec_sheets.strawberry.update_highlight_version_input import (
+    UpdateHighlightVersionInput,
+)
+
+from .create_spec_sheet_folder_input import CreateSpecSheetFolderInput
+from .delete_spec_sheet_folder_input import DeleteSpecSheetFolderInput
+from .move_spec_sheet_folder_input import MoveSpecSheetFolderInput
+from .move_spec_sheet_to_folder_input import MoveSpecSheetToFolderInput
+from .rename_spec_sheet_folder_input import RenameSpecSheetFolderInput
 
 __all__ = [
     # Folder types

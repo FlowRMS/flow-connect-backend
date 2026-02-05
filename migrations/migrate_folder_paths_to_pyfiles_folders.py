@@ -1,19 +1,3 @@
-"""
-Migration script to convert spec sheet folder_path strings to pyfiles.folders hierarchy.
-
-This script:
-1. Gets all unique folder_paths per factory
-2. Creates pyfiles.folders records with parent_id hierarchy
-3. Creates spec_sheet_folders mappings (factory_id -> pyfiles_folder_id)
-4. Updates File.folder_id for all spec sheets
-
-Run this script after applying the alembic migration:
-    python -m migrations.migrate_folder_paths_to_pyfiles_folders
-
-Environment variables required:
-    DATABASE_URL: PostgreSQL connection string
-"""
-
 import asyncio
 import logging
 import os

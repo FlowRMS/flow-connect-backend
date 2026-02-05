@@ -6,6 +6,14 @@ enum ABCClass {
   C
 }
 
+input AddChangeAnalysisInput {
+  returnedPdfId: UUID!
+  analyzedBy: ChangeAnalysisSourceGQL! = MANUAL
+  overallStatus: OverallChangeStatusGQL! = APPROVED
+  summary: String = null
+  itemChanges: [SubmittalItemChangeInput!] = null
+}
+
 input AddCompanyToJobInput {
   jobId: UUID!
   companyId: UUID!
@@ -29,6 +37,28 @@ input AddInventoryItemInput {
   lotNumber: String = null
   status: InventoryItemStatus! = AVAILABLE
   receivedDate: datetime = null
+}
+
+input AddItemChangeInput {
+  changeAnalysisId: UUID!
+  fixtureType: String!
+  catalogNumber: String!
+  manufacturer: String!
+  itemId: UUID = null
+  status: ItemChangeStatusGQL! = APPROVED
+  notes: [String!] = null
+  pageReferences: [Int!] = null
+}
+
+input AddReturnedPdfInput {
+  revisionId: UUID!
+  fileName: String!
+  fileUrl: String!
+  fileSize: Int! = 0
+  fileId: UUID = null
+  returnedByStakeholderId: UUID = null
+  receivedDate: Date = null
+  notes: String = null
 }
 
 input AddressInput {
@@ -423,6 +453,11 @@ enum CarrierType {
   FREIGHT
 }
 
+enum ChangeAnalysisSourceGQL {
+  AI
+  MANUAL
+}
+
 input CheckDetailInput {
   appliedAmount: Decimal!
   id: UUID = null
@@ -594,6 +629,7 @@ input ContactInput {
   tags: [String!]
   notes: String
   companyId: UUID
+  customerId: UUID
   externalId: String
 }
 
@@ -629,6 +665,7 @@ type ContactLiteResponse {
 
 type ContactRelatedEntitiesResponse {
   companies: [CompanyLiteResponse!]!
+  customers: [CustomerLiteResponse!]!
 }
 
 type ContactResponse {
@@ -664,6 +701,13 @@ type ContainerTypeResponse {
   weight: Decimal!
   position: Int!
   createdAt: datetime!
+}
+
+input CreateChangeAnalysisInput {
+  returnedPdfId: UUID!
+  analyzedBy: ChangeAnalysisSourceGQL! = MANUAL
+  overallStatus: OverallChangeStatusGQL! = APPROVED
+  summary: String = null
 }
 
 input CreateFolderInput {
@@ -722,6 +766,12 @@ input CreateShipmentRequestInput {
   items: [ShipmentRequestItemInput!]! = []
 }
 
+input CreateSpecSheetFolderInput {
+  factoryId: UUID!
+  parentFolderId: UUID = null
+  folderName: String!
+}
+
 input CreateSpecSheetInput {
   factoryId: UUID!
   fileName: String!
@@ -731,10 +781,20 @@ input CreateSpecSheetInput {
   pageCount: Int! = 1
   categories: [String!]!
   tags: [String!] = null
-  folderPath: String = null
+  folderId: UUID = null
   needsReview: Boolean! = false
   published: Boolean! = true
   file: Upload = null
+}
+
+input CreateSubmittalInput {
+  submittalNumber: String!
+  quoteId: UUID = null
+  jobId: UUID = null
+  status: SubmittalStatusGQL! = DRAFT
+  transmittalPurpose: TransmittalPurposeGQL = null
+  description: String = null
+  config: SubmittalConfigInput = null
 }
 
 enum CreationType {
@@ -975,6 +1035,13 @@ type CustomerLiteResponse {
   territoryId: UUID
 }
 
+input CustomerPricingImportInput {
+  customerName: String!
+  customerPartNumber: String = null
+  unitPrice: Decimal!
+  commissionRate: Decimal!
+}
+
 type CustomerResponse {
   id: UUID!
   companyName: String!
@@ -1010,6 +1077,11 @@ input DeleteLinkByEntitiesInput {
   sourceEntityId: UUID!
   targetEntityType: EntityType!
   targetEntityId: UUID!
+}
+
+input DeleteSpecSheetFolderInput {
+  factoryId: UUID!
+  folderId: UUID!
 }
 
 input DeliveryAssigneeInput {
@@ -1381,6 +1453,24 @@ type ExecuteWorkflowResponse {
   message: String!
 }
 
+input FactoryCustomerReferenceInput {
+  factoryId: UUID!
+  customerId: UUID!
+  referenceNumber: String!
+  addressId: UUID = null
+}
+
+type FactoryCustomerReferenceResponse {
+  id: UUID!
+  factoryId: UUID!
+  customerId: UUID!
+  referenceNumber: String!
+  addressId: UUID
+  factory: FactoryLiteResponse!
+  customer: CustomerLiteResponse!
+  address: AddressResponse
+}
+
 input FactoryInput {
   title: String!
   splitRates: [FactorySplitRateInput!]! = []
@@ -1448,8 +1538,14 @@ type FactoryLiteResponse {
   isParent: Boolean!
   parentId: UUID
   overageAllowed: Boolean!
-  overageType: Int!
+  overageType: OverageTypeEnum!
   repOverageShare: Decimal!
+}
+
+input FactoryOverageSettingsInput {
+  overageAllowed: Boolean! = false
+  overageType: OverageTypeEnum! = BY_LINE
+  repOverageShare: Decimal! = "100.0000"
 }
 
 type FactoryResponse {
@@ -1472,7 +1568,7 @@ type FactoryResponse {
   isParent: Boolean!
   parentId: UUID
   overageAllowed: Boolean!
-  overageType: Int!
+  overageType: OverageTypeEnum!
   repOverageShare: Decimal!
   createdBy: UserResponse!
   splitRates: [FactorySplitRateResponse!]!
@@ -1610,6 +1706,22 @@ type FolderWithChildrenResponse {
   children: [FolderLiteResponse!]!
   files: [FileLiteResponse!]!
   parent: FolderLiteResponse
+}
+
+input FreightCategoryInput {
+  freightClass: Decimal!
+  description: String = null
+  isActive: Boolean! = true
+  position: Int = null
+}
+
+type FreightCategoryResponse {
+  id: UUID!
+  freightClass: Decimal!
+  description: String
+  isActive: Boolean!
+  position: Int!
+  createdAt: datetime!
 }
 
 type FulfillmentActivityResponse {
@@ -1845,6 +1957,44 @@ type GeneralSettingsResponse {
   createdAt: datetime!
 }
 
+input GenerateSubmittalPdfInput {
+  submittalId: UUID!
+  outputType: String! = "pdf"
+  includeCoverPage: Boolean! = true
+  includeTransmittalPage: Boolean! = true
+  includeFixtureSummary: Boolean! = true
+  includePages: Boolean! = true
+  includeTypeCoverPage: Boolean! = false
+  showQuantities: Boolean! = false
+  showDescriptions: Boolean! = true
+  showLeadTimes: Boolean! = false
+  hideNotes: Boolean! = false
+  useCustomerLogo: Boolean! = true
+  printDuplex: Boolean! = false
+  saveAsAttachment: Boolean! = false
+  capFileSizeMb: Int = null
+  attachedItems: [String!] = null
+  attachedOther: String = null
+  transmittedFor: [String!] = null
+  transmittedForOther: String = null
+  copies: Int! = 1
+  selectedItemIds: [UUID!] = null
+  addressedToIds: [UUID!] = null
+  createRevision: Boolean! = true
+  revisionNotes: String = null
+}
+
+type GenerateSubmittalPdfResponse {
+  success: Boolean!
+  error: String
+  pdfUrl: String
+  pdfFileName: String
+  pdfFileSizeBytes: Int
+  revision: SubmittalRevisionResponse
+  emailSent: Boolean!
+  emailRecipientsCount: Int!
+}
+
 type GenericLandingPage {
   records: [LandingRecord!]!
   total: Int!
@@ -1887,6 +2037,7 @@ input HighlightRegionInput {
   shapeType: String!
   color: String!
   annotation: String = null
+  tags: [String!] = null
 }
 
 type HighlightRegionResponse {
@@ -1900,6 +2051,7 @@ type HighlightRegionResponse {
   shapeType: String!
   color: String!
   annotation: String
+  tags: [String!]
   createdAt: datetime!
 }
 
@@ -2158,6 +2310,13 @@ enum InvoiceStatus {
   OVER_PAID
 }
 
+enum ItemChangeStatusGQL {
+  APPROVED
+  APPROVED_AS_NOTED
+  REVISE
+  REJECTED
+}
+
 """The `JSON` scalar type represents JSON values as specified by ECMA-404"""
 scalar JSON
 
@@ -2342,10 +2501,15 @@ type MismatchCheckResponse {
   onlyInTerritory: [UserResponse!]!
 }
 
-input MoveFolderInput {
+input MoveSpecSheetFolderInput {
   factoryId: UUID!
-  oldFolderPath: String!
-  newFolderPath: String!
+  folderId: UUID!
+  newParentId: UUID = null
+}
+
+input MoveSpecSheetToFolderInput {
+  specSheetId: UUID!
+  folderId: UUID = null
 }
 
 input MultiFileUploadInput {
@@ -2410,6 +2574,8 @@ type Mutation {
   createInvoiceFromOrder(orderId: UUID!, invoiceNumber: String!, factoryId: UUID!, orderDetailsInputs: [OrderDetailToInvoiceDetailInput!] = null, dueDate: Date = null): InvoiceResponse!
   addCompanyToJob(input: AddCompanyToJobInput!): JobCompanyLinkResponse!
   removeCompanyFromJob(input: RemoveCompanyFromJobInput!): Boolean!
+  addJobWatcher(jobId: UUID!, userId: UUID!): [UserResponse!]!
+  removeJobWatcher(jobId: UUID!, userId: UUID!): [UserResponse!]!
   createJob(input: JobInput!): JobType!
   updateJob(id: UUID!, input: JobInput!): JobType!
   deleteJob(id: UUID!): Boolean!
@@ -2426,6 +2592,8 @@ type Mutation {
   createOrderAcknowledgement(input: OrderAcknowledgementInput!): OrderAcknowledgementResponse!
   updateOrderAcknowledgement(input: OrderAcknowledgementInput!): OrderAcknowledgementResponse!
   deleteOrderAcknowledgement(id: UUID!): Boolean!
+  addOrderWatcher(orderId: UUID!, userId: UUID!): [UserResponse!]!
+  removeOrderWatcher(orderId: UUID!, userId: UUID!): [UserResponse!]!
   createOrder(input: OrderInput!): OrderResponse!
   updateOrder(input: OrderInput!): OrderResponse!
   deleteOrder(id: UUID!): Boolean!
@@ -2436,11 +2604,19 @@ type Mutation {
   createPreOpportunity(input: PreOpportunityInput!): PreOpportunityResponse!
   updatePreOpportunity(input: PreOpportunityInput!): PreOpportunityResponse!
   deletePreOpportunity(id: UUID!): Boolean!
+  addPreOpportunityWatcher(preOpportunityId: UUID!, userId: UUID!): [UserResponse!]!
+  removePreOpportunityWatcher(preOpportunityId: UUID!, userId: UUID!): [UserResponse!]!
+  addQuoteWatcher(quoteId: UUID!, userId: UUID!): [UserResponse!]!
+  removeQuoteWatcher(quoteId: UUID!, userId: UUID!): [UserResponse!]!
   createQuote(input: QuoteInput!): QuoteResponse!
   updateQuote(input: QuoteInput!): QuoteResponse!
   deleteQuote(id: UUID!): Boolean!
   createQuoteFromPreOpportunity(preOpportunityId: UUID!, quoteNumber: String!, preOpportunityDetailIds: [UUID!] = null): QuoteResponse!
   duplicateQuote(sourceQuoteId: UUID!, newQuoteNumber: String!): QuoteResponse!
+  createSpecSheetFolder(input: CreateSpecSheetFolderInput!): SpecSheetFolderResponse!
+  renameSpecSheetFolder(input: RenameSpecSheetFolderInput!): SpecSheetFolderResponse!
+  deleteSpecSheetFolder(input: DeleteSpecSheetFolderInput!): Boolean!
+  moveSpecSheetFolder(input: MoveSpecSheetFolderInput!): SpecSheetFolderResponse!
   createHighlightVersion(input: CreateHighlightVersionInput!): HighlightVersionResponse!
   updateHighlightVersion(id: UUID!, input: UpdateHighlightVersionInput!): HighlightVersionResponse!
   updateHighlightRegions(input: UpdateHighlightRegionsInput!): HighlightVersionResponse!
@@ -2449,13 +2625,37 @@ type Mutation {
   updateSpecSheet(id: UUID!, input: UpdateSpecSheetInput!): SpecSheetResponse!
   deleteSpecSheet(id: UUID!): Boolean!
   incrementSpecSheetUsage(id: UUID!): Boolean!
-  moveFolder(input: MoveFolderInput!): Int!
+  moveSpecSheetToFolder(input: MoveSpecSheetToFolderInput!): SpecSheetResponse
   createStatement(input: StatementInput!): StatementResponse!
   updateStatement(input: StatementInput!): StatementResponse!
   deleteStatement(id: UUID!): Boolean!
+  uploadReturnedPdf(input: UploadReturnedPdfInput!): SubmittalReturnedPdfResponse!
+  deleteReturnedPdf(id: UUID!): Boolean!
+  createChangeAnalysis(input: CreateChangeAnalysisInput!): SubmittalChangeAnalysisResponse!
+  updateChangeAnalysis(id: UUID!, input: UpdateChangeAnalysisInput!): SubmittalChangeAnalysisResponse!
+  deleteChangeAnalysis(id: UUID!): Boolean!
+  addItemChange(input: AddItemChangeInput!): SubmittalItemChangeResponse!
+  updateItemChange(id: UUID!, input: UpdateItemChangeInput!): SubmittalItemChangeResponse!
+  deleteItemChange(id: UUID!): Boolean!
+  resolveItemChange(id: UUID!): SubmittalItemChangeResponse!
+  createSubmittal(input: CreateSubmittalInput!): SubmittalResponse!
+  updateSubmittal(id: UUID!, input: UpdateSubmittalInput!): SubmittalResponse!
+  deleteSubmittal(id: UUID!): Boolean!
+  addSubmittalItem(submittalId: UUID!, input: SubmittalItemInput!): SubmittalItemResponse!
+  updateSubmittalItem(id: UUID!, input: UpdateSubmittalItemInput!): SubmittalItemResponse!
+  removeSubmittalItem(id: UUID!): Boolean!
+  addSubmittalStakeholder(submittalId: UUID!, input: SubmittalStakeholderInput!): SubmittalStakeholderResponse!
+  removeSubmittalStakeholder(id: UUID!): Boolean!
+  createSubmittalRevision(submittalId: UUID!, notes: String = null): SubmittalRevisionResponse!
+  sendSubmittalEmail(input: SendSubmittalEmailInput!): SendSubmittalEmailResponse!
+  generateSubmittalPdf(input: GenerateSubmittalPdfInput!): GenerateSubmittalPdfResponse!
+  addReturnedPdf(input: AddReturnedPdfInput!): SubmittalReturnedPdfResponse!
+  addChangeAnalysis(input: AddChangeAnalysisInput!): SubmittalChangeAnalysisResponse!
   createTaskCategory(input: TaskCategoryInput!): TaskCategoryType!
   updateTaskCategory(id: UUID!, input: TaskCategoryInput!): TaskCategoryType!
   deleteTaskCategory(id: UUID!): Boolean!
+  addTaskWatcher(taskId: UUID!, userId: UUID!): [UserResponse!]!
+  removeTaskWatcher(taskId: UUID!, userId: UUID!): [UserResponse!]!
   createTask(input: TaskInput!): TaskType!
   updateTask(id: UUID!, input: TaskInput!): TaskType!
   deleteTask(id: UUID!): Boolean!
@@ -2474,6 +2674,9 @@ type Mutation {
   updateCustomer(id: UUID!, input: CustomerInput!): CustomerResponse!
   deleteCustomer(id: UUID!): Boolean!
   assignChildCustomers(parentId: UUID!, childIds: [UUID!]!): [CustomerLiteResponse!]!
+  createFactoryCustomerReference(input: FactoryCustomerReferenceInput!): FactoryCustomerReferenceResponse!
+  updateFactoryCustomerReference(id: UUID!, input: FactoryCustomerReferenceInput!): FactoryCustomerReferenceResponse!
+  deleteFactoryCustomerReference(id: UUID!): Boolean!
   createDelivery(input: DeliveryInput!): DeliveryResponse!
   updateDelivery(id: UUID!, input: DeliveryInput!): DeliveryResponse!
   deleteDelivery(id: UUID!): Boolean!
@@ -2503,6 +2706,11 @@ type Mutation {
   deleteFactory(id: UUID!): Boolean!
   updateManufacturerOrder(factoryIds: [UUID!]!): Int!
   assignChildFactories(parentId: UUID!, childIds: [UUID!]!): [FactoryLiteResponse!]!
+  updateFactoryOverageSettings(id: UUID!, input: FactoryOverageSettingsInput!): FactoryResponse!
+  createFreightCategory(input: FreightCategoryInput!): FreightCategoryResponse!
+  updateFreightCategory(id: UUID!, input: FreightCategoryInput!): FreightCategoryResponse!
+  deleteFreightCategory(id: UUID!): Boolean!
+  reorderFreightCategories(orderedIds: [UUID!]!): [FreightCategoryResponse!]!
   createFulfillmentOrder(input: CreateFulfillmentOrderInput!): FulfillmentOrderResponse!
   updateFulfillmentOrder(id: UUID!, input: UpdateFulfillmentOrderInput!): FulfillmentOrderResponse!
   releaseToWarehouse(id: UUID!): FulfillmentOrderResponse!
@@ -2510,6 +2718,7 @@ type Mutation {
   bulkAssignFulfillmentOrders(input: BulkAssignmentInput!): [FulfillmentOrderResponse!]!
   addFulfillmentAssignment(fulfillmentOrderId: UUID!, userId: UUID!, role: FulfillmentAssignmentRole!): FulfillmentOrderResponse!
   removeFulfillmentAssignment(assignmentId: UUID!): FulfillmentOrderResponse!
+  addFulfillmentNote(fulfillmentOrderId: UUID!, content: String!): FulfillmentOrderResponse!
   startPicking(id: UUID!): FulfillmentOrderResponse!
   updatePickedQuantity(input: UpdatePickedQuantityInput!): FulfillmentOrderLineItemResponse!
   completePicking(id: UUID!): FulfillmentOrderResponse!
@@ -2523,7 +2732,6 @@ type Mutation {
   completeShipping(id: UUID!, input: CompleteShippingInput!): FulfillmentOrderResponse!
   markCommunicated(id: UUID!): FulfillmentOrderResponse!
   markDelivered(id: UUID!): FulfillmentOrderResponse!
-  addFulfillmentNote(fulfillmentOrderId: UUID!, content: String!): FulfillmentOrderResponse!
   markManufacturerFulfilled(input: MarkManufacturerFulfilledInput!): FulfillmentOrderResponse!
   splitFulfillmentLineItem(input: SplitLineItemInput!): FulfillmentOrderLineItemResponse!
   cancelBackorderItems(input: CancelBackorderInput!): FulfillmentOrderResponse!
@@ -2543,9 +2751,11 @@ type Mutation {
   createProductCategory(input: ProductCategoryInput!): ProductCategoryResponse!
   updateProductCategory(id: UUID!, input: ProductCategoryInput!): ProductCategoryResponse!
   deleteProductCategory(id: UUID!): Boolean!
+  importProductCpns(input: ProductCpnImportInput!): ProductCpnImportResult!
   createProductCpn(input: ProductCpnInput!): ProductCpnResponse!
   updateProductCpn(id: UUID!, input: ProductCpnInput!): ProductCpnResponse!
   deleteProductCpn(id: UUID!): Boolean!
+  importProducts(input: ProductImportInput!, defaultUomId: UUID!): ProductImportResult!
   createProductQuantityPricing(input: ProductQuantityPricingInput!): ProductQuantityPricingResponse!
   updateProductQuantityPricing(id: UUID!, input: ProductQuantityPricingInput!): ProductQuantityPricingResponse!
   deleteProductQuantityPricing(id: UUID!): Boolean!
@@ -2891,6 +3101,7 @@ type OrderDetailLiteResponse {
   leadTime: String
   note: String
   status: OrderStatus!
+  divisionFactor: Decimal
   freightCharge: Decimal!
   shippingBalance: Decimal!
   cancelledBalance: Decimal!
@@ -2918,6 +3129,7 @@ type OrderDetailResponse {
   leadTime: String
   note: String
   status: OrderStatus!
+  divisionFactor: Decimal
   freightCharge: Decimal!
   shippingBalance: Decimal!
   cancelledBalance: Decimal!
@@ -3166,9 +3378,28 @@ input OutsideSplitRateInput {
   id: UUID = null
 }
 
+type OverageRecord {
+  effectiveCommissionRate: Float
+  overageUnitPrice: Float
+  baseUnitPrice: Float
+  repShare: Float
+  levelRate: Float
+  levelUnitPrice: Float
+  overageType: OverageTypeEnum
+  errorMessage: String
+  success: Boolean!
+}
+
 enum OverageTypeEnum {
   BY_LINE
   BY_TOTAL
+}
+
+enum OverallChangeStatusGQL {
+  APPROVED
+  APPROVED_AS_NOTED
+  REVISE_AND_RESUBMIT
+  REJECTED
 }
 
 enum OwnershipType {
@@ -3443,6 +3674,35 @@ type ProductCategoryResponse {
   children: [ProductCategoryLiteResponse!]!
 }
 
+type ProductCpnImportError {
+  factoryPartNumber: String!
+  customerName: String!
+  error: String!
+}
+
+input ProductCpnImportInput {
+  factoryId: UUID!
+  cpns: [ProductCpnImportItemInput!]!
+}
+
+input ProductCpnImportItemInput {
+  factoryPartNumber: String!
+  customerName: String!
+  customerPartNumber: String!
+  unitPrice: Decimal!
+  commissionRate: Decimal!
+}
+
+type ProductCpnImportResult {
+  success: Boolean!
+  cpnsCreated: Int!
+  cpnsUpdated: Int!
+  errors: [ProductCpnImportError!]!
+  message: String!
+  productsNotFound: [String!]!
+  customersNotFound: [String!]!
+}
+
 input ProductCpnInput {
   productId: UUID!
   customerId: UUID!
@@ -3476,6 +3736,39 @@ type ProductCpnResponse {
   commissionRate: Decimal!
   product: ProductLiteResponse!
   customer: CustomerLiteResponse!
+}
+
+type ProductImportError {
+  factoryPartNumber: String!
+  error: String!
+}
+
+input ProductImportInput {
+  factoryId: UUID!
+  products: [ProductImportItemInput!]!
+}
+
+input ProductImportItemInput {
+  factoryPartNumber: String!
+  unitPrice: Decimal!
+  description: String = null
+  upc: String = null
+  category: String = null
+  defaultCommissionRate: Decimal = null
+  quantityPricing: [QuantityPricingImportInput!] = null
+  customerPricing: [CustomerPricingImportInput!] = null
+}
+
+type ProductImportResult {
+  success: Boolean!
+  productsCreated: Int!
+  productsUpdated: Int!
+  quantityPricingCreated: Int!
+  customerPricingCreated: Int!
+  customerPricingUpdated: Int!
+  errors: [ProductImportError!]!
+  message: String!
+  customersNotFound: [String!]!
 }
 
 input ProductInput {
@@ -3586,6 +3879,12 @@ type ProductUomResponse {
   divisionFactor: Decimal
 }
 
+input QuantityPricingImportInput {
+  quantityLow: Decimal!
+  quantityHigh: Decimal
+  unitPrice: Decimal!
+}
+
 type Query {
   _service: _Service!
   address(id: UUID!): AddressResponse!
@@ -3608,6 +3907,11 @@ type Query {
   postedStatement(checkId: UUID!): PostedStatementResponse!
   entity(sourceType: EntitySourceType!, entityId: UUID!): EntityResponse!
   findLandingPages(sourceType: LandingSourceType!, filters: [Filter!] = null, orderBy: [OrderBy!] = null, limit: Int = 10, offset: Int = 0): GenericLandingPage!
+
+  """
+  Calculate effective commission rate and overage unit price for a product
+  """
+  findEffectiveCommissionRateAndOverageUnitPriceByProduct(productId: ID!, detailUnitPrice: Float!, factoryId: ID!, endUserId: ID!, quantity: Float! = 1): OverageRecord!
   relatedEntities(sourceType: LandingSourceType!, entityId: UUID!): RelatedEntitiesResponse!
   universalSearch(searchTerm: String!, limit: Int! = 20): [SearchResult!]!
   company(id: UUID!): CompanyResponse!
@@ -3617,6 +3921,7 @@ type Query {
   contact(id: UUID!): ContactResponse!
   contactsByCompany(companyId: UUID!): [ContactResponse!]!
   contactSearch(searchTerm: String!, limit: Int! = 20): [ContactResponse!]!
+  contactsByQuote(quoteId: UUID!): [ContactResponse!]!
   contactRelatedEntities(contactId: UUID!): ContactRelatedEntitiesResponse! @deprecated(reason: "Use related_entities(source_type: CONTACTS, entity_id: UUID)")
   credit(id: UUID!): CreditResponse!
   creditsByOrderId(orderId: UUID!): [CreditLiteResponse!]!
@@ -3662,14 +3967,23 @@ type Query {
   preOpportunitySearch(searchTerm: String!, limit: Int! = 20): [PreOpportunityLiteResponse!]!
   quote(id: UUID!): QuoteResponse!
   quoteSearch(searchTerm: String!, limit: Int! = 20): [QuoteLiteResponse!]!
+  foldersByFactory(factoryId: UUID!): [SpecSheetFolderResponse!]!
+  folderById(factoryId: UUID!, folderId: UUID!): SpecSheetFolderResponse
+  rootFoldersByFactory(factoryId: UUID!): [SpecSheetFolderResponse!]!
+  childFolders(factoryId: UUID!, parentId: UUID!): [SpecSheetFolderResponse!]!
   highlightVersion(id: UUID!): HighlightVersionResponse
   highlightVersionsBySpecSheet(specSheetId: UUID!, activeOnly: Boolean! = false): [HighlightVersionResponse!]!
   specSheet(id: UUID!): SpecSheetResponse
   specSheetsByFactory(factoryId: UUID!, publishedOnly: Boolean! = true): [SpecSheetResponse!]!
   specSheetSearch(searchTerm: String! = "", factoryId: UUID = null, categories: [String!] = null, publishedOnly: Boolean! = true, limit: Int! = 50): [SpecSheetResponse!]!
+  specSheetsByFolder(factoryId: UUID!, folderId: UUID = null, publishedOnly: Boolean! = true): [SpecSheetResponse!]!
   statement(id: UUID!): StatementResponse!
   statementSearch(searchTerm: String!, limit: Int! = 20): [StatementLiteResponse!]!
   statementsByFactoryId(factoryId: UUID!, limit: Int! = 25): [StatementLiteResponse!]!
+  submittal(id: UUID!): SubmittalResponse
+  submittalsByQuote(quoteId: UUID!): [SubmittalResponse!]!
+  submittalsByJob(jobId: UUID!): [SubmittalResponse!]!
+  submittalSearch(searchTerm: String! = "", status: SubmittalStatusGQL = null, limit: Int! = 50): [SubmittalResponse!]!
   taskCategories(includeInactive: Boolean! = false): [TaskCategoryType!]!
   taskCategory(id: UUID!): TaskCategoryType!
   task(id: UUID!): TaskType!
@@ -3686,6 +4000,9 @@ type Query {
   customerSearch(searchTerm: String!, published: Boolean! = true, limit: Int! = 20): [CustomerResponse!]!
   customerChildren(parentId: UUID!): [CustomerLiteResponse!]!
   customerBuyingGroupMembers(buyingGroupId: UUID!): [CustomerLiteResponse!]!
+  factoryCustomerReference(id: UUID!): FactoryCustomerReferenceResponse!
+  listFactoryCustomerReferences(factoryId: UUID!): [FactoryCustomerReferenceResponse!]!
+  factoryCustomerReferenceByCustomer(customerId: UUID!, factoryId: UUID!): FactoryCustomerReferenceResponse
   deliveries(warehouseId: UUID = null, limit: Int = null, offset: Int = null): [DeliveryLiteResponse!]!
   delivery(id: UUID!): DeliveryResponse!
   deliveryAssignees(deliveryId: UUID!): [DeliveryAssigneeLiteResponse!]!
@@ -3705,6 +4022,9 @@ type Query {
   factory(id: UUID!): FactoryResponse!
   factorySearch(searchTerm: String!, published: Boolean! = true, limit: Int! = 20, useCustomOrder: Boolean! = false): [FactoryResponse!]!
   factoryChildren(parentId: UUID!): [FactoryLiteResponse!]!
+  freightCategories: [FreightCategoryResponse!]!
+  activeFreightCategories: [FreightCategoryResponse!]!
+  freightCategory(id: UUID!): FreightCategoryResponse!
   fulfillmentOrders(warehouseId: UUID = null, status: [FulfillmentOrderStatus!] = null, search: String = null, limit: Int! = 50, offset: Int! = 0): [FulfillmentOrderLiteResponse!]!
   fulfillmentOrder(id: UUID!): FulfillmentOrderResponse
   fulfillmentStats(warehouseId: UUID = null): FulfillmentStatsResponse!
@@ -3777,6 +4097,7 @@ type Query {
   roleSidebarAssignments: [RoleSidebarAssignmentResponse!]!
   effectiveSidebar: EffectiveSidebarResponse!
   configurableSidebar: ConfigurableSidebarResponse!
+  getWatchersByEntity(entityType: EntityType!, entityId: UUID!): [UserResponse!]!
 }
 
 type QuoteBalanceResponse {
@@ -3812,6 +4133,10 @@ input QuoteDetailInput {
   commissionDiscountRate: Decimal! = "0.0000"
   outsideSplitRates: [QuoteSplitRateInput!] = null
   insideSplitRates: [QuoteInsideRepInput!] = null
+  overageCommissionRate: Decimal = null
+  overageCommission: Decimal = null
+  overageUnitPrice: Decimal = null
+  fixtureSchedule: String = null
 }
 
 type QuoteDetailResponse {
@@ -3837,6 +4162,10 @@ type QuoteDetailResponse {
   leadTime: String
   note: String
   status: QuoteDetailStatus!
+  overageCommissionRate: Decimal
+  overageCommission: Decimal
+  overageUnitPrice: Decimal
+  fixtureSchedule: String
   endUser: CustomerLiteResponse
   outsideSplitRates: [QuoteSplitRateResponse!]!
   insideSplitRates: [QuoteInsideRepResponse!]!
@@ -3925,6 +4254,7 @@ type QuoteLiteResponse {
   createdAt: datetime!
   createdById: UUID!
   quoteNumber: String!
+  name: String
   entityDate: Date!
   status: QuoteStatus!
   pipelineStage: PipelineStage!
@@ -3932,7 +4262,6 @@ type QuoteLiteResponse {
   creationType: CreationType!
   soldToCustomerId: UUID
   factoryPerLineItem: Boolean!
-  name: String
   billToCustomerId: UUID
   paymentTerms: String
   customerRef: String
@@ -3955,6 +4284,7 @@ type QuoteResponse {
   createdAt: datetime!
   createdById: UUID!
   quoteNumber: String!
+  name: String
   entityDate: Date!
   status: QuoteStatus!
   pipelineStage: PipelineStage!
@@ -3962,7 +4292,6 @@ type QuoteResponse {
   creationType: CreationType!
   soldToCustomerId: UUID
   factoryPerLineItem: Boolean!
-  name: String
   billToCustomerId: UUID
   paymentTerms: String
   customerRef: String
@@ -3979,7 +4308,7 @@ type QuoteResponse {
   endUserPerLineItem: Boolean
   url: String!
   createdBy: UserResponse!
-  soldToCustomer: CustomerLiteResponse!
+  soldToCustomer: CustomerLiteResponse
   billToCustomer: CustomerLiteResponse
   balance: QuoteBalanceResponse!
   details: [QuoteDetailResponse!]!
@@ -4157,6 +4486,12 @@ input RemoveCompanyFromJobInput {
   role: JobCompanyRole!
 }
 
+input RenameSpecSheetFolderInput {
+  factoryId: UUID!
+  folderId: UUID!
+  newName: String!
+}
+
 enum RepTypeEnum {
   OUTSIDE
   INSIDE
@@ -4229,6 +4564,23 @@ enum SendPace {
   FAST
 }
 
+input SendSubmittalEmailInput {
+  submittalId: UUID!
+  revisionId: UUID = null
+  subject: String!
+  body: String = null
+  recipientEmails: [String!]!
+  attachmentUrl: String = null
+  attachmentName: String = null
+}
+
+type SendSubmittalEmailResponse {
+  success: Boolean!
+  error: String
+  email: SubmittalEmailResponse
+  provider: String
+}
+
 type SendTestEmailResponse {
   success: Boolean!
   error: String
@@ -4243,6 +4595,9 @@ enum SettingKey {
   SIDEBAR_SETTINGS
   PICKLIST_SETTINGS
   NOTIFICATION_SETTINGS
+  SPEC_SHEETS_SETTINGS
+  FLOW_AI_SETTINGS
+  TAKEOFF_SETTINGS
 }
 
 type ShipToAddressResponse {
@@ -4446,6 +4801,15 @@ enum SourceType {
   FOLDER
 }
 
+type SpecSheetFolderResponse {
+  id: UUID!
+  factoryId: UUID!
+  name: String!
+  parentId: UUID
+  createdAt: datetime
+  specSheetCount: Int!
+}
+
 type SpecSheetResponse {
   id: UUID!
   factoryId: UUID!
@@ -4453,17 +4817,17 @@ type SpecSheetResponse {
   displayName: String!
   uploadSource: String!
   sourceUrl: String
-  fileUrl: String!
   fileSize: Int!
   pageCount: Int!
   categories: [String!]!
   tags: [String!]
-  folderPath: String
+  folderId: UUID
   needsReview: Boolean!
   published: Boolean!
   usageCount: Int!
   highlightCount: Int!
   createdAt: datetime!
+  fileUrl: String!
   createdBy: UserResponse!
 }
 
@@ -4506,6 +4870,7 @@ input StatementDetailInput {
   discountRate: Decimal! = "0.0000"
   commissionRate: Decimal! = "0.0000"
   commissionDiscountRate: Decimal! = "0.0000"
+  commission: Decimal = null
   outsideSplitRates: [StatementSplitRateInput!] = null
 }
 
@@ -4609,6 +4974,217 @@ type StatementSplitRateResponse {
   splitRate: Decimal
   position: Int!
   user: UserResponse!
+}
+
+type SubmittalChangeAnalysisResponse {
+  id: UUID!
+  returnedPdfId: UUID!
+  analyzedBy: ChangeAnalysisSourceGQL!
+  overallStatus: OverallChangeStatusGQL!
+  totalChangesDetected: Int!
+  summary: String
+  createdAt: datetime!
+  itemChanges: [SubmittalItemChangeResponse!]!
+}
+
+input SubmittalConfigInput {
+  includeLamps: Boolean! = false
+  includeAccessories: Boolean! = false
+  includeCq: Boolean! = false
+  includeFromOrders: Boolean! = false
+  rollUpKits: Boolean! = false
+  rollUpAccessories: Boolean! = true
+  includeZeroQuantityItems: Boolean! = true
+  dropDescriptions: Boolean! = false
+  dropLineNotes: Boolean! = true
+}
+
+type SubmittalConfigResponse {
+  includeLamps: Boolean!
+  includeAccessories: Boolean!
+  includeCq: Boolean!
+  includeFromOrders: Boolean!
+  rollUpKits: Boolean!
+  rollUpAccessories: Boolean!
+  includeZeroQuantityItems: Boolean!
+  dropDescriptions: Boolean!
+  dropLineNotes: Boolean!
+}
+
+type SubmittalEmailResponse {
+  id: UUID!
+  submittalId: UUID!
+  revisionId: UUID
+  subject: String!
+  body: String
+  recipientEmails: [String!]!
+  createdAt: datetime!
+}
+
+enum SubmittalItemApprovalStatusGQL {
+  PENDING
+  APPROVED
+  APPROVED_AS_NOTED
+  REVISE
+  REJECTED
+}
+
+input SubmittalItemChangeInput {
+  itemId: UUID = null
+  fixtureType: String!
+  catalogNumber: String!
+  manufacturer: String!
+  status: ItemChangeStatusGQL! = APPROVED
+  notes: [String!] = null
+  pageReferences: [Int!] = null
+}
+
+type SubmittalItemChangeResponse {
+  id: UUID!
+  changeAnalysisId: UUID!
+  itemId: UUID
+  fixtureType: String!
+  catalogNumber: String!
+  manufacturer: String!
+  status: ItemChangeStatusGQL!
+  notes: [String!]
+  pageReferences: [Int!]
+  resolved: Boolean!
+  createdAt: datetime!
+  updatedAt: datetime!
+}
+
+input SubmittalItemInput {
+  itemNumber: Int!
+  quoteDetailId: UUID = null
+  specSheetId: UUID = null
+  highlightVersionId: UUID = null
+  partNumber: String = null
+  manufacturer: String = null
+  description: String = null
+  quantity: Decimal = null
+  approvalStatus: SubmittalItemApprovalStatusGQL! = PENDING
+  matchStatus: SubmittalItemMatchStatusGQL! = NO_MATCH
+  notes: String = null
+  leadTime: String = null
+}
+
+enum SubmittalItemMatchStatusGQL {
+  NO_MATCH
+  PARTIAL_MATCH
+  EXACT_MATCH
+}
+
+type SubmittalItemResponse {
+  id: UUID!
+  submittalId: UUID!
+  itemNumber: Int!
+  quoteDetailId: UUID
+  specSheetId: UUID
+  highlightVersionId: UUID
+  partNumber: String
+  manufacturer: String
+  description: String
+  quantity: Decimal
+  approvalStatus: SubmittalItemApprovalStatusGQL!
+  matchStatus: SubmittalItemMatchStatusGQL!
+  notes: String
+  leadTime: String
+  createdAt: datetime!
+  specSheet: SpecSheetResponse
+  highlightVersion: HighlightVersionResponse
+}
+
+type SubmittalResponse {
+  id: UUID!
+  submittalNumber: String!
+  quoteId: UUID
+  jobId: UUID
+  status: SubmittalStatusGQL!
+  transmittalPurpose: TransmittalPurposeGQL
+  description: String
+  jobLocation: String
+  bidDate: Date
+  tags: [String!]
+  createdAt: datetime!
+  createdById: UUID
+  createdBy: UserResponse
+  items: [SubmittalItemResponse!]!
+  stakeholders: [SubmittalStakeholderResponse!]!
+  revisions: [SubmittalRevisionResponse!]!
+  config: SubmittalConfigResponse!
+}
+
+type SubmittalReturnedPdfResponse {
+  id: UUID!
+  revisionId: UUID!
+  fileName: String!
+  fileSize: Int!
+  returnedByStakeholderId: UUID
+  receivedDate: Date
+  notes: String
+  createdAt: datetime!
+  createdById: UUID
+  fileUrl: String!
+  fileId: UUID
+  createdBy: UserResponse
+  returnedByStakeholder: SubmittalStakeholderResponse
+  changeAnalysis: SubmittalChangeAnalysisResponse
+}
+
+type SubmittalRevisionResponse {
+  id: UUID!
+  submittalId: UUID!
+  revisionNumber: Int!
+  pdfFileId: UUID
+  pdfFileUrl: String
+  pdfFileName: String
+  pdfFileSizeBytes: Int
+  notes: String
+  createdAt: datetime!
+  createdById: UUID
+  createdBy: UserResponse
+  emailsSent: [SubmittalEmailResponse!]!
+  returnedPdfs: [SubmittalReturnedPdfResponse!]!
+}
+
+input SubmittalStakeholderInput {
+  role: SubmittalStakeholderRoleGQL!
+  customerId: UUID = null
+  isPrimary: Boolean! = false
+  contactName: String = null
+  contactEmail: String = null
+  contactPhone: String = null
+  companyName: String = null
+}
+
+type SubmittalStakeholderResponse {
+  id: UUID!
+  submittalId: UUID!
+  customerId: UUID
+  role: SubmittalStakeholderRoleGQL!
+  isPrimary: Boolean!
+  contactName: String
+  contactEmail: String
+  contactPhone: String
+  companyName: String
+}
+
+enum SubmittalStakeholderRoleGQL {
+  CUSTOMER
+  ENGINEER
+  ARCHITECT
+  GENERAL_CONTRACTOR
+  OTHER
+}
+
+enum SubmittalStatusGQL {
+  DRAFT
+  SUBMITTED
+  APPROVED
+  APPROVED_AS_NOTED
+  REVISE_AND_RESUBMIT
+  REJECTED
 }
 
 enum SyncDirection {
@@ -4728,6 +5304,7 @@ type TaskType {
   createdBy: UserResponse!
   assignees: [UserResponse!]!
   category: TaskCategoryType
+  watchers: [UserResponse!]!
 }
 
 input TerritoryInput {
@@ -4792,7 +5369,20 @@ enum TerritoryTypeEnum {
   TERRITORY
 }
 
+enum TransmittalPurposeGQL {
+  FOR_APPROVAL
+  FOR_REVIEW
+  FOR_INFORMATION
+  FOR_RECORD
+  RESUBMITTAL
+}
+
 scalar UUID
+
+input UpdateChangeAnalysisInput {
+  overallStatus: OverallChangeStatusGQL
+  summary: String
+}
 
 input UpdateCommissionVisibilityInput {
   role: RbacRoleEnum!
@@ -4826,9 +5416,9 @@ input UpdateHighlightRegionsInput {
 }
 
 input UpdateHighlightVersionInput {
-  name: String = null
-  description: String = null
-  isActive: Boolean = null
+  name: String
+  description: String
+  isActive: Boolean
 }
 
 input UpdateInventoryInput {
@@ -4844,6 +5434,16 @@ input UpdateInventoryItemInput {
   lotNumber: String
   status: InventoryItemStatus
   receivedDate: datetime
+}
+
+input UpdateItemChangeInput {
+  status: ItemChangeStatusGQL
+  notes: [String!]
+  pageReferences: [Int!]
+  resolved: Boolean
+  fixtureType: String
+  catalogNumber: String
+  manufacturer: String
 }
 
 input UpdatePackingBoxInput {
@@ -4875,9 +5475,31 @@ input UpdateSpecSheetInput {
   displayName: String
   categories: [String!]
   tags: [String!]
-  folderPath: String
   needsReview: Boolean
   published: Boolean
+}
+
+input UpdateSubmittalInput {
+  status: SubmittalStatusGQL
+  transmittalPurpose: TransmittalPurposeGQL
+  description: String
+  jobLocation: String
+  bidDate: Date
+  tags: [String!]
+  config: SubmittalConfigInput
+}
+
+input UpdateSubmittalItemInput {
+  specSheetId: UUID
+  highlightVersionId: UUID
+  partNumber: String = null
+  manufacturer: String = null
+  description: String = null
+  quantity: Decimal = null
+  approvalStatus: SubmittalItemApprovalStatusGQL = null
+  matchStatus: SubmittalItemMatchStatusGQL = null
+  notes: String = null
+  leadTime: String = null
 }
 
 scalar Upload
@@ -4886,6 +5508,17 @@ input UploadDocumentInput {
   fulfillmentOrderId: UUID!
   documentType: FulfillmentDocumentType!
   file: Upload!
+  notes: String = null
+}
+
+input UploadReturnedPdfInput {
+  revisionId: UUID!
+  fileName: String!
+  fileUrl: String!
+  fileSize: Int! = 0
+  fileId: UUID = null
+  returnedByStakeholderId: UUID = null
+  receivedDate: Date = null
   notes: String = null
 }
 

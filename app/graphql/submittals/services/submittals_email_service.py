@@ -12,7 +12,9 @@ from app.graphql.submittals.repositories.submittals_repository import (
     SubmittalsRepository,
 )
 from app.graphql.submittals.services.types import SendSubmittalEmailResult
-from app.graphql.submittals.strawberry.submittal_input import SendSubmittalEmailInput
+from app.graphql.submittals.strawberry.send_submittal_email_input import (
+    SendSubmittalEmailInput,
+)
 
 
 class SubmittalsEmailService:

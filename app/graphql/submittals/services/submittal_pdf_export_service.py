@@ -3,18 +3,20 @@ from dataclasses import dataclass, field
 from datetime import datetime
 from uuid import UUID
 
-from commons.db.v6.crm.organizations.organization_model import Organization
 from commons.db.v6.crm.spec_sheets.spec_sheet_highlight_model import (
     SpecSheetHighlightRegion,
 )
 from commons.db.v6.crm.spec_sheets.spec_sheet_model import SpecSheet
 from commons.db.v6.crm.submittals import Submittal
-from commons.db.v6.files import File
 from commons.s3.service import S3Service
 from loguru import logger
-from sqlalchemy import select
-from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.graphql.organizations.repositories.organization_repository import (
+    OrganizationRepository,
+)
+from app.graphql.spec_sheets.repositories.spec_sheets_repository import (
+    SpecSheetsRepository,
+)
 from app.graphql.submittals.services.pdf_generation_service import (
     ACCESSORIES_KEYWORDS,
     CQ_KEYWORDS,
@@ -22,7 +24,10 @@ from app.graphql.submittals.services.pdf_generation_service import (
     LAMPS_KEYWORDS,
     PdfGenerationService,
 )
-from app.graphql.submittals.strawberry.submittal_input import GenerateSubmittalPdfInput
+from app.graphql.submittals.strawberry.generate_submittal_pdf_input import (
+    GenerateSubmittalPdfInput,
+)
+from app.graphql.v2.files.repositories.file_repository import FileRepository
 
 SUBMITTAL_PDFS_S3_PREFIX = "submittal-pdfs"
 
@@ -46,10 +51,14 @@ class SubmittalPdfExportService:
     def __init__(  # pyright: ignore[reportMissingSuperCall]
         self,
         s3_service: S3Service,
-        session: AsyncSession,
+        organization_repository: OrganizationRepository,
+        file_repository: FileRepository,
+        spec_sheets_repository: SpecSheetsRepository,
     ) -> None:
         self.s3_service = s3_service
-        self.session = session
+        self.organization_repository = organization_repository
+        self.file_repository = file_repository
+        self.spec_sheets_repository = spec_sheets_repository
         self.pdf_service = PdfGenerationService()
 
     async def export_submittal_pdf(
@@ -217,16 +226,12 @@ class SubmittalPdfExportService:
 
     async def _fetch_organization_logo(self) -> bytes | None:
         try:
-            stmt = select(Organization).limit(1)
-            result = await self.session.execute(stmt)
-            org = result.scalar_one_or_none()
+            org = await self.organization_repository.get_single()
 
             if not org or not org.logo_file_id:
                 return None
 
-            file_stmt = select(File).where(File.id == org.logo_file_id)
-            file_result = await self.session.execute(file_stmt)
-            logo_file = file_result.scalar_one_or_none()
+            logo_file = await self.file_repository.get_by_id(org.logo_file_id)
 
             if not logo_file:
                 return None
@@ -239,9 +244,7 @@ class SubmittalPdfExportService:
             return None
 
     async def _get_spec_sheets_by_ids(self, ids: list[UUID]) -> list[SpecSheet]:
-        stmt = select(SpecSheet).where(SpecSheet.id.in_(ids))
-        result = await self.session.execute(stmt)
-        return list(result.scalars().all())
+        return await self.spec_sheets_repository.get_by_ids(ids)
 
     async def _download_spec_sheet_pdf(self, spec_sheet: SpecSheet) -> bytes | None:
         try:

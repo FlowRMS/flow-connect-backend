@@ -4,7 +4,7 @@ import orjson
 import strawberry
 
 
-def create_json_scalar():
+def create_json_scalar() -> Any:
     def serialize_json(value: dict[str, Any]) -> Any:
         return orjson.dumps(
             value,

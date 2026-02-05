@@ -39,16 +39,30 @@ from app.graphql.submittals.services.submittals_revision_service import (
     SubmittalsRevisionService,
 )
 from app.graphql.submittals.services.types import SendSubmittalEmailResult
-from app.graphql.submittals.strawberry.submittal_input import (
+from app.graphql.submittals.strawberry.add_change_analysis_input import (
     AddChangeAnalysisInput,
-    AddReturnedPdfInput,
+)
+from app.graphql.submittals.strawberry.add_returned_pdf_input import AddReturnedPdfInput
+from app.graphql.submittals.strawberry.create_submittal_input import (
     CreateSubmittalInput,
+)
+from app.graphql.submittals.strawberry.generate_submittal_pdf_input import (
     GenerateSubmittalPdfInput,
+)
+from app.graphql.submittals.strawberry.send_submittal_email_input import (
     SendSubmittalEmailInput,
-    SubmittalItemInput,
+)
+from app.graphql.submittals.strawberry.submittal_item_input import SubmittalItemInput
+from app.graphql.submittals.strawberry.submittal_stakeholder_input import (
     SubmittalStakeholderInput,
+)
+from app.graphql.submittals.strawberry.update_item_change_input import (
     UpdateItemChangeInput,
+)
+from app.graphql.submittals.strawberry.update_submittal_input import (
     UpdateSubmittalInput,
+)
+from app.graphql.submittals.strawberry.update_submittal_item_input import (
     UpdateSubmittalItemInput,
 )
 
@@ -106,8 +120,9 @@ class SubmittalsService:
         if not submittal:
             raise ValueError(f"Submittal with id {submittal_id} not found")
 
-        if input_data.status is not None:
-            new_status = SubmittalStatus(input_data.status.value)
+        status = input_data.optional_field(input_data.status)
+        if status is not None:
+            new_status = SubmittalStatus(status.value)
             if new_status == SubmittalStatus.APPROVED:
                 submittal_with_items = await self.repository.get_by_id_with_relations(
                     submittal_id
@@ -125,24 +140,29 @@ class SubmittalsService:
                         )
             submittal.status = new_status
 
-        if input_data.transmittal_purpose is not None:
+        transmittal_purpose = input_data.optional_field(input_data.transmittal_purpose)
+        if transmittal_purpose is not None:
             from commons.db.v6.crm.submittals import TransmittalPurpose
 
             submittal.transmittal_purpose = TransmittalPurpose(
-                input_data.transmittal_purpose.value
+                transmittal_purpose.value
             )
 
-        if input_data.description is not None:
-            submittal.description = input_data.description
-        if input_data.job_location is not None:
-            submittal.job_location = input_data.job_location
-        if input_data.bid_date is not None:
-            submittal.bid_date = input_data.bid_date
-        if input_data.tags is not None:
-            submittal.tags = input_data.tags
+        description = input_data.optional_field(input_data.description)
+        if description is not None:
+            submittal.description = description
+        job_location = input_data.optional_field(input_data.job_location)
+        if job_location is not None:
+            submittal.job_location = job_location
+        bid_date = input_data.optional_field(input_data.bid_date)
+        if bid_date is not None:
+            submittal.bid_date = bid_date
+        tags = input_data.optional_field(input_data.tags)
+        if tags is not None:
+            submittal.tags = tags
 
-        if input_data.config is not None:
-            config = input_data.config
+        config = input_data.optional_field(input_data.config)
+        if config is not None:
             submittal.config_include_lamps = config.include_lamps
             submittal.config_include_accessories = config.include_accessories
             submittal.config_include_cq = config.include_cq

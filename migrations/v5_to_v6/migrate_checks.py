@@ -47,26 +47,31 @@ async def migrate_checks(source: asyncpg.Connection, dest: asyncpg.Connection) -
             status = EXCLUDED.status,
             creation_type = EXCLUDED.creation_type
         """,
-        [(
-            c["id"],
-            c["check_number"],
-            c["entity_date"],
-            c["post_date"],
-            c["commission_month"],
-            c["entered_commission_amount"],
-            c["factory_id"],
-            c["status"],
-            c["creation_type"],
-            c["created_by_id"],
-            c["created_at"],
-        ) for c in checks],
+        [
+            (
+                c["id"],
+                c["check_number"],
+                c["entity_date"],
+                c["post_date"],
+                c["commission_month"],
+                c["entered_commission_amount"],
+                c["factory_id"],
+                c["status"],
+                c["creation_type"],
+                c["created_by_id"],
+                c["created_at"],
+            )
+            for c in checks
+        ],
     )
 
     logger.info(f"Migrated {len(checks)} checks")
     return len(checks)
 
 
-async def migrate_check_details(source: asyncpg.Connection, dest: asyncpg.Connection) -> int:
+async def migrate_check_details(
+    source: asyncpg.Connection, dest: asyncpg.Connection
+) -> int:
     """Migrate check details from v5 (commission.check_details) to v6 (pycommission.check_details).
 
     Maps v5 deduction_id to v6 credit_id (deductions were stored in credits table).
@@ -124,14 +129,17 @@ async def migrate_check_details(source: asyncpg.Connection, dest: asyncpg.Connec
             credit_id = EXCLUDED.credit_id,
             applied_amount = EXCLUDED.applied_amount
         """,
-        [(
-            d["id"],
-            d["check_id"],
-            d["invoice_id"],
-            d["adjustment_id"],
-            d["credit_id"],
-            d["applied_amount"],
-        ) for d in details],
+        [
+            (
+                d["id"],
+                d["check_id"],
+                d["invoice_id"],
+                d["adjustment_id"],
+                d["credit_id"],
+                d["applied_amount"],
+            )
+            for d in details
+        ],
     )
 
     logger.info(f"Migrated {len(details)} check details")

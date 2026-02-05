@@ -45,13 +45,11 @@ class NotesService:
         return note
 
     async def create_note(self, note_input: NoteInput) -> Note:
-        """Create a new note."""
         note = note_input.to_orm_model()
         created = await self.repository.create(note)
         return await self.find_note_by_id(created.id)
 
     async def update_note(self, note_id: UUID, note_input: NoteInput) -> Note:
-        """Update an existing note."""
         if not await self.repository.exists(note_id):
             raise NotFoundError(str(note_id))
 
@@ -61,7 +59,6 @@ class NotesService:
         return await self.find_note_by_id(note_id)
 
     async def delete_note(self, note_id: UUID) -> bool:
-        """Delete a note by ID."""
         if not await self.repository.exists(note_id):
             raise NotFoundError(str(note_id))
         return await self.repository.delete(note_id)
@@ -73,7 +70,6 @@ class NotesService:
     async def find_notes_by_entity(
         self, entity_type: EntityType, entity_id: UUID
     ) -> list[Note]:
-        """Find all notes linked to a specific entity."""
         return await self.repository.find_by_entity(entity_type, entity_id)
 
     async def add_conversation(

@@ -9,6 +9,7 @@ Create Date: 2026-02-02 00:00:00.000000
 from collections.abc import Sequence
 
 import sqlalchemy as sa
+from sqlalchemy import inspect
 
 from alembic import op
 
@@ -20,11 +21,16 @@ depends_on: str | Sequence[str] | None = None
 
 
 def upgrade() -> None:
-    op.add_column(
-        "contacts",
-        sa.Column("role_detail", sa.String(1000), nullable=True),
-        schema="pycrm",
-    )
+    conn = op.get_bind()
+    inspector = inspect(conn)
+    columns = [col["name"] for col in inspector.get_columns("contacts", schema="pycrm")]
+
+    if "role_detail" not in columns:
+        op.add_column(
+            "contacts",
+            sa.Column("role_detail", sa.String(1000), nullable=True),
+            schema="pycrm",
+        )
 
 
 def downgrade() -> None:

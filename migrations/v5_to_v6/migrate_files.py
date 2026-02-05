@@ -32,13 +32,16 @@ async def migrate_folders(source: asyncpg.Connection, dest: asyncpg.Connection) 
             name = EXCLUDED.name,
             archived = EXCLUDED.archived
         """,
-        [(
-            f["id"],
-            f["name"],
-            f["archived"],
-            f["created_at"],
-            f["created_by_id"],
-        ) for f in folders],
+        [
+            (
+                f["id"],
+                f["name"],
+                f["archived"],
+                f["created_at"],
+                f["created_by_id"],
+            )
+            for f in folders
+        ],
     )
 
     logger.info(f"Migrated {len(folders)} folders")
@@ -98,18 +101,21 @@ async def migrate_files(source: asyncpg.Connection, dest: asyncpg.Connection) ->
             archived = EXCLUDED.archived,
             folder_id = EXCLUDED.folder_id
         """,
-        [(
-            f["id"],
-            f["file_name"],
-            f["file_path"],
-            f["file_size"],
-            map_file_type(f["file_type"]),
-            f["file_sha"],
-            f["archived"],
-            f["folder_id"],
-            f["created_at"],
-            f["created_by_id"],
-        ) for f in files],
+        [
+            (
+                f["id"],
+                f["file_name"],
+                f["file_path"],
+                f["file_size"],
+                map_file_type(f["file_type"]),
+                f["file_sha"],
+                f["archived"],
+                f["folder_id"],
+                f["created_at"],
+                f["created_by_id"],
+            )
+            for f in files
+        ],
     )
 
     logger.info(f"Migrated {len(files)} files")

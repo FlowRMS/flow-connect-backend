@@ -5,7 +5,9 @@ from aioinject import Injected
 
 from app.graphql.inject import inject
 from app.graphql.spec_sheets.services.spec_sheets_service import SpecSheetsService
-from app.graphql.spec_sheets.strawberry.folder_input import MoveSpecSheetToFolderInput
+from app.graphql.spec_sheets.strawberry.move_spec_sheet_to_folder_input import (
+    MoveSpecSheetToFolderInput,
+)
 from app.graphql.spec_sheets.strawberry.spec_sheet_input import (
     CreateSpecSheetInput,
     UpdateSpecSheetInput,

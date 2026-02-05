@@ -1,18 +1,20 @@
-"""Tests for campaigns GraphQL endpoints."""
-
 from commons.db.v6.crm.campaigns.campaign_status import CampaignStatus
 from commons.db.v6.crm.campaigns.email_status import EmailStatus
 from commons.db.v6.crm.campaigns.recipient_list_type import RecipientListType
 from commons.db.v6.crm.campaigns.send_pace import SendPace
 from commons.db.v6.crm.links.entity_type import EntityType
 
-from app.graphql.campaigns.strawberry.criteria_input import (
+from app.graphql.campaigns.strawberry.campaign_criteria_input import (
     CampaignCriteriaInput,
+)
+from app.graphql.campaigns.strawberry.criteria_condition_input import (
     CriteriaConditionInput,
-    CriteriaGroupInput,
+)
+from app.graphql.campaigns.strawberry.criteria_enums import (
     CriteriaOperator,
     LogicalOperator,
 )
+from app.graphql.campaigns.strawberry.criteria_group_input import CriteriaGroupInput
 
 
 class TestCampaignEnums:
@@ -181,13 +183,12 @@ class TestCampaignServices:
 
         assert CampaignsService is not None
 
-    def test_criteria_evaluator_service_import(self) -> None:
-        """Test CriteriaEvaluatorService can be imported."""
-        from app.graphql.campaigns.services.criteria_evaluator_service import (
-            CriteriaEvaluatorService,
+    def test_criteria_evaluator_repository_import(self) -> None:
+        from app.graphql.campaigns.repositories.criteria_evaluator_repository import (
+            CriteriaEvaluatorRepository,
         )
 
-        assert CriteriaEvaluatorService is not None
+        assert CriteriaEvaluatorRepository is not None
 
 
 class TestCampaignRepositories:

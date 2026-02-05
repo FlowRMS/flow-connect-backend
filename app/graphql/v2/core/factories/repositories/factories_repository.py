@@ -135,7 +135,7 @@ class FactoriesRepository(BaseRepository[Factory]):
             order = ManufacturerOrder(factory_id=factory_id, sort_order=index)
             self.session.add(order)
 
-        await self.session.commit()
+        await self.session.flush()
         return len(factory_ids)
 
     async def search_by_title_ordered(

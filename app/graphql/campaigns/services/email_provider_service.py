@@ -3,10 +3,8 @@ from enum import Enum, auto
 
 from commons.auth import AuthInfo
 
-from app.integrations.gmail.services.gmail_auth_service import (
-    GmailAuthService,
-)
-from app.integrations.gmail.services.gmail_auth_service import (
+from app.integrations.gmail.services.gmail_auth_service import GmailAuthService
+from app.integrations.gmail.services.gmail_types import (
     SendEmailResult as GmailSendResult,
 )
 from app.integrations.microsoft_o365.services.o365_auth_service import (

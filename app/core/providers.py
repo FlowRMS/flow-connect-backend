@@ -35,8 +35,15 @@ from app.graphql.common.services.search_registry_factory import (
 from app.graphql.processor_providers import processor_providers
 from app.graphql.repositories import repository_providers
 from app.graphql.service_providers import service_providers
+from app.graphql.v2.core.products.services.product_import_operations import (
+    ProductImportOperations,
+)
+from app.graphql.v2.core.products.services.product_pricing_operations import (
+    ProductPricingOperations,
+)
 from app.integrations.gmail.config import GmailSettings
 from app.integrations.microsoft_o365.config import O365Settings
+from app.webhooks.workos.providers import webhook_providers
 from app.workers.document_execution.converters.providers import converter_providers
 from app.workers.document_execution.executor_service import DocumentExecutorService
 from app.workers.services.resend_notification_service import ResendNotificationService
@@ -79,11 +86,16 @@ def providers() -> Iterable[aioinject.Provider[Any]]:
     for provider in admin_providers:
         providers.append(provider)
 
+    for provider in webhook_providers:
+        providers.append(provider)
+
     for provider in dto_providers:
         providers.append(provider)
 
     providers.append(aioinject.Scoped(ProcessorExecutor))
     providers.append(aioinject.Scoped(DocumentExecutorService))
+    providers.append(aioinject.Scoped(ProductImportOperations))
+    providers.append(aioinject.Scoped(ProductPricingOperations))
     providers.append(aioinject.Scoped(ResendNotificationService))
     providers.append(aioinject.Singleton(create_search_strategy_registry))
     providers.append(aioinject.Scoped(create_related_entities_registry))

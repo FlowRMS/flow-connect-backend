@@ -31,6 +31,11 @@ class TenantsRepository:
         result = await self.session.execute(stmt)
         return result.scalar_one_or_none()
 
+    async def get_by_org_id(self, org_id: str) -> Tenant | None:
+        stmt = select(Tenant).where(Tenant.org_id == org_id)
+        result = await self.session.execute(stmt)
+        return result.scalar_one_or_none()
+
     async def list_all(self) -> list[Tenant]:
         stmt = select(Tenant).order_by(Tenant.name)
         result = await self.session.execute(stmt)

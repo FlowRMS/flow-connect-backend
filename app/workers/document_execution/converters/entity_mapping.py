@@ -13,6 +13,7 @@ class EntityMapping:
     credits: dict[int, UUID] = field(default_factory=dict)
     adjustments: dict[int, UUID] = field(default_factory=dict)
     products: dict[int, UUID] = field(default_factory=dict)
+    sold_to_customer_ids: dict[int, UUID] = field(default_factory=dict)
     end_users: dict[int, UUID] = field(default_factory=dict)
     skipped_product_indices: set[int] = field(default_factory=set)
     skipped_order_indices: set[int] = field(default_factory=set)
@@ -54,3 +55,13 @@ class EntityMapping:
         if flow_detail_index is None:
             return None
         return self.adjustments.get(flow_detail_index)
+
+    def get_sold_to_customer_id(
+        self,
+        flow_detail_index: int | None,
+    ) -> UUID | None:
+        if flow_detail_index is not None:
+            sold_to = self.sold_to_customer_ids.get(flow_detail_index)
+            if sold_to:
+                return sold_to
+        return self.sold_to_customer_id

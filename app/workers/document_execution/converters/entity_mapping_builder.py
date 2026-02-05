@@ -81,6 +81,7 @@ class EntityMappingBuilder:
                 self._factory_id = entity_id
             case EntityPendingType.CUSTOMERS:
                 mapping.sold_to_customer_id = entity_id
+                mapping.sold_to_customer_ids[flow_idx] = entity_id
                 self._sold_to_customer_id = entity_id
             case EntityPendingType.BILL_TO_CUSTOMERS:
                 mapping.bill_to_customer_id = entity_id
@@ -118,6 +119,7 @@ class EntityMappingBuilder:
             existing.adjustments.update(source.adjustments)
             existing.products.update(source.products)
             existing.end_users.update(source.end_users)
+            existing.sold_to_customer_ids.update(source.sold_to_customer_ids)
             existing.skipped_product_indices.update(source.skipped_product_indices)
             existing.skipped_order_indices.update(source.skipped_order_indices)
             existing.skipped_invoice_indices.update(source.skipped_invoice_indices)

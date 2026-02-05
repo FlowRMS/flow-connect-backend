@@ -27,9 +27,15 @@ class GeneralSettingsRepository(BaseRepository[GeneralSetting]):
         key: SettingKey,
         user_id: UUID | None = None,
     ) -> GeneralSetting | None:
+        # Use is_(None) for NULL comparison in SQL (NULL = NULL is FALSE in SQL)
+        user_id_condition = (
+            GeneralSetting.user_id.is_(None)
+            if user_id is None
+            else GeneralSetting.user_id == user_id
+        )
         stmt = select(GeneralSetting).where(
             GeneralSetting.key == key,
-            GeneralSetting.user_id == user_id,
+            user_id_condition,
         )
         result = await self.session.execute(stmt)
         return result.scalar_one_or_none()

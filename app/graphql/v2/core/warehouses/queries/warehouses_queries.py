@@ -5,10 +5,16 @@ from aioinject import Injected
 
 from app.graphql.inject import inject
 from app.graphql.v2.core.warehouses.services.warehouse_service import WarehouseService
-from app.graphql.v2.core.warehouses.strawberry.warehouse_response import (
+from app.graphql.v2.core.warehouses.strawberry.warehouse_member_response import (
     WarehouseMemberResponse,
+)
+from app.graphql.v2.core.warehouses.strawberry.warehouse_response import (
     WarehouseResponse,
+)
+from app.graphql.v2.core.warehouses.strawberry.warehouse_settings_response import (
     WarehouseSettingsResponse,
+)
+from app.graphql.v2.core.warehouses.strawberry.warehouse_structure_response import (
     WarehouseStructureResponse,
 )
 
@@ -23,7 +29,6 @@ class WarehousesQueries:
         self,
         service: Injected[WarehouseService],
     ) -> list[WarehouseResponse]:
-        """Get all warehouses."""
         warehouses = await service.list_all()
         return WarehouseResponse.from_orm_model_list(warehouses)
 
@@ -34,7 +39,6 @@ class WarehousesQueries:
         id: UUID,
         service: Injected[WarehouseService],
     ) -> WarehouseResponse:
-        """Get a warehouse by ID."""
         warehouse = await service.get_by_id(id)
         return WarehouseResponse.from_orm_model(warehouse)
 
@@ -45,7 +49,6 @@ class WarehousesQueries:
         warehouse_id: UUID,
         service: Injected[WarehouseService],
     ) -> list[WarehouseMemberResponse]:
-        """Get all members for a warehouse."""
         members = await service.get_members(warehouse_id)
         return WarehouseMemberResponse.from_orm_model_list(members)
 

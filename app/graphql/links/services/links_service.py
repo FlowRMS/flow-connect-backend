@@ -80,7 +80,6 @@ class LinksService:
         return await self.repository.bulk_create(links)
 
     async def get_link(self, link_id: UUID) -> LinkRelation:
-        """Get a link by ID."""
         link = await self.repository.get_by_id(link_id)
         if not link:
             raise NotFoundError(str(link_id))
@@ -102,7 +101,6 @@ class LinksService:
         source_type: EntityType,
         source_id: UUID,
     ) -> list[LinkRelation]:
-        """Get all links from a specific source entity."""
         return await self.repository.get_links_from_source(
             source_type=source_type,
             source_id=source_id,
@@ -113,14 +111,12 @@ class LinksService:
         target_type: EntityType,
         target_id: UUID,
     ) -> list[LinkRelation]:
-        """Get all links to a specific target entity."""
         return await self.repository.get_links_to_target(
             target_type=target_type,
             target_id=target_id,
         )
 
     async def delete_link(self, link_id: UUID) -> bool:
-        """Delete a link by ID."""
         if not await self.repository.exists(link_id):
             raise NotFoundError(str(link_id))
         return await self.repository.delete(link_id)
@@ -132,7 +128,6 @@ class LinksService:
         target_type: EntityType,
         target_id: UUID,
     ) -> bool:
-        """Delete a link between two specific entities."""
         result = await self.repository.delete_link(
             source_type=source_type,
             source_id=source_id,

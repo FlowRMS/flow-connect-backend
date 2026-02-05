@@ -22,7 +22,6 @@ class ContactsQueries:
         id: UUID,
         service: Injected[ContactsService],
     ) -> ContactResponse:
-        """Get a contact by ID."""
         return ContactResponse.from_orm_model(await service.get_contact(id))
 
     @strawberry.field
@@ -32,7 +31,6 @@ class ContactsQueries:
         company_id: UUID,
         service: Injected[ContactsService],
     ) -> list[ContactResponse]:
-        """Get all contacts for a specific company."""
         contacts = await service.get_contacts_by_company(company_id)
         return ContactResponse.from_orm_model_list(contacts)
 
@@ -65,7 +63,6 @@ class ContactsQueries:
         quote_id: UUID,
         service: Injected[ContactsService],
     ) -> list[ContactResponse]:
-        """Get all contacts linked to a specific quote."""
         contacts = await service.find_contacts_by_quote_id(quote_id)
         return ContactResponse.from_orm_model_list(contacts)
 

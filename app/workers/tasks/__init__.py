@@ -1,5 +1,3 @@
-"""Background workers package for campaign processing."""
-
 from .campaign_tasks import inner_check_and_process_campaigns_task
 from .document_tasks import inner_execute_pending_document_task
 

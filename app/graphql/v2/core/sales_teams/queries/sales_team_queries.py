@@ -8,8 +8,10 @@ from app.graphql.v2.core.sales_teams.services.sales_team_service import SalesTea
 from app.graphql.v2.core.sales_teams.services.sales_team_sync_service import (
     SalesTeamSyncService,
 )
-from app.graphql.v2.core.sales_teams.strawberry.sales_team_response import (
+from app.graphql.v2.core.sales_teams.strawberry.mismatch_check_response import (
     MismatchCheckResponse,
+)
+from app.graphql.v2.core.sales_teams.strawberry.sales_team_response import (
     SalesTeamResponse,
 )
 from app.graphql.v2.core.users.services.user_service import UserService

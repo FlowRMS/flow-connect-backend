@@ -1,32 +1,22 @@
 #!/usr/bin/env python3
-"""
-Unit tests for OverageService.
-
-Tests the overage calculation logic including:
-1. BY_LINE vs BY_TOTAL calculation modes
-2. Customer-specific pricing via ProductCpn
-3. Quantity-based pricing via ProductQuantityPricing
-4. Division by zero protection
-5. Error handling and feedback
-
-NOTE: These are unit tests that mock database queries.
-"""
-import pytest
 from decimal import Decimal
 from unittest.mock import AsyncMock, MagicMock, patch
 from uuid import uuid4
+
+import pytest
 
 # Check if required modules are available
 try:
     from commons.db.v6.core.factories import Factory, OverageTypeEnum
     from commons.db.v6.core.products import Product, ProductCpn, ProductQuantityPricing
+
     MODULES_AVAILABLE = True
 except ImportError:
     MODULES_AVAILABLE = False
 
 pytestmark = pytest.mark.skipif(
     not MODULES_AVAILABLE,
-    reason="Required modules not available. Update pyproject.toml to use local flowbot-commons."
+    reason="Required modules not available. Update pyproject.toml to use local flowbot-commons.",
 )
 
 
@@ -34,20 +24,21 @@ pytestmark = pytest.mark.skipif(
 # Test Factory Overage Fields
 # ============================================================================
 
+
 class TestFactoryOverageFields:
     """Test that Factory model has overage-related fields."""
 
     def test_factory_has_overage_allowed_field(self):
         """Verify Factory has overage_allowed field."""
-        assert hasattr(Factory, 'overage_allowed')
+        assert hasattr(Factory, "overage_allowed")
 
     def test_factory_has_overage_type_field(self):
         """Verify Factory has overage_type field."""
-        assert hasattr(Factory, 'overage_type')
+        assert hasattr(Factory, "overage_type")
 
     def test_factory_has_rep_overage_share_field(self):
         """Verify Factory has rep_overage_share field."""
-        assert hasattr(Factory, 'rep_overage_share')
+        assert hasattr(Factory, "rep_overage_share")
 
     def test_overage_type_enum_values(self):
         """Verify OverageTypeEnum has correct values."""
@@ -59,16 +50,17 @@ class TestFactoryOverageFields:
 # Test Product Pricing Models
 # ============================================================================
 
+
 class TestProductPricingModels:
     """Test that product pricing models have required fields."""
 
     def test_product_cpn_has_required_fields(self):
         """Verify ProductCpn has fields for customer-specific pricing."""
         required_fields = [
-            'product_id',
-            'customer_id',
-            'unit_price',
-            'commission_rate',
+            "product_id",
+            "customer_id",
+            "unit_price",
+            "commission_rate",
         ]
         for field in required_fields:
             assert hasattr(ProductCpn, field), f"ProductCpn missing field: {field}"
@@ -76,18 +68,21 @@ class TestProductPricingModels:
     def test_product_quantity_pricing_has_required_fields(self):
         """Verify ProductQuantityPricing has fields for quantity-based pricing."""
         required_fields = [
-            'product_id',
-            'quantity_low',
-            'quantity_high',
-            'unit_price',
+            "product_id",
+            "quantity_low",
+            "quantity_high",
+            "unit_price",
         ]
         for field in required_fields:
-            assert hasattr(ProductQuantityPricing, field), f"ProductQuantityPricing missing field: {field}"
+            assert hasattr(ProductQuantityPricing, field), (
+                f"ProductQuantityPricing missing field: {field}"
+            )
 
 
 # ============================================================================
 # Test OverageService
 # ============================================================================
+
 
 class TestOverageService:
     """Test OverageService calculation logic."""
@@ -122,6 +117,7 @@ class TestOverageService:
     def test_overage_service_can_be_imported(self):
         """Verify OverageService can be imported."""
         from app.graphql.common.services.overage_service import OverageService
+
         assert OverageService is not None
 
     def test_overage_record_has_required_fields(self):
@@ -129,15 +125,15 @@ class TestOverageService:
         from app.graphql.common.strawberry.overage_record import OverageRecord
 
         record = OverageRecord()
-        assert hasattr(record, 'effective_commission_rate')
-        assert hasattr(record, 'overage_unit_price')
-        assert hasattr(record, 'base_unit_price')
-        assert hasattr(record, 'rep_share')
-        assert hasattr(record, 'level_rate')
-        assert hasattr(record, 'level_unit_price')
-        assert hasattr(record, 'overage_type')
-        assert hasattr(record, 'error_message')
-        assert hasattr(record, 'success')
+        assert hasattr(record, "effective_commission_rate")
+        assert hasattr(record, "overage_unit_price")
+        assert hasattr(record, "base_unit_price")
+        assert hasattr(record, "rep_share")
+        assert hasattr(record, "level_rate")
+        assert hasattr(record, "level_unit_price")
+        assert hasattr(record, "overage_type")
+        assert hasattr(record, "error_message")
+        assert hasattr(record, "success")
 
     def test_overage_record_defaults(self):
         """Verify OverageRecord has correct defaults."""
@@ -150,7 +146,9 @@ class TestOverageService:
     def test_overage_type_enum_conversion(self):
         """Verify DB enum converts to GraphQL enum correctly."""
         from app.graphql.common.services.overage_service import _convert_overage_type
-        from app.graphql.common.strawberry.overage_record import OverageTypeEnum as GqlEnum
+        from app.graphql.common.strawberry.overage_record import (
+            OverageTypeEnum as GqlEnum,
+        )
 
         result_by_line = _convert_overage_type(OverageTypeEnum.BY_LINE)
         assert result_by_line == GqlEnum.BY_LINE
@@ -162,6 +160,7 @@ class TestOverageService:
 # ============================================================================
 # Test Commission Rate Priority
 # ============================================================================
+
 
 class TestCommissionRatePriority:
     """Test commission rate selection priority."""
@@ -217,6 +216,7 @@ class TestCommissionRatePriority:
 # Test Division by Zero Protection
 # ============================================================================
 
+
 class TestDivisionByZeroProtection:
     """Test that division by zero is properly handled."""
 
@@ -263,6 +263,7 @@ class TestDivisionByZeroProtection:
 # Test Error Feedback
 # ============================================================================
 
+
 class TestErrorFeedback:
     """Test that errors are properly communicated via OverageRecord."""
 
@@ -291,5 +292,5 @@ class TestErrorFeedback:
         assert "not found" in result.error_message.lower()
 
 
-if __name__ == '__main__':
-    pytest.main([__file__, '-v'])
+if __name__ == "__main__":
+    pytest.main([__file__, "-v"])

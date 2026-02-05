@@ -1,15 +1,3 @@
-"""
-Migration script to create File records and LinkRelations for existing spec sheets.
-
-This makes existing spec sheets appear in /files when browsing by Factory entity.
-
-Run this script after applying the alembic migration for file_id column:
-    python -m migrations.migrate_spec_sheets_to_files
-
-Environment variables required:
-    DATABASE_URL: PostgreSQL connection string
-"""
-
 import asyncio
 import logging
 import os
@@ -67,7 +55,8 @@ async def migrate_spec_sheets_to_files(conn: asyncpg.Connection) -> int:
 
             # Create File record
             file_id = uuid4()
-            await conn.execute("""
+            await conn.execute(
+                """
                 INSERT INTO pyfiles.files (
                     id, file_name, file_path, file_size, file_type,
                     archived, created_at, created_by_id
@@ -85,7 +74,8 @@ async def migrate_spec_sheets_to_files(conn: asyncpg.Connection) -> int:
 
             # Create LinkRelation (FILE -> FACTORY)
             link_id = uuid4()
-            await conn.execute("""
+            await conn.execute(
+                """
                 INSERT INTO pycrm.link_relations (
                     id, source_entity_type, source_entity_id,
                     target_entity_type, target_entity_id,
@@ -103,11 +93,15 @@ async def migrate_spec_sheets_to_files(conn: asyncpg.Connection) -> int:
             )
 
             # Update spec_sheet with file_id
-            await conn.execute("""
+            await conn.execute(
+                """
                 UPDATE pycrm.spec_sheets
                 SET file_id = $1
                 WHERE id = $2
-            """, file_id, ss["id"])
+            """,
+                file_id,
+                ss["id"],
+            )
 
             migrated_count += 1
 

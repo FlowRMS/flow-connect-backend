@@ -39,9 +39,7 @@ class SyncResult:
             self.errors = []
 
 
-async def get_workos_org_id(
-    client: AsyncWorkOSClient, tenant_name: str
-) -> str | None:
+async def get_workos_org_id(client: AsyncWorkOSClient, tenant_name: str) -> str | None:
     orgs = await client.organizations.list_organizations()
     print(f"Orgs: {orgs}")
     for org in orgs.data:
@@ -127,11 +125,15 @@ async def sync_users_for_tenant(config: SyncConfig) -> SyncResult:
     await controller.load_data_sources()
 
     try:
-        logger.info(f"Found WorkOS org {config.workos_org_id} for tenant {config.tenant_url}")
+        logger.info(
+            f"Found WorkOS org {config.workos_org_id} for tenant {config.tenant_url}"
+        )
 
         async with controller.scoped_session(config.tenant_url) as session:
-            stmt = select(User).order_by(User.email).where(
-                ~User.email.ilike("%@flowrms.com")
+            stmt = (
+                select(User)
+                .order_by(User.email)
+                .where(~User.email.ilike("%@flowrms.com"))
             )
             db_result = await session.execute(stmt)
             users = list(db_result.scalars().all())
@@ -141,7 +143,12 @@ async def sync_users_for_tenant(config: SyncConfig) -> SyncResult:
             for user in users:
                 try:
                     await _sync_single_user(
-                        client, session, user, config.workos_org_id, config.dry_run, result
+                        client,
+                        session,
+                        user,
+                        config.workos_org_id,
+                        config.dry_run,
+                        result,
                     )
                 except Exception as e:
                     logger.error(f"Error syncing user {user.email}: {e}")
@@ -186,7 +193,7 @@ async def _sync_single_user(
             user.auth_provider_id = workos_user_id
             result.users_updated += 1
             logger.info(f"Updated auth_provider_id for {user.email}")
-            
+
         if not external_id or external_id != user.id:
             logger.warning(
                 f"WorkOS user {user.email} has mismatched external_id "
@@ -274,7 +281,7 @@ if __name__ == "__main__":
         parser.error("--workos-client-id is required (or set WORKOS_CLIENT_ID)")
     if not args.workos_org_id:
         parser.error("--workos-org-id is required (or set WORKOS_ORG_ID)")
-        
+
     config = SyncConfig(
         pg_url=args.pg_url,
         tenant_url=args.tenant,

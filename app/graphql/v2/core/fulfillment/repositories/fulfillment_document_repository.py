@@ -30,7 +30,6 @@ class FulfillmentDocumentRepository(BaseRepository[FulfillmentDocument]):
         return list(result.scalars().all())
 
     async def get_with_user(self, document_id: UUID) -> FulfillmentDocument | None:
-        """Get a document by ID with uploaded_by_user relationship loaded."""
         stmt = (
             select(FulfillmentDocument)
             .options(selectinload(FulfillmentDocument.uploaded_by_user))

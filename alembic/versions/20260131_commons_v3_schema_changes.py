@@ -49,7 +49,7 @@ def upgrade() -> None:
             sa.Column("id", UUID(as_uuid=True), primary_key=True),
             sa.Column(
                 "created_at",
-                sa.DateTime(timezone=True),
+                sa.TIMESTAMP(timezone=True),
                 nullable=False,
                 server_default=sa.func.now(),
             ),
@@ -68,7 +68,7 @@ def upgrade() -> None:
             sa.Column(
                 "is_read", sa.Boolean, nullable=False, server_default=sa.text("false")
             ),
-            sa.Column("read_at", sa.DateTime(timezone=True), nullable=True),
+            sa.Column("read_at", sa.TIMESTAMP(timezone=True), nullable=True),
             schema="pycore",
         )
 
@@ -79,7 +79,7 @@ def upgrade() -> None:
             sa.Column("id", UUID(as_uuid=True), primary_key=True),
             sa.Column(
                 "created_at",
-                sa.DateTime(timezone=True),
+                sa.TIMESTAMP(timezone=True),
                 nullable=False,
                 server_default=sa.func.now(),
             ),

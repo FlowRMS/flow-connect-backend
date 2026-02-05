@@ -1,5 +1,3 @@
-"""Gmail OAuth and API constants."""
-
 # Google OAuth 2.0 endpoints
 GOOGLE_AUTH_ENDPOINT = "https://accounts.google.com/o/oauth2/v2/auth"
 GOOGLE_TOKEN_ENDPOINT = "https://oauth2.googleapis.com/token"
