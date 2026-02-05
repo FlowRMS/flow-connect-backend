@@ -1,4 +1,3 @@
-import functools
 from typing import Annotated
 
 from aioinject import Injected
@@ -7,16 +6,10 @@ from fastapi import APIRouter, Header, HTTPException, Request
 from loguru import logger
 from workos.webhooks import Webhooks
 
-from app.core.config.base_settings import get_settings
 from app.core.config.workos_settings import WorkOSSettings
 from app.webhooks.workos.services.user_sync_service import UserSyncService
 
 router = APIRouter()
-
-
-@functools.cache
-def get_workos_settings() -> WorkOSSettings:
-    return get_settings(WorkOSSettings)
 
 
 @router.post("/")
@@ -24,20 +17,20 @@ def get_workos_settings() -> WorkOSSettings:
 async def handle_webhook(
     request: Request,
     user_sync_service: Injected[UserSyncService],
+    workos_settings: Injected[WorkOSSettings],
     workos_signature: Annotated[str | None, Header(alias="WorkOS-Signature")] = None,
 ) -> dict[str, str]:
     if not workos_signature:
         raise HTTPException(status_code=401, detail="Missing WorkOS-Signature header")
 
     body = await request.body()
-    settings = get_workos_settings()
 
     webhooks = Webhooks()
     try:
         event = webhooks.verify_event(
             event_body=body,
             event_signature=workos_signature,
-            secret=settings.workos_webhook_secret,
+            secret=workos_settings.workos_webhook_secret,
         )
     except ValueError as e:
         logger.warning(f"Webhook signature verification failed: {e}")

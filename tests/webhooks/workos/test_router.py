@@ -3,7 +3,7 @@ import hmac
 import json
 import time
 from typing import Any
-from unittest.mock import AsyncMock, MagicMock, patch
+from unittest.mock import AsyncMock, MagicMock
 
 import aioinject
 import pytest
@@ -12,6 +12,7 @@ from fastapi import FastAPI
 from fastapi.testclient import TestClient
 from httpx import Response
 
+from app.core.config.workos_settings import WorkOSSettings
 from app.webhooks.workos.services.user_sync_service import UserSyncService
 
 
@@ -51,11 +52,15 @@ def generate_signature(payload: bytes, secret: str, timestamp: int | None = None
     return f"t={timestamp}, v1={signature}"
 
 
-def create_test_app(service_mock: AsyncMock) -> FastAPI:
+def create_test_app(service_mock: AsyncMock, webhook_secret: str) -> FastAPI:
     from app.webhooks.workos.router import router
+
+    mock_settings = MagicMock(spec=WorkOSSettings)
+    mock_settings.workos_webhook_secret = webhook_secret
 
     container = aioinject.Container()
     container.register(aioinject.Object(service_mock, interface=UserSyncService))
+    container.register(aioinject.Object(mock_settings, interface=WorkOSSettings))
 
     app = FastAPI()
     app.add_middleware(AioInjectMiddleware, container=container)
@@ -73,14 +78,9 @@ def post_webhook(
     if signature is None:
         signature = generate_signature(payload_bytes, webhook_secret)
 
-    app = create_test_app(service_mock)
+    app = create_test_app(service_mock, webhook_secret)
 
-    with (
-        patch("app.webhooks.workos.router.get_workos_settings") as mock_settings,
-        TestClient(app) as client,
-    ):
-        mock_settings.return_value = MagicMock(workos_webhook_secret=webhook_secret)
-
+    with TestClient(app) as client:
         response = client.post(
             "/",
             content=payload_bytes,
@@ -95,9 +95,11 @@ def post_webhook(
 class TestWebhookSignatureValidation:
 
     @pytest.mark.asyncio
-    async def test_webhook_rejects_missing_signature(self) -> None:
+    async def test_webhook_rejects_missing_signature(
+        self, webhook_secret: str
+    ) -> None:
         service_mock = AsyncMock()
-        app = create_test_app(service_mock)
+        app = create_test_app(service_mock, webhook_secret)
         with TestClient(app) as client:
             response = client.post("/", json={"event": "user.created", "data": {}})
 

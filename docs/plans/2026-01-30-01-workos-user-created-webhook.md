@@ -247,6 +247,34 @@ _Issues identified during PR review and fixed. Prefixes: BF = bugfix, CH = behav
 **File**: [`app/webhooks/workos/router.py`](../../app/webhooks/workos/router.py)
 **Change**: Changed to `except ValueError` since WorkOS SDK raises `ValueError` for signature verification failures
 
+### CH-4: Extract repository from service — bypass of repository pattern
+
+**Problem**: `user_sync_service.py` performs direct SQLAlchemy queries (`select`, `session.add`, `session.flush`) in `_find_user_by_email`, `_sync_existing_user`, and `_create_new_user`. This violates SRP — services should orchestrate business logic, not access the DB directly.
+**Review**: PR #172 review by marshallflowrms (2026-02-04)
+**Files**: [`app/webhooks/workos/services/user_sync_service.py`](../../app/webhooks/workos/services/user_sync_service.py)
+**Change**: Create a `WebhookUserRepository` that accepts only `AsyncSession` (since webhooks lack JWT/AuthInfo), with `get_by_email`, `create`, and `update` methods. Inject it into the service to replace inline DB operations.
+
+### CH-5: Separate external API calls from DB transaction
+
+**Problem**: In `handle_user_created`, WorkOS API calls (`update_user`, `update_organization_membership`) are made inside a `session.begin()` block. If a later API call fails, the DB transaction rolls back but earlier WorkOS changes persist — leaving systems in an inconsistent state.
+**Review**: PR #172 review by marshallflowrms (2026-02-04)
+**Files**: [`app/webhooks/workos/services/user_sync_service.py`](../../app/webhooks/workos/services/user_sync_service.py)
+**Change**: Persist DB changes first, then perform WorkOS API calls outside the transaction with explicit error handling for partial failures.
+
+### CH-6: Test real user creation logic instead of mocking private method
+
+**Problem**: `test_create_new_user_if_not_exists` replaces `_create_new_user` with a mock, so the actual user creation logic (User model instantiation, field assignments, `WORKOS_ROLE_TO_RBAC` mapping) is untested.
+**Review**: PR #172 review by marshallflowrms (2026-02-04)
+**Files**: [`tests/webhooks/workos/test_user_sync_service.py`](../../tests/webhooks/workos/test_user_sync_service.py)
+**Change**: Rewrite the test to exercise the real `_create_new_user` method, mocking only external dependencies (session, WorkOS client), and assert correct field mapping and role assignment.
+
+### REC-1: Inject WorkOSSettings via DI (recommendation)
+
+**Problem**: Router uses `@functools.cache` on `get_workos_settings()` to load settings. While this follows the existing pattern in `o365_router.py`, the router already uses aioinject's `@inject`, and `WorkOSSettings` is registered in the DI container.
+**Review**: PR #172 review by marshallflowrms (2026-02-04)
+**Files**: [`app/webhooks/workos/router.py`](../../app/webhooks/workos/router.py)
+**Change**: Optional — inject `WorkOSSettings` via `Injected[WorkOSSettings]` instead of `@functools.cache` for consistency within the file.
+
 ---
 
 ## Results

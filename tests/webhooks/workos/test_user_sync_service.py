@@ -7,7 +7,10 @@ from commons.db.models.tenant import Tenant
 from commons.db.v6.rbac.rbac_role_enum import RbacRoleEnum
 from commons.db.v6.user import User
 
-from app.webhooks.workos.services.user_sync_service import UserSyncService
+from app.webhooks.workos.services.user_sync_service import (
+    WORKOS_ROLE_TO_RBAC,
+    UserSyncService,
+)
 
 
 def create_mock_workos_user(
@@ -29,8 +32,10 @@ def create_mock_workos_user(
 def create_mock_membership(
     org_id: str = "org_01XYZ",
     role_slug: str = "inside_rep",
+    membership_id: str = "mem_01ABC",
 ) -> MagicMock:
     membership = MagicMock()
+    membership.id = membership_id
     membership.organization_id = org_id
     membership.role = {"slug": role_slug}
     return membership
@@ -246,8 +251,11 @@ class TestUserSyncServiceLinkExistingUser:
             external_id=None,
         )
         event = create_mock_event(workos_user)
-        membership = create_mock_membership(org_id="org_01XYZ", role_slug="outside_rep")
-        membership.id = "mem_01ABC"
+        membership = create_mock_membership(
+            org_id="org_01XYZ",
+            role_slug="outside_rep",
+            membership_id="mem_01ABC",
+        )
         tenant = create_mock_tenant(org_id="org_01XYZ")
         local_user = create_mock_local_user(
             user_id=local_user_id,
@@ -270,44 +278,115 @@ class TestUserSyncServiceCreateNewUser:
     async def test_create_new_user_if_not_exists(
         self, mock_deps: MockDependencies
     ) -> None:
-        test_workos_user = create_mock_workos_user(
+        workos_user = create_mock_workos_user(
             user_id="user_01ABC",
             email="newuser@example.com",
             first_name="New",
             last_name="User",
             external_id=None,
         )
-        event = create_mock_event(test_workos_user)
+        event = create_mock_event(workos_user)
         membership = create_mock_membership(org_id="org_01XYZ", role_slug="inside_rep")
         tenant = create_mock_tenant(org_id="org_01XYZ")
 
-        created_user_id = uuid.uuid4()
-        mock_created_user = MagicMock()
-        mock_created_user.id = created_user_id
+        await mock_deps.run_user_created(event, membership, tenant, local_user=None)
 
-        async def mock_create_new_user(
-            workos_user=None
-        ):
-            mock_deps.session.add.assert_not_called()
-            mock_deps.session.add(mock_created_user)
-            await mock_deps.session.flush([mock_created_user])
-            await mock_deps.workos_service.client.user_management.update_user(
-                user_id=workos_user.id,
-                external_id=str(created_user_id),
-            )
-            return mock_created_user
+        mock_deps.session.add.assert_called_once()
+        created_user: User = mock_deps.session.add.call_args[0][0]
+        assert created_user.email == "newuser@example.com"
+        assert created_user.username == "newuser@example.com"
+        assert created_user.first_name == "New"
+        assert created_user.last_name == "User"
+        assert created_user.role == RbacRoleEnum.INSIDE_REP
+        assert created_user.enabled is True
+        assert created_user.auth_provider_id == "user_01ABC"
 
-        mock_deps.set_membership(membership)
-        mock_deps.set_tenant(tenant)
-        mock_deps.set_local_user(None)
-        service = mock_deps.create_service()
-        service._create_new_user = mock_create_new_user
-
-        await service.handle_user_created(event)
-
-        mock_deps.session.add.assert_called_once_with(mock_created_user)
         mock_deps.workos_service.client.user_management.update_user.assert_called_once()
-        update_call = (
+        call_kwargs = (
             mock_deps.workos_service.client.user_management.update_user.call_args.kwargs
         )
-        assert update_call["external_id"] == str(created_user_id)
+        assert call_kwargs["user_id"] == "user_01ABC"
+        assert call_kwargs["external_id"] == str(created_user.id)
+
+    @pytest.mark.asyncio
+    async def test_create_new_user_maps_owner_role(
+        self, mock_deps: MockDependencies
+    ) -> None:
+        workos_user = create_mock_workos_user(
+            user_id="user_02DEF",
+            email="owner@example.com",
+            external_id=None,
+        )
+        event = create_mock_event(workos_user)
+        membership = create_mock_membership(org_id="org_01XYZ", role_slug="owner")
+        tenant = create_mock_tenant(org_id="org_01XYZ")
+
+        await mock_deps.run_user_created(event, membership, tenant, local_user=None)
+
+        created_user: User = mock_deps.session.add.call_args[0][0]
+        assert created_user.role == RbacRoleEnum.OWNER
+
+    @pytest.mark.asyncio
+    async def test_create_new_user_defaults_unknown_role(
+        self, mock_deps: MockDependencies
+    ) -> None:
+        workos_user = create_mock_workos_user(
+            user_id="user_03GHI",
+            email="unknown@example.com",
+            external_id=None,
+        )
+        event = create_mock_event(workos_user)
+        membership = create_mock_membership(
+            org_id="org_01XYZ", role_slug="nonexistent_role"
+        )
+        tenant = create_mock_tenant(org_id="org_01XYZ")
+
+        await mock_deps.run_user_created(event, membership, tenant, local_user=None)
+
+        created_user: User = mock_deps.session.add.call_args[0][0]
+        assert created_user.role == RbacRoleEnum.INSIDE_REP
+
+
+class TestBuildNewUser:
+
+    @pytest.mark.parametrize(
+        ("workos_slug", "expected_role"),
+        list(WORKOS_ROLE_TO_RBAC.items()),
+    )
+    def test_role_mapping(
+        self, workos_slug: str, expected_role: RbacRoleEnum
+    ) -> None:
+        workos_user = create_mock_workos_user(email="map@test.com")
+        membership = create_mock_membership(role_slug=workos_slug)
+
+        user = UserSyncService._build_new_user(workos_user, membership)
+
+        assert user.role == expected_role
+
+    def test_fields_from_workos_user(self) -> None:
+        workos_user = create_mock_workos_user(
+            user_id="user_99",
+            email="full@test.com",
+            first_name="Jane",
+            last_name="Doe",
+        )
+        membership = create_mock_membership(role_slug="administrator")
+
+        user = UserSyncService._build_new_user(workos_user, membership)
+
+        assert user.email == "full@test.com"
+        assert user.username == "full@test.com"
+        assert user.first_name == "Jane"
+        assert user.last_name == "Doe"
+        assert user.auth_provider_id == "user_99"
+        assert user.enabled is True
+        assert user.id is not None
+
+    def test_handles_none_names(self) -> None:
+        workos_user = create_mock_workos_user(first_name=None, last_name=None)
+        membership = create_mock_membership(role_slug="inside_rep")
+
+        user = UserSyncService._build_new_user(workos_user, membership)
+
+        assert user.first_name == ""
+        assert user.last_name == ""
