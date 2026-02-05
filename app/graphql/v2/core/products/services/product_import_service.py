@@ -21,10 +21,16 @@ from app.graphql.v2.core.products.services.product_import_operations import (
 from app.graphql.v2.core.products.services.product_pricing_operations import (
     ProductPricingOperations,
 )
-from app.graphql.v2.core.products.strawberry.product_import_types import (
+from app.graphql.v2.core.products.strawberry.product_import_error import (
     ProductImportError,
+)
+from app.graphql.v2.core.products.strawberry.product_import_input import (
     ProductImportInput,
+)
+from app.graphql.v2.core.products.strawberry.product_import_item_input import (
     ProductImportItemInput,
+)
+from app.graphql.v2.core.products.strawberry.product_import_result import (
     ProductImportResult,
 )
 

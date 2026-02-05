@@ -7,8 +7,10 @@ import pytest
 from app.graphql.v2.core.products.services.product_cpn_import_service import (
     ProductCpnImportService,
 )
-from app.graphql.v2.core.products.strawberry.product_cpn_import_types import (
+from app.graphql.v2.core.products.strawberry.product_cpn_import_input import (
     ProductCpnImportInput,
+)
+from app.graphql.v2.core.products.strawberry.product_cpn_import_item_input import (
     ProductCpnImportItemInput,
 )
 

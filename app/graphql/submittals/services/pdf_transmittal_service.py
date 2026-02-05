@@ -5,7 +5,9 @@ from commons.db.v6.crm.submittals import Submittal, SubmittalStakeholder
 from reportlab.lib.units import inch
 from reportlab.platypus import Paragraph, Spacer, Table, TableStyle
 
-from app.graphql.submittals.strawberry.submittal_input import GenerateSubmittalPdfInput
+from app.graphql.submittals.strawberry.generate_submittal_pdf_input import (
+    GenerateSubmittalPdfInput,
+)
 
 
 class PdfTransmittalService:

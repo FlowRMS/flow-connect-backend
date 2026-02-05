@@ -8,8 +8,10 @@ import pytest
 from app.graphql.v2.core.products.services.product_pricing_operations import (
     ProductPricingOperations,
 )
-from app.graphql.v2.core.products.strawberry.product_import_types import (
+from app.graphql.v2.core.products.strawberry.customer_pricing_import_input import (
     CustomerPricingImportInput,
+)
+from app.graphql.v2.core.products.strawberry.quantity_pricing_import_input import (
     QuantityPricingImportInput,
 )
 

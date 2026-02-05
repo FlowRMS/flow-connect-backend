@@ -21,14 +21,18 @@ from app.graphql.campaigns.repositories.criteria_evaluator_repository import (
     CriteriaEvaluatorRepository,
 )
 from app.graphql.campaigns.services.email_provider_service import EmailProviderService
-from app.graphql.campaigns.strawberry.campaign_input import CampaignInput
-from app.graphql.campaigns.strawberry.criteria_input import (
+from app.graphql.campaigns.strawberry.campaign_criteria_input import (
     CampaignCriteriaInput,
+)
+from app.graphql.campaigns.strawberry.campaign_input import CampaignInput
+from app.graphql.campaigns.strawberry.criteria_condition_input import (
     CriteriaConditionInput,
-    CriteriaGroupInput,
+)
+from app.graphql.campaigns.strawberry.criteria_enums import (
     CriteriaOperator,
     LogicalOperator,
 )
+from app.graphql.campaigns.strawberry.criteria_group_input import CriteriaGroupInput
 
 
 class NoEmailProviderError(Exception):

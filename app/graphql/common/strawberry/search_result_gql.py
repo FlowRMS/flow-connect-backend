@@ -1,38 +1,11 @@
-import enum
 import uuid
 from collections.abc import Sequence
-from enum import auto
 from typing import Self
 
 import strawberry
 from sqlalchemy.engine.row import Row
 
-
-@strawberry.enum
-class SourceType(enum.IntEnum):
-    CONTACT = auto()
-    COMPANY = auto()
-    JOB = auto()
-    TASK = auto()
-    NOTE = auto()
-    CAMPAIGN = auto()
-    QUOTE = auto()
-    PRE_OPPORTUNITY = auto()
-    SPEC_SHEET = auto()
-    CUSTOMER = auto()
-    FACTORY = auto()
-    PRODUCT = auto()
-    INVOICE = auto()
-    ORDER = auto()
-    CREDIT = auto()
-    CHECK = auto()
-    ADJUSTMENT = auto()
-    ADDRESS = auto()
-    SHIPPING_CARRIER = auto()
-    CONTAINER_TYPE = auto()
-    WAREHOUSE = auto()
-    ORDER_ACKNOWLEDGEMENT = auto()
-    FOLDER = auto()
+from app.graphql.common.strawberry.source_type import SourceType
 
 
 @strawberry.type(name="SearchResult")

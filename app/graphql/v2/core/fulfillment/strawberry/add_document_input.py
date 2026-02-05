@@ -4,7 +4,6 @@ from uuid import UUID
 import strawberry
 from commons.db.v6.fulfillment import FulfillmentDocument
 from commons.db.v6.fulfillment.enums import FulfillmentDocumentType
-from strawberry.file_uploads import Upload
 
 from app.core.strawberry.inputs import BaseInputGQL
 
@@ -33,13 +32,3 @@ class AddDocumentInput(BaseInputGQL[FulfillmentDocument]):
         )
         document.fulfillment_order_id = self.fulfillment_order_id
         return document
-
-
-@strawberry.input
-class UploadDocumentInput:
-    """Input for uploading a document file to a fulfillment order."""
-
-    fulfillment_order_id: UUID
-    document_type: FulfillmentDocumentType
-    file: Upload
-    notes: str | None = None

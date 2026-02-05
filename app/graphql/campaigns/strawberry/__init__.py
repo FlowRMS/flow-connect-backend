@@ -1,3 +1,6 @@
+from app.graphql.campaigns.strawberry.campaign_criteria_input import (
+    CampaignCriteriaInput,
+)
 from app.graphql.campaigns.strawberry.campaign_input import CampaignInput
 from app.graphql.campaigns.strawberry.campaign_landing_page_response import (
     CampaignLandingPageResponse,
@@ -11,13 +14,14 @@ from app.graphql.campaigns.strawberry.campaign_sending_status_response import (
     SendBatchResultResponse,
     SendTestEmailResponse,
 )
-from app.graphql.campaigns.strawberry.criteria_input import (
-    CampaignCriteriaInput,
+from app.graphql.campaigns.strawberry.criteria_condition_input import (
     CriteriaConditionInput,
-    CriteriaGroupInput,
+)
+from app.graphql.campaigns.strawberry.criteria_enums import (
     CriteriaOperator,
     LogicalOperator,
 )
+from app.graphql.campaigns.strawberry.criteria_group_input import CriteriaGroupInput
 from app.graphql.campaigns.strawberry.estimate_recipients_response import (
     EstimateRecipientsResponse,
 )

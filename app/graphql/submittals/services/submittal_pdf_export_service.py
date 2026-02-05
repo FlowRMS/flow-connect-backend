@@ -24,7 +24,9 @@ from app.graphql.submittals.services.pdf_generation_service import (
     LAMPS_KEYWORDS,
     PdfGenerationService,
 )
-from app.graphql.submittals.strawberry.submittal_input import GenerateSubmittalPdfInput
+from app.graphql.submittals.strawberry.generate_submittal_pdf_input import (
+    GenerateSubmittalPdfInput,
+)
 from app.graphql.v2.files.repositories.file_repository import FileRepository
 
 SUBMITTAL_PDFS_S3_PREFIX = "submittal-pdfs"

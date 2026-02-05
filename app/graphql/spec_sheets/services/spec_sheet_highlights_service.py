@@ -10,9 +10,13 @@ from app.graphql.spec_sheets.repositories.spec_sheet_highlights_repository impor
 from app.graphql.spec_sheets.repositories.spec_sheets_repository import (
     SpecSheetsRepository,
 )
-from app.graphql.spec_sheets.strawberry.spec_sheet_highlight_input import (
+from app.graphql.spec_sheets.strawberry.create_highlight_version_input import (
     CreateHighlightVersionInput,
+)
+from app.graphql.spec_sheets.strawberry.update_highlight_regions_input import (
     UpdateHighlightRegionsInput,
+)
+from app.graphql.spec_sheets.strawberry.update_highlight_version_input import (
     UpdateHighlightVersionInput,
 )
 

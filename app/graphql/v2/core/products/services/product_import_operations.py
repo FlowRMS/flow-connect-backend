@@ -8,8 +8,10 @@ from sqlalchemy.exc import IntegrityError
 from app.graphql.v2.core.products.repositories.products_repository import (
     ProductsRepository,
 )
-from app.graphql.v2.core.products.strawberry.product_import_types import (
+from app.graphql.v2.core.products.strawberry.product_import_error import (
     ProductImportError,
+)
+from app.graphql.v2.core.products.strawberry.product_import_item_input import (
     ProductImportItemInput,
 )
 from app.graphql.v2.core.products.strawberry.product_input import ProductInput

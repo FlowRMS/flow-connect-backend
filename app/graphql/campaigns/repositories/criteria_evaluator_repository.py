@@ -13,13 +13,17 @@ from sqlalchemy.sql import Select
 from app.core.context_wrapper import ContextWrapper
 from app.graphql.base_repository import BaseRepository
 from app.graphql.campaigns.repositories.criteria_operators import apply_operator
-from app.graphql.campaigns.strawberry.criteria_input import (
+from app.graphql.campaigns.strawberry.campaign_criteria_input import (
     CampaignCriteriaInput,
+)
+from app.graphql.campaigns.strawberry.criteria_condition_input import (
     CriteriaConditionInput,
-    CriteriaGroupInput,
+)
+from app.graphql.campaigns.strawberry.criteria_enums import (
     CriteriaOperator,
     LogicalOperator,
 )
+from app.graphql.campaigns.strawberry.criteria_group_input import CriteriaGroupInput
 
 
 class CriteriaEvaluatorRepository(BaseRepository[Contact]):

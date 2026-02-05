@@ -7,6 +7,9 @@ from app.graphql.campaigns.services.campaign_email_sender_service import (
     CampaignEmailSenderService,
 )
 from app.graphql.campaigns.services.campaigns_service import CampaignsService
+from app.graphql.campaigns.strawberry.campaign_criteria_input import (
+    CampaignCriteriaInput,
+)
 from app.graphql.campaigns.strawberry.campaign_recipient_response import (
     CampaignRecipientResponse,
 )
@@ -14,7 +17,6 @@ from app.graphql.campaigns.strawberry.campaign_response import CampaignResponse
 from app.graphql.campaigns.strawberry.campaign_sending_status_response import (
     CampaignSendingStatusResponse,
 )
-from app.graphql.campaigns.strawberry.criteria_input import CampaignCriteriaInput
 from app.graphql.campaigns.strawberry.estimate_recipients_response import (
     EstimateRecipientsResponse,
 )
