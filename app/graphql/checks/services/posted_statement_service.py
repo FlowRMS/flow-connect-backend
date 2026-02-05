@@ -2,6 +2,7 @@ import io
 from collections import defaultdict
 from datetime import date
 from decimal import Decimal
+from typing import TypedDict
 from uuid import UUID
 
 from commons.auth import AuthInfo
@@ -18,6 +19,19 @@ from app.graphql.checks.strawberry.posted_statement_response import (
     PostedStatementSummaryResponse,
 )
 from app.graphql.v2.files.services.file_upload_service import FileUploadService
+
+
+class _RepTotal(TypedDict):
+    expected: Decimal
+    received: Decimal
+    name: str
+
+
+class _RepSummaryEntry(TypedDict):
+    expected: Decimal
+    received: Decimal
+    name: str
+    id: UUID
 
 
 class PostedStatementService:
@@ -92,7 +106,7 @@ class PostedStatementService:
             invoice.balance.commission if invoice.balance else Decimal(0)
         )
 
-        rep_totals: dict[UUID, dict[str, Decimal | str]] = {}
+        rep_totals: dict[UUID, _RepTotal] = {}
         for invoice_detail in invoice.details:
             detail_commission = invoice_detail.commission or Decimal(0)
             detail_proportion = (
@@ -106,24 +120,22 @@ class PostedStatementService:
                 received = check_detail.applied_amount * detail_proportion * rate
                 rep_id = split_rate.user_id
                 if rep_id not in rep_totals:
-                    rep_totals[rep_id] = {
-                        "expected": Decimal(0),
-                        "received": Decimal(0),
-                        "name": split_rate.user.full_name,
-                    }
-                rep_totals[rep_id]["expected"] += expected  # type: ignore[operator]
-                rep_totals[rep_id]["received"] += received  # type: ignore[operator]
+                    rep_totals[rep_id] = _RepTotal(
+                        expected=Decimal(0),
+                        received=Decimal(0),
+                        name=split_rate.user.full_name,
+                    )
+                rep_totals[rep_id]["expected"] += expected
+                rep_totals[rep_id]["received"] += received
 
         return [
             PostedStatementDetailResponse(
                 entity_number=invoice.invoice_number,
                 entity_type="Invoice",
-                expected_commission=Decimal(str(data["expected"])),
-                commission_received=Decimal(str(data["received"])).quantize(
-                    Decimal("0.01")
-                ),
+                expected_commission=data["expected"],
+                commission_received=data["received"].quantize(Decimal("0.01")),
                 outside_sales_rep_id=rep_id,
-                outside_sales_rep_name=str(data["name"]),
+                outside_sales_rep_name=data["name"],
                 factory_name=check.factory.title,
                 posted_month=check.post_date,
                 commission_month=check.commission_month,
@@ -175,7 +187,7 @@ class PostedStatementService:
             credit.balance.commission if credit.balance else Decimal(0)
         )
 
-        rep_totals: dict[UUID, dict[str, Decimal | str]] = {}
+        rep_totals: dict[UUID, _RepTotal] = {}
         for credit_detail in credit.details:
             detail_commission = credit_detail.commission or Decimal(0)
             detail_proportion = (
@@ -189,27 +201,24 @@ class PostedStatementService:
                 received = check_detail.applied_amount * detail_proportion * rate
                 rep_id = split_rate.user_id
                 if rep_id not in rep_totals:
-                    rep_totals[rep_id] = {
-                        "expected": Decimal(0),
-                        "received": Decimal(0),
-                        "name": split_rate.user.full_name,
-                    }
-                rep_totals[rep_id]["expected"] = (
-                    Decimal(rep_totals[rep_id]["expected"]) + expected
-                )
-                rep_totals[rep_id]["received"] = (
-                    Decimal(rep_totals[rep_id]["received"]) + received
-                )
+                    rep_totals[rep_id] = _RepTotal(
+                        expected=Decimal(0),
+                        received=Decimal(0),
+                        name=split_rate.user.full_name,
+                    )
+                rep_totals[rep_id]["expected"] += expected
+                rep_totals[rep_id]["received"] += received
 
         return [
             PostedStatementDetailResponse(
                 entity_number=credit.credit_number,
                 entity_type="Credit",
-                expected_commission=Decimal("-1") * Decimal(str(data["expected"])),
-                commission_received=Decimal("-1")
-                * Decimal(str(data["received"])).quantize(Decimal("0.01")),
+                expected_commission=Decimal("-1") * data["expected"],
+                commission_received=(Decimal("-1") * data["received"]).quantize(
+                    Decimal("0.01")
+                ),
                 outside_sales_rep_id=rep_id,
-                outside_sales_rep_name=str(data["name"]),
+                outside_sales_rep_name=data["name"],
                 factory_name=check.factory.title,
                 posted_month=check.post_date,
                 commission_month=check.commission_month,
@@ -222,26 +231,26 @@ class PostedStatementService:
     def _build_rep_summaries(
         self, details: list[PostedStatementDetailResponse]
     ) -> list[PostedStatementRepSummaryResponse]:
-        summaries: dict[UUID, dict[str, Decimal | str | UUID]] = defaultdict(
-            lambda: {
-                "expected": Decimal(0),
-                "received": Decimal(0),
-                "name": "",
-                "id": UUID(int=0),
-            }
+        summaries: dict[UUID, _RepSummaryEntry] = defaultdict(
+            lambda: _RepSummaryEntry(
+                expected=Decimal(0),
+                received=Decimal(0),
+                name="",
+                id=UUID(int=0),
+            )
         )
         for detail in details:
             rep_id = detail.outside_sales_rep_id
-            summaries[rep_id]["expected"] += detail.expected_commission  # type: ignore[operator]
-            summaries[rep_id]["received"] += detail.commission_received  # type: ignore[operator]
+            summaries[rep_id]["expected"] += detail.expected_commission
+            summaries[rep_id]["received"] += detail.commission_received
             summaries[rep_id]["name"] = detail.outside_sales_rep_name
             summaries[rep_id]["id"] = rep_id
         return [
             PostedStatementRepSummaryResponse(
-                outside_sales_rep_id=UUID(str(data["id"])),
-                outside_sales_rep_name=str(data["name"]),
-                expected_commission=Decimal(str(data["expected"])),
-                commission_received=Decimal(str(data["received"])),
+                outside_sales_rep_id=data["id"],
+                outside_sales_rep_name=data["name"],
+                expected_commission=data["expected"],
+                commission_received=data["received"],
             )
             for data in summaries.values()
         ]

@@ -355,4 +355,7 @@ class CampaignEmailSenderService:
 
         campaign.status = CampaignStatus.SENDING
         await self.campaigns_repository.flush()
-        return await self.campaigns_repository.get_with_relations(campaign_id)  # type: ignore[return-value]
+        result = await self.campaigns_repository.get_with_relations(campaign_id)
+        if not result:
+            raise NotFoundError(f"Campaign {campaign_id} not found")
+        return result

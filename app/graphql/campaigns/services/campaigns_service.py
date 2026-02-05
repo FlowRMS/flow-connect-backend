@@ -88,7 +88,10 @@ class CampaignsService:
                     campaign.id, campaign_input.criteria, is_dynamic=True
                 )
 
-        return await self.repository.get_with_relations(campaign.id)  # type: ignore[return-value]
+        result = await self.repository.get_with_relations(campaign.id)
+        if not result:
+            raise NotFoundError(str(campaign.id))
+        return result
 
     async def _add_static_recipients(
         self,
@@ -179,7 +182,10 @@ class CampaignsService:
         campaign = campaign_input.to_orm_model()
         campaign.id = campaign_id
         updated = await self.repository.update(campaign)
-        return await self.repository.get_with_relations(updated.id)  # type: ignore[return-value]
+        result = await self.repository.get_with_relations(updated.id)
+        if not result:
+            raise NotFoundError(str(updated.id))
+        return result
 
     async def delete_campaign(self, campaign_id: UUID) -> bool:
         """Delete a campaign and all its recipients."""
@@ -195,7 +201,10 @@ class CampaignsService:
 
         campaign.status = CampaignStatus.PAUSED
         await self.repository.flush()
-        return await self.repository.get_with_relations(campaign_id)  # type: ignore[return-value]
+        result = await self.repository.get_with_relations(campaign_id)
+        if not result:
+            raise NotFoundError(str(campaign_id))
+        return result
 
     async def resume_campaign(self, campaign_id: UUID) -> Campaign:
         """Resume a paused campaign."""
@@ -205,7 +214,10 @@ class CampaignsService:
 
         campaign.status = CampaignStatus.SENDING
         await self.repository.flush()
-        return await self.repository.get_with_relations(campaign_id)  # type: ignore[return-value]
+        result = await self.repository.get_with_relations(campaign_id)
+        if not result:
+            raise NotFoundError(str(campaign_id))
+        return result
 
     async def estimate_recipients(
         self,
@@ -272,7 +284,10 @@ class CampaignsService:
             ]
             _ = await self.recipients_repository.bulk_create(new_recipients)
 
-        return await self.repository.get_with_relations(campaign_id)  # type: ignore[return-value]
+        result = await self.repository.get_with_relations(campaign_id)
+        if not result:
+            raise NotFoundError(str(campaign_id))
+        return result
 
     def _dict_to_criteria(
         self,
