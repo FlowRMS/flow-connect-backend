@@ -7,8 +7,10 @@ from app.graphql.inject import inject
 from app.graphql.v2.core.products.services.product_import_service import (
     ProductImportService,
 )
-from app.graphql.v2.core.products.strawberry.product_import_types import (
+from app.graphql.v2.core.products.strawberry.product_import_input import (
     ProductImportInput,
+)
+from app.graphql.v2.core.products.strawberry.product_import_result import (
     ProductImportResult,
 )
 

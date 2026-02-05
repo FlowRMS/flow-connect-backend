@@ -24,12 +24,12 @@ from app.graphql.submittals.services.returned_pdf_service import (
 from app.graphql.submittals.services.returned_pdf_service import (
     UploadReturnedPdfInput as ServiceUploadReturnedPdfInput,
 )
-from app.graphql.submittals.strawberry.returned_pdf_input import (
-    AddItemChangeInput,
+from app.graphql.submittals.strawberry.add_item_change_input import AddItemChangeInput
+from app.graphql.submittals.strawberry.create_change_analysis_input import (
     CreateChangeAnalysisInput,
-    UpdateChangeAnalysisInput,
+)
+from app.graphql.submittals.strawberry.returned_pdf_update_item_change_input import (
     UpdateItemChangeInput,
-    UploadReturnedPdfInput,
 )
 from app.graphql.submittals.strawberry.submittal_change_analysis_response import (
     SubmittalChangeAnalysisResponse,
@@ -39,6 +39,12 @@ from app.graphql.submittals.strawberry.submittal_item_change_response import (
 )
 from app.graphql.submittals.strawberry.submittal_returned_pdf_response import (
     SubmittalReturnedPdfResponse,
+)
+from app.graphql.submittals.strawberry.update_change_analysis_input import (
+    UpdateChangeAnalysisInput,
+)
+from app.graphql.submittals.strawberry.upload_returned_pdf_input import (
+    UploadReturnedPdfInput,
 )
 
 

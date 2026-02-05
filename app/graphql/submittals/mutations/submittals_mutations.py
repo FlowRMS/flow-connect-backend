@@ -5,26 +5,29 @@ from aioinject import Injected
 
 from app.graphql.inject import inject
 from app.graphql.submittals.services.submittals_service import SubmittalsService
+from app.graphql.submittals.strawberry.add_change_analysis_input import (
+    AddChangeAnalysisInput,
+)
+from app.graphql.submittals.strawberry.add_returned_pdf_input import AddReturnedPdfInput
+from app.graphql.submittals.strawberry.create_submittal_input import (
+    CreateSubmittalInput,
+)
 from app.graphql.submittals.strawberry.generate_pdf_response import (
     GenerateSubmittalPdfResponse,
+)
+from app.graphql.submittals.strawberry.generate_submittal_pdf_input import (
+    GenerateSubmittalPdfInput,
 )
 from app.graphql.submittals.strawberry.send_email_response import (
     SendSubmittalEmailResponse,
 )
+from app.graphql.submittals.strawberry.send_submittal_email_input import (
+    SendSubmittalEmailInput,
+)
 from app.graphql.submittals.strawberry.submittal_change_analysis_response import (
     SubmittalChangeAnalysisResponse,
 )
-from app.graphql.submittals.strawberry.submittal_input import (
-    AddChangeAnalysisInput,
-    AddReturnedPdfInput,
-    CreateSubmittalInput,
-    GenerateSubmittalPdfInput,
-    SendSubmittalEmailInput,
-    SubmittalItemInput,
-    SubmittalStakeholderInput,
-    UpdateSubmittalInput,
-    UpdateSubmittalItemInput,
-)
+from app.graphql.submittals.strawberry.submittal_item_input import SubmittalItemInput
 from app.graphql.submittals.strawberry.submittal_item_response import (
     SubmittalItemResponse,
 )
@@ -35,8 +38,17 @@ from app.graphql.submittals.strawberry.submittal_returned_pdf_response import (
 from app.graphql.submittals.strawberry.submittal_revision_response import (
     SubmittalRevisionResponse,
 )
+from app.graphql.submittals.strawberry.submittal_stakeholder_input import (
+    SubmittalStakeholderInput,
+)
 from app.graphql.submittals.strawberry.submittal_stakeholder_response import (
     SubmittalStakeholderResponse,
+)
+from app.graphql.submittals.strawberry.update_submittal_input import (
+    UpdateSubmittalInput,
+)
+from app.graphql.submittals.strawberry.update_submittal_item_input import (
+    UpdateSubmittalItemInput,
 )
 
 

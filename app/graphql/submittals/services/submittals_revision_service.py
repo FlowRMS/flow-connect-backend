@@ -13,7 +13,9 @@ from app.graphql.submittals.services.submittal_pdf_export_service import (
 from app.graphql.submittals.services.submittals_email_service import (
     SubmittalsEmailService,
 )
-from app.graphql.submittals.strawberry.submittal_input import GenerateSubmittalPdfInput
+from app.graphql.submittals.strawberry.generate_submittal_pdf_input import (
+    GenerateSubmittalPdfInput,
+)
 
 
 @dataclass

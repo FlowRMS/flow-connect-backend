@@ -7,7 +7,7 @@ import pytest
 from app.graphql.v2.core.products.services.product_import_operations import (
     ProductImportOperations,
 )
-from app.graphql.v2.core.products.strawberry.product_import_types import (
+from app.graphql.v2.core.products.strawberry.product_import_item_input import (
     ProductImportItemInput,
 )
 

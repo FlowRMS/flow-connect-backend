@@ -6,7 +6,7 @@ from sqlalchemy.orm import InstrumentedAttribute
 
 from app.graphql.common.builders.search_query_builder import SearchQueryBuilder
 from app.graphql.common.interfaces.search_query_interface import SearchQueryStrategy
-from app.graphql.common.strawberry.search_types import SourceType
+from app.graphql.common.strawberry.source_type import SourceType
 
 
 class SpecSheetSearchQueryBuilder(SearchQueryBuilder[SpecSheet]):

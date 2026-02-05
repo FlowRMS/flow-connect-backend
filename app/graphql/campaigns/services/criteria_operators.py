@@ -5,7 +5,7 @@ from uuid import UUID
 from commons.db.int_enum import IntEnum as IntEnumColumn
 from sqlalchemy import ARRAY, Date, String, Text, func
 
-from app.graphql.campaigns.strawberry.criteria_input import CriteriaOperator
+from app.graphql.campaigns.strawberry.criteria_enums import CriteriaOperator
 
 
 def is_string_column(column: Any) -> bool:

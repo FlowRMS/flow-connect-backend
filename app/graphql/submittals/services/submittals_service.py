@@ -39,16 +39,30 @@ from app.graphql.submittals.services.submittals_revision_service import (
     SubmittalsRevisionService,
 )
 from app.graphql.submittals.services.types import SendSubmittalEmailResult
-from app.graphql.submittals.strawberry.submittal_input import (
+from app.graphql.submittals.strawberry.add_change_analysis_input import (
     AddChangeAnalysisInput,
-    AddReturnedPdfInput,
+)
+from app.graphql.submittals.strawberry.add_returned_pdf_input import AddReturnedPdfInput
+from app.graphql.submittals.strawberry.create_submittal_input import (
     CreateSubmittalInput,
+)
+from app.graphql.submittals.strawberry.generate_submittal_pdf_input import (
     GenerateSubmittalPdfInput,
+)
+from app.graphql.submittals.strawberry.send_submittal_email_input import (
     SendSubmittalEmailInput,
-    SubmittalItemInput,
+)
+from app.graphql.submittals.strawberry.submittal_item_input import SubmittalItemInput
+from app.graphql.submittals.strawberry.submittal_stakeholder_input import (
     SubmittalStakeholderInput,
+)
+from app.graphql.submittals.strawberry.update_item_change_input import (
     UpdateItemChangeInput,
+)
+from app.graphql.submittals.strawberry.update_submittal_input import (
     UpdateSubmittalInput,
+)
+from app.graphql.submittals.strawberry.update_submittal_item_input import (
     UpdateSubmittalItemInput,
 )
 
