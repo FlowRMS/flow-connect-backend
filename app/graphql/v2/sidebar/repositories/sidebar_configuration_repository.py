@@ -100,7 +100,10 @@ class SidebarConfigurationRepository:
             self.session.add(item)
 
         await self.session.flush()
-        return await self.get_by_id(config.id)  # type: ignore
+        result = await self.get_by_id(config.id)
+        if not result:
+            raise RuntimeError(f"Configuration {config.id} not found after creation")
+        return result
 
     async def update(
         self,
@@ -130,7 +133,10 @@ class SidebarConfigurationRepository:
             self.session.add(item)
 
         await self.session.flush()
-        return await self.get_by_id(config.id)  # type: ignore
+        result = await self.get_by_id(config.id)
+        if not result:
+            raise RuntimeError(f"Configuration {config.id} not found after update")
+        return result
 
     async def delete(self, config_id: UUID) -> bool:
         stmt = delete(SidebarConfiguration).where(SidebarConfiguration.id == config_id)
