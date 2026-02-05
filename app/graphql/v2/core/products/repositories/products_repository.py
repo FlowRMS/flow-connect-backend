@@ -81,6 +81,23 @@ class ProductsRepository(BaseRepository[Product]):
         result = await self.session.execute(stmt)
         return list(result.scalars().all())
 
+    async def flush(self) -> None:
+        await self.session.flush()
+
+    async def find_by_fpn_and_factory(
+        self, fpn: str, factory_id: UUID
+    ) -> Product | None:
+        stmt = select(Product).where(
+            Product.factory_part_number == fpn,
+            Product.factory_id == factory_id,
+        )
+        result = await self.session.execute(stmt)
+        return result.scalar_one_or_none()
+
+    async def create_with_savepoint(self, product: Product) -> Product:
+        async with self.session.begin_nested():
+            return await self.create(product)
+
     async def bulk_update(self, entities: list[Product]) -> list[Product]:
         if not entities:
             return []

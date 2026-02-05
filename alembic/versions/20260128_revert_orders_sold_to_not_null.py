@@ -38,7 +38,9 @@ def upgrade() -> None:
 
     # Check if there are NULL values - if so, skip (don't fail)
     result = conn.execute(
-        sa.text("SELECT EXISTS(SELECT 1 FROM pycommission.orders WHERE sold_to_customer_id IS NULL)")
+        sa.text(
+            "SELECT EXISTS(SELECT 1 FROM pycommission.orders WHERE sold_to_customer_id IS NULL)"
+        )
     )
     has_nulls = result.scalar()
     if has_nulls:

@@ -3,9 +3,7 @@ from uuid import UUID
 from commons.db.v6.core.products.product import Product
 from commons.db.v6.core.products.product_cpn import ProductCpn
 from loguru import logger
-from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError
-from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.graphql.v2.core.customers.repositories.customers_repository import (
     CustomersRepository,
@@ -33,13 +31,11 @@ from app.graphql.v2.core.products.strawberry.product_cpn_import_result import (
 class ProductCpnImportService:
     def __init__(
         self,
-        session: AsyncSession,
         products_repository: ProductsRepository,
         cpn_repository: ProductCpnRepository,
         customers_repository: CustomersRepository,
     ) -> None:
         super().__init__()
-        self.session = session
         self.products_repository = products_repository
         self.cpn_repository = cpn_repository
         self.customers_repository = customers_repository
@@ -164,27 +160,25 @@ class ProductCpnImportService:
                 else:
                     # Create new CPN with savepoint for IntegrityError handling
                     try:
-                        async with self.session.begin_nested():
-                            new_cpn = ProductCpn(
-                                customer_id=customer_id,
-                                customer_part_number=cpn_data.customer_part_number,
-                                unit_price=cpn_data.unit_price,
-                                commission_rate=cpn_data.commission_rate,
-                            )
-                            new_cpn.product_id = product_id
-                            self.session.add(new_cpn)
-                            cpns_created += 1
+                        new_cpn = ProductCpn(
+                            customer_id=customer_id,
+                            customer_part_number=cpn_data.customer_part_number,
+                            unit_price=cpn_data.unit_price,
+                            commission_rate=cpn_data.commission_rate,
+                        )
+                        new_cpn.product_id = product_id
+                        _ = await self.cpn_repository.create_with_savepoint(new_cpn)
+                        cpns_created += 1
                     except IntegrityError:
                         # Race condition - CPN was created between check and insert
                         logger.info(
                             f"CPN for {fpn}/{cname} already exists, updating instead"
                         )
-                        stmt = select(ProductCpn).where(
-                            ProductCpn.product_id == product_id,
-                            ProductCpn.customer_id == customer_id,
+                        existing = (
+                            await self.cpn_repository.find_cpn_by_product_and_customer(
+                                product_id, customer_id
+                            )
                         )
-                        result = await self.session.execute(stmt)
-                        existing = result.scalar_one_or_none()
                         if existing:
                             existing.customer_part_number = (
                                 cpn_data.customer_part_number
@@ -210,7 +204,7 @@ class ProductCpnImportService:
                     )
                 )
 
-        await self.session.flush()
+        await self.cpn_repository.flush()
 
         success = len(errors) == 0
         message = self._build_result_message(

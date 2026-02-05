@@ -183,13 +183,12 @@ class TestCampaignServices:
 
         assert CampaignsService is not None
 
-    def test_criteria_evaluator_service_import(self) -> None:
-        """Test CriteriaEvaluatorService can be imported."""
-        from app.graphql.campaigns.services.criteria_evaluator_service import (
-            CriteriaEvaluatorService,
+    def test_criteria_evaluator_repository_import(self) -> None:
+        from app.graphql.campaigns.repositories.criteria_evaluator_repository import (
+            CriteriaEvaluatorRepository,
         )
 
-        assert CriteriaEvaluatorService is not None
+        assert CriteriaEvaluatorRepository is not None
 
 
 class TestCampaignRepositories:

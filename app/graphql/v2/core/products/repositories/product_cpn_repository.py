@@ -61,6 +61,14 @@ class ProductCpnRepository(BaseRepository[ProductCpn]):
         result = await self.session.execute(stmt)
         return result.unique().scalar_one_or_none()
 
+    async def flush(self) -> None:
+        await self.session.flush()
+
+    async def create_with_savepoint(self, cpn: ProductCpn) -> ProductCpn:
+        async with self.session.begin_nested():
+            self.session.add(cpn)
+        return cpn
+
     async def find_cpn_by_product_and_customer(
         self, product_id: UUID, customer_id: UUID
     ) -> ProductCpn | None:

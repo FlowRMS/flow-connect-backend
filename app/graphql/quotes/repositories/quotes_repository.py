@@ -21,6 +21,7 @@ from app.core.processors.events import RepositoryEvent
 from app.graphql.base_repository import BaseRepository
 from app.graphql.quotes.processors import (
     DefaultRepSplitProcessor,
+    ValidateQuoteReferencesProcessor,
     ValidateRepSplitProcessor,
 )
 from app.graphql.quotes.repositories.quote_balance_repository import (
@@ -60,6 +61,7 @@ class QuotesRepository(BaseRepository[Quote]):
         default_rep_split_processor: DefaultRepSplitProcessor,
         validate_rep_split_processor: ValidateRepSplitProcessor,
         validate_commission_rate_processor: ValidateCommissionRateProcessor,
+        validate_quote_references_processor: ValidateQuoteReferencesProcessor,
         quote_watcher_notification_processor: QuoteWatcherNotificationProcessor,
     ) -> None:
         super().__init__(
@@ -72,6 +74,7 @@ class QuotesRepository(BaseRepository[Quote]):
                 default_rep_split_processor,
                 validate_rep_split_processor,
                 validate_commission_rate_processor,
+                validate_quote_references_processor,
                 quote_watcher_notification_processor,
             ],
         )
