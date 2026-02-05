@@ -43,6 +43,7 @@ from app.graphql.v2.core.products.services.product_pricing_operations import (
 )
 from app.integrations.gmail.config import GmailSettings
 from app.integrations.microsoft_o365.config import O365Settings
+from app.webhooks.workos.providers import webhook_providers
 from app.workers.document_execution.converters.providers import converter_providers
 from app.workers.document_execution.executor_service import DocumentExecutorService
 from app.workers.services.resend_notification_service import ResendNotificationService
@@ -83,6 +84,9 @@ def providers() -> Iterable[aioinject.Provider[Any]]:
         providers.append(provider)
 
     for provider in admin_providers:
+        providers.append(provider)
+
+    for provider in webhook_providers:
         providers.append(provider)
 
     for provider in dto_providers:
