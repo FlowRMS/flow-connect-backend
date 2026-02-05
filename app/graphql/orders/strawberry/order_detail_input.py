@@ -25,6 +25,7 @@ class OrderDetailInput(BaseInputGQL[OrderDetail]):
     note: str | None = None
     discount_rate: Decimal = Decimal("0")
     commission_rate: Decimal = Decimal("0")
+    commission: Decimal | None = None  # If provided, commission_rate is calculated from it
     commission_discount_rate: Decimal = Decimal("0")
     freight_charge: Decimal = Decimal("0")
     outside_split_rates: list[OrderSplitRateInput] | None = None
@@ -37,7 +38,18 @@ class OrderDetailInput(BaseInputGQL[OrderDetail]):
         subtotal = quantity * unit_price
         discount = subtotal * (self.discount_rate / Decimal("100"))
         total = subtotal - discount
-        commission = total * (self.commission_rate / Decimal("100"))
+
+        # If commission value is provided, calculate commission_rate from it
+        # Formula: commission_rate = (commission / total) * 100
+        if self.commission is not None:
+            commission = self.commission
+            commission_rate = (
+                (commission / total * Decimal("100")) if total != 0 else Decimal("0")
+            )
+        else:
+            commission_rate = self.commission_rate
+            commission = total * (commission_rate / Decimal("100"))
+
         commission_discount = commission * (
             self.commission_discount_rate / Decimal("100")
         )
@@ -51,7 +63,7 @@ class OrderDetailInput(BaseInputGQL[OrderDetail]):
             discount_rate=self.discount_rate,
             discount=discount,
             total=total,
-            commission_rate=self.commission_rate,
+            commission_rate=commission_rate,
             commission=commission,
             commission_discount_rate=self.commission_discount_rate,
             commission_discount=commission_discount,
