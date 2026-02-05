@@ -8,6 +8,7 @@ class EntityMapping:
     warehouse_id: UUID | None = None
     sold_to_customer_id: UUID | None = None
     bill_to_customer_id: UUID | None = None
+    default_end_user_id: UUID | None = None
     orders: dict[int, UUID] = field(default_factory=dict)
     invoices: dict[int, UUID] = field(default_factory=dict)
     credits: dict[int, UUID] = field(default_factory=dict)
@@ -34,7 +35,7 @@ class EntityMapping:
             end_user = self.end_users.get(flow_detail_index)
             if end_user:
                 return end_user
-        return fallback or self.sold_to_customer_id
+        return fallback or self.default_end_user_id or self.sold_to_customer_id
 
     def get_order_id(self, flow_detail_index: int | None) -> UUID | None:
         if flow_detail_index is None:
