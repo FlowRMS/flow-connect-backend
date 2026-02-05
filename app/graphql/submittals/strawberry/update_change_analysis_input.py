@@ -7,7 +7,5 @@ from app.graphql.submittals.strawberry.enums import OverallChangeStatusGQL
 
 @strawberry.input
 class UpdateChangeAnalysisInput(BaseInputGQL[SubmittalChangeAnalysis]):
-    """Input for updating a change analysis."""
-
-    overall_status: OverallChangeStatusGQL | None = None
-    summary: str | None = None
+    overall_status: OverallChangeStatusGQL | None = strawberry.UNSET  # type: ignore[assignment]
+    summary: str | None = strawberry.UNSET  # type: ignore[assignment]

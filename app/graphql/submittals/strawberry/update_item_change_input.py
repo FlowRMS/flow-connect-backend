@@ -7,10 +7,10 @@ from app.graphql.submittals.strawberry.enums import ItemChangeStatusGQL
 
 @strawberry.input
 class UpdateItemChangeInput(BaseInputGQL[SubmittalItemChange]):
-    status: ItemChangeStatusGQL | None = None
-    notes: list[str] | None = None
-    page_references: list[int] | None = None
-    resolved: bool | None = None
-    fixture_type: str | None = None
-    catalog_number: str | None = None
-    manufacturer: str | None = None
+    status: ItemChangeStatusGQL | None = strawberry.UNSET  # type: ignore[assignment]
+    notes: list[str] | None = strawberry.UNSET  # type: ignore[assignment]
+    page_references: list[int] | None = strawberry.UNSET  # type: ignore[assignment]
+    resolved: bool | None = strawberry.UNSET  # type: ignore[assignment]
+    fixture_type: str | None = strawberry.UNSET  # type: ignore[assignment]
+    catalog_number: str | None = strawberry.UNSET  # type: ignore[assignment]
+    manufacturer: str | None = strawberry.UNSET  # type: ignore[assignment]

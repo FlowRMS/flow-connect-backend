@@ -1,5 +1,3 @@
-from dataclasses import dataclass
-from datetime import date
 from uuid import UUID
 
 from commons.db.v6.crm.submittals import (
@@ -19,59 +17,22 @@ from app.graphql.submittals.repositories.submittals_repository import (
     SubmittalReturnedPdfsRepository,
     SubmittalRevisionsRepository,
 )
-
-
-@dataclass
-class UploadReturnedPdfInput:
-    """Input for uploading a returned PDF."""
-
-    revision_id: UUID
-    file_name: str
-    file_url: str
-    file_size: int = 0
-    file_id: UUID | None = None  # Reference to files table for presigned URL generation
-    returned_by_stakeholder_id: UUID | None = None
-    received_date: date | None = None
-    notes: str | None = None
-
-
-@dataclass
-class CreateChangeAnalysisInput:
-    """Input for creating a change analysis."""
-
-    returned_pdf_id: UUID
-    analyzed_by: ChangeAnalysisSource = ChangeAnalysisSource.MANUAL
-    overall_status: OverallChangeStatus = OverallChangeStatus.APPROVED
-    summary: str | None = None
-
-
-@dataclass
-class AddItemChangeInput:
-    """Input for adding an item change."""
-
-    change_analysis_id: UUID
-    fixture_type: str
-    catalog_number: str
-    manufacturer: str
-    item_id: UUID | None = None
-    status: ItemChangeStatus = ItemChangeStatus.APPROVED
-    notes: list[str] | None = None
-    page_references: list[int] | None = None
-
-
-@dataclass
-class UpdateItemChangeInput:
-    """Input for updating an item change."""
-
-    status: ItemChangeStatus | None = None
-    notes: list[str] | None = None
-    page_references: list[int] | None = None
-    resolved: bool | None = None
+from app.graphql.submittals.strawberry.add_item_change_input import AddItemChangeInput
+from app.graphql.submittals.strawberry.create_change_analysis_input import (
+    CreateChangeAnalysisInput,
+)
+from app.graphql.submittals.strawberry.update_change_analysis_input import (
+    UpdateChangeAnalysisInput,
+)
+from app.graphql.submittals.strawberry.update_item_change_input import (
+    UpdateItemChangeInput,
+)
+from app.graphql.submittals.strawberry.upload_returned_pdf_input import (
+    UploadReturnedPdfInput,
+)
 
 
 class ReturnedPdfService:
-    """Service for managing returned PDFs and change analysis."""
-
     def __init__(  # pyright: ignore[reportMissingSuperCall]
         self,
         revisions_repository: SubmittalRevisionsRepository,
@@ -84,19 +45,9 @@ class ReturnedPdfService:
         self.change_analysis_repository = change_analysis_repository
         self.item_changes_repository = item_changes_repository
 
-    # Returned PDF operations
     async def upload_returned_pdf(
         self, input_data: UploadReturnedPdfInput
     ) -> SubmittalReturnedPdf:
-        """
-        Upload a returned PDF to a revision.
-
-        Args:
-            input_data: Upload data including file info and optional stakeholder
-
-        Returns:
-            Created SubmittalReturnedPdf
-        """
         returned_pdf = SubmittalReturnedPdf(
             file_name=input_data.file_name,
             file_url=input_data.file_url,
@@ -118,7 +69,6 @@ class ReturnedPdfService:
     async def get_returned_pdf(
         self, returned_pdf_id: UUID
     ) -> SubmittalReturnedPdf | None:
-        """Get a returned PDF by ID with change analysis."""
         return await self.returned_pdfs_repository.get_by_id_with_analysis(
             returned_pdf_id
         )
@@ -132,25 +82,14 @@ class ReturnedPdfService:
     async def get_revision_with_returned_pdfs(
         self, revision_id: UUID
     ) -> SubmittalRevision | None:
-        """Get a revision with all returned PDFs loaded."""
         return await self.revisions_repository.get_by_id_with_returned_pdfs(revision_id)
 
-    # Change Analysis operations
     async def create_change_analysis(
         self, input_data: CreateChangeAnalysisInput
     ) -> SubmittalChangeAnalysis:
-        """
-        Create a change analysis for a returned PDF.
-
-        Args:
-            input_data: Analysis data
-
-        Returns:
-            Created SubmittalChangeAnalysis
-        """
         change_analysis = SubmittalChangeAnalysis(
-            analyzed_by=input_data.analyzed_by,
-            overall_status=input_data.overall_status,
+            analyzed_by=ChangeAnalysisSource(input_data.analyzed_by.value),
+            overall_status=OverallChangeStatus(input_data.overall_status.value),
             summary=input_data.summary,
             total_changes_detected=0,
         )
@@ -167,7 +106,6 @@ class ReturnedPdfService:
     async def get_change_analysis(
         self, analysis_id: UUID
     ) -> SubmittalChangeAnalysis | None:
-        """Get a change analysis by ID with item changes."""
         return await self.change_analysis_repository.get_by_id_with_item_changes(
             analysis_id
         )
@@ -175,16 +113,16 @@ class ReturnedPdfService:
     async def update_change_analysis(
         self,
         analysis_id: UUID,
-        overall_status: OverallChangeStatus | None = None,
-        summary: str | None = None,
+        input_data: UpdateChangeAnalysisInput,
     ) -> SubmittalChangeAnalysis:
-        """Update a change analysis."""
         analysis = await self.change_analysis_repository.get_by_id(analysis_id)
         if not analysis:
             raise ValueError(f"ChangeAnalysis with id {analysis_id} not found")
 
+        overall_status = input_data.optional_field(input_data.overall_status)
         if overall_status is not None:
-            analysis.overall_status = overall_status
+            analysis.overall_status = OverallChangeStatus(overall_status.value)
+        summary = input_data.optional_field(input_data.summary)
         if summary is not None:
             analysis.summary = summary
 
@@ -198,25 +136,15 @@ class ReturnedPdfService:
             logger.info(f"Deleted change analysis {analysis_id}")
         return result
 
-    # Item Change operations
     async def add_item_change(
         self, input_data: AddItemChangeInput
     ) -> SubmittalItemChange:
-        """
-        Add an item change to a change analysis.
-
-        Args:
-            input_data: Item change data
-
-        Returns:
-            Created SubmittalItemChange
-        """
         item_change = SubmittalItemChange(
             fixture_type=input_data.fixture_type,
             catalog_number=input_data.catalog_number,
             manufacturer=input_data.manufacturer,
             item_id=input_data.item_id,
-            status=input_data.status,
+            status=ItemChangeStatus(input_data.status.value),
             notes=input_data.notes,
             page_references=input_data.page_references,
             resolved=False,
@@ -234,36 +162,45 @@ class ReturnedPdfService:
     async def update_item_change(
         self, item_change_id: UUID, input_data: UpdateItemChangeInput
     ) -> SubmittalItemChange:
-        """Update an item change."""
         item_change = await self.item_changes_repository.get_by_id(item_change_id)
         if not item_change:
             raise ValueError(f"ItemChange with id {item_change_id} not found")
 
-        if input_data.status is not None:
-            item_change.status = input_data.status
-        if input_data.notes is not None:
-            item_change.notes = input_data.notes
-        if input_data.page_references is not None:
-            item_change.page_references = input_data.page_references
-        if input_data.resolved is not None:
-            item_change.resolved = input_data.resolved
+        status = input_data.optional_field(input_data.status)
+        if status is not None:
+            item_change.status = ItemChangeStatus(status.value)
+        notes = input_data.optional_field(input_data.notes)
+        if notes is not None:
+            item_change.notes = notes
+        page_references = input_data.optional_field(input_data.page_references)
+        if page_references is not None:
+            item_change.page_references = page_references
+        resolved = input_data.optional_field(input_data.resolved)
+        if resolved is not None:
+            item_change.resolved = resolved
+        fixture_type = input_data.optional_field(input_data.fixture_type)
+        if fixture_type is not None:
+            item_change.fixture_type = fixture_type
+        catalog_number = input_data.optional_field(input_data.catalog_number)
+        if catalog_number is not None:
+            item_change.catalog_number = catalog_number
+        manufacturer = input_data.optional_field(input_data.manufacturer)
+        if manufacturer is not None:
+            item_change.manufacturer = manufacturer
 
         updated = await self.item_changes_repository.update(item_change)
         logger.info(f"Updated item change {item_change_id}")
         return updated
 
     async def delete_item_change(self, item_change_id: UUID) -> bool:
-        # Get the item change to find its parent analysis
         item_change = await self.item_changes_repository.get_by_id(item_change_id)
         if not item_change:
             return False
 
         analysis_id = item_change.change_analysis_id
 
-        # Delete the item change
         result = await self.item_changes_repository.delete(item_change_id)
         if result:
-            # Update the total count in the parent analysis
             analysis = await self.change_analysis_repository.get_by_id(analysis_id)
             if analysis:
                 analysis.total_changes_detected = max(
@@ -274,7 +211,11 @@ class ReturnedPdfService:
         return result
 
     async def resolve_item_change(self, item_change_id: UUID) -> SubmittalItemChange:
-        """Mark an item change as resolved."""
-        return await self.update_item_change(
-            item_change_id, UpdateItemChangeInput(resolved=True)
-        )
+        item_change = await self.item_changes_repository.get_by_id(item_change_id)
+        if not item_change:
+            raise ValueError(f"ItemChange with id {item_change_id} not found")
+
+        item_change.resolved = True
+        updated = await self.item_changes_repository.update(item_change)
+        logger.info(f"Resolved item change {item_change_id}")
+        return updated
