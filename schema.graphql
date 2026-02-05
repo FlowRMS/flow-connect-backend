@@ -2166,6 +2166,7 @@ input InvoiceDetailInput {
   note: String = null
   discountRate: Decimal! = "0.0000"
   commissionRate: Decimal! = "0.0000"
+  commission: Decimal = null
   commissionDiscountRate: Decimal! = "0.0000"
   outsideSplitRates: [InvoiceSplitRateInput!] = null
 }
@@ -3073,6 +3074,7 @@ input OrderDetailInput {
   note: String = null
   discountRate: Decimal! = "0.0000"
   commissionRate: Decimal! = "0.0000"
+  commission: Decimal = null
   commissionDiscountRate: Decimal! = "0.0000"
   freightCharge: Decimal! = "0.0000"
   outsideSplitRates: [OrderSplitRateInput!] = null

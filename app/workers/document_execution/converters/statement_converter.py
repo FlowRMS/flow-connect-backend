@@ -9,10 +9,9 @@ from commons.db.v6.commission.statements import CommissionStatement
 from commons.dtos.common.dto_loader_service import DTOLoaderService
 from commons.dtos.statement.statement_detail_dto import CommissionStatementDetailDTO
 from commons.dtos.statement.statement_dto import CommissionStatementDTO
-from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.orm import lazyload
 
+from app.graphql.invoices.repositories.invoices_repository import InvoicesRepository
 from app.graphql.invoices.services.order_detail_matcher import OrderDetailMatcherService
 from app.graphql.orders.repositories.orders_repository import OrdersRepository
 from app.graphql.statements.services.statement_service import StatementService
@@ -40,11 +39,13 @@ class StatementConverter(
         dto_loader_service: DTOLoaderService,
         statement_service: StatementService,
         orders_repository: OrdersRepository,
+        invoices_repository: InvoicesRepository,
         order_detail_matcher: OrderDetailMatcherService,
     ) -> None:
         super().__init__(session, dto_loader_service)
         self.statement_service = statement_service
         self.orders_repository = orders_repository
+        self.invoices_repository = invoices_repository
         self.order_detail_matcher = order_detail_matcher
         self._invoice_cache: dict[tuple[str, UUID], Invoice | None] = {}
         self._order_cache: dict[UUID, Order | None] = {}
@@ -152,7 +153,13 @@ class StatementConverter(
             item_number=item_number,
         )
 
-        order_detail = await self._get_order_detail(order_id, order_detail_id)
+        order_detail: OrderDetail | None = None
+        if order_id and order_detail_id:
+            order = await self._get_order(order_id)
+            if order:
+                order_detail = next(
+                    (d for d in order.details if d.id == order_detail_id), None
+                )
         if order_detail:
             product_id = product_id or order_detail.product_id
             end_user_id = end_user_id or order_detail.end_user_id
@@ -262,21 +269,6 @@ class StatementConverter(
                 return invoice.id
         return entity_mapping.get_invoice_id(detail.flow_detail_index)
 
-    async def _get_order_detail(
-        self,
-        order_id: UUID | None,
-        order_detail_id: UUID | None,
-    ) -> OrderDetail | None:
-        if not order_id or not order_detail_id:
-            return None
-        order = await self._get_order(order_id)
-        if not order:
-            return None
-        for detail in order.details:
-            if detail.id == order_detail_id:
-                return detail
-        return None
-
     async def _get_order(self, order_id: UUID) -> Order | None:
         if order_id in self._order_cache:
             return self._order_cache[order_id]
@@ -286,25 +278,14 @@ class StatementConverter(
         return order
 
     async def _find_invoice_by_number_and_factory(
-        self,
-        invoice_number: str,
-        factory_id: UUID,
+        self, invoice_number: str, factory_id: UUID
     ) -> Invoice | None:
         cache_key = (invoice_number, factory_id)
         if cache_key in self._invoice_cache:
             return self._invoice_cache[cache_key]
-
-        stmt = (
-            select(Invoice)
-            .options(lazyload("*"))
-            .where(
-                Invoice.invoice_number == invoice_number,
-                Invoice.factory_id == factory_id,
-            )
+        invoice = await self.invoices_repository.find_by_number_and_factory(
+            invoice_number, factory_id
         )
-        result = await self.session.execute(stmt)
-        invoice = result.scalar_one_or_none()
-
         self._invoice_cache[cache_key] = invoice
         return invoice
 

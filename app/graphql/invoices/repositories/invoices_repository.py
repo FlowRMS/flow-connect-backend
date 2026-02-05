@@ -298,3 +298,17 @@ class InvoicesRepository(BaseRepository[Invoice]):
         )
         result = await self.session.execute(stmt)
         return list(result.scalars().all())
+
+    async def find_by_number_and_factory(
+        self, invoice_number: str, factory_id: UUID
+    ) -> Invoice | None:
+        stmt = (
+            select(Invoice)
+            .options(lazyload("*"))
+            .where(
+                Invoice.invoice_number == invoice_number,
+                Invoice.factory_id == factory_id,
+            )
+        )
+        result = await self.session.execute(stmt)
+        return result.scalar_one_or_none()

@@ -25,7 +25,9 @@ class OrderDetailInput(BaseInputGQL[OrderDetail]):
     note: str | None = None
     discount_rate: Decimal = Decimal("0")
     commission_rate: Decimal = Decimal("0")
-    commission: Decimal | None = None  # If provided, commission_rate is calculated from it
+    commission: Decimal | None = (
+        None  # If provided, commission_rate is calculated from it
+    )
     commission_discount_rate: Decimal = Decimal("0")
     freight_charge: Decimal = Decimal("0")
     outside_split_rates: list[OrderSplitRateInput] | None = None

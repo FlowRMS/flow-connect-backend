@@ -27,7 +27,9 @@ class InvoiceDetailInput(BaseInputGQL[InvoiceDetail]):
     note: str | None = None
     discount_rate: Decimal = Decimal("0")
     commission_rate: Decimal = Decimal("0")
-    commission: Decimal | None = None  # If provided, commission_rate is calculated from it
+    commission: Decimal | None = (
+        None  # If provided, commission_rate is calculated from it
+    )
     commission_discount_rate: Decimal = Decimal("0")
     outside_split_rates: list[InvoiceSplitRateInput] | None = None
 

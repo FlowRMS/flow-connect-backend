@@ -221,7 +221,9 @@ class QuoteConverter(BaseEntityConverter[QuoteDTO, QuoteInput, Quote]):
             commission_discount_rate=commission_discount_rate,
         )
 
-    async def _get_product_factory_ids(self, product_ids: list[UUID]) -> dict[UUID, UUID]:
+    async def _get_product_factory_ids(
+        self, product_ids: list[UUID]
+    ) -> dict[UUID, UUID]:
         if not product_ids:
             return {}
         stmt = select(Product.id, Product.factory_id).where(Product.id.in_(product_ids))
