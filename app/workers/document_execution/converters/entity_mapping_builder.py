@@ -26,6 +26,7 @@ class EntityMappingBuilder:
         self._factory_id: UUID | None = None
         self._sold_to_customer_id: UUID | None = None
         self._bill_to_customer_id: UUID | None = None
+        self._default_end_user_id: UUID | None = None
 
     def build(self) -> dict[UUID, EntityMapping]:
         logger.info(
@@ -44,6 +45,8 @@ class EntityMappingBuilder:
                 mapping.sold_to_customer_id = self._sold_to_customer_id
             if not mapping.bill_to_customer_id and self._bill_to_customer_id:
                 mapping.bill_to_customer_id = self._bill_to_customer_id
+            if not mapping.default_end_user_id and self._default_end_user_id:
+                mapping.default_end_user_id = self._default_end_user_id
 
     def _process_base_entities(self) -> None:
         for pe in self._pending_entities:
@@ -100,6 +103,9 @@ class EntityMappingBuilder:
             case EntityPendingType.END_USERS:
                 if pe.flow_index_detail is not None:
                     mapping.end_users[pe.flow_index_detail] = entity_id
+                else:
+                    mapping.default_end_user_id = entity_id
+                    self._default_end_user_id = entity_id
 
         for dto_id in pe.dto_ids or []:
             self._merge_mapping(dto_id, mapping)
@@ -119,6 +125,8 @@ class EntityMappingBuilder:
             existing.adjustments.update(source.adjustments)
             existing.products.update(source.products)
             existing.end_users.update(source.end_users)
+            if source.default_end_user_id:
+                existing.default_end_user_id = source.default_end_user_id
             existing.sold_to_customer_ids.update(source.sold_to_customer_ids)
             existing.skipped_product_indices.update(source.skipped_product_indices)
             existing.skipped_order_indices.update(source.skipped_order_indices)

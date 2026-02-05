@@ -13,8 +13,8 @@ from app.graphql.statements.strawberry.statement_split_rate_input import (
 @strawberry.input
 class StatementDetailInput(BaseInputGQL[CommissionStatementDetail]):
     item_number: int
-    quantity: Decimal | None = None
-    unit_price: Decimal | None = None
+    quantity: Decimal
+    unit_price: Decimal
     id: UUID | None = None
     sold_to_customer_id: UUID | None = None
     order_id: UUID | None = None
@@ -31,16 +31,21 @@ class StatementDetailInput(BaseInputGQL[CommissionStatementDetail]):
     discount_rate: Decimal = Decimal("0")
     commission_rate: Decimal = Decimal("0")
     commission_discount_rate: Decimal = Decimal("0")
+    # Optional: pass actual commission value directly instead of calculating from rate
+    commission: Decimal | None = None
     outside_split_rates: list[StatementSplitRateInput] | None = None
 
     def to_orm_model(self) -> CommissionStatementDetail:
-        quantity = self.quantity if self.quantity is not None else Decimal("0")
-        unit_price = self.unit_price if self.unit_price is not None else Decimal("0")
-
-        subtotal = quantity * unit_price
+        subtotal = self.quantity * self.unit_price
         discount = subtotal * (self.discount_rate / Decimal("100"))
         total = subtotal - discount
-        commission = total * (self.commission_rate / Decimal("100"))
+
+        # Use provided commission value if available, otherwise calculate from rate
+        if self.commission is not None:
+            commission = self.commission
+        else:
+            commission = total * (self.commission_rate / Decimal("100"))
+
         commission_discount = commission * (
             self.commission_discount_rate / Decimal("100")
         )
@@ -48,8 +53,8 @@ class StatementDetailInput(BaseInputGQL[CommissionStatementDetail]):
 
         detail = CommissionStatementDetail(
             item_number=self.item_number,
-            quantity=quantity,
-            unit_price=unit_price,
+            quantity=self.quantity,
+            unit_price=self.unit_price,
             subtotal=subtotal,
             discount_rate=self.discount_rate,
             discount=discount,

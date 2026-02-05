@@ -19,6 +19,7 @@ from app.api.o365_router import router as o365_router
 from app.core.config.settings import Settings
 from app.core.container import create_container
 from app.graphql.app import create_graphql_app
+from app.webhooks.workos.router import router as workos_webhook_router
 from app.workers.broker import broker
 
 
@@ -63,6 +64,7 @@ def create_app() -> FastAPI:
     app.include_router(create_graphql_app(), prefix="/graphql")
     app.include_router(create_admin_graphql_app(), prefix="/admin/graphql")
     app.include_router(o365_router, prefix="/api")
+    app.include_router(workos_webhook_router, prefix="/webhooks/workos")
 
     app.add_middleware(
         CORSMiddleware,
