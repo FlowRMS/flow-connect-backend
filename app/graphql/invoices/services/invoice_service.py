@@ -2,11 +2,15 @@ from datetime import date
 from uuid import UUID
 
 from commons.auth import AuthInfo
+from commons.db.v6 import AutoNumberEntityType
 from commons.db.v6.commission import Invoice
 from commons.db.v6.commission.invoices.enums import InvoiceStatus
 from commons.db.v6.crm.links.entity_type import EntityType
 
 from app.errors.common_errors import NameAlreadyExistsError, NotFoundError
+from app.graphql.auto_numbers.services.auto_number_settings_service import (
+    AutoNumberSettingsService,
+)
 from app.graphql.invoices.factories.invoice_factory import InvoiceFactory
 from app.graphql.invoices.repositories.invoices_repository import InvoicesRepository
 from app.graphql.invoices.strawberry.invoice_input import InvoiceInput
@@ -21,11 +25,13 @@ class InvoiceService:
         self,
         repository: InvoicesRepository,
         orders_repository: OrdersRepository,
+        auto_number_settings_service: AutoNumberSettingsService,
         auth_info: AuthInfo,
     ) -> None:
         super().__init__()
         self.repository = repository
         self.orders_repository = orders_repository
+        self.auto_number_settings_service = auto_number_settings_service
         self.auth_info = auth_info
 
     async def find_invoice_by_id(self, invoice_id: UUID) -> Invoice:
@@ -37,6 +43,15 @@ class InvoiceService:
         return await self.repository.find_by_invoice_number(order_id, invoice_number)
 
     async def create_invoice(self, invoice_input: InvoiceInput) -> Invoice:
+        if self.auto_number_settings_service.needs_generation(
+            invoice_input.invoice_number
+        ):
+            invoice_input.invoice_number = (
+                await self.auto_number_settings_service.generate_number(
+                    AutoNumberEntityType.INVOICE
+                )
+            )
+
         if await self.repository.invoice_number_exists(
             invoice_input.order_id, invoice_input.invoice_number
         ):

@@ -1,6 +1,7 @@
 from uuid import UUID
 
 from commons.auth import AuthInfo
+from commons.db.v6 import AutoNumberEntityType
 from commons.db.v6.crm.links.entity_type import EntityType
 from commons.db.v6.crm.pre_opportunities.pre_opportunity_detail_model import (
     PreOpportunityDetail,
@@ -9,6 +10,9 @@ from commons.db.v6.crm.pre_opportunities.pre_opportunity_model import PreOpportu
 from sqlalchemy.orm import joinedload, lazyload
 
 from app.errors.common_errors import NameAlreadyExistsError, NotFoundError
+from app.graphql.auto_numbers.services.auto_number_settings_service import (
+    AutoNumberSettingsService,
+)
 from app.graphql.pre_opportunities.repositories.pre_opportunities_repository import (
     PreOpportunitiesRepository,
 )
@@ -23,10 +27,12 @@ class PreOpportunitiesService:
     def __init__(
         self,
         repository: PreOpportunitiesRepository,
+        auto_number_settings_service: AutoNumberSettingsService,
         auth_info: AuthInfo,
     ) -> None:
         super().__init__()
         self.repository = repository
+        self.auto_number_settings_service = auto_number_settings_service
         self.auth_info = auth_info
 
     async def create_pre_opportunity(
@@ -44,6 +50,15 @@ class PreOpportunitiesService:
         Raises:
             NameAlreadyExistsError: If a pre-opportunity with the same entity number exists
         """
+        if self.auto_number_settings_service.needs_generation(
+            pre_opportunity_input.entity_number
+        ):
+            pre_opportunity_input.entity_number = (
+                await self.auto_number_settings_service.generate_number(
+                    AutoNumberEntityType.PRE_OPPORTUNITY
+                )
+            )
+
         if await self.repository.entity_number_exists(
             pre_opportunity_input.entity_number
         ):
