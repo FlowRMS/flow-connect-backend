@@ -15,10 +15,10 @@ from app.graphql.submittals.strawberry.submittal_config_input import (
 
 @strawberry.input
 class UpdateSubmittalInput(BaseInputGQL[Submittal]):
-    status: SubmittalStatusGQL | None = None
-    transmittal_purpose: TransmittalPurposeGQL | None = None
-    description: str | None = None
-    job_location: str | None = None
-    bid_date: date | None = None
-    tags: list[str] | None = None
-    config: SubmittalConfigInput | None = None
+    status: SubmittalStatusGQL | None = strawberry.UNSET  # type: ignore[assignment]
+    transmittal_purpose: TransmittalPurposeGQL | None = strawberry.UNSET  # type: ignore[assignment]
+    description: str | None = strawberry.UNSET  # type: ignore[assignment]
+    job_location: str | None = strawberry.UNSET  # type: ignore[assignment]
+    bid_date: date | None = strawberry.UNSET  # type: ignore[assignment]
+    tags: list[str] | None = strawberry.UNSET  # type: ignore[assignment]
+    config: SubmittalConfigInput | None = strawberry.UNSET  # type: ignore[assignment]

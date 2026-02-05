@@ -129,13 +129,18 @@ class SpecSheetHighlightsService:
         if not version:
             raise ValueError(f"Highlight version with id {version_id} not found")
 
-        # Update fields if provided
-        if input_data.name is not None:
-            version.name = input_data.name
-        if input_data.description is not None:
-            version.description = input_data.description
-        if input_data.is_active is not None:
-            version.is_active = input_data.is_active
+        # Update fields if provided (using optional_field to handle UNSET)
+        name = input_data.optional_field(input_data.name)
+        if name is not None:
+            version.name = name
+
+        description = input_data.optional_field(input_data.description)
+        if description is not None:
+            version.description = description
+
+        is_active = input_data.optional_field(input_data.is_active)
+        if is_active is not None:
+            version.is_active = is_active
 
         _ = await self.repository.update(version)
         result = await self.repository.get_version_with_regions(version_id)
