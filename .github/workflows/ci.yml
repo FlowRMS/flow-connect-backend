@@ -3,14 +3,14 @@ name: CI
 on:
   push:
     branches:
-      - main
-      - v6
-      - v6-production
+      - main_disabled
+      - v6_disabled
+      - v6-production_disabled
   pull_request:
     branches:
-      - main
-      - v6
-      - v6-production
+      - main_disabled
+      - v6_disabled
+      - v6-production_disabled
 
 jobs:
   lint-and-typecheck:
