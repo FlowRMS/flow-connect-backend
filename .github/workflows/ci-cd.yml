@@ -17,7 +17,7 @@ jobs:
       - run: |
           hive schema:publish \
             --registry.accessToken ${{ secrets.HIVE_PUBLISHING_TOKEN }} \
-            --service "backend" \
+            --service "flowconnect-backend" \
             --url "${{ secrets.GRAPHQL_ENDPOINT }}" \
             --author "${{ github.actor }}" \
             --commit "${{ github.sha }}" \
@@ -31,10 +31,10 @@ jobs:
       - uses: actions/setup-node@v3
       - run: npm install -g @graphql-hive/cli
       - run: |
-          hive schema:publish \
-            --registry.accessToken ${{ secrets.HIVE_PUBLISHING_TOKEN }} \
-            --service "admin" \
-            --url "${{ secrets.ADMIN_GRAPHQL_ENDPOINT }}" \
-            --author "${{ github.actor }}" \
-            --commit "${{ github.sha }}" \
-            --target "flowrms/flowrms-v6/${{ secrets.ENVIRONMENT }}" admin.schema.graphql
+          #hive schema:publish \
+            #--registry.accessToken ${{ secrets.HIVE_PUBLISHING_TOKEN }} \
+            #--service "flowconnect-admin" \
+            #--url "${{ secrets.ADMIN_GRAPHQL_ENDPOINT }}" \
+            #--author "${{ github.actor }}" \
+            #--commit "${{ github.sha }}" \
+            #--target "flowrms/flowrms-v6/${{ secrets.ENVIRONMENT }}" admin.schema.graphql
