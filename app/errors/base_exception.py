@@ -2,7 +2,7 @@ from strawberry.exceptions import StrawberryGraphQLError
 
 
 class BaseException(StrawberryGraphQLError):
-    def __init__(self, message: str) -> None:
+    def __init__(self, message: str):
         super().__init__(
             message=message,
             original_error=self,

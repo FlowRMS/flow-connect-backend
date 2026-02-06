@@ -4,7 +4,6 @@ ARG GITHUB_TOKEN
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
     libpq-dev cmake build-essential locales curl ca-certificates git \
-    libde265-dev libx265-dev libaom-dev libdav1d-dev pkg-config \
     && rm -rf /var/lib/apt/lists/*
 
 RUN git config --global url."https://${GITHUB_TOKEN}@github.com/".insteadOf "ssh://git@github.com/"
@@ -35,8 +34,6 @@ COPY start.py ./
 COPY run_migrations.py ./
 COPY alembic.ini ./
 COPY alembic/ ./alembic
-COPY models.py ./
-
 ENV PATH="/app/.venv/bin:$PATH"
 ENV PYTHONPATH="${PYTHONPATH}:${PWD}"
 

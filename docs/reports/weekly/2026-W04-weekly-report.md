@@ -1,0 +1,110 @@
+# Weekly Report: Jan 20-24, 2026
+
+- **Week**: 2026-W04 (Jan 20 - Jan 24)
+- **Generated**: 2026-02-02 09:00 -03
+
+---
+
+## Summary
+
+A highly productive week focused on building **core POS functionality**: preferences system, field mapping, data validation, and file upload. The architecture evolved significantly with the introduction of the Registry Pattern for extensible preferences and a complete field mapping system for data transformation.
+
+**Key achievements**:
+- Comprehensive preferences system (user → organization preferences) with decentralized configuration
+- Complete field mapping infrastructure with 17 default fields and custom field support
+- Data submission file upload system with S3 integration
+- Manufacturer aliases for organization-specific naming
+- Validation rules customization framework
+
+---
+
+## Plans Completed
+
+| # | Plan | Created | Finished | Duration |
+|---|------|---------|----------|----------|
+| 1 | [Create Manufacturer Mutation](../../plans/2026-01/2026-01-19-01-create-manufacturer-mutation.md) | Jan 19 | Jan 20 | ~1 day |
+| 2 | [User Preferences](../../plans/2026-01/2026-01-20-01-user-preferences.md) | Jan 20 | Jan 20 | ~5h |
+| 3 | [Field Mapping](../../plans/2026-01/2026-01-21-01-field-mapping.md) | Jan 21 | Jan 21 | ~5.5h |
+| 4 | [New User Preferences for POS Domain](../../plans/2026-01/2026-01-21-02-pos-user-preferences.md) | Jan 21 | Jan 21 | ~6h |
+| 5 | [Manufacturer Aliases](../../plans/2026-01/2026-01-22-01-manufacturer-aliases.md) | Jan 22 | Jan 22 | ~3h |
+| 6 | [User Preferences to Organization Preferences](../../plans/2026-01/2026-01-22-02-organization-preferences.md) | Jan 22 | Jan 22 | ~1h 10m |
+| 7 | [Validation Rules - Customization Options](../../plans/2026-01/2026-01-22-03-validation-rules-customization.md) | Jan 22 | Jan 22 | ~2h 19m |
+| 8 | [Data Validation](../../plans/2026-01/2026-01-22-04-data-validation.md) | Jan 22 | Jan 22 | ~1h |
+| 9 | [Data Submission - File Upload](../../plans/2026-01/2026-01-22-05-data-submission-files.md) | Jan 22 | Jan 23 | ~7h |
+
+**Total**: 9 plans completed
+
+---
+
+## Feature Highlights
+
+### 1. Preferences System Evolution (Jan 20-22)
+
+Complete redesign of the preferences system across three plans:
+
+- **User Preferences** (Jan 20): Initial key-value preferences model with `application` + `preference_key` + `preference_value` structure
+- **Decentralized Preferences** (Jan 21): Registry Pattern implementation allowing POS domain to own its preference configs without modifying `user_preferences`
+- **Organization Preferences** (Jan 22): Refactored from user-scoped to organization-scoped preferences (all members share same settings)
+
+**Design Pattern**: Registry Pattern (Martin Fowler) - `PreferenceConfigRegistry` provides lookup services for validation configs registered by each application package.
+
+### 2. Field Mapping System (Jan 21)
+
+Built comprehensive field mapping for POS data transformation:
+
+- Two map types: POS (Point of Sale) and POT (Point of Transfer)
+- 17 default fields with categories (Transaction, Selling Branch, Territory, etc.)
+- Custom field support with unique key generation
+- Declarative save API with backend reconciliation
+
+**Files**: Created new `pos/field_map/` package with models, repository, service, and GraphQL layer (39 files changed).
+
+### 3. Data Submission Files (Jan 22-23)
+
+File upload system for data submissions with validation:
+
+- Upload multiple files (CSV, XLS, XLSX) with metadata
+- SHA256 duplicate detection per target organization
+- S3 storage with tenant isolation
+- Pending/sent status workflow
+
+**Design Pattern**: Repository Pattern + Service Layer for data access and orchestration.
+
+---
+
+## Metrics
+
+| Metric | Value |
+|--------|-------|
+| Plans Completed | 9 |
+| Total Phases | ~40 |
+| Bugfixes | 4 |
+
+### Packages
+
+| Action | Count | Packages |
+|--------|-------|----------|
+| Created | 7 | `pos/field_map`, `pos/validations`, `pos/preferences`, `pos/organization_alias`, `pos/data_exchange`, `settings/organization_preferences`, `settings/applications` |
+| Modified | 4 | `graphql/organizations`, `graphql/connections`, `graphql/schemas`, `core/config` |
+| Removed | 1 | `settings/user_preferences` (refactored to `organization_preferences`) |
+
+---
+
+## Technical Debt & Notes
+
+### Registry Pattern Considerations
+
+The `PreferenceConfigRegistry` is a singleton with global state. While this enables decoupled preference registration, it requires careful import ordering to ensure registration happens before service usage.
+
+### Field Mapping - Unique Constraint
+
+The unique constraint `(field_map_id, standard_field_key)` requires key generation for custom fields. The `generate_unique_field_key()` function slugifies names and adds numeric suffixes on collision.
+
+### Security Fixes
+
+- **BF-1**: Added organization ownership check in `delete_file` to prevent users from deleting other orgs' files
+- **BF-3**: Added ownership validation in `delete_alias` to prevent unauthorized deletion
+
+---
+
+*Report generated by Claude Code*

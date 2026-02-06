@@ -1,7 +1,7 @@
 import decimal
 from typing import Any
 
-import strawberry
+from strawberry.types.scalar import ScalarDefinition
 
 
 def serialize_decimal(value: Any) -> str | None:
@@ -21,8 +21,11 @@ def parse_decimal(value: str | None) -> decimal.Decimal | None:
     return decimal.Decimal(value).quantize(decimal.Decimal("0.0001"))
 
 
-DecimalScalar = strawberry.scalar(
-    decimal.Decimal,
+DecimalScalar = ScalarDefinition(
+    name="Decimal",
+    description=None,
+    specified_by_url=None,
     serialize=serialize_decimal,
     parse_value=parse_decimal,
+    parse_literal=None,
 )

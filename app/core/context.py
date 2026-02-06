@@ -4,14 +4,13 @@ from typing import Any
 
 from commons.auth import AuthInfo, AuthService, ConnectionParams
 from fastapi import Request, WebSocket
-from graphql import GraphQLError
 from pydantic import ValidationError
 from starlette.datastructures import Headers
 from strawberry.fastapi import BaseContext
 
 
 class ContextModel:
-    def __init__(self, auth_info: AuthInfo) -> None:
+    def __init__(self, auth_info: AuthInfo):
         super().__init__()
         self.auth_info = auth_info
 
@@ -19,15 +18,11 @@ class ContextModel:
 class Context(BaseContext):
     def __init__(self) -> None:
         super().__init__()
-        self.auth_info: AuthInfo = None  # type: ignore[assignment] # pyright: ignore[reportAttributeAccessIssue]
-        self.aioinject_context: Any = None  # Added for aioinject extension
-        self.commission_visible: bool = True
+        self.auth_info: AuthInfo = None  # pyright: ignore[reportAttributeAccessIssue]
+        self.aioinject_context: Any = None
 
-    def initialize(
-        self, context: ContextModel, *, commission_visible: bool = True
-    ) -> None:
+    def initialize(self, context: ContextModel) -> None:
         self.auth_info = context.auth_info
-        self.commission_visible = commission_visible
 
     @classmethod
     @asynccontextmanager
@@ -36,10 +31,7 @@ class Context(BaseContext):
     ) -> AsyncGenerator[ContextModel, None]:
         auth_result = await auth_service.generate_auth_info_from_request(request)
         if auth_result.is_err():
-            raise GraphQLError(
-                message=f"Unauthorized. {auth_result.unwrap_err()}",
-                extensions={"statusCode": 401, "type": "AuthenticationError"},
-            )
+            raise PermissionError(f"Unauthorized. {auth_result.unwrap_err()}")
 
         auth_info = auth_result.unwrap()
         yield ContextModel(auth_info=auth_info)
@@ -63,5 +55,5 @@ class Context(BaseContext):
         return ConnectionParams(access_token=token)
 
 
-async def get_context() -> Context:
+async def get_context():
     return Context()

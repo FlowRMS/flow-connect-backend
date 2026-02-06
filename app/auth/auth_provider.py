@@ -8,11 +8,10 @@ from commons.auth import (
     AuthInfoService,
     AuthProviderEnum,
     AuthService,
-    WorkOSService,
     WorkOSStrategy,
 )
 
-from app.auth.workos_auth_service import WorkOSAuthService
+from app.auth.workos_service import FlowConnectWorkOSService
 from app.core.config.workos_settings import WorkOSSettings
 from app.core.context_wrapper import ContextWrapper
 
@@ -21,7 +20,7 @@ def create_auth_service_singleton(
     workos_settings: WorkOSSettings,
 ) -> AuthService:
     workos_strategy = WorkOSStrategy(
-        WorkOSService(
+        FlowConnectWorkOSService(
             api_key=workos_settings.workos_api_key,
             client_id=workos_settings.workos_client_id,
         )
@@ -31,10 +30,6 @@ def create_auth_service_singleton(
             AuthProviderEnum.WORKOS: workos_strategy,
         }
     )
-
-
-def create_workos_auth_service(workos_settings: WorkOSSettings) -> WorkOSAuthService:
-    return WorkOSAuthService(workos_settings)
 
 
 def create_auth_info_service(
@@ -49,13 +44,12 @@ def create_auth_info_service(
 @contextlib.asynccontextmanager
 async def create_auth_info(
     context_wrapper: ContextWrapper,
-) -> AsyncIterator[AuthInfo]:  # pragma: no cover
+) -> AsyncIterator[AuthInfo]:
     yield context_wrapper.get().auth_info
 
 
 providers: Iterable[aioinject.Provider[Any]] = [
     aioinject.Singleton(create_auth_service_singleton),
-    aioinject.Singleton(create_workos_auth_service),
     aioinject.Scoped(create_auth_info_service),
     aioinject.Scoped(create_auth_info),
 ]

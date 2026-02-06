@@ -1,162 +1,209 @@
-import hashlib
-import hmac
-import json
 import time
 from typing import Any
-from unittest.mock import AsyncMock, MagicMock
+from unittest.mock import AsyncMock, patch
 
-import aioinject
 import pytest
-from aioinject.ext.fastapi import AioInjectMiddleware
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
-from httpx import Response
 
-from app.core.config.workos_settings import WorkOSSettings
-from app.webhooks.workos.services.user_sync_service import UserSyncService
-
-
-@pytest.fixture
-def webhook_secret() -> str:
-    return "test_webhook_secret_12345"
+from app.webhooks.workos.router import create_workos_webhook_router
+from tests.webhooks.workos.conftest import generate_workos_signature
 
 
-@pytest.fixture
-def user_created_payload() -> dict[str, Any]:
-    return {
-        "id": "event_01234567890",
-        "event": "user.created",
-        "created_at": "2026-01-30T12:00:00.000Z",
-        "data": {
-            "id": "user_01ABCDEFGHIJKLMNOP",
-            "email": "test@example.com",
-            "first_name": "Test",
-            "last_name": "User",
-            "email_verified": True,
-            "external_id": None,
-            "created_at": "2026-01-30T12:00:00.000Z",
-            "updated_at": "2026-01-30T12:00:00.000Z",
-        },
-    }
+class TestWorkOSWebhookRouter:
+    @pytest.fixture
+    def webhook_secret(self) -> str:
+        return "whsec_test_secret_key_12345"
 
+    @pytest.fixture
+    def mock_provisioning_service(self) -> AsyncMock:
+        mock: Any = AsyncMock()
+        return mock
 
-def generate_signature(payload: bytes, secret: str, timestamp: int | None = None) -> str:
-    if timestamp is None:
-        timestamp = int(time.time() * 1000)
-    message = f"{timestamp}.{payload.decode()}"
-    signature = hmac.new(
-        secret.encode(),
-        message.encode(),
-        hashlib.sha256,
-    ).hexdigest()
-    return f"t={timestamp}, v1={signature}"
+    @pytest.fixture
+    def app(
+        self,
+        webhook_secret: str,
+        mock_provisioning_service: AsyncMock,
+    ) -> FastAPI:
+        app = FastAPI()
+        router = create_workos_webhook_router(
+            webhook_secret,
+            provisioning_service=mock_provisioning_service,
+        )
+        app.include_router(router)
+        return app
 
+    @pytest.fixture
+    def client(self, app: FastAPI) -> TestClient:
+        return TestClient(app)
 
-def create_test_app(service_mock: AsyncMock, webhook_secret: str) -> FastAPI:
-    from app.webhooks.workos.router import router
+    @pytest.fixture
+    def organization_created_payload(self) -> dict:
+        return {
+            "id": "event_01ABC123",
+            "event": "organization.created",
+            "created_at": "2026-01-27T14:00:00Z",
+            "data": {
+                "id": "org_01XYZ789",
+                "name": "Acme Corp",
+                "object": "organization",
+                "external_id": "ext-123",
+                "domains": [],
+                "created_at": "2026-01-27T14:00:00Z",
+                "updated_at": "2026-01-27T14:00:00Z",
+            },
+        }
 
-    mock_settings = MagicMock(spec=WorkOSSettings)
-    mock_settings.workos_webhook_secret = webhook_secret
+    def test_webhook_valid_signature_returns_200(
+        self,
+        client: TestClient,
+        webhook_secret: str,
+        organization_created_payload: dict,
+    ) -> None:
+        """Valid request with correct signature returns 200."""
+        signature, payload_bytes = generate_workos_signature(
+            organization_created_payload,
+            webhook_secret,
+        )
 
-    container = aioinject.Container()
-    container.register(aioinject.Object(service_mock, interface=UserSyncService))
-    container.register(aioinject.Object(mock_settings, interface=WorkOSSettings))
+        with patch(
+            "app.webhooks.workos.router.handle_organization_created",
+            new_callable=AsyncMock,
+        ):
+            response = client.post(
+                "/webhooks/workos",
+                content=payload_bytes,
+                headers={
+                    "WorkOS-Signature": signature,
+                    "Content-Type": "application/json",
+                },
+            )
 
-    app = FastAPI()
-    app.add_middleware(AioInjectMiddleware, container=container)
-    app.include_router(router)
-    return app
+        assert response.status_code == 200
+        assert response.json() == {"status": "ok"}
 
-
-def post_webhook(
-    service_mock: AsyncMock,
-    payload: dict[str, Any],
-    webhook_secret: str,
-    signature: str | None = None,
-) -> Response:
-    payload_bytes = json.dumps(payload).encode()
-    if signature is None:
-        signature = generate_signature(payload_bytes, webhook_secret)
-
-    app = create_test_app(service_mock, webhook_secret)
-
-    with TestClient(app) as client:
+    def test_webhook_missing_signature_returns_401(
+        self,
+        client: TestClient,
+        organization_created_payload: dict,
+    ) -> None:
+        """Request without signature header returns 401."""
         response = client.post(
-            "/",
+            "/webhooks/workos",
+            json=organization_created_payload,
+        )
+
+        assert response.status_code == 401
+
+    def test_webhook_invalid_signature_returns_401(
+        self,
+        client: TestClient,
+        organization_created_payload: dict,
+    ) -> None:
+        """Invalid signature returns 401."""
+        timestamp = int(time.time() * 1000)
+        invalid_signature = f"t={timestamp}, v1=invalid_signature_hash"
+
+        response = client.post(
+            "/webhooks/workos",
+            json=organization_created_payload,
+            headers={"WorkOS-Signature": invalid_signature},
+        )
+
+        assert response.status_code == 401
+
+    def test_webhook_expired_signature_returns_401(
+        self,
+        client: TestClient,
+        webhook_secret: str,
+        organization_created_payload: dict,
+    ) -> None:
+        """Expired signature (>5 min old) returns 401."""
+        old_timestamp = int((time.time() - 600) * 1000)  # 10 minutes ago
+        signature, payload_bytes = generate_workos_signature(
+            organization_created_payload,
+            webhook_secret,
+            timestamp=old_timestamp,
+        )
+
+        response = client.post(
+            "/webhooks/workos",
             content=payload_bytes,
             headers={
-                "Content-Type": "application/json",
                 "WorkOS-Signature": signature,
+                "Content-Type": "application/json",
             },
         )
-        return response
-
-
-class TestWebhookSignatureValidation:
-
-    @pytest.mark.asyncio
-    async def test_webhook_rejects_missing_signature(
-        self, webhook_secret: str
-    ) -> None:
-        service_mock = AsyncMock()
-        app = create_test_app(service_mock, webhook_secret)
-        with TestClient(app) as client:
-            response = client.post("/", json={"event": "user.created", "data": {}})
 
         assert response.status_code == 401
-        assert "signature" in response.json()["detail"].lower()
 
-    @pytest.mark.asyncio
-    async def test_webhook_rejects_invalid_signature(
+    def test_webhook_unknown_event_returns_200(
         self,
-        webhook_secret: str,
-        user_created_payload: dict[str, Any],
-    ) -> None:
-        service_mock = AsyncMock()
-        response = post_webhook(
-            service_mock,
-            user_created_payload,
-            webhook_secret,
-            signature="t=123, v1=invalid_signature",
-        )
-        assert response.status_code == 401
-
-    @pytest.mark.asyncio
-    async def test_webhook_accepts_valid_signature(
-        self,
-        webhook_secret: str,
-        user_created_payload: dict[str, Any],
-    ) -> None:
-        service_mock = AsyncMock()
-        response = post_webhook(service_mock, user_created_payload, webhook_secret)
-        assert response.status_code == 200
-
-
-class TestWebhookEventParsing:
-
-    @pytest.mark.asyncio
-    async def test_webhook_parses_user_created_event(
-        self,
-        webhook_secret: str,
-        user_created_payload: dict[str, Any],
-    ) -> None:
-        service_mock = AsyncMock()
-        response = post_webhook(service_mock, user_created_payload, webhook_secret)
-        assert response.status_code == 200
-        service_mock.handle_user_created.assert_called_once()
-
-    @pytest.mark.asyncio
-    async def test_webhook_ignores_non_user_created_events(
-        self,
+        client: TestClient,
         webhook_secret: str,
     ) -> None:
+        """Unknown event types are acknowledged but not processed."""
         payload = {
-            "id": "event_01234567890",
-            "event": "user.updated",
-            "created_at": "2026-01-30T12:00:00.000Z",
-            "data": {"id": "user_01ABCDEFGHIJKLMNOP"},
+            "id": "event_01ABC123",
+            "event": "user.created",
+            "created_at": "2026-01-27T14:00:00Z",
+            "data": {
+                "id": "user_01XYZ789",
+                "name": "John Doe",
+                "object": "user",
+                "external_id": None,
+                "domains": [],
+                "created_at": "2026-01-27T14:00:00Z",
+                "updated_at": "2026-01-27T14:00:00Z",
+            },
         }
-        service_mock = AsyncMock()
-        response = post_webhook(service_mock, payload, webhook_secret)
+        signature, payload_bytes = generate_workos_signature(payload, webhook_secret)
+
+        response = client.post(
+            "/webhooks/workos",
+            content=payload_bytes,
+            headers={
+                "WorkOS-Signature": signature,
+                "Content-Type": "application/json",
+            },
+        )
+
         assert response.status_code == 200
-        service_mock.handle_user_created.assert_not_called()
+        assert response.json() == {"status": "ok", "message": "Event ignored"}
+
+    def test_webhook_organization_created_triggers_handler(
+        self,
+        client: TestClient,
+        webhook_secret: str,
+        organization_created_payload: dict,
+        mock_provisioning_service: AsyncMock,
+    ) -> None:
+        """organization.created event calls the handler."""
+        signature, payload_bytes = generate_workos_signature(
+            organization_created_payload,
+            webhook_secret,
+        )
+
+        with patch(
+            "app.webhooks.workos.router.handle_organization_created",
+            new_callable=AsyncMock,
+        ) as mock_handler:
+            response = client.post(
+                "/webhooks/workos",
+                content=payload_bytes,
+                headers={
+                    "WorkOS-Signature": signature,
+                    "Content-Type": "application/json",
+                },
+            )
+
+        assert response.status_code == 200
+        mock_handler.assert_called_once()
+        call_args = mock_handler.call_args[0]
+        event = call_args[0]
+        provisioning_service = call_args[1]
+        assert event.event == "organization.created"
+        assert event.data.id == "org_01XYZ789"
+        assert event.data.name == "Acme Corp"
+        assert provisioning_service is mock_provisioning_service

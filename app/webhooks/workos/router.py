@@ -1,42 +1,75 @@
-from typing import Annotated
-
-from aioinject import Injected
-from aioinject.ext.fastapi import inject
 from fastapi import APIRouter, Header, HTTPException, Request
 from loguru import logger
-from workos.webhooks import Webhooks
 
-from app.core.config.workos_settings import WorkOSSettings
-from app.webhooks.workos.services.user_sync_service import UserSyncService
+from app.tenant_provisioning.service import TenantProvisioningService
+from app.webhooks.workos.handlers import handle_organization_created
+from app.webhooks.workos.schemas import WorkOSEvent
+from app.webhooks.workos.signature import (
+    InvalidSignatureError,
+    MissingSignatureError,
+    SignatureExpiredError,
+    verify_signature,
+)
 
-router = APIRouter()
+SUPPORTED_EVENTS = {"organization.created"}
 
 
-@router.post("/")
-@inject
-async def handle_webhook(
-    request: Request,
-    user_sync_service: Injected[UserSyncService],
-    workos_settings: Injected[WorkOSSettings],
-    workos_signature: Annotated[str | None, Header(alias="WorkOS-Signature")] = None,
-) -> dict[str, str]:
-    if not workos_signature:
-        raise HTTPException(status_code=401, detail="Missing WorkOS-Signature header")
+def create_workos_webhook_router(
+    webhook_secret: str,
+    *,
+    provisioning_service: TenantProvisioningService,
+) -> APIRouter:
+    """
+    Create a FastAPI router for WorkOS webhooks.
 
-    body = await request.body()
+    Args:
+        webhook_secret: The webhook secret from WorkOS dashboard
+        provisioning_service: Service for provisioning new tenants
+    """
+    router = APIRouter(tags=["webhooks"])
 
-    webhooks = Webhooks()
-    try:
-        event = webhooks.verify_event(
-            event_body=body,
-            event_signature=workos_signature,
-            secret=workos_settings.workos_webhook_secret,
+    @router.post("/webhooks/workos")
+    async def handle_workos_webhook(
+        request: Request,
+        workos_signature: str | None = Header(None, alias="WorkOS-Signature"),
+    ) -> dict[str, str]:
+        """
+        Handle incoming WorkOS webhook events.
+
+        Verifies the signature and routes to appropriate handlers.
+        """
+        # Get raw body for signature verification
+        body = await request.body()
+
+        # Verify signature
+        if not workos_signature:
+            logger.warning("Webhook request missing signature header")
+            raise HTTPException(status_code=401, detail="Missing signature")
+
+        try:
+            verify_signature(body, workos_signature, webhook_secret)
+        except (
+            MissingSignatureError,
+            InvalidSignatureError,
+            SignatureExpiredError,
+        ) as e:
+            logger.warning("Webhook signature verification failed", error=str(e))
+            raise HTTPException(status_code=401, detail="Invalid signature") from e
+
+        # Parse event
+        event = WorkOSEvent.model_validate_json(body)
+        logger.info(
+            "Received WorkOS webhook", event_type=event.event, event_id=event.id
         )
-    except ValueError as e:
-        logger.warning(f"Webhook signature verification failed: {e}")
-        raise HTTPException(status_code=401, detail="Invalid signature") from e
 
-    if event.event == "user.created":
-        await user_sync_service.handle_user_created(event)
+        # Route to handler
+        if event.event not in SUPPORTED_EVENTS:
+            logger.debug("Ignoring unsupported event type", event_type=event.event)
+            return {"status": "ok", "message": "Event ignored"}
 
-    return {"status": "ok"}
+        if event.event == "organization.created":
+            await handle_organization_created(event, provisioning_service)
+
+        return {"status": "ok"}
+
+    return router

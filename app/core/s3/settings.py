@@ -1,0 +1,15 @@
+from pydantic_settings import BaseSettings, SettingsConfigDict
+
+
+class S3Settings(BaseSettings):
+    aws_access_key_id: str = ""
+    aws_secret_access_key: str = ""
+    aws_endpoint_url: str = "https://nyc3.digitaloceanspaces.com"
+    aws_bucket_name: str = "flowrms-connect"
+    aws_default_region: str = "nyc3"
+
+    model_config = SettingsConfigDict(
+        env_file_encoding="utf-8",
+        extra="ignore",
+        env_file=(".env", ".env.local", ".env.staging", ".env.production"),
+    )

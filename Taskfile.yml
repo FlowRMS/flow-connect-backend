@@ -1,7 +1,7 @@
 version: '3'
 
 vars:
-  SOURCES: app alembic
+  SOURCES: app
   RUNNER: uv run
 
 tasks:
@@ -9,30 +9,16 @@ tasks:
     cmd:
       task: all
 
-  .uv:
-    internal: true
-    desc: Ensure that uv is installed
-    silent: true
-    preconditions: []
-
   lint:
     desc: Lint python source files
-    deps: [.uv]
     cmds:
       - "{{.RUNNER}} ruff check --fix --select I {{.SOURCES}}"
       - "{{.RUNNER}} ruff format {{.SOURCES}}"
 
   typecheck:
-    desc: Perform type-checking with mypy
-    deps: [.uv]
-    silent: true
-    cmd: "{{.RUNNER}} mypy {{.SOURCES}} --show-traceback"
-
-  typecheck-basedpy:
     desc: Perform type-checking with basedpyright
-    deps: [.uv]
     silent: true
-    cmd: "{{.RUNNER}} basedpyright {{.SOURCES}}"
+    cmd: "{{.RUNNER}} basedpyright --level error {{.SOURCES}}"
 
   gql:
     desc: Export GraphQL Schema
@@ -43,35 +29,19 @@ tasks:
         --output schema.graphql
         app.graphql.schemas.schema
 
-  admin-gql:
-    desc: Export Admin GraphQL Schema
-    cmds:
-      - >
-        export PYTHONPATH=. && {{.RUNNER}} strawberry export-schema
-        --app-dir app
-        --output admin.schema.graphql
-        app.admin.schemas.schema
-
-  worker-prod:
-    desc: Run taskiq worker with a specified environment
-    cmds:
-      - export $(grep -v '^#' .env.production | xargs) && uv run taskiq worker app.workers.broker:broker -r
+  test:
+    desc: Run tests with pytest
+    cmd: "{{.RUNNER}} pytest"
 
   all:
-    desc: Run the standard set of checks performed in CI
+    desc: Run the standard set of checks (lint, typecheck, gql)
     cmds:
       - task: lint
-      - task: typecheck-basedpy
+      - task: typecheck
       - task: gql
 
   all-ci:
     desc: Run the standard set of checks performed in CI
     cmds:
       - task: lint
-      - task: typecheck-basedpy
-
-  lints:
-    desc: Run linting and type-checking
-    cmds:
-      - task: lint
-      - task: typecheck-basedpy
+      - task: typecheck

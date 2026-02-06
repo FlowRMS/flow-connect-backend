@@ -7,8 +7,8 @@ class NameAlreadyExistsError(BaseException):
 
 
 class NotFoundError(BaseException):
-    def __init__(self, id: str) -> None:
-        super().__init__(f"Entity with ID '{id}' not found")
+    def __init__(self, entity_id: str) -> None:
+        super().__init__(f"Entity with ID '{entity_id}' not found")
 
 
 class ConflictError(BaseException):
@@ -28,4 +28,15 @@ class UnauthorizedError(BaseException):
 
 class DeletionError(BaseException):
     def __init__(self, message: str) -> None:
+        super().__init__(message)
+
+
+class TenantNotFoundError(BaseException):
+    def __init__(self, message: str) -> None:
+        super().__init__(message)
+
+
+class RemoteApiError(BaseException):
+    def __init__(self, message: str, status_code: int | None = None) -> None:
+        self.status_code = status_code
         super().__init__(message)

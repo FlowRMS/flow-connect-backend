@@ -15,7 +15,7 @@ def main() -> None:
     host = os.getenv("HOST", "0.0.0.0")
     port = int(os.getenv("PORT", "5555"))
     log_level = os.getenv("LOG_LEVEL", "info").lower()
-    
+
     # On Windows, use single worker for development
     if sys.platform == "win32":
         workers = 1
@@ -30,7 +30,7 @@ def main() -> None:
     access_log_var = os.getenv("ACCESS_LOG", "-")
     use_access_log = access_log_var != "none"
 
-    print(f"🚀 Starting on {host}:{port} with {workers} workers")
+    print(f"Starting on {host}:{port} with {workers} workers")
 
     # Configure loop and http settings based on platform
     uvicorn_config = {
@@ -45,11 +45,11 @@ def main() -> None:
         "proxy_headers": True,
         "forwarded_allow_ips": "*",
     }
-    
+
     # Only set workers if not Windows (Windows doesn't support multiple workers well)
     if workers > 1 and sys.platform != "win32":
         uvicorn_config["workers"] = workers
-    
+
     # Use uvloop and httptools only on non-Windows platforms
     if sys.platform != "win32":
         uvicorn_config["loop"] = "uvloop"

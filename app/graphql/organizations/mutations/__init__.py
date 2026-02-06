@@ -1,3 +1,5 @@
-from .organizations_mutations import OrganizationsMutations
+from app.graphql.organizations.mutations.organization_mutations import (
+    OrganizationMutations,
+)
 
-__all__ = ["OrganizationsMutations"]
+__all__ = ["OrganizationMutations"]

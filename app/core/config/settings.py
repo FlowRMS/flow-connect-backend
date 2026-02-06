@@ -1,14 +1,12 @@
-from commons.logging.datadog_settings import DatadogSettings
-from pydantic import PostgresDsn, RedisDsn
+from pydantic import PostgresDsn
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
 class Settings(BaseSettings):
     pg_url: PostgresDsn
-    ro_pg_host: str
-    redis_url: RedisDsn
+    pg_ro_host: str = ""  # Read-only database host for tenant records
     environment: str
-    datadog: DatadogSettings
+    orgs_db_url: PostgresDsn | None = None
 
     log_level: str = "INFO"
 

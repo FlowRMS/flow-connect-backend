@@ -5,20 +5,27 @@ from typing import Any
 import aioinject
 from commons.auth import AuthInfo
 from commons.db.controller import MultiTenantController
-from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.config.settings import Settings
-from app.core.db.transient_session import TransientSession
+from app.core.db.transient_session import TenantSession, TransientSession
+from app.errors.common_errors import TenantNotFoundError
+
+TENANT_NOT_FOUND_PATTERN = "not found"
 
 
 @contextlib.asynccontextmanager
 async def create_session(
     controller: MultiTenantController,
     auth_info: AuthInfo,
-) -> AsyncIterator[AsyncSession]:
-    async with controller.scoped_session(auth_info.tenant_name) as session:
-        async with session.begin():
-            yield session
+) -> AsyncIterator[TenantSession]:
+    try:
+        async with controller.scoped_session(auth_info.tenant_name) as session:
+            async with session.begin():
+                yield session  # pyright: ignore[reportReturnType]
+    except Exception as e:
+        if TENANT_NOT_FOUND_PATTERN in str(e):
+            raise TenantNotFoundError(str(e)) from e
+        raise
 
 
 @contextlib.asynccontextmanager
@@ -26,15 +33,20 @@ async def create_transient_session(
     controller: MultiTenantController,
     auth_info: AuthInfo,
 ) -> AsyncIterator[TransientSession]:
-    async with controller.transient_session(auth_info.tenant_name) as session:
-        async with session.begin():
-            yield session  # type: ignore[return-value]
+    try:
+        async with controller.transient_session(auth_info.tenant_name) as session:
+            async with session.begin():
+                yield session  # pyright: ignore[reportReturnType]
+    except Exception as e:
+        if TENANT_NOT_FOUND_PATTERN in str(e):
+            raise TenantNotFoundError(str(e)) from e
+        raise
 
 
 async def create_multitenant_controller(settings: Settings) -> MultiTenantController:
     controller = MultiTenantController(
         pg_url=settings.pg_url.unicode_string(),
-        app_name="Flow Py CRM App",
+        app_name="Flow Connect App",
         echo=settings.log_level == "DEBUG",
         connect_args={
             "timeout": 5,
@@ -51,7 +63,7 @@ async def create_multitenant_for_migration_controller(
 ) -> MultiTenantController:
     controller = MultiTenantController(
         pg_url=pg_url,
-        app_name="FlowAI Py CRM (Migration)",
+        app_name="Flow Connect (Migration)",
         echo=True,
         connect_args={
             "timeout": 5,
