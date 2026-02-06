@@ -3,13 +3,13 @@ name: Build, Push, and Deploy to K8S
 on:
   push:
     branches:
-      - v6
+      - v6-staging-2
       - v6-production
 
 jobs:
   publish-graphql-schema:
     runs-on: ubuntu-latest
-    environment: ${{ github.ref_name == 'v6-production' && 'v6-production' || 'v6-staging' }}
+    environment: ${{ github.ref_name == 'v6-production' && 'v6-production' || 'v6-staging-2' }}
     steps:
       - uses: actions/checkout@v3
       - uses: actions/setup-node@v3
