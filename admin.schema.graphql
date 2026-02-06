@@ -47,6 +47,7 @@ enum RbacRoleEnum {
   WAREHOUSE_MANAGER
   WAREHOUSE_EMPLOYEE
   DRIVER
+  SALES_MANAGER
 }
 
 type TenantCreationResultType {
