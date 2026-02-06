@@ -1,23 +1,50 @@
 version: "1"
-projects:
-- name: Flow RMS Services
-  environments:
-  - name: Staging
-    networking:
-      isolation: enabled
-    services:
-    - type: web
-      name: flow-py-crm
-      runtime: docker
-      repo: https://github.com/FlowRMS/flow-py-crm
-      plan: standard
-      envVars:
-      - fromGroup: Flow Py Commons
-      - fromGroup: Flow Py CRM Staging
-      region: ohio
-      preDeployCommand: python run_migrations.py
-      dockerContext: .
-      dockerfilePath: ./Dockerfile
-      domains:
-      - staging.crm.flowrms.com
-      autoDeployTrigger: commit
+services:
+  # Development Environment
+  - type: web
+    name: flow-connect-backend-dev
+    runtime: docker
+    repo: https://github.com/FlowRMS/flow-connect-backend
+    branch: dev
+    plan: starter
+    region: ohio
+    dockerContext: .
+    dockerfilePath: ./Dockerfile
+    envVars:
+      - key: ENVIRONMENT
+        value: development
+      - fromGroup: Flow Connect Backend Dev
+    autoDeploy: true
+
+  # Staging Environment
+  - type: web
+    name: flow-connect-backend-staging
+    runtime: docker
+    repo: https://github.com/FlowRMS/flow-connect-backend
+    branch: staging
+    plan: starter
+    region: ohio
+    dockerContext: .
+    dockerfilePath: ./Dockerfile
+    envVars:
+      - key: ENVIRONMENT
+        value: staging
+      - fromGroup: Flow Connect Backend Staging
+    autoDeploy: true
+
+  # Production Environment
+  - type: web
+    name: flow-connect-backend-prod
+    runtime: docker
+    repo: https://github.com/FlowRMS/flow-connect-backend
+    branch: main
+    plan: standard
+    region: ohio
+    dockerContext: .
+    dockerfilePath: ./Dockerfile
+    preDeployCommand: python run_migrations.py
+    envVars:
+      - key: ENVIRONMENT
+        value: production
+      - fromGroup: Flow Connect Backend Prod
+    autoDeploy: false
