@@ -218,7 +218,7 @@ type Mutation {
   updateConnectionTerritories(connectionId: ID!, subdivisionIds: [ID!]!): UpdateConnectionTerritoriesResponse!
   uploadAgreement(connectedOrgId: ID!, file: Upload!): AgreementResponse!
   deleteAgreement(connectedOrgId: ID!): Boolean!
-  createOrganization(input: CreateOrganizationInput!): OrganizationLiteResponse!
+  createConnectOrganization(input: CreateOrganizationInput!): OrganizationLiteResponse!
   updateOrganizationPreference(application: Application!, key: String!, value: String = null): OrganizationPreferenceResponse!
   saveFieldMap(input: SaveFieldMapInput!): FieldMapResponse!
   createOrganizationAlias(input: CreateOrganizationAliasInput!): OrganizationAliasResponse!

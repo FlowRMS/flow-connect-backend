@@ -15,7 +15,7 @@ from app.graphql.organizations.strawberry import (
 class OrganizationMutations:
     @strawberry.mutation()
     @inject
-    async def create_organization(
+    async def create_connect_organization(
         self,
         input_data: Annotated[
             CreateOrganizationInput, strawberry.argument(name="input")
