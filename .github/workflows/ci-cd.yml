@@ -16,13 +16,13 @@ jobs:
       - uses: actions/setup-node@v3
       - run: npm install -g @graphql-hive/cli
       - run: |
-          hive schema:publish \
-            --registry.accessToken ${{ secrets.HIVE_PUBLISHING_TOKEN }} \
-            --service "flowconnect-backend" \
-            --url "${{ secrets.GRAPHQL_ENDPOINT }}" \
-            --author "${{ github.actor }}" \
-            --commit "${{ github.sha }}" \
-            --target "flowrms/flowrms-v6/${{ secrets.ENVIRONMENT }}" schema.graphql
+          #hive schema:publish \
+            #--registry.accessToken ${{ secrets.HIVE_PUBLISHING_TOKEN }} \
+            #--service "flowconnect-backend" \
+            #--url "${{ secrets.GRAPHQL_ENDPOINT }}" \
+            #--author "${{ github.actor }}" \
+            #--commit "${{ github.sha }}" \
+            #--target "flowrms/flowrms-v6/${{ secrets.ENVIRONMENT }}" schema.graphql
 
   publish-admin-graphql-schema:
     runs-on: ubuntu-latest
