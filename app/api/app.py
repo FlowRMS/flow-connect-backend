@@ -1,4 +1,5 @@
 import contextlib
+import os
 import time
 from typing import Any
 from urllib.parse import urlparse, urlunparse
@@ -148,12 +149,17 @@ def create_app() -> FastAPI:
         app.include_router(webhook_router)
         logger.info("WorkOS webhook router registered")
 
+    cors_origins = [
+        "http://localhost:3000",
+        "http://localhost:3001",
+    ]
+    extra_origins = os.environ.get("CORS_ALLOWED_ORIGINS", "")
+    if extra_origins:
+        cors_origins.extend([o.strip() for o in extra_origins.split(",") if o.strip()])
+
     app.add_middleware(
         CORSMiddleware,
-        allow_origins=[
-            "http://localhost:3000",
-            "http://localhost:3001",
-        ],
+        allow_origins=cors_origins,
         allow_credentials=True,
         allow_methods=["*"],
         allow_headers=["*"],
