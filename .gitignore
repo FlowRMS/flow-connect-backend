@@ -27,15 +27,12 @@ env/
 .venv
 
 # IDEs
-.vscode/
 .idea/
 *.swp
 *.swo
 *~
 
 # Environment
-.env
-.env.*
 !.env.example
 
 # Credentials
@@ -74,3 +71,5 @@ logins-workos.csv
 code_review_findings.txt
 
 PR-docs
+config.bat
+node_modules
